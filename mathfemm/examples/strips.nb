@@ -1,0 +1,1567 @@
+(* Content-type: application/mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 7.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       145,          7]
+NotebookDataLength[     56736,       1558]
+NotebookOptionsPosition[     47785,       1284]
+NotebookOutlinePosition[     50444,       1359]
+CellTagsIndexPosition[     50190,       1350]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Electrostatics Example", "Section"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"<<", 
+  "\"\<c:\\\\claude\\\\tangle\\\\femm-qt\\\\mathfemm\\\\mathfemm.m\>\""}]], \
+"Input",
+ CellChangeTimes->{{3.526164917968602*^9, 3.5261649192166047`*^9}, {
+  3.985708222584017*^9, 3.9857082680491133`*^9}}],
+
+Cell[BoxData["\<\"MathFEMM loaded at Mon 20 Apr 2026 17:11:16\"\>"], "Print",
+ CellChangeTimes->{3.985708276538192*^9}]
+}, Open  ]],
+
+Cell["\<\
+The objective of this notebook is to find the capacitance matrix associated \
+with a set of four microstrip lines on top of a dielectric substrate.  We \
+will consider lines that are 20 um wide and 2 um thick, separated by a 4 um \
+distance.  The traces are laying centered atop of a 20 um by 200 um slab with \
+a relative permeability of 4.  The slab rests on an infinite ground plane. We \
+will consider a 1m depth in the into-the-page direction.\
+\>", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "OpenFEMM"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"OpenFEMM[] starts an external instance of FEMM and establishes \
+an associated MathLink connection.\\nOpenFEMM[1] starts FEMM minimized\"\>", 
+  "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.9857082766149716`*^9},
+ CellTags->"Info3985693876-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"OpenFEMM", "[", "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "NewDocument"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"NewDocument[doctype] creates a new preprocessor document and \
+opens up\\na new preprocessor window in FEMM. Specify doctype to be 0 for a \
+magnetics problem, 1 for\\nan electrostatics problem, 2 for a heat flow \
+problem, or 3 for a current flow problem.\\nAlternate form is Create[doctype]\
+\"\>", "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.9857082775445147`*^9},
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"NewDocument", "[", "1", "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EIProbDef"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EIProbDef[units,type,precision,depth,minangle] changes the \
+problem definition. The units\\nparameter specifies the units used for \
+measuring length in the problem domain. Valid \\\"units\\\"\\nentries are \
+\\\"inches\\\", \\\"millimeters\\\", \\\"centimeters\\\", \\\"mils\\\", \
+\\\"meters\\\", and \\\"micrometers\\\".\\nSet problemtype to \\\"planar\\\" \
+for a 2-D planar problem, or to \\\"axi\\\" for an axisymmetric\\nproblem. \
+The precision parameter dictates the precision required by the solver. For \
+example,\\nspecifying 1.E-8 requires the RMS of the residual to be less than \
+10^(-8). The depth parameter,\\nrepresents the depth of the problem in the \
+into-the-page direction for 2-D planar problems. The\\nminangle parameter is \
+a constraint for the mesh generator. It specifies the smallest \
+permissible\\nangle in triangles that compose the finite element mesh. A good \
+value to choose is 30 degrees, but\\nsmaller values may be needed for \
+\\\"tough\\\" geometries that contain small angles.\"\>", "MSG"]], "Print", \
+"PrintUsage",
+ CellChangeTimes->{3.9857082775990515`*^9},
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EIProbDef", "[", 
+  RowBox[{"\"\<micrometers\>\"", ",", "\"\<planar\>\"", ",", 
+   RowBox[{"10", "^", 
+    RowBox[{"(", 
+     RowBox[{"-", "8"}], ")"}]}], ",", 
+   RowBox[{"10", "^", "6"}], ",", "30"}], "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EIDrawRectangle"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EIDrawRectangle[x1,y1,x2,y2] adds nodes at {x1,y1}, {x1,y2}, \
+{x2,y2} and\\n {x2,y1} and joins them with new segments.  Equivalent forms \
+are:\\n\\nEIDrawRectangle[{x1,y1},{x2,y2}]\\n\\nEIDrawRectangle[{{x1,y1},{x2,\
+y2}}]\"\>", "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.9857082776779175`*^9},
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EIDrawRectangle", "[", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"2", ",", "0"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"22", ",", "2"}], "}"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIDrawRectangle", "[", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"2", "+", "24"}], ",", "0"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"22", "+", "24"}], ",", "2"}], "}"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIDrawRectangle", "[", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"-", "2"}], ",", "0"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"-", "22"}], ",", "2"}], "}"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIDrawRectangle", "[", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"-", "2"}], "-", "24"}], ",", "0"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"-", "22"}], "-", "24"}], ",", "2"}], "}"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIDrawRectangle", "[", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"-", "100"}], ",", 
+      RowBox[{"-", "20"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"100", ",", "0"}], "}"}]}], "}"}], "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EIDrawLine"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EIDrawLine[x1,y1,x2,y2] adds points at {x1,y1} and {x2,y2} and \
+then adds\\na segment connecting these two points.  Equivalent forms \
+are:\\n\\nEIDrawLine[{x1,y1},{x2,y2}]\\n\\nEIDrawLine[{{x1,y1},{x2,y2}}]\"\>",
+   "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.985708277772491*^9},
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EIDrawLine", "[", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"-", "120"}], ",", 
+     RowBox[{"-", "20"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"120", ",", 
+     RowBox[{"-", "20"}]}], "}"}]}], "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EIDrawArc"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EIDrawArc[x1,y1,x2,y2,angle,maxseg] adds an arc to the \
+electrostatics\\ninput geometry by drawing points at {x1,y1} and {x2,y2} and \
+then connecting\\nthem with an arc segment. The arc spans a number of degrees \
+specified by\\nangle. Since FEMM approximates arcs by many line segments, the \
+parameter\\nmaxseg specifies the maximum number of degrees that is allowed to \
+be spanned\\nby any one segment. Equivalent forms \
+are:\\n\\nEIDrawArc[{x1,y1},{x2,y2},angle,maxseg]\\n\\nEIDrawArc[{{x1,y1},{x2,\
+y2}},angle,maxseg]\"\>", "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.9857082778356533`*^9},
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EIDrawArc", "[", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"120", ",", 
+     RowBox[{"-", "20"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"-", "120"}], ",", 
+     RowBox[{"-", "20"}]}], "}"}], ",", "180", ",", "2.5"}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIDrawArc", "[", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"100", ",", "100"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"120", ",", "100"}], "}"}], ",", "180", ",", "2.5"}], 
+  "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIDrawLine", "[", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"100", ",", "100"}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"120", ",", "100"}], "}"}]}], "}"}], "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EIAddBoundProp"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EIAddBoundProp[\\\"boundpropname\\\", Vs,qs,c0,c1,BdryFormat] \
+adds a new boundary\\nproperty with name \\\"boundpropname\\\"\\n\\nFor a \
+\\\"Fixed Temperature\\\" type boundary condition, set the Vs parameter to \
+the\\ndesired voltage and all other parameters to zero.\\n\\nTo obtain a \
+\\\"Mixed\\\" type boundary condition, set C1 and C0 as required \
+and\\nBdryFormat to 1. Set all other parameters to zero.\\n\\nTo obtain a \
+prescribes surface charge density, set qs to the desired charge\\ndensity in \
+C/m2 and set BdryFormat to 2.\\n\\nFor a \\\"Periodic\\\" boundary condition, \
+set BdryFormat to 3 and set all other\\nparameters to zero.\\n\\nFor an \
+\\\"Anti-Perodic\\\" boundary condition, set BdryFormat to 4 set all \
+other\\nparameters to zero.\"\>", "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.9857082778990774`*^9},
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EIAddBoundProp", "[", 
+  RowBox[{
+  "\"\<ground\>\"", ",", "0", ",", "0", ",", "0", ",", "0", ",", "0"}], 
+  "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIAddBoundProp", "[", 
+  RowBox[{
+  "\"\<periodic\>\"", ",", "0", ",", "0", ",", "0", ",", "0", ",", "3"}], 
+  "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EISelectArcSegment"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EISelectArcSegment[x,y] selects the arc segment closest to \
+{x,y}.  An equivalent form is:\\n\\nEISelectArcSegment[{x,y}]\"\>", 
+  "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.9857082779627123`*^9},
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EISelectArcSegment", "[", 
+  RowBox[{"0", ",", "100"}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EISelectArcSegment", "[", 
+  RowBox[{"110", ",", "80"}], "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EISetArcSegmentProp"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EISetArcSegmentProp[maxsegdeg, \\\"propname\\\", hide, \
+groupno,\\\"inconductor\\\"]\\nsets the properties associated with the \
+selected arc segments\\n\\nmaxsegdeg specifies that the arcs must be meshed \
+with elements that span at\\nmost maxsegdeg degrees per \
+element\\n\\n\\\"propname\\\" specifies the boundary property to be \
+associated with the\\nselected arcs\\n\\nhide: 0 = not hidden in \
+post-processor, 1 == hidden in post processor\\n\\ngroupno is an integer \
+specifying the group number of which the selected arcs\\nare to be \
+members.\\n\\n\\\"inconductor\\\" specifies the name of the conductor \
+property with which the\\nselected arcs are to be associated. If the arcs is \
+not to be part of a\\nconductor, this parameter can be specified as \
+\\\"<None>\\\".\"\>", "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.985708278026229*^9},
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EISetArcSegmentProp", "[", 
+  RowBox[{
+  "2.5", ",", "\"\<periodic\>\"", ",", "0", ",", "0", ",", "\"\<<None>\>\""}],
+   "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EIClearSelected"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EIClearSelected[] clear all selected nodes, blocks, segments \
+and arc segments.\"\>", "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.985708278090042*^9},
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EIClearSelected", "[", "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EISelectSegment", "[", 
+  RowBox[{"0", ",", 
+   RowBox[{"-", "20"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EISelectSegment", "[", 
+  RowBox[{"110", ",", 
+   RowBox[{"-", "20"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EISelectSegment", "[", 
+  RowBox[{
+   RowBox[{"-", "110"}], ",", 
+   RowBox[{"-", "20"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EISelectSegment", "[", 
+  RowBox[{"110", ",", "100"}], "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EISetSegmentProp"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EISetSegmentProp[\\\"propname\\\",elementsize,automesh,hide,\
+groupno,\\\"inconductor\\\"]\\nsets the select segments to \
+have:\\n\\nBoundary property \\\"propname\\\"\\n\\nLocal element size along \
+segment no greater than elementsize\\n\\nautomesh: 0 = mesher defers to the \
+element constraint defined by elementsize, 1 = mesher\\nautomatically chooses \
+mesh size along the selected segments\\n\\nhide: 0 = not hidden in \
+post-processor, 1 == hidden in post\\nprocessor\\n\\nA member of group number \
+groupno\\n\\nA member of the conductor specified by the string \
+\\\"inconductor\\\". If the segment is not\\npart of a conductor, this \
+parameter can be specified as \\\"<None>\\\".\"\>", "MSG"]], "Print", \
+"PrintUsage",
+ CellChangeTimes->{3.9857082781535144`*^9},
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EISetSegmentProp", "[", 
+  RowBox[{
+  "\"\<ground\>\"", ",", "0", ",", "1", ",", "0", ",", "0", ",", 
+   "\"\<<None>\>\""}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIClearSelected", "[", "]"}]], "Input"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"For", "[", 
+   RowBox[{
+    RowBox[{"i", "=", "0"}], ",", 
+    RowBox[{"i", "<", "4"}], ",", 
+    RowBox[{"i", "++"}], ",", "\[IndentingNewLine]", 
+    RowBox[{"EIAddBlockLabel", "[", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"-", "36"}], "+", 
+       RowBox[{"i", "*", "24"}]}], ",", "1"}], "]"}]}], "\[IndentingNewLine]",
+    "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"For", "[", 
+  RowBox[{
+   RowBox[{"i", "=", "0"}], ",", 
+   RowBox[{"i", "<", "4"}], ",", 
+   RowBox[{"i", "++"}], ",", "\[IndentingNewLine]", 
+   RowBox[{"EISelectLabel", "[", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"-", "36"}], "+", 
+      RowBox[{"i", "*", "24"}]}], ",", "1"}], "]"}]}], "\[IndentingNewLine]", 
+  "]"}]}], "Input",
+ CellChangeTimes->{{3.656635047184209*^9, 3.6566350649694953`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EISetBlockProp"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EISetBlockProp[\\\"blockname\\\",automesh,meshsize,groupno] \
+sets the selected block\\nlabels to have the properties:\\n\\nBlock property \
+\\\"blockname\\\".\\n\\nautomesh: 0 = mesher defers to mesh size constraint \
+defined in meshsize, 1 = mesher\\nautomatically chooses the mesh \
+density.\\n\\nmeshsize: size constraint on the mesh in the block marked by \
+this label\\n.\\ngroupno: make selected members of specified group \
+number\"\>", "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.985708278217723*^9},
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EISetBlockProp", "[", 
+  RowBox[{"\"\<<No Mesh>\>\"", ",", "0", ",", "1", ",", "0"}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIClearSelected", "[", "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EIAddMaterial"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EIAddMaterial[\\\"materialname\\\",ex,ey,qv] adds a new \
+material with called\\n\\\"materialname\\\" with the material \
+properties:\\n\\nex Relative permittivity in the x- or r-direction.\\n\\ney \
+Relative permittivity in the y- or z-direction.\\n\\nqv Volume charge density \
+in units of C/m^3\"\>", "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.985708278281208*^9},
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EIAddMaterial", "[", 
+  RowBox[{"\"\<air\>\"", ",", "1", ",", "1", ",", "0"}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIAddMaterial", "[", 
+  RowBox[{"\"\<dielectric\>\"", ",", "4", ",", "4", ",", "0"}], 
+  "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIAddBlockLabel", "[", 
+  RowBox[{"0", ",", 
+   RowBox[{"-", "10"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIAddBlockLabel", "[", 
+  RowBox[{"0", ",", "50"}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIAddBlockLabel", "[", 
+  RowBox[{"110", ",", "95"}], "]"}]], "Input"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"EISelectLabel", "[", 
+   RowBox[{"0", ",", 
+    RowBox[{"-", "10"}]}], "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISetBlockProp", "[", 
+   RowBox[{"\"\<dielectric\>\"", ",", "0", ",", "1", ",", "0"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EIClearSelected", "[", "]"}], ";"}]}], "Input"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"EISelectLabel", "[", 
+   RowBox[{"0", ",", "50"}], "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISelectLabel", "[", 
+   RowBox[{"110", ",", "95"}], "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISetBlockProp", "[", 
+   RowBox[{"\"\<air\>\"", ",", "0", ",", "1", ",", "0"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EIClearSelected", "[", "]"}], ";"}]}], "Input"],
+
+Cell["\<\
+For the first run, we will set the voltage on the 0th conductor to 1 V, and \
+the voltages on the other conductors to 0 V.  We can then obtain the coupled \
+capacitances by examining the charge that accumulates on each conductor.\
+\>", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EIAddConductorProp"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EIAddConductorProp[\\\"conductorname\\\",Vc,qc,conductortype] \
+adds a new\\nconductor property with name \\\"conductorname\\\" with either a \
+prescribed\\nvoltage or a prescribed total charge. Set the unused property to \
+zero. The\\nconductortype parameter is 0 for prescribed charge and 1 for \
+prescribed\\nvoltage.\"\>", "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.9857082783453074`*^9},
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EIAddConductorProp", "[", 
+  RowBox[{"\"\<V0\>\"", ",", "1", ",", "0", ",", "1"}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIAddConductorProp", "[", 
+  RowBox[{"\"\<V1\>\"", ",", "0", ",", "0", ",", "1"}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIAddConductorProp", "[", 
+  RowBox[{"\"\<V2\>\"", ",", "0", ",", "0", ",", "1"}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIAddConductorProp", "[", 
+  RowBox[{"\"\<V3\>\"", ",", "0", ",", "0", ",", "1"}], "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EISetSegmentProp"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EISetSegmentProp[\\\"propname\\\",elementsize,automesh,hide,\
+groupno,\\\"inconductor\\\"]\\nsets the select segments to \
+have:\\n\\nBoundary property \\\"propname\\\"\\n\\nLocal element size along \
+segment no greater than elementsize\\n\\nautomesh: 0 = mesher defers to the \
+element constraint defined by elementsize, 1 = mesher\\nautomatically chooses \
+mesh size along the selected segments\\n\\nhide: 0 = not hidden in \
+post-processor, 1 == hidden in post\\nprocessor\\n\\nA member of group number \
+groupno\\n\\nA member of the conductor specified by the string \
+\\\"inconductor\\\". If the segment is not\\npart of a conductor, this \
+parameter can be specified as \\\"<None>\\\".\"\>", "MSG"]], "Print", \
+"PrintUsage",
+ CellChangeTimes->{3.985708278415852*^9},
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{"-", "46"}], ",", "1"}], "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{"-", "26"}], ",", "1"}], "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{"-", "36"}], ",", "2"}], "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{"-", "36"}], ",", "0"}], "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISetSegmentProp", "[", 
+   RowBox[{
+   "\"\<<None>\>\"", ",", "0.25", ",", "0", ",", "0", ",", "0", ",", 
+    "\"\<V0\>\""}], "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"EIClearSelected", "[", "]"}]}], "Input"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"-", "46"}], "+", "24"}], ",", "1"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"-", "26"}], "+", "24"}], ",", "1"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"-", "36"}], "+", "24"}], ",", "2"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"-", "36"}], "+", "24"}], ",", "0"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISetSegmentProp", "[", 
+   RowBox[{
+   "\"\<<None>\>\"", ",", "0.25", ",", "0", ",", "0", ",", "0", ",", 
+    "\"\<V1\>\""}], "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"EIClearSelected", "[", "]"}]}], "Input"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"-", "46"}], "+", 
+     RowBox[{"2", "*", "24"}]}], ",", "1"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"-", "26"}], "+", 
+     RowBox[{"2", "*", "24"}]}], ",", "1"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"-", "36"}], "+", 
+     RowBox[{"2", "*", "24"}]}], ",", "2"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"-", "36"}], "+", 
+     RowBox[{"2", "*", "24"}]}], ",", "0"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISetSegmentProp", "[", 
+   RowBox[{
+   "\"\<<None>\>\"", ",", "0.25", ",", "0", ",", "0", ",", "0", ",", 
+    "\"\<V2\>\""}], "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"EIClearSelected", "[", "]"}]}], "Input"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"-", "46"}], "+", 
+     RowBox[{"3", "*", "24"}]}], ",", "1"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"-", "26"}], "+", 
+     RowBox[{"3", "*", "24"}]}], ",", "1"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"-", "36"}], "+", 
+     RowBox[{"3", "*", "24"}]}], ",", "2"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISelectSegment", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"-", "36"}], "+", 
+     RowBox[{"3", "*", "24"}]}], ",", "0"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EISetSegmentProp", "[", 
+   RowBox[{
+   "\"\<<None>\>\"", ",", "0.25", ",", "0", ",", "0", ",", "0", ",", 
+    "\"\<V3\>\""}], "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"EIClearSelected", "[", "]"}]}], "Input"],
+
+Cell["Get a snapshot of the problem input geometry:", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"EIRestore", "[", "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EIResize", "[", 
+   RowBox[{"640", ",", "320"}], "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"EIZoomNatural", "[", "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Show", "[", 
+  RowBox[{"EIGetView", "[", "]"}], "]"}]}], "Input"],
+
+Cell[BoxData[
+ GraphicsBox[RasterBox[CompressedData["
+1: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
+t969pSef9E6BZLdsmdSqlXeKvKjfAAAmivVbixbSO+94p0Cy++IL6cADvVOE
+1q1bp4ULF6pmzYWaPXuhVq9e7R0J+cR/RvEtSj+j//znP3myffjhh3nuX7p0
+aZ77t2/f7pS0oJdffjlPtp07d+bc9/XXX+e575UInXC0LTi45s72z3/+M8/9
+ifx5gT/7Gc2atTA4RkXrZ2Tnnub6FQXc/PjH4fnQ3loEX2rOOOMMVa3aRZ06
+dVGzZs301VdfecdCLvGfUZcuXWJbVH5GXwRfRE444YScXJ06dVLLli1z7n/j
+jTdi+/H7W7durYsvvtgx8R7PPvusTjzxxJxsJ510kq6zATbZRo8enSe73T9v
+XjTWMxg4cGDsvYxns5y5a7hE/bzAX/xn1LFjF+2/f3R+Rv/9r9SokXcKINS5
+s/TCC94prN+0tnbs2KGaNaXZsxVc1g4udwTfu8QWkS3+M7nsMum55/b9Z3Td
+40/l2Ur7PLNmbQu+o9eRlTWXX75nP37/zTfP189+1jW25u+YMXv2S/t6jz27
+Pk/uu2a+XurnuuaaqerWbbD+8hdp/Pg9+/H7zzprkDIypunGG6V77tmzX9rX
+u/OZf+TJ/vjcj0r9XK1addHEiQuDGjNcTzm+n+ifFzb/Lf4zmTUr7COytt46
+EehInT9f6trVOwUQsr9fkyd7p9hTvx1+eLgua9WqtYPvXDuC78dii8gW/5ns
+t590+un79jNKHThFB13bUodd0Su2HZTRMrhtcqmeq2PHbcF39Do67TTFssX3
+4/e3bDlf9et31fHHK/b9IL5f2veh7jXtVP+qbjnZa49IU7vu75fquU44Yaoa
+Nhyso44Kx/nE9+P3N2w4KLhtmg4+WLHHxPdL81rterwXZG2ek7v+VWer7rAO
+pX4f6tXrEtRsC1WjRjgfVnw/0T8vbP5b/GfSqZN05JHRqd/uuEMaOtQ7BRBK
+T5fOPts7hX3HOjD4bj5b8fEotWrVitVziI6aQfFz1VVXqVq1jOAyIzhu1yj1
+zyhzcabGLhq71/2SsL/t9nkZOjRDBxyQEVwOjX2e4uYHX5pTgwKjV68MNWqU
+EVz2UgdbgLqUUu9O1arPVu11vySmTp2qk08+OfhOn6EWLTKCy64aMGBAzv39
++vVTt27d1Lx5RnCZEdRHrTRt2rRSvdaKjSuUNjltr/sl1bZtW/Xp00dHH50R
+XGYE9fHxsd/duPjnpXr1xPq8wJ/9jA466KCc48GsWbNi+96sthwyxDsFEJox
+IxrnoE6YMEGdO3dWfEzKyJEj9d1333nHQi5169YNvgsfqf32a6gjjmgY+3sa
+hePx1q1bY1ksU5Uqlu0I1atXL+f+uXPn6pBDDgluaxgcrxvG7mvTpk2pXsuU
+Zf123333xd7XunUbBjVFw1gbwwUXXJBz//nnnx+7ze6zx9hjreYrjbKu3049
+9VTVr18/9p7Wr98w9h5brRxnWe1nkWifF/j79ttvlZGRkXM8sGPDLbfc4h1L
+J54oPfOMdwogtGWLgr+73imQCOJ93NZfZmOxDjigdnC5Q9YcVNKt558zdcqt
+vTVk8lOxrfVtffSrSWNL9VxTpmxTzZp1gksFdU7BvharKaxd69FHpebNpeHD
+5weXXUv1WrYdNr6JLrzzzznZDx1/tG66b1Wpnuvii6eqQ4fBstMpuncP2+MG
+Dx6ck33QoEGx9rZu3SS7uX37QcHltFK91vj7VqjB+MY5ufvdebuOGN+01O/D
+CSd0CY6xC4PL8HugHWdzt78l6ucF2BtrAvz8c+8UwB52Po2dVwMUJX48tuP1
+wIFStWq11b//jqDGUIm3CwZv1E9G9lCjEb1im12/YPCGEjzHPC3LbKM56dKF
+F25T9ep1NPCyYCe4bef78ePxvGA/JXurq3cfl045RTrzzPn60Y+6Fnie2P6Q
+dH1y9ZrC70ufpE+C55oRbOdlHqNWseztNTjY32WvkTGv8H+XZz/vfe3aTdVx
+Z6XGcs/9Xbx+65ordwO9fd80XXSRYjVckyaDghpuWqly7wy2UZkn5eQ+I9h/
+qti5C+43bNhFZ114Tiz7f56M128TcmWvql3rCvu8lDz7xmDrkXl0TvYOwf6G
+UmYv3ueljfRZYb8F8/LetzJ4jiVrCr/vs0m5ni8912Oyb8uaV/i/K7CPKFiz
+JlwzHIiS888P/pRkeadA1NmYoXvuuSfWHmRbhY5RXNIm1zHQ7DnGWftJ7do1
+9UHmsdo24Vi9eeeUcKxMVkrs2Grtb61+eag0oZ9mBbmHDx8em48g//MEf6Gl
+KcH1rEl7uS8l17E6v+x/+1m+fxfL3S3X89h9B+X8X6ZOvUqvZtaJ5bY6zeY1
+uSdjz+v0/11wwBhzaiy3vecdO3bMHv9Wzrlj77nVlYfn2m+WZ79Dh+Zantkw
+J7vN7/Cvu/e8Vq1T95fG987Jvufz4pv9hz4vMVaXTZlU8CUrInuB/0v+zz48
+2FrhtmY4ECU33SSNGuWdAlH30EMPxfrz4tvkyZP1/fffl/OrZrdXFDgO7jnG
+WYZHJzbSJ1e31rLMBpqTPkjTp2fk3G9z4I4c2TvnPpu3zOaEy/88sfYSaxOx
+4+XKfPf9UJtInmOsPbZZrtyFPU/2/+vupvo0o11Otv79O2lHZsuc11m9+n69
+mXlo7D57z4cMGVKwBirT3LmyLZlaSF2RmtN29Pb05vrfVT/LyT56dF99m3lq
+zuMfemh4zn15Py/e2ecW+Xkp8LnIozyzF/Xa8/K12aGiZQQfkVtv9U4B5PX8
+8zavlHcKIJ/YMS4l+9iYX75jZaytpKjjZzGOx1nZrxU/Lhd4vpS8WyxXdjtL
+7uPqkuw64Y1CXiP/9ZtTCmmfc8qd0zaYUkg9Ushr2vWovOcJn72Y/adZufti
+UZFsXqsXX/ROAeS1aZNUv753CmAv4sfbAu0R+Y6j+Y97JeoPm5f3/qx4W06+
+58s5Buc+Tuc/nmYfuydl5349vWBby7zs2nRBBHNbbRF7zw9XwT7r7BrprxF9
+zxM9e/y18z+myO8yqAg2RNLWYwWi5uijpQ8+8E4B7I0dAwsZ/7ZyUq7jaGHt
+GMUcj27H39x9tLFx6ZP2/nx52tuyj635a7Ql6Xsen2eMu421Gp0YuW+7INfj
+rU+4ZeK854mcPfdzL8n3Wqhw770nHXusdwqgcOedJz39tHcKoLiyj3lT8h8v
+ixhztNfnKaxPKrufq1TnARaVI1Fz57qf7BWcHd5sfpw+fbxTAIWzKUN79fJO
+ARTXvILtGvtyPC5sXHisnaQ86rdEzL231yR7jnLLDm89e0q5lkUBIsXOjba5
+sQAAwB4tWzLHFqJr506bH907BQAA0VK1qq3p5Z0C2LtTT5Vef907BQAA0fDK
+K7ZOincKoGjMTwgAwB7Mb49E8Oyz0jnneKcAACAaunaV5s/3TgEUzZblqV3b
+OwUAANFQo4atweedAvhhdp7NW295pwAAwNfSpczLgMRx9dXSpMKWjQEAIInc
+dpt07bXeKYDimTkznKsQAIBk1r27NGeOdwqgeDZvDueBs/XeAABIRu++K1Wr
+Jm3f7p0EKL7Bg6XMTO8UAAD4GDNGSs+/zC0QccxXCABIZsxnj0RVp460bZt3
+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
+V7//vfTSS3v/Nzanks23/KtfSXXrhn/fHnpI2rGj4nIDQEWwMXGXXy5dckn4
+PbZHD+lvf/NOBRSfHbO7d5cOPTTsJ0Xi+8UvpFq1pBo1pHvuKd1zWD/rr38t
+7bdfWAPaehoAUFnNni398pdh38SoUZyfh2iyc3NsPXlbg6RnT2nOHO9EKAs2
+pqNatbA/tCzH6S5aFH5WzjuPcZAAKreNG6Wbbgrnx+rUiXmB4c/6922u3dNP
+D/vTbPz6pk3eqVBWbG4Xq7Euu0zaurXsn9/W1LBzkG0MHQAkg7//PTxmHnOM
+9Pzz3mmQTJ57Lhy7bnPg2GZz7dq4KFQuy5eH43B79Sr/16pdW7rrrvJ/HQCI
+gm+/le69VzrrrLBvIz09PIcfKGsLF4bzTtu5CLaGvI1bevppaedO72QoD9a2
+f+yx0mmnVdxr2ncBa4f74IOKe00A8LZtW1jLnXFGOGbczn9YssQ7FRKZtalZ
+v1m9elKXLtJ990nbt3unQnmzOdtsLqN27Ur27z754hMNmz9Mw58fHttuWHyD
+dn9XsoFt9j3UxobY/CQAkGw++0yaPFnq0CE8V79Fi3B+e+v3Aooyb57Up49U
+s2bYPz9lirR5s3cqVCRbx8zOlSqp/k/3V9+n+uqPr/0xtrV9oK2m/d+0Ej3H
+p5+G7XB27j0AJDObi8TmkbP5l6zfy87bt3kd7LjMekWwviqr9c85J5zPoVs3
+aexY5s1PVtOmhXOEvPtuyf/toFmD8tRr+feLy86BsX7Uf/6z5BkAoLKyfgmb
+18H6xY46SmrePFyHlb7W5GH9orb2qI1NP/rosK/92We9UyEKrN3N5mcrjbKq
+34ydY9+xY+lyAEAysHPMbJ1C62utUiVsm/vzn6W33vJOhrK0bJk0YUI4V4P1
+i9qcuv/+t3cqRImdq/DTn5b+31/8t4v1i0d/kTP+rfX9rTX9X9NL9Vxffikd
+dFA4XxIAoGgffyzNmCFddZXUsmX499PqOTvWs/ZRYnn99bAut35Rm5uhVSvp
+iitYxwN7Z+sqPP546f/99p3bc8a+2Xb/svtz3TtPykwJt6z04LKN9Fn89sKu
+S717S8cfX/o8AJCsPv887Gu1vjZbe9z+vttcJTaPBOchRoede3zHHeE4xzPP
+DNcRP/XUsF/c+kVZZxI/xNbOsM+NtceXi5VBzZY1b8/1YtRv48aF51+xNgMA
+7Juvv5bmz5caNQrnAbP5oexcRWvneeGF8pmfHXlt2RLOxWZjvO29t5+Bzblg
+64KPGSMtWMCcbCi5IUPCtZbLjdVsUyZl7+ytZstbv9nfGxvTYW3JAICy8957
+YX+rtfN07hzWEDbu2Po9bNyKbfYYlJy1h1jb2aWXhu+jzYFva20cckg4F5ut
+M2rvPe8vyoJ9rn7/+3J+kVi7W3YfajHqN2PjOCpyDmEASFZr10pPPhn2udr3
+eWsfqlo1PNfR1qkeNUp66KHwO3Wyt9fZ/9/WA3/wwfB9Offc8H2y98vWErWx
+a9bWacfVp56S3n/fOzEqK+s7tTb0imF1Wnqu67nrt6C2W7Im55E2VsP+hgAA
+Kp6t82XnOtp6S9aWZPMT2Pgsa687/PBwrlib793a7YYNk/70p7Bt6dVXwznq
+vvvO+39QcpbZsr/yivTEE9If/yhdfXXYjmZjCa1Gs/+//b8vuih8X555Jnyf
+7P0Cytvu3buD38VfKy0tTfvtlxbUSScEv3/DyunVgppsSsqe9recGq2Q9res
+YLv7Zl0TfOE79NA0VauWpmbNmukWGzQAAIgEm289Kyusc6zd7vbbpWuuCcd2
+tW0bzlFnY2COPFKqXz8cn2/1n50jm5kZjtt/+OHwPAt7Dqt/rE/Rxux/882+
+57PnsPM47Dntue017LXsNe21LYNlsUzWr2lrl1lWy2zZbQ2ivn2l4cOlSZPC
+djSrS995Z9+zAfti27ZtOvjgg/X22yuC+m1F8Nl+PbYfBStWrFDTpk01atSK
+4HvOCs2aNStWwwEAEsv//hfWTFbjWf+rzVFn6wTYuhIDB4bznFitZP2P1p5n
+/UHVqoVrCtjlgQeG7V3Wp2tzu1u/pF23za7bbTZ3qT3G5p/P/W/tvFu7zZ7b
+XsNey17TXtsyWBbLZG2GjzwSZgWizuq3OnXqaP36cF2W1NRtqlq1jtLSVIHb
+PC3KTNfofLc3abIi+B1Oi435tN9dq+esnRAAkDysDe2LL8LxZhs2SB99JP33
+v+HYM9vsut22cWP4GJs7tCza7oAoi9dvNj+HtSm//vo21a5dJ6iV5L7NmrUi
+qOHSYvOIv/gi9RsAAID5Mvii0qpVq1hdZJv1T7Zv3947Vsz69evzZLO+1PPs
+BCgAAIAk98knn8TatuLb5s2bvSPlsBoud7btTBoOAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAlMj/AzcX56A=
+   "], {{0, 0}, {624, 281}}, {0, 255},
+   ColorFunction->RGBColor],
+  ImageSize->{624, 281},
+  PlotRange->{{0, 624}, {0, 281}}]], "Output",
+ CellChangeTimes->{
+  3.656635320667828*^9, {3.985708250390736*^9, 3.9857082786771374`*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EISaveAs"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EISaveAs[\\\"filename\\\"] saves the file with name \
+\\\"filename\\\". Note if you use a path you\\nmust use two backslashes e.g. \
+\\\"c:\\\\\\\\temp\\\\\\\\myfemmfile.fem\\\"\"\>", "MSG"]], "Print", \
+"PrintUsage",
+ CellChangeTimes->{3.985708278709119*^9},
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EISaveAs", "[", " ", 
+  RowBox[{
+   RowBox[{"NotebookDirectory", "[", "]"}], "<>", "\"\<strips.fee\>\""}], 
+  "]"}]], "Input",
+ CellChangeTimes->{{3.6566351040478945`*^9, 3.656635123186563*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EIAnalyze"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EIAnalyze[(flag)] runs the electrostatics solver. The flag \
+parameter controls\\nwhether the solver window is visible or minimized. For a \
+visible window, either\\nspecify no value for flag or specify 0. For a \
+minimized window, flag should be\\nset to 1. An equivalent form \
+is:\\n\\nEIAnalyse[(flag)]\"\>", "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.9857082787726884`*^9},
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EIAnalyze", "[", "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EILoadSolution"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EILoadSolution[] loads and displays the solution corresponding \
+to the\\ncurrent geometry.\"\>", "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.9857082793311596`*^9},
+ CellTags->"Info3985693879-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EILoadSolution", "[", "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EOGetConductorProperties"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EOGetConductorProperties[\\\"conductor\\\"] returns properties \
+for the\\nconductor property named \\\"conductor\\\". A list with two values \
+is returned: The voltage of the specified\\nconductor, and the charge carried \
+on the specified conductor.\"\>", "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.985708279552127*^9},
+ CellTags->"Info3985693879-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"c", "=", 
+   RowBox[{"Table", "[", 
+    RowBox[{"0", ",", 
+     RowBox[{"{", "4", "}"}]}], "]"}]}], ";"}]], "Input"],
+
+Cell["\<\
+The first row of the capacitance matrix is gleaned by collecting the charge \
+on each conductor\
+\>", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"c", "[", 
+   RowBox[{"[", "1", "]"}], "]"}], "=", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"EOGetConductorProperties", "[", "\"\<V0\>\"", "]"}], "[", 
+     RowBox[{"[", "2", "]"}], "]"}], ",", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"EOGetConductorProperties", "[", "\"\<V1\>\"", "]"}], "[", 
+     RowBox[{"[", "2", "]"}], "]"}], ",", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"EOGetConductorProperties", "[", "\"\<V2\>\"", "]"}], "[", 
+     RowBox[{"[", "2", "]"}], "]"}], ",", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"EOGetConductorProperties", "[", "\"\<V3\>\"", "]"}], "[", 
+     RowBox[{"[", "2", "]"}], "]"}]}], "}"}]}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"9.570352910850339`*^-11", ",", 
+   RowBox[{"-", "3.303653175710833`*^-11"}], ",", 
+   RowBox[{"-", "1.2133853130263933`*^-12"}], ",", 
+   RowBox[{"-", "5.214867834185144`*^-13"}]}], "}"}]], "Output",
+ CellChangeTimes->{
+  3.656630029777585*^9, 3.6566351576524906`*^9, 3.6566353338246927`*^9, {
+   3.985708250518979*^9, 3.985708279568152*^9}}]
+}, Open  ]],
+
+Cell["\<\
+By symmetry, we can also infer the fourth row on the capacitance matrix:\
+\>", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"c", "[", 
+   RowBox[{"[", "4", "]"}], "]"}], "=", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"0", ",", "0", ",", "0", ",", "1"}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"0", ",", "0", ",", "1", ",", "0"}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"0", ",", "1", ",", "0", ",", "0"}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"1", ",", "0", ",", "0", ",", "0"}], "}"}]}], "}"}], ".", 
+   RowBox[{"c", "[", 
+    RowBox[{"[", "1", "]"}], "]"}]}]}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"-", "5.214867834185144`*^-13"}], ",", 
+   RowBox[{"-", "1.2133853130263933`*^-12"}], ",", 
+   RowBox[{"-", "3.303653175710833`*^-11"}], ",", "9.570352910850339`*^-11"}],
+   "}"}]], "Output",
+ CellChangeTimes->{
+  3.656630029824462*^9, 3.6566351577462454`*^9, 3.6566353339340754`*^9, {
+   3.9857082505456123`*^9, 3.9857082795839705`*^9}}]
+}, Open  ]],
+
+Cell["\<\
+We can then obtain the last two rows of the matrix by setting \"V1\" to 1 V \
+and the rest of the voltages to 0V.\
+\>", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"??", "EIModifyConductorProp"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ StyleBox["\<\"EIModifyConductorProp[\\\"ConductorName\\\",propnum,value] \
+allows for\\nmodification of a conductor property. The conductor property to \
+be modified is\\nspecified by \\\"ConductorName\\\". The next parameter is \
+the number of the property\\nto be set. The last number is the value to be \
+applied to the specified\\nproperty. The various properties that can be \
+modified are listed below:\\n\\n0 - \\\"ConductorName\\\" - Name of the \
+conductor property\\n\\n1 - Vc - Conductor voltage\\n\\n2 - qc - Total \
+conductor charge\\n\\n3 - ConductorType - 0 = Prescribed charge, 1 = \
+Prescribed voltage\"\>", "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.98570827961547*^9},
+ CellTags->"Info3985693879-6685917"],
+
+Cell[BoxData[
+ InterpretationBox[GridBox[{
+    {
+     RowBox[{
+      RowBox[{"Attributes", "[", "EIModifyConductorProp", "]"}], "=", 
+      RowBox[{"{", 
+       RowBox[{"Locked", ",", "Protected", ",", "ReadProtected"}], "}"}]}]}
+   },
+   BaselinePosition->{Baseline, {1, 1}},
+   GridBoxAlignment->{
+    "Columns" -> {{Left}}, "ColumnsIndexed" -> {}, "Rows" -> {{Baseline}}, 
+     "RowsIndexed" -> {}}],
+  Definition[MathFEMM`EIModifyConductorProp],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.9857082796311364`*^9},
+ CellTags->"Info3985693879-6685917"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EIModifyConductorProp", "[", 
+  RowBox[{"\"\<V0\>\"", ",", "1", ",", "0"}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIModifyConductorProp", "[", 
+  RowBox[{"\"\<V1\>\"", ",", "1", ",", "1"}], "]"}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"EIAnalyze", "[", "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "EOReload"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"EOReload[] reloads the current electrostatics output\\nfile.\"\
+\>", "MSG"]], "Print", "PrintUsage",
+ CellChangeTimes->{3.9857082802172937`*^9},
+ CellTags->"Info3985693880-6685917"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"EOReload", "[", "]"}]], "Input"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"c", "[", 
+   RowBox[{"[", "2", "]"}], "]"}], "=", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"EOGetConductorProperties", "[", "\"\<V0\>\"", "]"}], "[", 
+     RowBox[{"[", "2", "]"}], "]"}], ",", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"EOGetConductorProperties", "[", "\"\<V1\>\"", "]"}], "[", 
+     RowBox[{"[", "2", "]"}], "]"}], ",", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"EOGetConductorProperties", "[", "\"\<V2\>\"", "]"}], "[", 
+     RowBox[{"[", "2", "]"}], "]"}], ",", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"EOGetConductorProperties", "[", "\"\<V3\>\"", "]"}], "[", 
+     RowBox[{"[", "2", "]"}], "]"}]}], "}"}]}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"-", "3.30365334256183`*^-11"}], ",", "1.116134821365656`*^-10", 
+   ",", 
+   RowBox[{"-", "3.257716376061693`*^-11"}], ",", 
+   RowBox[{"-", "1.2134592536748988`*^-12"}]}], "}"}]], "Output",
+ CellChangeTimes->{
+  3.6566300386373744`*^9, 3.6566351706532435`*^9, 3.6566353468447027`*^9, {
+   3.985708250636949*^9, 3.9857082804242487`*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"c", "[", 
+   RowBox[{"[", "3", "]"}], "]"}], "=", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"0", ",", "0", ",", "0", ",", "1"}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"0", ",", "0", ",", "1", ",", "0"}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"0", ",", "1", ",", "0", ",", "0"}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"1", ",", "0", ",", "0", ",", "0"}], "}"}]}], "}"}], ".", 
+   RowBox[{"c", "[", 
+    RowBox[{"[", "2", "]"}], "]"}]}]}]], "Input"],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"-", "1.2134592536748988`*^-12"}], ",", 
+   RowBox[{"-", "3.257716376061693`*^-11"}], ",", "1.116134821365656`*^-10", 
+   ",", 
+   RowBox[{"-", "3.30365334256183`*^-11"}]}], "}"}]], "Output",
+ CellChangeTimes->{
+  3.6566300388405104`*^9, 3.6566351707624793`*^9, 3.656635346954089*^9, {
+   3.985708250641347*^9, 3.985708280440131*^9}}]
+}, Open  ]],
+
+Cell["Complete per-meter capacitance matrix:", "Text"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"MatrixForm", "[", "c", "]"}]], "Input"],
+
+Cell[BoxData[
+ TagBox[
+  RowBox[{"(", "\[NoBreak]", GridBox[{
+     {"9.570352910850339`*^-11", 
+      RowBox[{"-", "3.303653175710833`*^-11"}], 
+      RowBox[{"-", "1.2133853130263933`*^-12"}], 
+      RowBox[{"-", "5.214867834185144`*^-13"}]},
+     {
+      RowBox[{"-", "3.30365334256183`*^-11"}], "1.116134821365656`*^-10", 
+      RowBox[{"-", "3.257716376061693`*^-11"}], 
+      RowBox[{"-", "1.2134592536748988`*^-12"}]},
+     {
+      RowBox[{"-", "1.2134592536748988`*^-12"}], 
+      RowBox[{"-", "3.257716376061693`*^-11"}], "1.116134821365656`*^-10", 
+      RowBox[{"-", "3.30365334256183`*^-11"}]},
+     {
+      RowBox[{"-", "5.214867834185144`*^-13"}], 
+      RowBox[{"-", "1.2133853130263933`*^-12"}], 
+      RowBox[{"-", "3.303653175710833`*^-11"}], "9.570352910850339`*^-11"}
+    },
+    GridBoxAlignment->{
+     "Columns" -> {{Center}}, "ColumnsIndexed" -> {}, "Rows" -> {{Baseline}}, 
+      "RowsIndexed" -> {}},
+    GridBoxSpacings->{"Columns" -> {
+        Offset[0.27999999999999997`], {
+         Offset[0.7]}, 
+        Offset[0.27999999999999997`]}, "ColumnsIndexed" -> {}, "Rows" -> {
+        Offset[0.2], {
+         Offset[0.4]}, 
+        Offset[0.2]}, "RowsIndexed" -> {}}], "\[NoBreak]", ")"}],
+  Function[BoxForm`e$, 
+   MatrixForm[BoxForm`e$]]]], "Output",
+ CellChangeTimes->{
+  3.65663003894989*^9, 3.6566351708093576`*^9, 3.656635347016589*^9, {
+   3.9857082506570888`*^9, 3.9857082804421396`*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"?", "CloseFEMM"}]], "Input"],
+
+Cell[BoxData[
+ StyleBox["\<\"CloseFEMM[] shuts down the external instance of FEMM and \
+closes the associated MathLink connection.\"\>", "MSG"]], "Print", \
+"PrintUsage",
+ CellChangeTimes->{3.985708280488*^9},
+ CellTags->"Info3985693880-6685917"]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{1904, 935},
+WindowMargins->{{0, Automatic}, {Automatic, 0}},
+PrivateNotebookOptions->{"VersionedStylesheet"->{"Default.nb"[8.] -> False}},
+ShowSelection->True,
+FrontEndVersion->"9.0 for Microsoft Windows (64-bit) (January 25, 2013)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{
+ "Info3985693876-6685917"->{
+  Cell[1556, 51, 286, 5, 58, "Print",
+   CellTags->"Info3985693876-6685917"]},
+ "Info3985693877-6685917"->{
+  Cell[1995, 67, 442, 7, 92, "Print",
+   CellTags->"Info3985693877-6685917"],
+  Cell[2596, 85, 1170, 17, 194, "Print",
+   CellTags->"Info3985693877-6685917"],
+  Cell[4110, 118, 372, 6, 126, "Print",
+   CellTags->"Info3985693877-6685917"],
+  Cell[5810, 183, 357, 6, 126, "Print",
+   CellTags->"Info3985693877-6685917"],
+  Cell[6515, 208, 674, 10, 194, "Print",
+   CellTags->"Info3985693877-6685917"],
+  Cell[8009, 255, 914, 13, 313, "Print",
+   CellTags->"Info3985693877-6685917"],
+  Cell[9330, 288, 273, 5, 75, "Print",
+   CellTags->"Info3985693877-6685917"],
+  Cell[9904, 309, 929, 14, 313, "Print",
+   CellTags->"Info3985693877-6685917"]},
+ "Info3985693878-6685917"->{
+  Cell[11095, 337, 226, 4, 40, "Print",
+   CellTags->"Info3985693878-6685917"],
+  Cell[11949, 372, 841, 13, 313, "Print",
+   CellTags->"Info3985693878-6685917"],
+  Cell[13943, 428, 584, 9, 211, "Print",
+   CellTags->"Info3985693878-6685917"],
+  Cell[14818, 452, 443, 7, 160, "Print",
+   CellTags->"Info3985693878-6685917"],
+  Cell[16995, 521, 468, 7, 109, "Print",
+   CellTags->"Info3985693878-6685917"],
+  Cell[18066, 552, 839, 13, 313, "Print",
+   CellTags->"Info3985693878-6685917"],
+  Cell[36948, 948, 325, 6, 58, "Print",
+   CellTags->"Info3985693878-6685917"],
+  Cell[37586, 969, 454, 7, 126, "Print",
+   CellTags->"Info3985693878-6685917"]},
+ "Info3985693879-6685917"->{
+  Cell[38197, 987, 239, 4, 58, "Print",
+   CellTags->"Info3985693879-6685917"],
+  Cell[38608, 1002, 397, 6, 75, "Print",
+   CellTags->"Info3985693879-6685917"],
+  Cell[41750, 1103, 749, 11, 245, "Print",
+   CellTags->"Info3985693879-6685917"],
+  Cell[42502, 1116, 560, 15, 23, "Print",
+   CellTags->"Info3985693879-6685917"]},
+ "Info3985693880-6685917"->{
+  Cell[43463, 1151, 210, 4, 58, "Print",
+   CellTags->"Info3985693880-6685917"],
+  Cell[47511, 1275, 246, 5, 40, "Print",
+   CellTags->"Info3985693880-6685917"]}
+ }
+*)
+(*CellTagsIndex
+CellTagsIndex->{
+ {"Info3985693876-6685917", 48191, 1296},
+ {"Info3985693877-6685917", 48299, 1299},
+ {"Info3985693878-6685917", 48970, 1316},
+ {"Info3985693879-6685917", 49648, 1333},
+ {"Info3985693880-6685917", 50004, 1342}
+ }
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[567, 22, 41, 0, 86, "Section"],
+Cell[CellGroupData[{
+Cell[633, 26, 235, 5, 31, "Input"],
+Cell[871, 33, 119, 1, 23, "Print"]
+}, Open  ]],
+Cell[1005, 37, 472, 7, 49, "Text"],
+Cell[CellGroupData[{
+Cell[1502, 48, 51, 1, 31, "Input"],
+Cell[1556, 51, 286, 5, 58, "Print",
+ CellTags->"Info3985693876-6685917"]
+}, Open  ]],
+Cell[1857, 59, 56, 1, 31, "Input"],
+Cell[CellGroupData[{
+Cell[1938, 64, 54, 1, 31, "Input"],
+Cell[1995, 67, 442, 7, 92, "Print",
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+Cell[2452, 77, 64, 1, 31, "Input"],
+Cell[CellGroupData[{
+Cell[2541, 82, 52, 1, 31, "Input"],
+Cell[2596, 85, 1170, 17, 194, "Print",
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+Cell[3781, 105, 243, 6, 31, "Input"],
+Cell[CellGroupData[{
+Cell[4049, 115, 58, 1, 31, "Input"],
+Cell[4110, 118, 372, 6, 126, "Print",
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+Cell[4497, 127, 190, 6, 31, "Input"],
+Cell[4690, 135, 244, 8, 31, "Input"],
+Cell[4937, 145, 232, 8, 31, "Input"],
+Cell[5172, 155, 288, 10, 31, "Input"],
+Cell[5463, 167, 266, 9, 31, "Input"],
+Cell[CellGroupData[{
+Cell[5754, 180, 53, 1, 31, "Input"],
+Cell[5810, 183, 357, 6, 126, "Print",
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+Cell[6182, 192, 253, 9, 31, "Input"],
+Cell[CellGroupData[{
+Cell[6460, 205, 52, 1, 31, "Input"],
+Cell[6515, 208, 674, 10, 194, "Print",
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+Cell[7204, 221, 276, 9, 31, "Input"],
+Cell[7483, 232, 218, 7, 31, "Input"],
+Cell[7704, 241, 220, 7, 31, "Input"],
+Cell[CellGroupData[{
+Cell[7949, 252, 57, 1, 31, "Input"],
+Cell[8009, 255, 914, 13, 313, "Print",
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+Cell[8938, 271, 149, 4, 31, "Input"],
+Cell[9090, 277, 151, 4, 31, "Input"],
+Cell[CellGroupData[{
+Cell[9266, 285, 61, 1, 31, "Input"],
+Cell[9330, 288, 273, 5, 75, "Print",
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+Cell[9618, 296, 96, 2, 31, "Input"],
+Cell[9717, 300, 97, 2, 31, "Input"],
+Cell[CellGroupData[{
+Cell[9839, 306, 62, 1, 31, "Input"],
+Cell[9904, 309, 929, 14, 313, "Print",
+ CellTags->"Info3985693877-6685917"]
+}, Open  ]],
+Cell[10848, 326, 161, 4, 31, "Input"],
+Cell[CellGroupData[{
+Cell[11034, 334, 58, 1, 31, "Input"],
+Cell[11095, 337, 226, 4, 40, "Print",
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+Cell[11336, 344, 63, 1, 31, "Input"],
+Cell[11402, 347, 111, 3, 31, "Input"],
+Cell[11516, 352, 113, 3, 31, "Input"],
+Cell[11632, 357, 132, 4, 31, "Input"],
+Cell[11767, 363, 95, 2, 31, "Input"],
+Cell[CellGroupData[{
+Cell[11887, 369, 59, 1, 31, "Input"],
+Cell[11949, 372, 841, 13, 313, "Print",
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+Cell[12805, 388, 165, 4, 31, "Input"],
+Cell[12973, 394, 63, 1, 31, "Input"],
+Cell[13039, 397, 819, 24, 132, "Input"],
+Cell[CellGroupData[{
+Cell[13883, 425, 57, 1, 31, "Input"],
+Cell[13943, 428, 584, 9, 211, "Print",
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+Cell[14542, 440, 126, 2, 31, "Input"],
+Cell[14671, 444, 63, 1, 31, "Input"],
+Cell[CellGroupData[{
+Cell[14759, 449, 56, 1, 31, "Input"],
+Cell[14818, 452, 443, 7, 160, "Print",
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+Cell[15276, 462, 119, 2, 31, "Input"],
+Cell[15398, 466, 129, 3, 31, "Input"],
+Cell[15530, 471, 111, 3, 31, "Input"],
+Cell[15644, 476, 92, 2, 31, "Input"],
+Cell[15739, 480, 94, 2, 31, "Input"],
+Cell[15836, 484, 363, 10, 72, "Input"],
+Cell[16202, 496, 448, 12, 92, "Input"],
+Cell[16653, 510, 253, 4, 30, "Text"],
+Cell[CellGroupData[{
+Cell[16931, 518, 61, 1, 31, "Input"],
+Cell[16995, 521, 468, 7, 109, "Print",
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+Cell[17478, 531, 123, 2, 31, "Input"],
+Cell[17604, 535, 123, 2, 31, "Input"],
+Cell[17730, 539, 123, 2, 31, "Input"],
+Cell[17856, 543, 123, 2, 31, "Input"],
+Cell[CellGroupData[{
+Cell[18004, 549, 59, 1, 31, "Input"],
+Cell[18066, 552, 839, 13, 313, "Print",
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+Cell[18920, 568, 779, 22, 132, "Input"],
+Cell[19702, 592, 899, 30, 132, "Input"],
+Cell[20604, 624, 1003, 34, 132, "Input"],
+Cell[21610, 660, 1003, 34, 132, "Input"],
+Cell[22616, 696, 61, 0, 30, "Text"],
+Cell[CellGroupData[{
+Cell[22702, 700, 354, 9, 92, "Input"],
+Cell[23059, 711, 13798, 229, 296, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[36894, 945, 51, 1, 31, "Input"],
+Cell[36948, 948, 325, 6, 58, "Print",
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+Cell[37288, 957, 218, 5, 31, "Input"],
+Cell[CellGroupData[{
+Cell[37531, 966, 52, 1, 31, "Input"],
+Cell[37586, 969, 454, 7, 126, "Print",
+ CellTags->"Info3985693878-6685917"]
+}, Open  ]],
+Cell[38055, 979, 57, 1, 31, "Input"],
+Cell[CellGroupData[{
+Cell[38137, 984, 57, 1, 31, "Input"],
+Cell[38197, 987, 239, 4, 58, "Print",
+ CellTags->"Info3985693879-6685917"]
+}, Open  ]],
+Cell[38451, 994, 62, 1, 31, "Input"],
+Cell[CellGroupData[{
+Cell[38538, 999, 67, 1, 31, "Input"],
+Cell[38608, 1002, 397, 6, 75, "Print",
+ CellTags->"Info3985693879-6685917"]
+}, Open  ]],
+Cell[39020, 1011, 151, 5, 31, "Input"],
+Cell[39174, 1018, 119, 3, 30, "Text"],
+Cell[CellGroupData[{
+Cell[39318, 1025, 713, 17, 92, "Input"],
+Cell[40034, 1044, 382, 8, 35, "Output"]
+}, Open  ]],
+Cell[40431, 1055, 96, 2, 30, "Text"],
+Cell[CellGroupData[{
+Cell[40552, 1061, 539, 16, 31, "Input"],
+Cell[41094, 1079, 389, 9, 35, "Output"]
+}, Open  ]],
+Cell[41498, 1091, 137, 3, 30, "Text"],
+Cell[CellGroupData[{
+Cell[41660, 1098, 65, 1, 31, "Input"],
+Cell[CellGroupData[{
+Cell[41750, 1103, 749, 11, 245, "Print",
+ CellTags->"Info3985693879-6685917"],
+Cell[42502, 1116, 560, 15, 23, "Print",
+ CellTags->"Info3985693879-6685917"]
+}, Open  ]]
+}, Open  ]],
+Cell[43089, 1135, 116, 2, 31, "Input"],
+Cell[43208, 1139, 116, 2, 31, "Input"],
+Cell[43327, 1143, 57, 1, 31, "Input"],
+Cell[CellGroupData[{
+Cell[43409, 1148, 51, 1, 31, "Input"],
+Cell[43463, 1151, 210, 4, 58, "Print",
+ CellTags->"Info3985693880-6685917"]
+}, Open  ]],
+Cell[43688, 1158, 56, 1, 31, "Input"],
+Cell[CellGroupData[{
+Cell[43769, 1163, 713, 17, 92, "Input"],
+Cell[44485, 1182, 389, 9, 35, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[44911, 1196, 539, 16, 31, "Input"],
+Cell[45453, 1214, 385, 9, 35, "Output"]
+}, Open  ]],
+Cell[45853, 1226, 54, 0, 30, "Text"],
+Cell[CellGroupData[{
+Cell[45932, 1230, 63, 1, 31, "Input"],
+Cell[45998, 1233, 1421, 34, 102, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[47456, 1272, 52, 1, 31, "Input"],
+Cell[47511, 1275, 246, 5, 40, "Print",
+ CellTags->"Info3985693880-6685917"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)

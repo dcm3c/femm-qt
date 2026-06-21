@@ -1,0 +1,320 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    framerule=0.5pt,
+    breaklines=true,
+    showstringspaces=false,
+    language=bash,
+    morekeywords={pkg,cmake,ninja,git,cd,mkdir,export,setenv,service,sysrc,doas}
+}
+
+\title{Building femm-qt on FreeBSD}
+\author{D.\ Meeker}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Overview}
+
+femm-qt is a cross-platform port of FEMM (Finite Element Method Magnetics)
+using Qt~6 for the GUI and CMake/Ninja for the build system.  This document
+describes how to build it from source on FreeBSD.  The instructions target
+FreeBSD~14, but should work with minor changes on 13.x and later.
+
+The C++ source and the CMake build are platform-generic: there is no
+Linux-specific code, and the only places that differ from the Linux build are
+the toolchain (FreeBSD's base compiler is clang, not g++), the package manager
+(\texttt{pkg}), and the install prefix (\texttt{/usr/local}, a.k.a.\
+\texttt{LOCALBASE}).  The dedicated \texttt{freebsd\_build.sh} script handles
+those differences for you.
+
+The build produces six executables:
+\begin{itemize}[nosep]
+  \item \texttt{femm\_gui} --- the main GUI application
+  \item \texttt{femm\_headless} --- headless IPC server (no GUI)
+  \item \texttt{fkn} --- magnetics solver
+  \item \texttt{belasolv} --- electrostatics solver
+  \item \texttt{hsolv} --- heat flow solver
+  \item \texttt{csolv} --- current flow solver
+\end{itemize}
+
+The commands below use \texttt{doas} for administrative actions; substitute
+\texttt{sudo} (from \texttt{pkg install sudo}) if you prefer it.
+
+\section{Prerequisites}
+
+\subsection{Build Tools}
+
+FreeBSD ships clang, the C++ standard library, and the linker in the base
+system, so no separate ``build-essential'' package is required.  Install
+CMake, Ninja, git, and bash (the build script is a bash script):
+\begin{lstlisting}
+doas pkg install cmake ninja git bash
+\end{lstlisting}
+This provides \texttt{cmake}, \texttt{ninja}, \texttt{git}, and \texttt{bash};
+the C++ compiler is already present as \texttt{cc}/\texttt{c++}.
+
+\subsection{Qt 6}
+
+Install the Qt~6 libraries and development files:
+\begin{lstlisting}
+doas pkg install qt6
+\end{lstlisting}
+The \texttt{qt6} metapackage pulls in everything, including the \texttt{moc},
+\texttt{rcc}, and \texttt{uic} code generators that the build needs.  If you
+prefer a minimal install, \texttt{qt6-base} is usually sufficient for this
+project.  Qt~6 installs under \texttt{/usr/local}; no separate Qt installer or
+online account is needed.
+
+To verify the installation:
+\begin{lstlisting}
+qmake6 --version
+\end{lstlisting}
+
+\subsection{OpenMP (Optional)}
+
+Unlike GCC on Linux, FreeBSD's base clang does not bundle the OpenMP runtime.
+For multithreaded solvers, install it:
+\begin{lstlisting}
+doas pkg install openmp
+\end{lstlisting}
+This provides \texttt{libomp} and \texttt{omp.h} under \texttt{/usr/local}.
+If OpenMP is not installed, CMake reports ``OpenMP not found'' and the solvers
+build and run single-threaded --- the build still succeeds.
+
+\section{Getting the Source}
+
+If you have a source zip, unzip it:
+\begin{lstlisting}
+unzip femm-qt-src.zip
+cd femm-qt
+\end{lstlisting}
+
+Or, if the source is hosted on GitHub, clone the repository:
+\begin{lstlisting}
+git clone <repository-url> femm-qt
+cd femm-qt
+\end{lstlisting}
+
+\section{Building}
+
+From the \texttt{femm-qt} directory, run the build script:
+\begin{lstlisting}
+./freebsd_build.sh
+\end{lstlisting}
+
+This checks that the build tools are present, configures the project with
+CMake (pointing it at \texttt{/usr/local} so Qt~6 and OpenMP are found), and
+builds it with Ninja.  All executables are placed in \texttt{build/bin/}.
+
+To wipe the build directory and rebuild from scratch, pass \texttt{clean}:
+\begin{lstlisting}
+./freebsd_build.sh clean
+\end{lstlisting}
+
+If your Qt~6 packages live somewhere other than \texttt{/usr/local}, set
+\texttt{LOCALBASE} before running the script:
+\begin{lstlisting}
+LOCALBASE=/opt/local ./freebsd_build.sh
+\end{lstlisting}
+
+If the build fails because CMake cannot find Qt~6, see \textit{Manual
+configuration} under Troubleshooting.
+
+\section{Running}
+
+Launch the GUI:
+\begin{lstlisting}
+./build/bin/femm_gui
+\end{lstlisting}
+
+Or the headless server:
+\begin{lstlisting}
+./build/bin/femm_headless
+\end{lstlisting}
+
+\subsection{Setting FEMM\_DIR}
+
+The language bindings (OctaveFEMM, MathFEMM, pyFEMM, JuliaFEMM) locate the
+FEMM executables via the \texttt{FEMM\_DIR} environment variable.  Set it to
+the \texttt{bin} directory.  For \texttt{sh}/\texttt{bash} (in
+\texttt{\textasciitilde/.profile} or \texttt{\textasciitilde/.bashrc}):
+\begin{lstlisting}
+export FEMM_DIR=/path/to/femm-qt/build/bin
+\end{lstlisting}
+For \texttt{csh}/\texttt{tcsh} (the default root shell; in
+\texttt{\textasciitilde/.cshrc}):
+\begin{lstlisting}
+setenv FEMM_DIR /path/to/femm-qt/build/bin
+\end{lstlisting}
+
+\subsection{Desktop Integration (Optional)}
+
+If you run a desktop environment (KDE, XFCE, etc.), add femm-qt to your
+application menu by creating a \texttt{.desktop} file:
+\begin{lstlisting}
+cat > ~/.local/share/applications/femm-qt.desktop << 'EOF'
+[Desktop Entry]
+Name=FEMM
+Comment=Finite Element Method Magnetics
+Exec=/path/to/femm-qt/build/bin/femm_gui
+Type=Application
+Categories=Science;Engineering;
+EOF
+\end{lstlisting}
+
+\section{Using with Octave}
+
+MATLAB is not available natively on FreeBSD, so Octave is the supported route
+for the *.m language bindings.
+
+Install Octave and a JDK (OctaveFEMM uses Java for socket communication):
+\begin{lstlisting}
+doas pkg install octave openjdk21
+\end{lstlisting}
+Find the path to Java:
+\begin{lstlisting}
+readlink -f $(which java)
+\end{lstlisting}
+This usually points under \texttt{/usr/local/openjdk21}.  Set
+\texttt{JAVA\_HOME} and \texttt{FEMM\_DIR} in your shell startup file ---
+for \texttt{sh}/\texttt{bash}:
+\begin{lstlisting}
+export JAVA_HOME=/usr/local/openjdk21
+export FEMM_DIR=/path/to/femm-qt/build/bin
+\end{lstlisting}
+Run Octave and confirm Java is available:
+\begin{lstlisting}
+version -java
+\end{lstlisting}
+Then add the OctaveFEMM mfiles to Octave's path:
+\begin{lstlisting}
+addpath("/path/to/femm-qt/octavefemm")
+savepath
+\end{lstlisting}
+Now the \texttt{openfemm} function in the \texttt{octavefemm} directory should
+find and launch \texttt{femm\_gui} or \texttt{femm\_headless} automatically.
+
+\section{Using with Python}
+
+The Python interface is/will be available as pyfemm-qt.  Install Python and
+pip first:
+\begin{lstlisting}
+doas pkg install python3 py311-pip
+\end{lstlisting}
+Then install pyfemm from PyPI:
+\begin{lstlisting}
+pip install pyfemm-qt
+\end{lstlisting}
+To install the version that ships with the source instead, change to the
+\texttt{pyfemm} directory and install in editable mode:
+\begin{lstlisting}
+cd pyfemm
+pip install -e .
+\end{lstlisting}
+Like recent Linux distributions, FreeBSD marks the system Python as
+externally managed (PEP~668), so pip may refuse to install into it.  The
+cleanest fix is a virtual environment:
+\begin{lstlisting}
+python3 -m venv ~/femm-venv
+. ~/femm-venv/bin/activate
+pip install -e .
+\end{lstlisting}
+Since pyfemm is a single file with no dependencies, overriding the check is
+also safe:
+\begin{lstlisting}
+pip install -e . --break-system-packages
+\end{lstlisting}
+
+\section{Troubleshooting}
+
+\subsection{Manual configuration}
+
+The build script just wraps the standard CMake and Ninja steps.  To run them
+by hand:
+\begin{lstlisting}
+mkdir build && cd build
+cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_PREFIX_PATH=/usr/local
+ninja
+\end{lstlisting}
+The \texttt{CMAKE\_PREFIX\_PATH=/usr/local} hint lets find\_package locate the
+Qt~6 and OpenMP packages installed by \texttt{pkg}.
+
+\subsection{``env: bash: No such file or directory''}
+
+The build script is a bash script, but bash is not part of the FreeBSD base
+system.  Install it:
+\begin{lstlisting}
+doas pkg install bash
+\end{lstlisting}
+
+\subsection{Qt not found}
+
+If CMake reports that it cannot find Qt6, check that the package is installed:
+\begin{lstlisting}
+pkg info -x qt6
+\end{lstlisting}
+If it is installed but not found, pass \texttt{-DCMAKE\_PREFIX\_PATH} pointing
+at the Qt~6 CMake config directory, typically
+\texttt{/usr/local/lib/cmake/Qt6}:
+\begin{lstlisting}
+cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_PREFIX_PATH=/usr/local/lib/cmake/Qt6
+\end{lstlisting}
+
+\subsection{Missing OpenGL headers}
+
+On minimal installations or VMs without a desktop, Qt may need the Mesa
+OpenGL libraries and DRI drivers:
+\begin{lstlisting}
+doas pkg install mesa-libs mesa-dri libglvnd
+\end{lstlisting}
+
+\subsection{VirtualBox Guest Additions}
+
+If running in a VirtualBox VM, install the FreeBSD guest additions for proper
+display scaling and shared folders:
+\begin{lstlisting}
+doas pkg install virtualbox-ose-additions
+\end{lstlisting}
+Enable the guest services so they start at boot:
+\begin{lstlisting}
+doas sysrc vboxguest_enable="YES"
+doas sysrc vboxservice_enable="YES"
+\end{lstlisting}
+Reboot after installation.  To use a shared folder, add your user to the
+\texttt{wheel}/\texttt{operator} group as appropriate and mount it with the
+\texttt{vboxsf} filesystem, e.g.:
+\begin{lstlisting}
+doas mount -t vboxvfs <share-name> /mnt
+\end{lstlisting}
+
+\subsection{MESA / OpenGL errors in VirtualBox}
+
+VirtualBox's virtual GPU may not support the OpenGL version Qt expects,
+producing errors like ``ZINK: failed to choose pdev'' or ``failed to create
+dri2 screen.''  Two fixes:
+
+\begin{enumerate}[nosep]
+\item Enable 3D Acceleration in VirtualBox (Settings $\rightarrow$ Display
+      $\rightarrow$ check ``Enable 3D Acceleration'' and raise the video
+      memory to at least 128~MB in Expert mode), or
+\item Force Qt to use software rendering by adding (for \texttt{sh}/\texttt{bash})
+\begin{lstlisting}
+export LIBGL_ALWAYS_SOFTWARE=1
+\end{lstlisting}
+to your shell startup file (or \texttt{setenv LIBGL\_ALWAYS\_SOFTWARE 1} for
+csh/tcsh).
+\end{enumerate}
+
+\end{document}

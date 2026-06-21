@@ -1,0 +1,77 @@
+# Build artifacts
+*.exe
+*.o
+*.obj
+*.a
+Dist/
+
+# Build output (out-of-source CMake build dir)
+build/
+!build/buildsource.bat
+
+# Packaging output (installer + source zip — regenerated, not tracked)
+packaging/output/
+
+# FEMM model files and solver output — except the tracked example sets
+*.fem
+*.fee
+*.feh
+*.fec
+*.ans
+*.anh
+*.anc
+!examples/*
+!octavefemm/examples/*
+!mathfemm/examples/*
+!pyfemm/examples/*
+!juliafemm/examples/*
+!scifemm/examples/*
+
+# PBC files (generated or test)
+*.pbc
+
+# Generated mesh output
+*.ele
+*.edge
+*.node
+*.neigh
+*.1.poly
+
+# Scratch files in examples
+**/examples/junk.*
+**/examples/temp.*
+
+# Large result/data files
+*.res
+
+# Images, archives, documents — except the GUI icons
+*.pdf
+*.png
+!gui/icons/*.png
+*.zip
+*.docx
+
+# LaTeX intermediate files
+*.aux
+*.log
+*.out
+*.toc
+*.dvi
+
+# Compiled manual output
+manual/manual.ps
+manual/Release/
+
+# Python cache
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Editor/OS artifacts
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Claude Code local config
+.claude/

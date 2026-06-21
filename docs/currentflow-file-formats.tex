@@ -1,0 +1,435 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{amsmath}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    framerule=0.5pt,
+    breaklines=true,
+    showstringspaces=false,
+    columns=flexible
+}
+
+\title{FEMM Current Flow File Formats\\[0.5em]
+\large Input (\texttt{.fec}) and Output (\texttt{.anc}) Specifications}
+\author{D.\ Meeker}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ======================================================================
+\section{Overview}
+
+The FEMM current flow solver (\texttt{csolv}) reads a problem
+definition from a \texttt{.fec} file and writes the solution to a
+\texttt{.anc} file.  The \texttt{.anc} file begins with a verbatim
+copy of the input \texttt{.fec} file, followed by a
+\texttt{[Solution]} section containing the finite element mesh and
+computed complex voltage values.
+
+Current flow is an AC problem.  The solver computes the complex
+voltage phasor $\hat{V}$ at each mesh node, from which the electric
+field $E = -\nabla V$ and current density $J = \sigma E + j\omega
+\varepsilon E$ are derived.  All solution quantities (voltages,
+currents, fields) are complex-valued.
+
+All floating-point values are written with 17 significant digits
+(\verb|%.17g| format).  Fields within a line are separated by tabs or
+spaces.  Section headers use square brackets (\verb|[Tag]|); property
+block delimiters use angle brackets (\verb|<BeginBlock>| /
+\verb|<EndBlock>|).  String comparisons during parsing are
+case-insensitive.
+
+% ======================================================================
+\section{The \texttt{.fec} Input File}
+
+% ----------------------------------------------------------------------
+\subsection{Global Problem Parameters}
+
+Each parameter occupies one line in the format
+\verb|[Tag] = value|.  All are optional; defaults are applied if
+missing.
+
+\begin{longtable}{lllp{5.5cm}}
+\toprule
+Tag & Type & Default & Description \\
+\midrule
+\endhead
+\verb|[Format]|      & int     & 1          & File format version \\
+\verb|[Frequency]|   & double  & 60         & AC frequency (Hz) \\
+\verb|[Precision]|   & double  & 1e-8       & Solver convergence tolerance \\
+\verb|[MinAngle]|    & double  & 30         & Minimum mesh element angle (degrees) \\
+\verb|[DoSmartMesh]| & int     & 1          & Adaptive meshing (0=off, 1=on) \\
+\verb|[Depth]|       & double  & 1.0        & Extrusion depth (planar problems) \\
+\verb|[LengthUnits]| & string  & millimeters & inches, millimeters, centimeters, meters, mils, microns \\
+\verb|[ProblemType]| & string  & planar     & planar or axisymmetric \\
+\verb|[Coordinates]| & string  & cartesian  & cartesian or polar \\
+\verb|[Comment]|     & string  & (empty)    & Problem description (quoted; \verb|\n| = newline) \\
+\verb|[ACSolver]|    & int     & 0          & Always 0 (compatibility field) \\
+\bottomrule
+\end{longtable}
+
+The \verb|[Frequency]| field distinguishes current flow from
+electrostatics.  At $f = 0$, the displacement current term vanishes
+and the problem reduces to pure DC conduction.  The solver internally
+converts frequency to angular frequency: $\omega = 2\pi f$.
+
+\subsubsection{Axisymmetric External Region}
+
+Written only when \verb|ProblemType| is axisymmetric and both
+\verb|extRo| and \verb|extRi| are nonzero:
+
+\begin{longtable}{llp{8cm}}
+\toprule
+Tag & Type & Description \\
+\midrule
+\verb|[extZo]| & double & Outer Z coordinate \\
+\verb|[extRo]| & double & Outer radius \\
+\verb|[extRi]| & double & Inner radius \\
+\bottomrule
+\end{longtable}
+
+% ----------------------------------------------------------------------
+\subsection{Point (Nodal) Properties}
+
+All point property values are complex (separate real and imaginary
+parts) to support AC excitation.
+
+\begin{lstlisting}
+[PointProps] = <count>
+<BeginPoint>
+  <PointName> = "name"
+  <vpr> = 0        prescribed voltage, real (V)
+  <vpi> = 0        prescribed voltage, imag (V)
+  <qpr> = 0        point current source, real (A)
+  <qpi> = 0        point current source, imag (A)
+<EndPoint>
+... repeated count times
+\end{lstlisting}
+
+% ----------------------------------------------------------------------
+\subsection{Boundary Properties}
+
+All boundary values are complex-valued.
+
+\begin{lstlisting}
+[BdryProps] = <count>
+<BeginBdry>
+  <BdryName> = "name"
+  <BdryType> = 0
+  <vsr> = 0          fixed voltage, real (V)
+  <vsi> = 0          fixed voltage, imag (V)
+  <qsr> = 0          surface current density, real (A/m)
+  <qsi> = 0          surface current density, imag (A/m)
+  <c0r> = 0          mixed BC coefficient, real
+  <c0i> = 0          mixed BC coefficient, imag
+  <c1r> = 0          mixed BC coefficient, real
+  <c1i> = 0          mixed BC coefficient, imag
+<EndBdry>
+\end{lstlisting}
+
+Boundary types:
+\begin{itemize}[nosep]
+  \item 0 = fixed voltage (Dirichlet): $V = V_s$
+  \item 1 = mixed (Robin): $\hat{n} \cdot J = c_0 + c_1 V$
+  \item 2 = surface current density (Neumann)
+  \item 3 = periodic
+  \item 4 = antiperiodic
+\end{itemize}
+
+% ----------------------------------------------------------------------
+\subsection{Material (Block) Properties}
+
+Current flow materials combine electrical conductivity and dielectric
+properties.  The solver constructs an effective complex admittivity
+from these parameters:
+\[
+  K_x = \frac{\sigma_x}{\varepsilon_0} + j\omega\,\varepsilon_{r,x}
+        \, e^{-j\arctan(\tan\delta_x)}
+\]
+and similarly for $K_y$.
+
+\begin{lstlisting}
+[BlockProps] = <count>
+<BeginBlock>
+  <BlockName> = "name"
+  <ox> = 0          DC conductivity, x-direction (MS/m)
+  <oy> = 0          DC conductivity, y-direction (MS/m)
+  <ex> = 1          relative permittivity, x-direction
+  <ey> = 1          relative permittivity, y-direction
+  <ltx> = 0         loss tangent, x-direction (tan delta)
+  <lty> = 0         loss tangent, y-direction (tan delta)
+<EndBlock>
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item Conductivity $\sigma$ is in megasiemens per meter (MS/m).
+  \item Loss tangent $\tan\delta$ creates a complex permittivity that
+        models dielectric loss.  Zero means lossless dielectric.
+  \item At $f = 0$ (DC), the displacement current term vanishes and
+        only the conductivity term remains.
+  \item At $\sigma = 0$ (perfect insulator), only displacement current
+        flows.
+\end{itemize}
+
+% ----------------------------------------------------------------------
+\subsection{Conductor Properties}
+
+Conductors enforce equipotential constraints or prescribe total
+current on electrode surfaces.  All values are complex.
+
+\begin{lstlisting}
+[ConductorProps] = <count>
+<BeginConductor>
+  <ConductorName> = "name"
+  <vcr> = 0           prescribed voltage, real (V)
+  <vci> = 0           prescribed voltage, imag (V)
+  <qcr> = 0           prescribed total current, real (A)
+  <qci> = 0           prescribed total current, imag (A)
+  <ConductorType> = 0
+<EndConductor>
+\end{lstlisting}
+
+Conductor types:
+\begin{itemize}[nosep]
+  \item 0 = prescribed total current ($\hat{q}$ given; solver
+        computes $\hat{V}$)
+  \item 1 = prescribed voltage ($\hat{V}$ given; solver computes
+        $\hat{q}$)
+\end{itemize}
+
+% ----------------------------------------------------------------------
+\subsection{Geometry}
+
+\subsubsection{Nodes}
+
+\begin{lstlisting}
+[NumPoints] = <count>
+x    y    propIdx    inGroup    conductorIdx    [lfs]
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{x}, \texttt{y}: coordinates (double)
+  \item \texttt{propIdx}: index into point property list (1-based; 0 = none)
+  \item \texttt{inGroup}: group number (int)
+  \item \texttt{conductorIdx}: index into conductor list (1-based; 0 = none)
+  \item \texttt{lfs}: local feature size constraint (double, optional; $-1$ = auto)
+\end{itemize}
+
+\subsubsection{Line Segments}
+
+\begin{lstlisting}
+[NumSegments] = <count>
+n0    n1    maxSideLength    propIdx    hidden    inGroup    conductorIdx
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{n0}, \texttt{n1}: endpoint node indices (0-based)
+  \item \texttt{maxSideLength}: mesh size constraint (double; $-1$ = auto)
+  \item \texttt{propIdx}: boundary property index (1-based; 0 = none)
+  \item \texttt{hidden}: 0 = visible, 1 = suppressed from mesh
+  \item \texttt{inGroup}: group number
+  \item \texttt{conductorIdx}: conductor index (1-based; 0 = none)
+\end{itemize}
+
+\subsubsection{Arc Segments}
+
+\begin{lstlisting}
+[NumArcSegments] = <count>
+n0  n1  arcAngle  maxSideLength  propIdx  hidden  inGroup  conductorIdx  mySideLength
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{n0}, \texttt{n1}: endpoint node indices (0-based)
+  \item \texttt{arcAngle}: arc span (degrees)
+  \item \texttt{maxSideLength}: mesh constraint (double)
+  \item \texttt{propIdx}: boundary property index (1-based; 0 = none)
+  \item \texttt{hidden}: 0 = visible, 1 = suppressed
+  \item \texttt{inGroup}: group number
+  \item \texttt{conductorIdx}: conductor index (1-based; 0 = none)
+  \item \texttt{mySideLength}: computed side length (0 = auto)
+\end{itemize}
+
+\subsubsection{Holes}
+
+\begin{lstlisting}
+[NumHoles] = <count>
+x    y    inGroup
+\end{lstlisting}
+
+\subsubsection{Block Labels}
+
+\begin{lstlisting}
+[NumBlockLabels] = <count>
+x    y    blockIdx    meshSize    inGroup    extFlags
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{x}, \texttt{y}: label position (double)
+  \item \texttt{blockIdx}: material index (1-based; 0 = unassigned)
+  \item \texttt{meshSize}: element size (double; $\leq 0$ = auto).
+        Stored as diameter; converted to area: $A = \pi d^2/4$
+  \item \texttt{inGroup}: group number
+  \item \texttt{extFlags}: bit 0 = external region, bit 1 = default region
+\end{itemize}
+
+% ----------------------------------------------------------------------
+\subsection{Differences from Other Physics Formats}
+
+\begin{itemize}
+  \item \texttt{[Frequency]} is always present and typically nonzero
+        (default 60~Hz), unlike electrostatics (always 0) and heat
+        flow (no frequency).
+  \item All point properties, boundary values, and conductor
+        properties have separate real/imaginary parts (complex AC
+        phasors).
+  \item Material properties include both conductivity ($\sigma_x$,
+        $\sigma_y$) and permittivity ($\varepsilon_x$,
+        $\varepsilon_y$) with loss tangent --- unique to current flow.
+  \item No nonlinear material curves (no B-H or T-K equivalent).
+  \item No transient fields (\texttt{[dT]}, \texttt{[PrevSoln]} are
+        heat-flow-specific).
+\end{itemize}
+
+
+% ======================================================================
+\section{The \texttt{.anc} Output File}
+
+The \texttt{.anc} file begins with a verbatim copy of the input
+\texttt{.fec} file (all sections described in Section~2), followed by
+the solver's solution data.
+
+% ----------------------------------------------------------------------
+\subsection{Solution Header}
+
+Immediately after the echoed \texttt{.fec} content:
+
+\begin{lstlisting}
+[Solution]
+\end{lstlisting}
+
+% ----------------------------------------------------------------------
+\subsection{Mesh Nodes}
+
+\begin{lstlisting}
+<NumNodes>
+\end{lstlisting}
+
+followed by \texttt{NumNodes} lines:
+
+\begin{lstlisting}
+x    y    V_re    V_im    Q
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{x}, \texttt{y}: node coordinates in model units
+  \item \texttt{V\_re}: real part of complex voltage phasor (V)
+  \item \texttt{V\_im}: imaginary part of complex voltage phasor (V)
+  \item \texttt{Q}: boundary/conductor marker (int):
+    \begin{itemize}[nosep]
+      \item $-2$ = interior node (no boundary condition)
+      \item $-1$ = fixed voltage boundary
+      \item $0 \ldots N-1$ = conductor index
+    \end{itemize}
+\end{itemize}
+
+The voltage phasor represents the steady-state AC solution.  The
+instantaneous voltage at any point is $V(t) = |\hat{V}| \cos(\omega t
++ \arg\hat{V})$.
+
+Node indices are 0-based throughout the solution section.
+
+% ----------------------------------------------------------------------
+\subsection{Mesh Elements}
+
+\begin{lstlisting}
+<NumElements>
+\end{lstlisting}
+
+followed by \texttt{NumElements} lines:
+
+\begin{lstlisting}
+p0    p1    p2    labelIdx
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{p0}, \texttt{p1}, \texttt{p2}: vertex node indices (0-based)
+  \item \texttt{labelIdx}: block label index (0-based, into the block
+        label list from the \texttt{.fec} header)
+\end{itemize}
+
+% ----------------------------------------------------------------------
+\subsection{Conductor Solution Data}
+
+\begin{lstlisting}
+<NumConductors>
+\end{lstlisting}
+
+followed by \texttt{NumConductors} lines:
+
+\begin{lstlisting}
+V_re    V_im    q_re    q_im
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{V\_re}, \texttt{V\_im}: complex voltage on the
+        conductor (V).  For prescribed-voltage conductors, this is
+        the prescribed value; for prescribed-current conductors, this
+        is the computed value.
+  \item \texttt{q\_re}, \texttt{q\_im}: complex total current through
+        the conductor (A).  For prescribed-current conductors, this is
+        the prescribed value; for prescribed-voltage conductors, this
+        is the computed value.
+\end{itemize}
+
+% ======================================================================
+\section{Index Conventions}
+
+\begin{itemize}
+  \item \textbf{Property indices} (materials, boundaries, conductors,
+        point properties) are \textbf{1-based} in the file.  An index
+        of 0 means ``no property assigned.''  The parser converts to
+        0-based internally.
+
+  \item \textbf{Node indices} (in segments, arcs, and the solution
+        section) are \textbf{0-based}.
+
+  \item \textbf{Block label indices} in the solution element list are
+        \textbf{0-based}, referencing the block label array from the
+        \texttt{.fec} header.
+\end{itemize}
+
+% ======================================================================
+\section{Unit Conversion}
+
+The \verb|[LengthUnits]| tag determines the coordinate system.  All
+coordinates in the file are in the specified units.  Conversion to
+meters:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Unit & Meters per unit \\
+\midrule
+inches      & 0.0254 \\
+millimeters & 0.001 \\
+centimeters & 0.01 \\
+meters      & 1.0 \\
+mils        & $2.54 \times 10^{-5}$ \\
+microns     & $10^{-6}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

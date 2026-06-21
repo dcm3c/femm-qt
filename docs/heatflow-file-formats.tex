@@ -1,0 +1,406 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{amsmath}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    framerule=0.5pt,
+    breaklines=true,
+    showstringspaces=false,
+    columns=flexible
+}
+
+\title{FEMM Heat Flow File Formats\\[0.5em]
+\large Input (\texttt{.feh}) and Output (\texttt{.anh}) Specifications}
+\author{D.\ Meeker}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ======================================================================
+\section{Overview}
+
+The FEMM heat flow solver (\texttt{hsolv}) reads a problem definition
+from a \texttt{.feh} file and writes the solution to a \texttt{.anh}
+file.  The \texttt{.anh} file begins with a verbatim copy of the input
+\texttt{.feh} file, followed by a \texttt{[Solution]} section
+containing the finite element mesh and computed temperature values.
+
+All floating-point values are written with 17 significant digits
+(\verb|%.17g| format).  Fields within a line are separated by tabs or
+spaces.  Section headers use square brackets (\verb|[Tag]|); property
+block delimiters use angle brackets (\verb|<BeginBlock>| /
+\verb|<EndBlock>|).  String comparisons during parsing are
+case-insensitive.
+
+% ======================================================================
+\section{The \texttt{.feh} Input File}
+
+% ----------------------------------------------------------------------
+\subsection{Global Problem Parameters}
+
+Each parameter occupies one line in the format
+\verb|[Tag] = value|.  All are optional; defaults are applied if
+missing.
+
+\begin{longtable}{lllp{5.5cm}}
+\toprule
+Tag & Type & Default & Description \\
+\midrule
+\endhead
+\verb|[Format]|      & int     & 1          & File format version \\
+\verb|[Frequency]|   & int     & 0          & Always 0 (legacy field) \\
+\verb|[Precision]|   & double  & 1e-8       & Nonlinear convergence tolerance \\
+\verb|[MinAngle]|    & double  & 30         & Minimum mesh element angle (degrees) \\
+\verb|[DoSmartMesh]| & int     & 1          & Adaptive meshing (0=off, 1=on) \\
+\verb|[Depth]|       & double  & 1.0        & Extrusion depth (planar problems) \\
+\verb|[LengthUnits]| & string  & millimeters & inches, millimeters, centimeters, meters, mils, microns \\
+\verb|[ProblemType]| & string  & planar     & planar or axisymmetric \\
+\verb|[Coordinates]| & string  & cartesian  & cartesian or polar \\
+\verb|[Comment]|     & string  & (empty)    & Problem description (quoted; \verb|\n| = newline) \\
+\verb|[ACSolver]|    & int     & 0          & Always 0 (legacy field) \\
+\verb|[dT]|          & double  & 0          & Time step for transient analysis (0 = steady-state) \\
+\verb|[PrevSoln]|    & string  & (empty)    & Path to previous solution for transient initialization (quoted) \\
+\bottomrule
+\end{longtable}
+
+The \verb|[dT]| and \verb|[PrevSoln]| fields enable transient thermal
+analysis.  When \verb|dT| $> 0$, the solver performs a single time step
+of duration \verb|dT|, using the temperature field from
+\verb|PrevSoln| as the initial condition.  Steady-state analysis
+corresponds to \verb|dT| $= 0$.
+
+\subsubsection{Axisymmetric External Region}
+
+Written only when \verb|ProblemType| is axisymmetric and both
+\verb|extRo| and \verb|extRi| are nonzero:
+
+\begin{longtable}{llp{8cm}}
+\toprule
+Tag & Type & Description \\
+\midrule
+\verb|[extZo]| & double & Outer Z coordinate \\
+\verb|[extRo]| & double & Outer radius \\
+\verb|[extRi]| & double & Inner radius \\
+\bottomrule
+\end{longtable}
+
+% ----------------------------------------------------------------------
+\subsection{Point (Nodal) Properties}
+
+\begin{lstlisting}
+[PointProps] = <count>
+<BeginPoint>
+  <PointName> = "name"
+  <Tp> = 0        prescribed temperature (K)
+  <qp> = 0        point heat source (W)
+<EndPoint>
+... repeated count times
+\end{lstlisting}
+
+% ----------------------------------------------------------------------
+\subsection{Boundary Properties}
+
+\begin{lstlisting}
+[BdryProps] = <count>
+<BeginBdry>
+  <BdryName> = "name"
+  <BdryType> = 0
+  <Tset> = 0          fixed temperature (K)
+  <qs> = 0            prescribed heat flux (W/m^2)
+  <Tinf> = 0          ambient temperature for convection (K)
+  <h> = 0             convection coefficient (W/m^2-K)
+  <beta> = 0          radiation coefficient (W/m^2-K^4)
+  <TinfRad> = 0       radiation reference temperature (K)
+<EndBdry>
+\end{lstlisting}
+
+Boundary types:
+\begin{itemize}[nosep]
+  \item 0 = fixed temperature (Dirichlet): $T = T_\text{set}$
+  \item 1 = prescribed heat flux (Neumann): $\hat{n} \cdot F = q_s$
+  \item 2 = convection: $\hat{n} \cdot F = h(T - T_\infty) + q_s$
+  \item 3 = radiation + convection:
+        $\hat{n} \cdot F = h(T - T_\infty) + \beta(T^4 - T_{\infty,\text{rad}}^4) + q_s$
+  \item 4 = periodic
+  \item 5 = antiperiodic
+\end{itemize}
+
+If \verb|TinfRad| is not present in the file, it defaults to the value
+of \verb|Tinf| (backward compatibility).
+
+% ----------------------------------------------------------------------
+\subsection{Material (Block) Properties}
+
+\begin{lstlisting}
+[BlockProps] = <count>
+<BeginBlock>
+  <BlockName> = "name"
+  <Kx> = 1          thermal conductivity, x-direction (W/m-K)
+  <Ky> = 1          thermal conductivity, y-direction (W/m-K)
+  <Kt> = 0          volumetric heat capacity (J/m^3-K)
+  <qv> = 0          volumetric heat generation (W/m^3)
+  <TKPoints> = N
+    T_0  K_0         temperature-conductivity data (K, W/m-K)
+    T_1  K_1         ... repeated N times
+    ...
+<EndBlock>
+\end{lstlisting}
+
+When \verb|TKPoints| $> 0$, the thermal conductivity is nonlinear:
+$K(T)$ is piecewise-linear interpolated from the T-K curve.  Below the
+first data point, the first conductivity value is used; above the last
+data point, the last value is used.  The solver iterates until
+convergence when nonlinear materials or radiation BCs are present.
+
+% ----------------------------------------------------------------------
+\subsection{Conductor Properties}
+
+Conductors enforce equipotential (isothermal) constraints or prescribe
+total heat flow on surfaces, analogous to circuits in the magnetics
+solver.
+
+\begin{lstlisting}
+[ConductorProps] = <count>
+<BeginConductor>
+  <ConductorName> = "name"
+  <Tc> = 0           prescribed temperature (K)
+  <qc> = 0           prescribed total heat flow (W)
+  <ConductorType> = 0
+<EndConductor>
+\end{lstlisting}
+
+Conductor types:
+\begin{itemize}[nosep]
+  \item 0 = prescribed heat flow ($q = q_c$; solver computes $T$)
+  \item 1 = prescribed temperature ($T = T_c$; solver computes $q$)
+\end{itemize}
+
+% ----------------------------------------------------------------------
+\subsection{Geometry}
+
+\subsubsection{Nodes}
+
+\begin{lstlisting}
+[NumPoints] = <count>
+x    y    propIdx    inGroup    conductorIdx    [lfs]
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{x}, \texttt{y}: coordinates (double)
+  \item \texttt{propIdx}: index into point property list (1-based; 0 = none)
+  \item \texttt{inGroup}: group number (int)
+  \item \texttt{conductorIdx}: index into conductor list (1-based; 0 = none)
+  \item \texttt{lfs}: local feature size constraint (double, optional; $-1$ = auto)
+\end{itemize}
+
+\subsubsection{Line Segments}
+
+\begin{lstlisting}
+[NumSegments] = <count>
+n0    n1    maxSideLength    propIdx    hidden    inGroup    conductorIdx
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{n0}, \texttt{n1}: endpoint node indices (0-based)
+  \item \texttt{maxSideLength}: mesh size constraint (double; $-1$ = auto)
+  \item \texttt{propIdx}: boundary property index (1-based; 0 = none)
+  \item \texttt{hidden}: 0 = visible, 1 = suppressed from mesh
+  \item \texttt{inGroup}: group number
+  \item \texttt{conductorIdx}: conductor index (1-based; 0 = none)
+\end{itemize}
+
+\subsubsection{Arc Segments}
+
+\begin{lstlisting}
+[NumArcSegments] = <count>
+n0  n1  arcAngle  maxSideLength  propIdx  hidden  inGroup  conductorIdx  mySideLength
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{n0}, \texttt{n1}: endpoint node indices (0-based)
+  \item \texttt{arcAngle}: arc span (degrees)
+  \item \texttt{maxSideLength}: mesh constraint (double)
+  \item \texttt{propIdx}: boundary property index (1-based; 0 = none)
+  \item \texttt{hidden}: 0 = visible, 1 = suppressed
+  \item \texttt{inGroup}: group number
+  \item \texttt{conductorIdx}: conductor index (1-based; 0 = none)
+  \item \texttt{mySideLength}: computed side length (0 = auto)
+\end{itemize}
+
+\subsubsection{Holes}
+
+\begin{lstlisting}
+[NumHoles] = <count>
+x    y    inGroup
+\end{lstlisting}
+
+\subsubsection{Block Labels}
+
+\begin{lstlisting}
+[NumBlockLabels] = <count>
+x    y    blockIdx    meshSize    inGroup    extFlags
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{x}, \texttt{y}: label position (double)
+  \item \texttt{blockIdx}: material index (1-based; 0 = unassigned)
+  \item \texttt{meshSize}: element size (double; $\leq 0$ = auto).
+        Stored as diameter; converted to area: $A = \pi d^2/4$
+  \item \texttt{inGroup}: group number
+  \item \texttt{extFlags}: bit 0 = external region, bit 1 = default region
+\end{itemize}
+
+% ----------------------------------------------------------------------
+\subsection{Differences from Magnetics and Electrostatics Formats}
+
+\begin{itemize}
+  \item \texttt{[dT]} and \texttt{[PrevSoln]} enable transient analysis
+        (unique to heat flow).
+  \item Material properties use thermal conductivity ($K_x$, $K_y$),
+        volumetric heat capacity ($K_t$), and heat generation ($q_v$).
+  \item Nonlinear materials use T-K curves (temperature vs.\
+        conductivity) instead of B-H curves.
+  \item Boundary conditions include convection ($h$, $T_\infty$) and
+        radiation ($\beta$, $T_{\infty,\text{rad}}$), which are
+        physics-specific to heat transfer.
+  \item Point properties use temperature $T_p$ and point heat
+        source $q_p$.
+\end{itemize}
+
+
+% ======================================================================
+\section{The \texttt{.anh} Output File}
+
+The \texttt{.anh} file begins with a verbatim copy of the input
+\texttt{.feh} file (all sections described in Section~2), followed by
+the solver's solution data.
+
+% ----------------------------------------------------------------------
+\subsection{Solution Header}
+
+Immediately after the echoed \texttt{.feh} content:
+
+\begin{lstlisting}
+[Solution]
+\end{lstlisting}
+
+% ----------------------------------------------------------------------
+\subsection{Mesh Nodes}
+
+\begin{lstlisting}
+<NumNodes>
+\end{lstlisting}
+
+followed by \texttt{NumNodes} lines:
+
+\begin{lstlisting}
+x    y    T    Q
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{x}, \texttt{y}: node coordinates in model units
+  \item \texttt{T}: computed temperature (K)
+  \item \texttt{Q}: boundary/conductor marker (int):
+    \begin{itemize}[nosep]
+      \item $-2$ = interior node (no boundary condition)
+      \item $-1$ = fixed temperature boundary
+      \item $0 \ldots N-1$ = conductor index
+    \end{itemize}
+\end{itemize}
+
+Node indices are 0-based throughout the solution section.
+
+% ----------------------------------------------------------------------
+\subsection{Mesh Elements}
+
+\begin{lstlisting}
+<NumElements>
+\end{lstlisting}
+
+followed by \texttt{NumElements} lines:
+
+\begin{lstlisting}
+p0    p1    p2    labelIdx
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{p0}, \texttt{p1}, \texttt{p2}: vertex node indices (0-based)
+  \item \texttt{labelIdx}: block label index (0-based, into the block
+        label list from the \texttt{.feh} header)
+\end{itemize}
+
+% ----------------------------------------------------------------------
+\subsection{Conductor Solution Data}
+
+\begin{lstlisting}
+<NumConductors>
+\end{lstlisting}
+
+followed by \texttt{NumConductors} lines:
+
+\begin{lstlisting}
+T    q
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{T}: temperature on the conductor (K).  For
+        prescribed-temperature conductors, this is the prescribed
+        value; for prescribed-flow conductors, this is the computed
+        value.
+  \item \texttt{q}: total heat flow on the conductor (W).  For
+        prescribed-flow conductors, this is the prescribed value; for
+        prescribed-temperature conductors, this is the computed value.
+\end{itemize}
+
+% ======================================================================
+\section{Index Conventions}
+
+\begin{itemize}
+  \item \textbf{Property indices} (materials, boundaries, conductors,
+        point properties) are \textbf{1-based} in the file.  An index
+        of 0 means ``no property assigned.''  The parser converts to
+        0-based internally.
+
+  \item \textbf{Node indices} (in segments, arcs, and the solution
+        section) are \textbf{0-based}.
+
+  \item \textbf{Block label indices} in the solution element list are
+        \textbf{0-based}, referencing the block label array from the
+        \texttt{.feh} header.
+\end{itemize}
+
+% ======================================================================
+\section{Unit Conversion}
+
+The \verb|[LengthUnits]| tag determines the coordinate system.  All
+coordinates in the file are in the specified units.  Conversion to
+meters:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Unit & Meters per unit \\
+\midrule
+inches      & 0.0254 \\
+millimeters & 0.001 \\
+centimeters & 0.01 \\
+meters      & 1.0 \\
+mils        & $2.54 \times 10^{-5}$ \\
+microns     & $10^{-6}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

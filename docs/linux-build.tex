@@ -1,0 +1,291 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    framerule=0.5pt,
+    breaklines=true,
+    showstringspaces=false,
+    language=bash,
+    morekeywords={sudo,apt,cmake,ninja,git,cd,mkdir,export}
+}
+
+\title{Building femm-qt on Linux}
+\author{D.\ Meeker}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Overview}
+
+femm-qt is a cross-platform port of FEMM (Finite Element Method Magnetics)
+using Qt~6 for the GUI and CMake/Ninja for the build system.  This document
+describes how to build it from source on Linux.  The instructions target
+Ubuntu 24.04~LTS but should work with minor changes on other distributions
+(Debian, Fedora, Arch, etc.).
+
+The build produces six executables:
+\begin{itemize}[nosep]
+  \item \texttt{femm\_gui} --- the main GUI application
+  \item \texttt{femm\_headless} --- headless IPC server (no GUI)
+  \item \texttt{fkn} --- magnetics solver
+  \item \texttt{belasolv} --- electrostatics solver
+  \item \texttt{hsolv} --- heat flow solver
+  \item \texttt{csolv} --- current flow solver
+\end{itemize}
+
+\section{Prerequisites}
+
+\subsection{Build Tools}
+
+Install the compiler toolchain, CMake, Ninja, and git:
+\begin{lstlisting}
+sudo apt update
+sudo apt install build-essential cmake ninja-build git
+\end{lstlisting}
+This provides \texttt{g++}, \texttt{cmake}, \texttt{ninja}, and \texttt{git}.
+
+\subsection{Qt 6}
+
+Install the Qt~6 development libraries:
+\begin{lstlisting}
+sudo apt install qt6-base-dev libqt6widgets6
+\end{lstlisting}
+On Ubuntu 24.04, this installs Qt~6.4 or later from the standard
+repositories.  No separate Qt installer or online account is needed.
+
+To verify the installation:
+\begin{lstlisting}
+qmake6 --version
+\end{lstlisting}
+
+\subsection{OpenMP (Optional)}
+
+GCC ships with OpenMP support by default on Linux.  The solvers will
+automatically use multithreaded solving with no extra packages needed.
+If for some reason OpenMP is not found, install the runtime:
+\begin{lstlisting}
+sudo apt install libgomp1
+\end{lstlisting}
+
+\subsection{Other Distributions}
+
+On Fedora:
+\begin{lstlisting}
+sudo dnf install gcc-c++ cmake ninja-build git qt6-qtbase-devel
+\end{lstlisting}
+
+On Arch Linux:
+\begin{lstlisting}
+sudo pacman -S base-devel cmake ninja git qt6-base
+\end{lstlisting}
+
+\section{Getting the Source}
+
+If you have a source zip, unzip it:
+\begin{lstlisting}
+unzip femm-qt-src.zip
+cd femm-qt
+\end{lstlisting}
+
+Or, if the source is hosted on GitHub, clone the repository:
+\begin{lstlisting}
+git clone <repository-url> femm-qt
+cd femm-qt
+\end{lstlisting}
+
+\section{Building}
+
+From the \texttt{femm-qt} directory, run the build script:
+\begin{lstlisting}
+./linux_build.sh
+\end{lstlisting}
+
+This checks that the build tools are present, configures the project
+with CMake, and builds it with Ninja.  All executables are placed in
+\texttt{build/bin/}.
+
+To wipe the build directory and rebuild from scratch, pass
+\texttt{clean}:
+\begin{lstlisting}
+./linux_build.sh clean
+\end{lstlisting}
+
+If the build fails because CMake cannot find Qt~6, see
+\textit{Manual configuration} under Troubleshooting.
+
+\section{Running}
+
+Launch the GUI:
+\begin{lstlisting}
+./bin/femm_gui
+\end{lstlisting}
+
+Or the headless server:
+\begin{lstlisting}
+./bin/femm_headless
+\end{lstlisting}
+
+\subsection{Setting FEMM\_DIR}
+
+The language bindings (OctaveFEMM, MathFEMM, pyFEMM, JuliaFEMM) locate
+the FEMM executables via the \texttt{FEMM\_DIR} environment variable.
+Set it to the \texttt{bin} directory:
+\begin{lstlisting}
+export FEMM_DIR=/path/to/femm-qt/build/bin
+\end{lstlisting}
+Add this to your \texttt{\textasciitilde/.bashrc} to make it persistent.
+
+\subsection{Desktop Integration (Optional)}
+
+To add femm-qt to your application menu, create a \texttt{.desktop} file:
+\begin{lstlisting}
+cat > ~/.local/share/applications/femm-qt.desktop << 'EOF'
+[Desktop Entry]
+Name=FEMM
+Comment=Finite Element Method Magnetics
+Exec=/path/to/femm-qt/build/bin/femm_gui
+Type=Application
+Categories=Science;Engineering;
+EOF
+\end{lstlisting}
+
+\section{Using with MATLAB or Octave}
+
+\subsection{Octave}
+
+Install Octave and its Java support:
+\begin{lstlisting}
+sudo apt install octave default-jdk
+\end{lstlisting}
+Note that in Ubuntu, the version of Octave installed by App Center does \textit{not} have Java support, so the installation by \texttt{apt}, which does have Java support, is needed.
+Find the path to Java by typing:
+\begin{lstlisting}
+readlink -f $(which java)
+\end{lstlisting}
+at the Bash command line.  This usually returns something like: 
+\begin{lstlisting}
+/usr/lib/jvm/java-21-openjdk-amd64/bin/java
+\end{lstlisting}
+Edit your \verb+~/.bashrc+ file and add as the last lines:
+\begin{lstlisting}
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+export FEMM_DIR=/path/to/femm-qt/build/bin
+\end{lstlisting}
+Run Octave and confirm that Java is running by typing
+\begin{lstlisting}
+version -java
+\end{lstlisting}
+at the Octave prompt.  It should return something like: 
+\\ \\
+\begin{small} \texttt{ans =  Java 21.0.10+7-Ubuntu-124.04 with Ubuntu OpenJDK 64-Bit Server VM mixed mode, sharing} \end{small} \\
+which indicates that Java is properly installed.  Then add the path to the the OctaveFEMM mfiles to Octave by typing the following at the Octave command line:
+\begin{lstlisting}
+addpath("/path/to/femm-qt/octavefemm")
+savepath
+\end{lstlisting}
+Now, the \texttt{openfemm} function in the \texttt{octavefemm} directory should find and launch \texttt{femm\_gui}
+or \texttt{femm\_headless} automatically.
+
+\subsection{MATLAB}
+
+Set \texttt{FEMM\_DIR} before launching MATLAB, or set it within MATLAB:
+\begin{lstlisting}
+setenv('FEMM_DIR', '/path/to/femm-qt/build/bin')
+\end{lstlisting}
+MATLAB on Linux uses its bundled JRE for socket communication with
+femm-qt, which should work without additional configuration.  The path to the OctaveFEMM mfiles must also be set using the \verb+pathtool+ command.
+
+\subsection{Python}
+
+The Python interface is/will be available as pyfemm-qt.  Install it via:
+\begin{lstlisting}
+pip install pyfemm-qt
+\end{lstlisting}
+To install the version that comes with the source code distribution instead, change to the \verb+pyfemm+ directory in the source distribution and type:
+\begin{lstlisting}
+pip install -e .
+\end{lstlisting}
+On Ubuntu 24.04 and later, pip may refuse to install into the system
+Python with an ``externally-managed-environment'' error.  Since pyfemm
+is a single file with no dependencies, it is safe to override this:
+\begin{lstlisting}
+pip install -e . --break-system-packages
+\end{lstlisting}
+
+\section{Troubleshooting}
+
+\subsection{Manual configuration}
+
+The build script just wraps the standard CMake and Ninja steps.  To run
+them by hand:
+\begin{lstlisting}
+mkdir build && cd build
+cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+ninja
+\end{lstlisting}
+CMake finds Qt~6 from the system packages automatically.  If it does
+not, pass the Qt prefix explicitly:
+\begin{lstlisting}
+cmake .. -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake/Qt6
+\end{lstlisting}
+
+\subsection{Qt not found}
+
+If CMake reports that it cannot find Qt6, check that the development
+package is installed:
+\begin{lstlisting}
+dpkg -l | grep qt6-base-dev
+\end{lstlisting}
+If installed but not found, pass \texttt{-DCMAKE\_PREFIX\_PATH} pointing
+to the Qt~6 CMake config directory, typically
+\texttt{/usr/lib/x86\_64-linux-gnu/cmake/Qt6}.
+
+\subsection{Missing OpenGL headers}
+
+On minimal server installations or VMs without a desktop environment,
+Qt may require OpenGL development headers:
+\begin{lstlisting}
+sudo apt install libgl1-mesa-dev libglu1-mesa-dev
+\end{lstlisting}
+
+\subsection{VirtualBox Guest Additions}
+
+If running in a VirtualBox VM, install Guest Additions for proper display
+scaling and shared folders:
+\begin{lstlisting}
+sudo apt install virtualbox-guest-utils \
+    virtualbox-guest-x11
+\end{lstlisting}
+Reboot after installation.  For shared folders, add your user to the
+\texttt{vboxsf} group:
+\begin{lstlisting}
+sudo usermod -aG vboxsf $USER
+\end{lstlisting}
+
+\subsection{MESA / OpenGL errors in VirtualBox}
+
+VirtualBox's virtual GPU may not support the OpenGL version Qt expects,
+producing errors like ``ZINK: failed to choose pdev'' or ``failed to
+create dri2 screen.''  Two fixes:
+
+\begin{enumerate}[nosep]
+\item Enable 3D Acceleration in VirtualBox (Settings $\rightarrow$
+      Display $\rightarrow$ check ``Enable 3D Acceleration'' and move the slider to at least 128MB video memory out in Expert mode), or
+\item Force Qt to use software rendering by adding
+\begin{lstlisting}
+export LIBGL_ALWAYS_SOFTWARE=1
+\end{lstlisting}
+to \verb+~/.bashrc+
+\end{enumerate}
+
+\end{document}

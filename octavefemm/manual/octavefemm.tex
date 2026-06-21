@@ -1,0 +1,156 @@
+% ------------------------------------------------------------------------
+%  My Format for a Article
+% ------------------------------------------------------------------------
+\documentclass[12pt]{article}
+\oddsidemargin 0.0in
+\textwidth 6.5in
+\textheight 9in
+\topmargin -0.35in
+\headheight 0.0in
+\hfuzz 10pt
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\Curl}{\nabla \times}
+\newcommand{\Div}{\nabla \cdot}
+
+% ------------------------------------------------------------------------
+% Definitions so that LaTeX won't throw a
+% "Too many unprocessed floats" tantrum
+% ------------------------------------------------------------------------
+\renewcommand{\topfraction}{.85}
+\renewcommand{\bottomfraction}{.7}
+\renewcommand{\textfraction}{.15}
+\renewcommand{\floatpagefraction}{.66}
+\renewcommand{\dbltopfraction}{.66}
+\renewcommand{\dblfloatpagefraction}{.66}
+\setcounter{topnumber}{9}
+\setcounter{bottomnumber}{9}
+\setcounter{totalnumber}{20}
+\setcounter{dbltopnumber}{9}
+
+% ------------------------------------------------------------------------
+% Packages to use for a dvips document:
+% ------------------------------------------------------------------------
+\usepackage{pslatex}
+\usepackage[]{graphicx}
+\usepackage[]{hyperref}
+\begin{document}
+
+% ------------------------------------------------------------------------
+% Title Page:
+% ------------------------------------------------------------------------
+\thispagestyle{empty}
+
+\vspace*{2.5in}
+
+\vspace*{0.5in}
+\begin{center}
+{\LARGE Finite Element Method Magnetics: OctaveFEMM}
+
+
+\vspace*{16pt} {\Large User's Manual}
+
+\vspace*{16pt} \today
+
+\vspace*{48pt} David Meeker \\
+\href{mailto:dmeeker@ieee.org}{\tt dmeeker@ieee.org} \\
+\href{http://www.femm.info}{\tt http://www.femm.info} \\
+\end{center}
+
+\newpage
+
+
+% ------------------------------------------------------------------------
+% Main Text:
+% ------------------------------------------------------------------------
+\section{Introduction}
+
+OctaveFEMM is a Matlab toolbox that allows for the operation of Finite
+Element Method Magnetics (FEMM) via a set of Matlab functions.  The toolbox
+works with Octave, a Matlab clone.
+
+When OctaveFEMM starts up a FEMM process, the usual FEMM user interface
+is displayed and is fully functional.  The user then has the choice of
+accomplishing modeling and analysis tasks either exclusively through
+functions implemented by the toolbox, or by a combination of manual and
+programmatic operations -- whichever is easiest for the task at hand.
+
+The syntax of the OctaveFEMM toolbox closely mirrors that of FEMM's existing
+Lua scripting language interface associated with FEMM v4.2.  However, there
+are some differences between the Lua functions and the analogous Octave/Matlab
+implementations:
+\begin{itemize}
+\item All strings are enclosed in single quotes, rather than
+double quotes as in Lua.
+\item Functions in Lua that have no arguments require a set of
+empty parentheses after the function name ({\em e.g.} {\tt
+mi\_analyze()}).  In Octave or Matlab, no parentheses should be used needed ({\em e.g.} {\tt
+mi\_analyze} with the OctaveFEMM toolbox).
+\item Several commands have also been added to OctaveFEMM that have no
+analog in Lua.  These commands streamline the drawing of new
+geometries with the OctaveFEMM toolbox, as well is the collection
+of data from solutions.
+\end{itemize}
+
+Perhaps the most remarkable difference between Lua and OctaveFEMM,
+however, is due to the matrix-oriented nature of Octave/Matlab.  In just about any
+OctaveFEMM function in which it would be desiable to enter an array
+of points such that multiple copies of an operation are performed, OctaveFEMM
+will correctly interpret the input perform the requested operation
+on every element in the array.  In addition, for any function in which
+the coordinates of a point are required, that point can be
+specified as an array with two elements instead of specifying each
+element separately.  In functions that require the specification
+of multiple points, those points can be entered as an array of
+two-element arrays.
+
+\section{Installation and Startup}
+
+\subsection{Installation for Matlab and Octave 3}
+The OctaveFEMM distribution is automatically installed with FEMM 4.2 in the
+\verb+mfiles+ subdirectory.  The absolute directory is typically
+\verb+c:\Program Files\femm42\mfiles+.  To use OctaveFEMM with Octave or
+Matlab, this path needs to be added to the program's search path. To add
+this path to the search path, type the following lines at the Matlab or
+Octave 3.X.X command prompt:
+
+\begin{verbatim}
+	addpath('c:\\femm42\\mfiles');
+	savepath;
+\end{verbatim}
+
+Alternatively, in Matlab, the interactive {\tt pathtool} command can be used
+to add the {\tt mfiles} directory to the search path.
+
+\subsection{Startup}
+To start an OctaveFEMM session, use the {\tt openfemm} function.
+This function starts up a FEMM process to which OctaveFEMM calls
+are sent. When done with OctaveFEMM, the FEMM process can be shut
+down via the {\tt closefemm} function.
+
+A number of examples that use OctaveFEMM to analyze various problems
+are included in the directory \verb+cd c:\Program Files\femm42\examples+
+
+%-----------------------------------------------------------------------------------
+%
+%  OctaveFEMM Documentation
+%
+%-----------------------------------------------------------------------------------
+
+% Magnetics-specific functions
+\input{magn.tex}
+
+% Electrostatics-specific functions
+\input{elec.tex}
+
+% Heat flow-specific functions
+\input{heat.tex}
+
+% Current flow-specific functions
+\input{cflow.tex}
+
+%-----------------------------------------------------------------------------------
+
+\end{document}

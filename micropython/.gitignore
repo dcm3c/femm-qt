@@ -1,0 +1,3 @@
+# Build artifacts from build_test.sh / embed generation (regenerable).
+build-test/
+build-embed/

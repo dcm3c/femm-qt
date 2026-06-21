@@ -1,0 +1,123 @@
+[Format]      =  4.0
+[Frequency]   =  0
+[Precision]   =  1e-008
+[MinAngle]    =  30
+[Depth]       =  1
+[LengthUnits] =  centimeters
+[ProblemType] =  axisymmetric
+[Coordinates] =  cartesian
+[Comment]     =  "Add comments here."
+[PointProps]   = 0
+[BdryProps]   = 1
+  <BeginBdry>
+    <BdryName> = "abc"
+    <BdryType> = 2
+    <A_0> = 0
+    <A_1> = 0
+    <A_2> = 0
+    <Phi> = 0
+    <c0> = 2652582.3848649221
+    <c1> = 0
+    <Mu_ssd> = 0
+    <Sigma_ssd> = 0
+  <EndBdry>
+[BlockProps]  = 3
+  <BeginBlock>
+    <BlockName> = "Air"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 0
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 0
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <BHPoints> = 0
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Copper"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 0
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 47.759999999999998
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <BHPoints> = 0
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Solid Copper"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 0
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 58
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <BHPoints> = 0
+  <EndBlock>
+[CircuitProps]  = 2
+  <BeginCircuit>
+    <CircuitName> = "coil"
+    <TotalAmps_re> = 1
+    <TotalAmps_im> = 0
+    <CircuitType> = 1
+  <EndCircuit>
+  <BeginCircuit>
+    <CircuitName> = "secondary"
+    <TotalAmps_re> = 0
+    <TotalAmps_im> = 0
+    <CircuitType> = 1
+  <EndCircuit>
+[NumPoints] = 13
+0	0	0	0
+0	30	0	0
+0	-30	0	0
+11	0	0	0
+19	0	0	0
+16.449999999999999	-0.5	0	0
+16.449999999999999	0.5	0	0
+16.550000000000001	0.5	0	0
+16.550000000000001	-0.5	0	0
+13.949999999999999	0.5	0	1
+13.949999999999999	-0.5	0	1
+14.050000000000001	0.5	0	1
+14.050000000000001	-0.5	0	1
+[NumSegments] = 10
+1	0	-1	0	0	0
+0	2	-1	0	0	0
+6	5	-1	0	0	0
+7	8	-1	0	0	0
+6	7	-1	0	0	0
+5	8	-1	0	0	0
+9	10	-1	0	0	1
+11	12	-1	0	0	1
+9	11	-1	0	0	1
+10	12	-1	0	0	1
+[NumArcSegments] = 3
+2	1	180	2.5	1	0	0
+4	3	180	10	0	0	0
+3	4	180	10	0	0	0
+[NumHoles] = 0
+[NumBlockLabels] = 4
+7.2999999999999998	23.300000000000001	1	0.5	0	0	0	1
+15.25	1.5	1	0.050000000000000003	0	0	0	1
+14	-0.029999999999999999	2	0.025000000000000001	2	0	1	10
+16.48	-0.089999999999999997	2	0.025000000000000001	1	0	0	10

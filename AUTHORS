@@ -1,0 +1,11 @@
+femm-qt - Authors
+=================
+
+The following people have contributed to femm-qt. See the git history for
+complete, per-commit attribution.
+
+  David Meeker      - original author and maintainer
+  Robin Cornelius   - original Lua scripting interface
+
+The "and contributors" in the MIT copyright notices refers to the people
+listed here (and any future contributors).

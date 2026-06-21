@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyfemm-qt"
+version = "0.1.0"
+description = "Python interface for femm-qt (Finite Element Method Magnetics)"
+authors = [{ name = "David Meeker" }]
+license = { text = "GPL-3.0-or-later" }
+requires-python = ">=3.8"
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+]
+
+[project.urls]
+Homepage = "https://www.femm.info"
+
+[tool.setuptools]
+py-modules = ["femm"]

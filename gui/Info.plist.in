@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>com.femm.femm-qt</string>
+    <key>CFBundleName</key>
+    <string>FEMM</string>
+    <key>CFBundleDisplayName</key>
+    <string>FEMM 5.0</string>
+    <key>CFBundleExecutable</key>
+    <string>femm_gui</string>
+    <key>CFBundleVersion</key>
+    <string>5.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>5.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>FEMM Magnetics Problem</string>
+            <key>CFBundleTypeExtensions</key>
+            <array><string>fem</string></array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>FEMM Electrostatics Problem</string>
+            <key>CFBundleTypeExtensions</key>
+            <array><string>fee</string></array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>FEMM Heat Flow Problem</string>
+            <key>CFBundleTypeExtensions</key>
+            <array><string>feh</string></array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>FEMM Current Flow Problem</string>
+            <key>CFBundleTypeExtensions</key>
+            <array><string>fec</string></array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+        </dict>
+    </array>
+</dict>
+</plist>

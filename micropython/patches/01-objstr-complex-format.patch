@@ -1,0 +1,69 @@
+diff --git a/femm-qt/micropython/micropython_embed/py/objstr.c b/femm-qt/micropython/micropython_embed/py/objstr.c
+index e8b2512..155a66e 100644
+--- a/femm-qt/micropython/micropython_embed/py/objstr.c
++++ b/femm-qt/micropython/micropython_embed/py/objstr.c
+@@ -1393,7 +1393,31 @@ static vstr_t mp_obj_str_format_helper(const char *str, const char *top, int *ar
+                 case 'F':
+                 case 'g':
+                 case 'G':
+-                    mp_print_float(&print, mp_obj_get_float(arg), type, flags, fill, width, precision);
++                    // FEMM patch: complex -> CComplex::ToString style (re+I*im),
++                    // using the format's precision for both components.
++                    if (mp_obj_is_type(arg, &mp_type_complex)) {
++                        mp_float_t re, im;
++                        mp_obj_complex_get(arg, &re, &im);
++                        if (im == 0) {
++                            mp_print_float(&print, re, type, flags, fill, width, precision);
++                        } else if (im == 1) {
++                            if (re != 0) { mp_print_float(&print, re, type, 0, 0, 0, precision); mp_print_str(&print, "+"); }
++                            mp_print_str(&print, "I");
++                        } else if (im == -1) {
++                            if (re != 0) { mp_print_float(&print, re, type, 0, 0, 0, precision); }
++                            mp_print_str(&print, "-I");
++                        } else if (im < 0) {
++                            if (re != 0) { mp_print_float(&print, re, type, 0, 0, 0, precision); }
++                            mp_print_str(&print, "-I*");
++                            mp_print_float(&print, -im, type, 0, 0, 0, precision);
++                        } else {
++                            if (re != 0) { mp_print_float(&print, re, type, 0, 0, 0, precision); mp_print_str(&print, "+"); }
++                            mp_print_str(&print, "I*");
++                            mp_print_float(&print, im, type, 0, 0, 0, precision);
++                        }
++                    } else {
++                        mp_print_float(&print, mp_obj_get_float(arg), type, flags, fill, width, precision);
++                    }
+                     break;
+ 
+                 case '%':
+@@ -1615,7 +1639,30 @@ static mp_obj_t str_modulo_format(mp_obj_t pattern, size_t n_args, const mp_obj_
+             case 'F':
+             case 'g':
+             case 'G':
+-                mp_print_float(&print, mp_obj_get_float(arg), *str, flags, fill, width, prec);
++                // FEMM patch: complex -> CComplex::ToString style.
++                if (mp_obj_is_type(arg, &mp_type_complex)) {
++                    mp_float_t re, im;
++                    mp_obj_complex_get(arg, &re, &im);
++                    if (im == 0) {
++                        mp_print_float(&print, re, *str, flags, fill, width, prec);
++                    } else if (im == 1) {
++                        if (re != 0) { mp_print_float(&print, re, *str, 0, 0, 0, prec); mp_print_str(&print, "+"); }
++                        mp_print_str(&print, "I");
++                    } else if (im == -1) {
++                        if (re != 0) { mp_print_float(&print, re, *str, 0, 0, 0, prec); }
++                        mp_print_str(&print, "-I");
++                    } else if (im < 0) {
++                        if (re != 0) { mp_print_float(&print, re, *str, 0, 0, 0, prec); }
++                        mp_print_str(&print, "-I*");
++                        mp_print_float(&print, -im, *str, 0, 0, 0, prec);
++                    } else {
++                        if (re != 0) { mp_print_float(&print, re, *str, 0, 0, 0, prec); mp_print_str(&print, "+"); }
++                        mp_print_str(&print, "I*");
++                        mp_print_float(&print, im, *str, 0, 0, 0, prec);
++                    }
++                } else {
++                    mp_print_float(&print, mp_obj_get_float(arg), *str, flags, fill, width, prec);
++                }
+                 break;
+             #endif
+ 

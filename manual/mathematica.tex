@@ -1,0 +1,80 @@
+\chapter{Mathematica Interface}
+
+FEMM can be driven from Mathematica using the {\tt MathFEMM} package, which
+controls a FEMM process over a TCP/IP socket.  (Earlier versions used
+Mathematica's MathLink API; the current package uses the same TCP interface as
+all of the other language bindings --- see the {\em TCP/IP Interface} chapter.)
+The package takes care of launching FEMM, establishing the connection, sending
+commands, and parsing the results, so that FEMM is controlled directly through a
+set of Mathematica functions.
+
+To use the package, load it and open a connection:
+
+\begin{verbatim}
+Get["mathfemm.m"]
+OpenFEMM[]
+\end{verbatim}
+
+\verb+OpenFEMM[]+ launches a FEMM process and connects to it.  By default it
+starts the interactive shell ({\tt femm\_gui}) and uses port 48015.  Pass
+\verb+OpenFEMM[1]+ to launch the headless engine ({\tt femm\_headless}) instead,
+with no window, or \verb+OpenFEMM[bHide, port]+ to choose both the visibility and
+the port.
+
+Once connected, FEMM is controlled through the Mathematica functions provided by
+the package, which mirror the Python command set documented in the scripting
+chapters.  For example, the magnetics preprocessor commands appear as
+\verb+MIAddNode[x,y]+, \verb+MIAddSegment[x1,y1,x2,y2]+,
+\verb+MIAddBlockLabel[x,y]+, and so on.  Each function sends the corresponding
+command to FEMM's Python interpreter and returns the result as a Mathematica
+expression --- a number, a string, or a list, as appropriate --- so values can
+be used directly in further Mathematica computation.
+
+When finished, close the connection with:
+
+\begin{verbatim}
+CloseFEMM[]
+\end{verbatim}
+
+\chapter{TCP/IP Interface}
+
+Beyond the supplied language bindings, FEMM can be controlled by any program
+that can open a TCP/IP socket.  A running FEMM process exposes its Python
+interpreter over a socket, so an external client can send commands and read back
+results programmatically.  (This replaces the ActiveX/COM automation server used
+by older, Windows-only versions of FEMM.)
+
+A FEMM process listens for a connection on a TCP port; the default is 48015.
+The headless engine is started for this purpose with, for example:
+
+\begin{verbatim}
+femm_headless --port 48015
+\end{verbatim}
+
+The interactive shell {\tt femm\_gui} also serves the same protocol while
+displaying its window.  The connection is single-client: one program controls a
+given FEMM process at a time, and the process exits when that client
+disconnects.
+
+The protocol is a simple line-based text exchange.  The client sends a command
+--- any statement or expression accepted by FEMM's Python interpreter --- as a
+single newline-terminated line, and FEMM replies with exactly one
+newline-terminated line:
+
+\begin{itemize}
+\item If the command is an expression, the reply is its value rendered as text.
+      Real numbers are reported in full precision; a complex number is returned
+      in the form \verb|a+I*b|; and a tuple of results is returned with the
+      individual items separated by tab characters.
+\item A statement that produces no value (an assignment, a drawing command, and
+      the like) replies with an empty line.
+\item If the command raises an error, the reply is a single line beginning with
+      \verb+error:+ followed by the error message.
+\end{itemize}
+
+All of the supplied toolboxes are thin wrappers over this protocol, each
+presenting it as native function calls in its host language: {\tt OctaveFEMM}
+(MATLAB and Octave), {\tt MathFEMM} (Mathematica), {\tt pyfemm} (Python), and
+equivalent packages for Julia, Scilab, and Lua.  Those packages serve both as
+ready-to-use interfaces and as worked examples of how to speak the protocol
+from a new client.

@@ -1,0 +1,200 @@
+<html>
+
+<head>
+</head>
+
+<body>
+
+<center>
+<h1> LuaSocket: TCP/IP support for the Lua language </h1>
+</center>
+<br>
+
+<h2> Contents </h2>
+
+<ul>
+<li> <a href=#whatis> What is LuaSocket </a> </li>
+<li> <a href=#intro> Introduction </a> </li>
+<li> <a href=#down> Download </a> </li>
+<li> <a href=#refman> Reference Manual </a> </li>
+</ul>
+
+<h2> <a name=whatis> What is LuaSocket? </h2>
+
+LuaSocket is a <a href="http://www.tecgraf.puc-rio.br/lua">Lua</a>
+extension library that allows the use the most important
+features of the TCP/IP socket layer within the Lua language. <p>
+
+It can be used by any Lua application desiring access to TCP/IP
+communication, once it has been properly linked with and
+initialized by the interpreter running the application. The code
+has been tested and runs well on the WinSock2 and 4.3BSD
+platforms. <p>
+
+The library is available under the same terms as the Lua
+language, that is, it can be used at no cost for both academic
+and commercial purposes. <p>
+
+Copyright (C) 2000 TeCGraf, PUC-Rio. All rights reserved. <br>
+Author: Diego Nehab <p>
+
+<h2> <a name=intro> Introduction </h2>
+
+To have the TCP/IP made functions available to a Lua script, the
+interpreter running the script must be linked to the
+<tt>socklib</tt> library. The functions are registered in the Lua
+scope when the interpreter calls the C function
+<tt>lua_socklibopen</tt>, the only C function exported by the
+library. The scripts can then use all registered functions.
+<p>To connect to a server, a client application creates a client
+socket object with a call to the function <tt>connect</tt>. Once
+this object is created, the user can use the functions
+<tt>send</tt> and <tt>receive</tt> to exchange information with
+the server. After all data exchange is done, the client
+application can close the connection by calling the
+<tt>close</tt> function on the client socket. <p>
+
+On the server side, a server application binds to an address with
+a call to the <tt>bind</tt> function, which returns a server
+socket object.  The server application can then accept remote
+connections on the server socket, with calls to the
+<tt>accept</tt> function. This function returns a client socket,
+through which the server application can communicate with the
+client application that attempted connection. Both server and
+client sockets can be closed with the <tt>close</tt> function.
+<p>
+
+
+All functions are available both as stand-alone functions and as
+<i>methods</i> of the socket objects. For example, the function
+call <tt>send(socket,"test")</tt> is equivalent to the function
+call <tt>socket:send("test")</tt>, where <tt>socket</tt> is a
+client socket. <p>
+
+<h2> <a name=down> Download </h2>
+
+LuaSocket version 1.0 is now available for download! It is
+compatible with Lua&nbsp;4.0 and has been tested on Windows&nbsp;98,
+Windows&nbsp;2000, Linux, AIX, SunOS and Solaris. <p>
+
+<a href="luasocket-1.0.tar.gz"> luasocket-1.0.tar.gz </a> <br>
+<a href="luasocket-1.0.zip"> luasocket-1.0.zip </a> <p>
+
+<h2> <a name=refman> Reference Manual </h2>
+
+<tt><b>accept(</b>socket<b>)</b></tt><p>
+
+Returns a client socket object, representing a client attempting
+connection on the server socket <tt>socket</tt>. The function
+blocks until a connection attempt is detected. <p>
+
+<tt><b>bind(</b>address, port [, backlog]<b>)</b></tt><p>
+
+Binds to the address <tt>address</tt> and port <tt>port</tt> on
+the local host. <tt>Address</tt> can be an IP address or a host
+name. The optional parameter <tt>backlog</tt> (default value 1)
+specifies the number of client connections that can be queued
+waiting for service. If the queue is full and another client
+attempts connection, the connection is refused. In case of
+success, the function returns a server socket, on which the
+operations <tt>accept</tt>, <tt>close</tt> and <tt>listen</tt>
+are permitted. In case of error, the function returns
+<tt>nil</tt> followed by a string describing the error. <p>
+
+<tt><b>close(</b>socket<b>)</b></tt><p>
+
+Closes the socket <tt>socket</tt>. No further operations are allowed
+on a closed socket. In case <tt>socket</tt> is a server socket, the address
+to which it is bound is made available to other applications. It is important
+to close all used sockets once they are not needed, since, in many systems,
+each socket uses a file descriptor, which is a limited system resource. <p>
+
+<tt><b>connect(</b>address, port<b>)</b></tt><p>
+
+Attempts connection to address <tt>address</tt> and port
+<tt>port</tt>.  <tt>Address</tt> can be an IP address or a host
+name. In case of success, the function returns a client socket on
+which the operations <tt>send</tt>, <tt>receive</tt> and
+<tt>close</tt> are permitted. In case of error, the function
+returns <tt>nil</tt> followed by a string describing the error. <p>
+
+<tt><b>listen(</b>socket, backlog<b>)</b></tt><p>
+
+Changes the <tt>backlog</tt> parameter of the server socket
+<tt>socket</tt>.<p>
+
+<tt><b>send(</b>socket, string<sub>1</sub> </tt>[, <tt>string</tt><sub>2</sub>,
+... <tt>string</tt><sub>N</sub>]<b><tt>)</tt></b><p>
+
+Sends the strings <tt>string</tt><sub>1</sub>,
+<tt>string</tt><sub>2</sub>, ... <tt>string</tt><sub>N</sub>
+through the client socket <tt>socket</tt>.  The function returns
+an error code, which is <tt>nil</tt> in case of success, the
+string `<tt>closed</tt>' in case the connection was closed before
+the transmission was complete or the string `<tt>timeout</tt>' in
+case there was a timeout during the operation. After the error
+code, the function returns the number of bytes accepted by the
+transport layer. <p>
+
+<tt><b>receive(</b>socket [, pattern<sub>1</sub></tt><b>, </b><tt>pattern</tt><sub>2</sub>, ... <tt>pattern</tt><sub>N</sub>]<b><tt>)</tt></b><p>
+
+Receives <tt>pattern</tt><sub>1</sub>,
+<tt>pattern</tt><sub>2</sub>, ... <tt>pattern</tt><sub>N</sub>
+from the client socket <tt>socket</tt>.  A pattern can be one of
+the following:
+
+<ul>
+<li> `<tt>*l</tt>': causes the function to read a line of text
+from the socket.  The line is terminated by a LF character
+(ASCII~10), optionally preceeded by a CR character (ASCII~13).
+The CR and LF characters are not returned.  This is the default
+pattern.</li>
+
+<li> `<tt>*lu</tt>': causes the function to read a line of text
+from the socket.  The line is assumed to be terminated by a
+single LF character. If the LF character is is preceeded by a CR
+character, the CR character is returned in the string, whereas
+the LF character is not.</li>
+
+<li> <tt>number</tt>: causes the function to read <tt>number</tt>
+raw bytes from the socket. This is the fastest pattern and should
+be used whenever possible.</li> 
+</ul>
+
+The function returns one string for each pattern, followed by a
+single error code that can be <tt>nil</tt> in case of success,
+the string `<tt>closed</tt>' in case the connection was closed
+before the transmission was complete or the string
+`<tt>timeout</tt>' in case there was a timeout during the
+operation. <p>
+
+
+<tt><b>timeout(</b>socket, value [, mode]<b>)</b></tt><p>
+
+Changes the timeout values for the socket <tt>socket</tt>. By
+default, all I/O operations are blocking. That is, any call to
+the functions <tt>send</tt> and <tt>receive</tt> will block
+indefinetely, until the operation completes.  The
+<tt>timeout</tt> function defines a limit on the ammount of time
+the functions can block, specified as the <tt>value</tt>
+parameter, in seconds.  There are two timeout modes, which can be
+used together:
+
+<ul>
+<li> `<tt>b</tt>': <i>blocked</i> timeout. Specifies the upper
+limit on the ammount of time LuaSocket can be blocked by the
+operational system waiting for completion of any I/O
+operation.</li>
+<li> `<tt>r</tt>': <i>return</i> timeout. Specifies the upper
+limit on the ammount of time LuaSocket can block a Lua script while
+performing an I/O operation.</li> 
+</ul>
+
+<hr>
+<small>
+Last modified by Diego Nehab<br>
+Wed Nov  8 16:32:38 EDT 2000
+</small>
+
+</body>
+</html>

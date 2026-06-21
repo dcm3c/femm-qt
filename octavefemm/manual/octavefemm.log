@@ -1,0 +1,502 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (MiKTeX 22.12) (preloaded format=pdflatex 2023.6.4)  4 JUN 2023 16:58
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**./octavefemm.tex
+(octavefemm.tex
+LaTeX2e <2022-11-01> patch level 1
+L3 programming layer <2022-11-02>
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
+Document Class: article 2022/07/02 v1.4n Standard LaTeX document class
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/base\size12.clo
+File: size12.clo 2022/07/02 v1.4n Standard LaTeX file (size option)
+)
+\c@part=\count185
+\c@section=\count186
+\c@subsection=\count187
+\c@subsubsection=\count188
+\c@paragraph=\count189
+\c@subparagraph=\count190
+\c@figure=\count191
+\c@table=\count192
+\abovecaptionskip=\skip48
+\belowcaptionskip=\skip49
+\bibindent=\dimen140
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/pslatex\pslatex.sty
+Package: pslatex 2021/01/13 v1.3 pslatex emulation (DPC)
+LaTeX Font Info:    Redeclaring symbol font `operators' on input line 66.
+LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
+(Font)                  OT1/cmr/m/n --> OT1/ptmcm/m/n on input line 66.
+LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
+(Font)                  OT1/cmr/bx/n --> OT1/ptmcm/m/n on input line 66.
+LaTeX Font Info:    Redeclaring symbol font `letters' on input line 67.
+LaTeX Font Info:    Overwriting symbol font `letters' in version `normal'
+(Font)                  OML/cmm/m/it --> OML/ptmcm/m/it on input line 67.
+LaTeX Font Info:    Overwriting symbol font `letters' in version `bold'
+(Font)                  OML/cmm/b/it --> OML/ptmcm/m/it on input line 67.
+LaTeX Font Info:    Redeclaring symbol font `symbols' on input line 68.
+LaTeX Font Info:    Overwriting symbol font `symbols' in version `normal'
+(Font)                  OMS/cmsy/m/n --> OMS/pzccm/m/n on input line 68.
+LaTeX Font Info:    Overwriting symbol font `symbols' in version `bold'
+(Font)                  OMS/cmsy/b/n --> OMS/pzccm/m/n on input line 68.
+LaTeX Font Info:    Redeclaring symbol font `largesymbols' on input line 69.
+LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `normal'
+(Font)                  OMX/cmex/m/n --> OMX/psycm/m/n on input line 69.
+LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `bold'
+(Font)                  OMX/cmex/m/n --> OMX/psycm/m/n on input line 69.
+\symbold=\mathgroup4
+\symitalic=\mathgroup5
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 75.
+LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `normal'
+(Font)                  OT1/cmr/bx/n --> OT1/ptm/bx/n on input line 75.
+LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
+(Font)                  OT1/cmr/bx/n --> OT1/ptm/bx/n on input line 75.
+LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 76.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
+(Font)                  OT1/cmr/m/it --> OT1/ptm/m/it on input line 76.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
+(Font)                  OT1/cmr/bx/it --> OT1/ptm/m/it on input line 76.
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
+Package: graphicx 2021/09/16 v1.2d Enhanced LaTeX Graphics (DPC,SPQR)
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty
+Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
+\KV@toks@=\toks16
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
+Package: graphics 2022/03/10 v1.4e Standard LaTeX Graphics (DPC,SPQR)
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty
+Package: trig 2021/08/11 v1.11 sin cos tan (DPC)
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics.c
+fg
+File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
+)
+Package graphics Info: Driver file: pdftex.def on input line 107.
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\pdftex.def
+File: pdftex.def 2022/09/22 v1.2b Graphics/color driver for pdftex
+))
+\Gin@req@height=\dimen141
+\Gin@req@width=\dimen142
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
+Package: hyperref 2022-11-13 v7.00u Hypertext links for LaTeX
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty
+Package: ltxcmds 2020-05-10 v1.25 LaTeX kernel commands for general use (HO)
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty
+Package: iftex 2022/02/03 v1.0f TeX engine tests
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/generic/pdftexcmds\pdftexcmds
+.sty
+Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
+)
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/generic/infwarerr\infwarerr.s
+ty
+Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
+)
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.sty
+Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/generic/kvdefinekeys\kvdefine
+keys.sty
+Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/generic/pdfescape\pdfescape.s
+ty
+Package: pdfescape 2019/12/09 v1.15 Implements pdfTeX's escape features (HO)
+) (C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/hycolor\hycolor.sty
+Package: hycolor 2020-01-27 v1.10 Color options for hyperref/bookmark (HO)
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/letltxmacro\letltxmacro
+.sty
+Package: letltxmacro 2019/12/03 v1.6 Let assignment for LaTeX macros (HO)
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/auxhook\auxhook.sty
+Package: auxhook 2019-12-17 v1.6 Hooks for auxiliary files (HO)
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\nameref.sty
+Package: nameref 2022-05-17 v2.50 Cross-referencing by name of section
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/refcount\refcount.sty
+Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/generic/gettitlestring\gettit
+lestring.sty
+Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.sty
+Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
+))
+\c@section@level=\count193
+)
+\@linkdim=\dimen143
+\Hy@linkcounter=\count194
+\Hy@pagecounter=\count195
+ (C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def
+File: pd1enc.def 2022-11-13 v7.00u Hyperref: PDFDocEncoding definition (HO)
+Now handling font encoding PD1 ...
+... no UTF-8 mapping file for font encoding PD1
+) (C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/generic/intcalc\intcalc.sty
+Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/generic/etexcmds\etexcmds.sty
+Package: etexcmds 2019/12/15 v1.7 Avoid name clashes with e-TeX commands (HO)
+)
+\Hy@SavedSpaceFactor=\count196
+ (C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def
+File: puenc.def 2022-11-13 v7.00u Hyperref: PDF Unicode definition (HO)
+Now handling font encoding PU ...
+... no UTF-8 mapping file for font encoding PU
+)
+Package hyperref Info: Hyper figures OFF on input line 4162.
+Package hyperref Info: Link nesting OFF on input line 4167.
+Package hyperref Info: Hyper index ON on input line 4170.
+Package hyperref Info: Plain pages OFF on input line 4177.
+Package hyperref Info: Backreferencing OFF on input line 4182.
+Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
+Package hyperref Info: Bookmarks ON on input line 4410.
+\c@Hy@tempcnt=\count197
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/url\url.sty
+\Urlmuskip=\muskip16
+Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
+)
+LaTeX Info: Redefining \url on input line 4748.
+\XeTeXLinkMargin=\dimen144
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/generic/bitset\bitset.sty
+Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/generic/bigintcalc\bigintcalc
+.sty
+Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
+)
+))
+\Fld@menulength=\count198
+\Field@Width=\dimen145
+\Fld@charsize=\dimen146
+Package hyperref Info: Hyper figures OFF on input line 6027.
+Package hyperref Info: Link nesting OFF on input line 6032.
+Package hyperref Info: Hyper index ON on input line 6035.
+Package hyperref Info: backreferencing OFF on input line 6042.
+Package hyperref Info: Link coloring OFF on input line 6047.
+Package hyperref Info: Link coloring with OCG OFF on input line 6052.
+Package hyperref Info: PDF/A mode OFF on input line 6057.
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/base\atbegshi-ltx.sty
+Package: atbegshi-ltx 2021/01/10 v1.0c Emulation of the original atbegshi
+package with kernel methods
+)
+\Hy@abspage=\count199
+\c@Item=\count266
+\c@Hfootnote=\count267
+)
+Package hyperref Info: Driver (autodetected): hpdftex.
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hpdftex.def
+File: hpdftex.def 2022-11-13 v7.00u Hyperref driver for pdfTeX
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/base\atveryend-ltx.sty
+Package: atveryend-ltx 2020/08/19 v1.0a Emulation of the original atveryend pac
+kage
+with kernel methods
+)
+\Fld@listcount=\count268
+\c@bookmark@seq@number=\count269
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunfil
+echeck.sty
+Package: rerunfilecheck 2022-07-10 v1.10 Rerun checks for auxiliary files (HO)
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/generic/uniquecounter\uniquec
+ounter.sty
+Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
+)
+Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
+85.
+)
+\Hy@SectionHShift=\skip50
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdf
+tex.def
+File: l3backend-pdftex.def 2022-10-26 L3 backend support: PDF output (pdfTeX)
+\l__color_backend_stack_int=\count270
+\l__pdf_internal_box=\box51
+) (octavefemm.aux)
+\openout1 = `octavefemm.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for OMS/pzccm/m/n on input line 39.
+LaTeX Font Info:    Trying to load font information for OMS+pzccm on input line
+ 39.
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\omspzccm.fd
+File: omspzccm.fd 2000/01/03 Fontinst v1.801 font definitions for OMS/pzccm.
+)
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mk
+ii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count271
+\scratchdimen=\dimen147
+\scratchbox=\box52
+\nofMPsegments=\count272
+\nofMParguments=\count273
+\everyMPshowfont=\toks17
+\MPscratchCnt=\count274
+\MPscratchDim=\dimen148
+\MPnumerator=\count275
+\makeMPintoPDFobject=\count276
+\everyMPtoPDFconversion=\toks18
+)
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-b
+ase.sty
+Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
+85.
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/00miktex\epstopdf-sys.c
+fg
+File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
+))
+Package hyperref Info: Link coloring OFF on input line 39.
+ (octavefemm.out) (octavefemm.out)
+\@outlinefile=\write3
+\openout3 = `octavefemm.out'.
+
+ [1
+
+{C:/Users/dmeek/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}]
+LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 8
+5.
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ts1ptm.fd
+File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
+)
+[2] (magn.tex [3]
+LaTeX Font Info:    Trying to load font information for OT1+ptmcm on input line
+ 59.
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1ptmcm.fd
+File: ot1ptmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OT1/ptmcm.
+)
+LaTeX Font Info:    Trying to load font information for OML+ptmcm on input line
+ 59.
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\omlptmcm.fd
+File: omlptmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OML/ptmcm.
+)
+LaTeX Font Info:    Trying to load font information for OMX+psycm on input line
+ 59.
+
+(C:\Users\dmeek\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\omxpsycm.fd
+File: omxpsycm.fd 2000/01/03 Fontinst v1.801 font definitions for OMX/psycm.
+)
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 59.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 59.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <7> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 59.
+
+[4]
+Overfull \hbox (22.9382pt too wide) in paragraph at lines 154--157
+[]\OT1/pcr/m/n/12 mi[]setblockprop('blockname', automesh, meshsize, 'incircuit'
+, magdir, group,
+ []
+
+[5] [6] [7] [8]
+Overfull \hbox (30.4983pt too wide) in paragraph at lines 396--400
+[]\OT1/pcr/m/n/12 mi[]addmaterial('matname', mu[]x, mu[]y, H[]c, J, Cduct, Lam[
+]d, Phi[]hmax, lam[]fill,
+ []
+
+[9]
+Overfull \hbox (36.5097pt too wide) in paragraph at lines 442--447
+[]\OT1/pcr/m/n/12 mi[]addpointprop('pointpropname',a,j) \OT1/ptm/m/n/12 adds a 
+new point prop-erty of name \OT1/pcr/m/n/12 'pointpropname'
+ []
+
+[10]
+Overfull \hbox (22.80531pt too wide) in paragraph at lines 490--492
+[]\OT1/pcr/m/n/12 mi[]deletepointprop('pointpropname') \OT1/ptm/m/n/12 deletes 
+the point prop-erty named \OT1/pcr/m/n/12 'pointpropname' 
+ []
+
+[11] [12] [13]
+Overfull \hbox (82.90051pt too wide) in paragraph at lines 630--634
+\OT1/ptm/m/n/12 per-me-abil-ity (\OT1/pcr/m/n/12 2\OT1/ptm/m/n/12 ). The file-n
+ame should in-clude the \OT1/pcr/m/n/12 .ans \OT1/ptm/m/n/12 ex-ten-sion, \OT1/
+ptm/m/it/12 e.g. \OT1/pcr/m/n/12 mi[]setprevious('mymodel.ans',1) 
+ []
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10.95> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 647.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <8> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 647.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <6> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 647.
+[14] [15] [16] [17] [18] [19] [20]) (elec.tex [21] [22] [23]
+Overfull \hbox (13.49394pt too wide) in paragraph at lines 156--172
+[]\OT1/pcr/m/n/12 ei[]probdef(units,type,precision,depth,minangle,prevsoln,time
+step) \OT1/ptm/m/n/12 changes the
+ []
+
+[24] [25] [26] [27] [28] [29] [30] [31]
+Underfull \hbox (badness 10000) in paragraph at lines 657--666
+
+ []
+
+[32]
+Overfull \hbox (27.67596pt too wide) in paragraph at lines 692--698
+\OT1/ptm/m/n/12 con-duc-tors are points or sur-faces, rather than re-gions (\OT
+1/ptm/m/it/12 i.e. \OT1/ptm/m/n/12 can't be se-lected with \OT1/pcr/m/n/12 eo[]
+selectblock\OT1/ptm/m/n/12 ). 
+ []
+
+[33] [34]) (heat.tex [35] [36]
+Overfull \hbox (47.41812pt too wide) in paragraph at lines 91--93
+[]\OT1/pcr/m/n/12 hi[]setsegmentprop("propname", elementsize, automesh, hide, g
+roup, "inconductor")
+ []
+
+[37] [38] [39]
+Overfull \hbox (48.74966pt too wide) in paragraph at lines 328--331
+[]\OT1/pcr/m/n/12 hi[]addpointprop("pointpropname",Tp,qp) \OT1/ptm/m/n/12 adds 
+a new point prop-erty of name \OT1/pcr/m/n/12 "pointpropname"
+ []
+
+
+Overfull \hbox (35.17816pt too wide) in paragraph at lines 332--334
+[]\OT1/pcr/m/n/12 hi[]addboundprop("boundpropname", BdryFormat, Tset, qs, Tinf,
+ h, beta, TinfRad)
+ []
+
+[40]
+Overfull \hbox (46.45744pt too wide) in paragraph at lines 359--361
+[]\OT1/pcr/m/n/12 hi[]deleteboundprop("boundpropname") \OT1/ptm/m/n/12 deletes 
+the bound-ary prop-erty named \OT1/pcr/m/n/12 "boundpropname"\OT1/ptm/m/n/12 . 
+
+ []
+
+
+Overfull \hbox (22.80531pt too wide) in paragraph at lines 365--367
+[]\OT1/pcr/m/n/12 hi[]deletepointprop("pointpropname") \OT1/ptm/m/n/12 deletes 
+the point prop-erty named \OT1/pcr/m/n/12 "pointpropname" 
+ []
+
+[41] [42] [43] [44]
+Underfull \hbox (badness 10000) in paragraph at lines 608--617
+
+ []
+
+[45]
+Overfull \hbox (27.67596pt too wide) in paragraph at lines 643--649
+\OT1/ptm/m/n/12 con-duc-tors are points or sur-faces, rather than re-gions (\OT
+1/ptm/m/it/12 i.e. \OT1/ptm/m/n/12 can't be se-lected with \OT1/pcr/m/n/12 ho[]
+selectblock\OT1/ptm/m/n/12 ). 
+ []
+
+[46] [47] [48]) (cflow.tex [49]
+Overfull \hbox (53.5381pt too wide) in paragraph at lines 91--93
+[]\OT1/pcr/m/n/12 ci[]setsegmentprop("propname", elementsize, automesh, hide, g
+roup, "inconductor",)
+ []
+
+[50]
+Overfull \hbox (17.28596pt too wide) in paragraph at lines 137--151
+[]\OT1/pcr/m/n/12 ci[]probdef(units,type,frequency,precision,(depth),(minangle)
+) \OT1/ptm/m/n/12 changes the prob-
+ []
+
+[51] [52] [53]
+Overfull \hbox (48.74966pt too wide) in paragraph at lines 335--338
+[]\OT1/pcr/m/n/12 ci[]addpointprop("pointpropname",Vp,jp) \OT1/ptm/m/n/12 adds 
+a new point prop-erty of name \OT1/pcr/m/n/12 "pointpropname"
+ []
+
+
+Overfull \hbox (15.1502pt too wide) in paragraph at lines 339--341
+[]\OT1/pcr/m/n/12 ci[]addboundprop("boundpropname", Vs, js, c0, c1, BdryFormat)
+ \OT1/ptm/m/n/12 adds a new bound-
+ []
+
+
+Overfull \hbox (46.45744pt too wide) in paragraph at lines 369--371
+[]\OT1/pcr/m/n/12 ci[]deleteboundprop("boundpropname") \OT1/ptm/m/n/12 deletes 
+the bound-ary prop-erty named \OT1/pcr/m/n/12 "boundpropname"\OT1/ptm/m/n/12 . 
+
+ []
+
+
+Overfull \hbox (22.80531pt too wide) in paragraph at lines 375--377
+[]\OT1/pcr/m/n/12 ci[]deletepointprop("pointpropname") \OT1/ptm/m/n/12 deletes 
+the point prop-erty named \OT1/pcr/m/n/12 "pointpropname" 
+ []
+
+[54] [55] [56] [57] [58]
+Underfull \hbox (badness 10000) in paragraph at lines 640--649
+
+ []
+
+
+Overfull \hbox (27.67596pt too wide) in paragraph at lines 682--688
+\OT1/ptm/m/n/12 con-duc-tors are points or sur-faces, rather than re-gions (\OT
+1/ptm/m/it/12 i.e. \OT1/ptm/m/n/12 can't be se-lected with \OT1/pcr/m/n/12 co[]
+selectblock\OT1/ptm/m/n/12 ). 
+ []
+
+[59] [60] [61] [62]) [63] (octavefemm.aux)
+Package rerunfilecheck Info: File `octavefemm.out' has not changed.
+(rerunfilecheck)             Checksum: F8D6B6C1E264CA909383C7B8DD38A71E;11625.
+ ) 
+Here is how much of TeX's memory you used:
+ 8698 strings out of 475281
+ 138873 string characters out of 2774066
+ 483867 words of memory out of 3000000
+ 29889 multiletter control sequences out of 15000+600000
+ 507464 words of font info for 101 fonts, out of 8000000 for 9000
+ 1141 hyphenation exceptions out of 8191
+ 72i,12n,77p,408b,589s stack positions out of 10000i,1000n,20000p,200000b,80000s
+{C:/Users/dmeek/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc}<C:
+/Users/dmeek/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi1
+0.pfb><C:/Users/dmeek/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts
+/cm/cmr10.pfb><C:/Users/dmeek/AppData/Local/Programs/MiKTeX/fonts/type1/public/
+amsfonts/cm/cmsy10.pfb><C:/Users/dmeek/AppData/Local/Programs/MiKTeX/fonts/type
+1/urw/courier/ucrr8a.pfb><C:/Users/dmeek/AppData/Local/Programs/MiKTeX/fonts/ty
+pe1/urw/symbol/usyr.pfb><C:/Users/dmeek/AppData/Local/Programs/MiKTeX/fonts/typ
+e1/urw/times/utmb8a.pfb><C:/Users/dmeek/AppData/Local/Programs/MiKTeX/fonts/typ
+e1/urw/times/utmr8a.pfb><C:/Users/dmeek/AppData/Local/Programs/MiKTeX/fonts/typ
+e1/urw/times/utmri8a.pfb>
+Output written on octavefemm.pdf (63 pages, 292960 bytes).
+PDF statistics:
+ 670 PDF objects out of 1000 (max. 8388607)
+ 166 named destinations out of 1000 (max. 500000)
+ 585 words of extra memory for PDF output out of 10000 (max. 10000000)
+

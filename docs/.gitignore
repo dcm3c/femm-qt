@@ -1,0 +1,8 @@
+# Internal development notes kept locally for historical reference but not
+# distributed. Untracked on purpose; listed here so a stray `git add` can't
+# pull them back in. (The distributed docs are the .tex sources.)
+arc-180-degree-fix.md
+build-warning-fixes.md
+license-split.md
+macos-bundle-fixes.md
+of-fidelity-audit.md

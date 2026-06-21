@@ -1,0 +1,269 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    framerule=0.5pt,
+    breaklines=true,
+    showstringspaces=false,
+    language=bash,
+    morekeywords={brew,cmake,ninja,git,cd,mkdir}
+}
+
+\title{Building femm-qt on macOS}
+\author{D.\ Meeker}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Overview}
+
+femm-qt is a cross-platform port of FEMM (Finite Element Method Magnetics)
+using Qt~6 for the GUI and CMake/Ninja for the build system.  This document
+describes how to build it from source on macOS (Intel or Apple Silicon).
+
+The build produces six executables:
+\begin{itemize}[nosep]
+  \item \texttt{femm\_gui} --- the main GUI application
+  \item \texttt{femm\_headless} --- headless IPC server (no GUI)
+  \item \texttt{fkn} --- magnetics solver
+  \item \texttt{belasolv} --- electrostatics solver
+  \item \texttt{hsolv} --- heat flow solver
+  \item \texttt{csolv} --- current flow solver
+\end{itemize}
+
+\section{Prerequisites}
+
+\subsection{Xcode Command Line Tools}
+
+Install the Apple compiler toolchain (Clang, make, git, etc.) from Terminal:
+\begin{lstlisting}
+xcode-select --install
+\end{lstlisting}
+Follow the prompts to complete the installation.  This provides
+\texttt{clang++}, \texttt{git}, and standard system headers.
+
+\subsection{Homebrew}
+
+If not already installed, install the Homebrew package manager:
+\begin{lstlisting}
+/bin/bash -c "$(curl -fsSL \
+    https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+\end{lstlisting}
+Follow the post-install instructions to add Homebrew to your \texttt{PATH}.
+
+\subsection{CMake and Ninja}
+
+\begin{lstlisting}
+brew install cmake ninja
+\end{lstlisting}
+
+\subsection{Qt 6}
+
+Install Qt~6 via Homebrew:
+\begin{lstlisting}
+brew install qt@6
+\end{lstlisting}
+Homebrew installs Qt to a prefix such as \texttt{/opt/homebrew/opt/qt@6}
+(Apple Silicon) or \texttt{/usr/local/opt/qt@6} (Intel).  Note this path;
+it is needed for the CMake configure step.
+
+To find your Qt prefix:
+\begin{lstlisting}
+brew --prefix qt@6
+\end{lstlisting}
+
+\subsection{OpenMP (Optional)}
+
+macOS's system Clang does not ship with OpenMP support.  Without OpenMP,
+the solvers build and run correctly but are single-threaded.  To enable
+multithreaded solving:
+\begin{lstlisting}
+brew install libomp
+\end{lstlisting}
+CMake will automatically detect Homebrew's \texttt{libomp} and configure
+the necessary flags.  If it is not found, CMake prints a notice and
+proceeds without it.
+
+\section{Getting the Source}
+
+If you have a source zip, unzip it:
+\begin{lstlisting}
+unzip femm-qt-src.zip
+cd femm-qt
+\end{lstlisting}
+
+Or, if the source is hosted on GitHub, clone the repository:
+\begin{lstlisting}
+git clone <repository-url> femm-qt
+cd femm-qt
+\end{lstlisting}
+
+\section{Building}
+
+From the \texttt{femm-qt} directory, run the build script:
+\begin{lstlisting}
+./macos_build.sh
+\end{lstlisting}
+
+This checks that the build tools are present, locates Qt~6 via
+Homebrew, configures the project with CMake, and builds it with Ninja.
+The GUI is produced as a macOS application bundle
+(\texttt{build/bin/femm\_gui.app}).  The build script copies the solver
+executables, material libraries, and the OpenMP runtime into the bundle
+so the app is self-contained, and runs \texttt{macdeployqt} to bundle
+the Qt frameworks.
+
+To wipe the build directory and rebuild from scratch, pass
+\texttt{clean}:
+\begin{lstlisting}
+./macos_build.sh clean
+\end{lstlisting}
+
+If the build fails because CMake cannot find Qt~6, see
+\textit{Manual configuration} under Troubleshooting.
+
+\section{Running}
+
+Launch the GUI by double-clicking \texttt{femm\_gui.app} in Finder, or
+from Terminal:
+\begin{lstlisting}
+open build/bin/femm_gui.app
+\end{lstlisting}
+
+Or the headless server (for scripted/IPC use):
+\begin{lstlisting}
+./build/bin/femm_headless
+\end{lstlisting}
+
+\subsection{Setting FEMM\_DIR}
+
+The language bindings (OctaveFEMM, MathFEMM, pyFEMM, JuliaFEMM) locate
+the FEMM executables via the \texttt{FEMM\_DIR} environment variable.
+Point it at \texttt{build/bin}:
+\begin{lstlisting}
+export FEMM_DIR=/path/to/femm-qt/build/bin
+\end{lstlisting}
+Enter the \texttt{export} line exactly as shown --- a single line with no
+spaces around the \texttt{=}.  This one setting serves both a GUI session
+(\texttt{openfemm()} in OctaveFEMM) and a headless session
+(\texttt{openfemm(1)}): the bindings find \texttt{femm\_headless} directly in
+this directory and reach into the application bundle for the GUI
+(\texttt{femm\_gui.app/Contents/MacOS/femm\_gui}) on their own.  Add it to
+your \texttt{\textasciitilde/.zshrc} (or
+\texttt{\textasciitilde/.bash\_profile}) to make it persistent.
+
+\section{Setting Up OctaveFEMM}
+
+OctaveFEMM drives FEMM from Octave (or MATLAB) over a local socket, and uses
+Java to make that connection.  On a clean macOS machine the setup is:
+
+\begin{enumerate}
+\item \textbf{Install Octave} via Homebrew:
+\begin{lstlisting}
+brew install octave
+\end{lstlisting}
+
+\item \textbf{Install a JDK.}  OctaveFEMM's socket bridge needs a Java
+runtime, and Homebrew's Octave does not bundle one.  Install the Adoptium
+Temurin JDK --- either download it from \url{https://adoptium.net} or, more
+simply, install it with Homebrew:
+\begin{lstlisting}
+brew install --cask temurin
+\end{lstlisting}
+
+\item \textbf{Set \texttt{FEMM\_DIR} and \texttt{JAVA\_HOME}} in your
+\texttt{\textasciitilde/.zshrc}.  \texttt{FEMM\_DIR} points at
+\texttt{build/bin} (see ``Setting FEMM\_DIR'' above); \texttt{JAVA\_HOME}
+is best resolved dynamically with \texttt{java\_home}, so it survives JDK
+updates:
+\begin{lstlisting}
+export FEMM_DIR="/path/to/femm-qt/build/bin"
+export JAVA_HOME="$(/usr/libexec/java_home)"
+\end{lstlisting}
+Open a new terminal (or run \texttt{source \textasciitilde/.zshrc})
+afterward so the variables take effect.
+
+\item \textbf{Add the m-files to Octave's path.}  Start Octave and run, once:
+\begin{lstlisting}
+addpath('/path/to/femm-qt/octavefemm');
+savepath;
+\end{lstlisting}
+\texttt{savepath} records the directory in your Octave preferences so you do
+not have to re-add it every session.
+\end{enumerate}
+
+To verify, run \texttt{openfemm} at the Octave prompt: the FEMM window should
+appear and connect.  Use \texttt{openfemm(1)} for a headless session (no
+window), which talks to \texttt{femm\_headless} instead.
+
+\section{Troubleshooting}
+
+\subsection{Manual configuration}
+
+The build script wraps the CMake/Ninja steps and assembles the app
+bundle.  The order of the bundling steps matters: \texttt{macdeployqt}
+must run \emph{before} the solvers and data files are copied in (it scans
+\texttt{MacOS/} and aborts on the \texttt{.dat} files otherwise), and the
+bundle must be re-signed afterward.  To run the steps by hand:
+\begin{lstlisting}
+mkdir build && cd build
+cmake .. -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
+ninja
+APP=bin/femm_gui.app/Contents/MacOS
+# 1. Bundle Qt frameworks FIRST, while the bundle holds only femm_gui.
+#    This also copies libomp.dylib into Contents/Frameworks/.
+$(brew --prefix qt@6)/bin/macdeployqt bin/femm_gui.app
+# 2. Copy the solvers and the headless engine in afterward:
+for s in fkn belasolv hsolv csolv femm_headless; do
+    cp bin/$s "$APP/"
+done
+# 3. Repoint each at the bundled libomp (so they need no Homebrew libomp):
+for s in fkn belasolv hsolv csolv femm_headless; do
+    install_name_tool -change \
+        "$(otool -L "$APP/$s" | awk '/libomp/{print $1; exit}')" \
+        @executable_path/../Frameworks/libomp.dylib "$APP/$s"
+done
+# 4. Copy the material libraries (data, not code):
+cp ../matlibs/*.dat "$APP/"
+# 5. Re-seal the bundle with a deep ad-hoc signature:
+codesign --force --deep --sign - bin/femm_gui.app
+\end{lstlisting}
+The \texttt{macos\_build.sh} script is the authoritative, commented version
+of this procedure.
+
+\subsection{Qt not found}
+
+If CMake reports that it cannot find Qt6, verify the prefix path:
+\begin{lstlisting}
+brew --prefix qt@6
+\end{lstlisting}
+Pass the result to \texttt{-DCMAKE\_PREFIX\_PATH}.
+
+\subsection{OpenMP not found}
+
+If CMake prints ``OpenMP not found,'' the solvers will still build and
+run but will be single-threaded.  To enable OpenMP, install
+\texttt{libomp} via Homebrew (\texttt{brew install libomp}) and
+re-run the CMake configure step.
+
+\subsection{Permission denied on first run}
+
+macOS Gatekeeper may block unsigned applications.  If you see a
+``cannot be opened because the developer cannot be verified'' dialog,
+go to System Settings $\rightarrow$ Privacy \& Security and click
+``Allow Anyway,'' or remove the quarantine attribute:
+\begin{lstlisting}
+xattr -dr com.apple.quarantine build/bin/femm_gui.app
+\end{lstlisting}
+
+\end{document}

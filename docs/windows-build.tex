@@ -1,0 +1,227 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    framerule=0.5pt,
+    breaklines=true,
+    showstringspaces=false,
+    language=bash,
+    morekeywords={cmake,ninja,git,cd,mkdir,set}
+}
+
+\title{Building femm-qt on Windows}
+\author{D.\ Meeker}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Overview}
+
+femm-qt is a cross-platform port of FEMM (Finite Element Method Magnetics)
+using Qt~6 for the GUI and CMake/Ninja for the build system.  This document
+describes how to build it from source on Windows using the Qt Online
+Installer and MinGW (no Visual Studio required).
+
+The build produces six executables:
+\begin{itemize}[nosep]
+  \item \texttt{femm\_gui.exe} --- the main GUI application
+  \item \texttt{femm\_headless.exe} --- headless IPC server (no GUI)
+  \item \texttt{fkn.exe} --- magnetics solver
+  \item \texttt{belasolv.exe} --- electrostatics solver
+  \item \texttt{hsolv.exe} --- heat flow solver
+  \item \texttt{csolv.exe} --- current flow solver
+\end{itemize}
+
+\section{Prerequisites}
+
+\subsection{Qt 6 with MinGW}
+
+Download and run the Qt Online Installer from
+\url{https://www.qt.io/download-qt-installer-oss}.  You will need a
+free Qt account.
+
+In the installer, select:
+\begin{itemize}[nosep]
+  \item A recent Qt version (e.g.\ Qt 6.10.3)
+  \item Under that version, check \texttt{MinGW 64-bit}
+  \item Under \textbf{Developer and Designer Tools}, check:
+    \begin{itemize}[nosep]
+      \item \texttt{MinGW 13.1.0 64-bit} (or the version matching your Qt)
+      \item \texttt{CMake}
+      \item \texttt{Ninja}
+    \end{itemize}
+\end{itemize}
+
+The default install location is \texttt{C:\textbackslash Qt}.  The paths
+below assume this default; adjust if you installed elsewhere.
+
+After installation, verify the tools are accessible.  Open a command
+prompt and check:
+\begin{lstlisting}
+C:\Qt\Tools\mingw1310_64\bin\g++ --version
+C:\Qt\Tools\CMake_64\bin\cmake --version
+C:\Qt\Tools\Ninja\ninja --version
+\end{lstlisting}
+
+\subsection{Git (Optional)}
+
+If you are cloning from a repository rather than using a source zip,
+install Git for Windows from \url{https://git-scm.com/download/win}.
+
+\section{Getting the Source}
+
+If you have a source zip, extract it:
+\begin{lstlisting}
+unzip femm-qt-src.zip
+cd femm-qt
+\end{lstlisting}
+
+Or clone from a repository:
+\begin{lstlisting}
+git clone <repository-url> femm-qt
+cd femm-qt
+\end{lstlisting}
+
+\section{Building}
+
+From the \texttt{femm-qt} directory, run the build script:
+\begin{lstlisting}
+win_build.bat
+\end{lstlisting}
+
+This auto-detects Qt, MinGW, CMake and Ninja under \texttt{C:\textbackslash Qt},
+configures the project with CMake, and builds it with Ninja.  All
+executables are placed in \texttt{build\textbackslash bin\textbackslash}.
+
+To wipe the build directory and rebuild from scratch, pass
+\texttt{clean}:
+\begin{lstlisting}
+win_build.bat clean
+\end{lstlisting}
+
+If the script cannot find your Qt or MinGW installation --- for
+example, if Qt is installed somewhere other than \texttt{C:\textbackslash Qt}
+--- see \textit{Manual configuration} under Troubleshooting.
+
+\section{Running}
+
+Launch the GUI:
+\begin{lstlisting}
+bin\femm_gui.exe
+\end{lstlisting}
+
+Or the headless server:
+\begin{lstlisting}
+bin\femm_headless.exe
+\end{lstlisting}
+
+\subsection{Setting FEMM\_DIR}
+
+The language bindings (OctaveFEMM, MathFEMM, pyFEMM, JuliaFEMM) locate
+the FEMM executables via the \texttt{FEMM\_DIR} environment variable.
+Set it to the \texttt{bin} directory:
+\begin{lstlisting}
+set FEMM_DIR=C:\path\to\femm-qt\build\bin
+\end{lstlisting}
+To make this persistent, add it via System Properties $\rightarrow$
+Environment Variables, or in PowerShell:
+\begin{lstlisting}
+[Environment]::SetEnvironmentVariable("FEMM_DIR",
+    "C:\path\to\femm-qt\build\bin", "User")
+\end{lstlisting}
+
+\section{Using with MATLAB or Octave}
+
+\subsection{MATLAB}
+
+Set \texttt{FEMM\_DIR} before launching MATLAB, or set it within MATLAB:
+\begin{lstlisting}
+setenv('FEMM_DIR', 'C:\path\to\femm-qt\build\bin')
+\end{lstlisting}
+Add the \texttt{octavefemm} directory to the MATLAB path:
+\begin{lstlisting}
+addpath('C:\path\to\femm-qt\octavefemm')
+\end{lstlisting}
+Then call \texttt{openfemm} to launch femm-qt.
+
+\subsection{Octave}
+
+Octave on Windows requires a modern JDK for socket communication
+(Adoptium Temurin 25 or later is recommended; MATLAB's bundled Java~8
+may segfault with Octave).  Set the \texttt{JAVA\_HOME} environment
+variable to point at the JDK, then launch Octave.
+
+\begin{lstlisting}
+set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-25
+\end{lstlisting}
+
+Add the \texttt{octavefemm} directory to the Octave path and call
+\texttt{openfemm}.
+
+\section{Troubleshooting}
+
+\subsection{Manual configuration}
+
+\texttt{win\_build.bat} auto-detects the toolchain under
+\texttt{C:\textbackslash Qt}.  If it picks the wrong Qt version, or your
+tools are installed elsewhere, set the \texttt{QT\_DIR} and
+\texttt{MINGW\_DIR} variables near the top of the script to the correct
+paths and run it again.
+
+To configure entirely by hand instead, create the build directory and
+invoke CMake and Ninja directly:
+\begin{lstlisting}
+mkdir build
+cd build
+cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release ^
+    -DCMAKE_PREFIX_PATH="C:/Qt/6.10.3/mingw_64" ^
+    -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw1310_64/bin/gcc.exe" ^
+    -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw1310_64/bin/g++.exe" ^
+    -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/Ninja/ninja.exe"
+ninja
+\end{lstlisting}
+Adjust the version numbers in the paths to match what you installed
+(e.g.\ \texttt{6.10.3}, \texttt{mingw1310\_64}).  Use forward slashes in
+paths, even on Windows.
+
+\subsection{CMake cannot find Qt}
+
+If CMake reports that it cannot find Qt6, verify that
+\texttt{-DCMAKE\_PREFIX\_PATH} points to the correct Qt installation.
+Look for a directory like \texttt{C:\textbackslash Qt\textbackslash 6.10.3\textbackslash mingw\_64}
+containing \texttt{lib\textbackslash cmake\textbackslash Qt6}.
+
+\subsection{Wrong compiler picked up}
+
+If CMake finds a different compiler (e.g.\ MSVC), make sure you are
+specifying \texttt{-DCMAKE\_C\_COMPILER} and
+\texttt{-DCMAKE\_CXX\_COMPILER} explicitly pointing at MinGW's
+\texttt{gcc.exe} and \texttt{g++.exe}.
+
+\subsection{DLL not found at runtime}
+
+If \texttt{femm\_gui.exe} fails to launch with missing DLL errors,
+add the Qt and MinGW binary directories to your \texttt{PATH}:
+\begin{lstlisting}
+set PATH=C:\Qt\6.10.3\mingw_64\bin;C:\Qt\Tools\mingw1310_64\bin;%PATH%
+bin\femm_gui.exe
+\end{lstlisting}
+
+\subsection{Building the standalone mesher}
+
+The \texttt{tangle} mesher can be built independently without Qt,
+using just MinGW:
+\begin{lstlisting}
+cd solvers\common
+g++ -O3 -std=c++17 -static -o tangle.exe tangle.cpp float256.cpp -lm
+\end{lstlisting}
+
+\end{document}

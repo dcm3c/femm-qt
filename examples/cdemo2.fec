@@ -1,0 +1,70 @@
+[Format]      =  1
+[Precision]   =  1e-008
+[Frequency]   =  60
+[MinAngle]    =  30
+[Depth]       =  1
+[LengthUnits] =  meters
+[ProblemType] =  axisymmetric
+[Coordinates] =  cartesian
+[Comment]     =  "capacitance between spheres"
+[PointProps]   = 0
+[BdryProps]   = 2
+  <BeginBdry>
+    <BdryName> = "open_bc"
+    <BdryType> = 1
+    <vsr> = 0
+    <vsi> = 0
+    <qsr> = 0
+    <qsi> = 0
+    <c0r>  = 0
+    <c0i>  = 4.4506002242142767e-011
+    <c1r>  = 0
+    <c1i>  = 0
+  <EndBdry>
+  <BeginBdry>
+    <BdryName> = "zero"
+    <BdryType> = 0
+    <vsr> = 0
+    <vsi> = 0
+    <qsr> = 0
+    <qsi> = 0
+    <c0r>  = 0
+    <c0i>  = 0
+    <c1r>  = 0
+    <c1i>  = 0
+  <EndBdry>
+[BlockProps]  = 1
+  <BeginBlock>
+    <BlockName> = "Air"
+    <ox> = 0
+    <oy> = 0
+    <ex> = 1
+    <ey> = 1
+    <ltx> = 0
+    <lty> = 0
+  <EndBlock>
+[ConductorProps]  = 1
+  <BeginConductor>
+    <ConductorName> = "+100V"
+    <vcr> = 100
+    <vci> = 0
+    <qcr> = 0
+    <qci> = 0
+    <ConductorType> = 1
+  <EndConductor>
+[NumPoints] = 5
+0	150	0	0	0
+0	0	0	0	0
+150	0	0	0	0
+0	10	0	0	0
+0	60	0	0	0
+[NumSegments] = 3
+1	2	-1	2	0	0	0
+0	4	-1	0	0	0	0
+3	1	-1	0	0	0	0
+[NumArcSegments] = 2
+2	0	90	1	1	0	0	0
+3	4	180	1	0	0	0	1
+[NumHoles] = 0
+[NumBlockLabels] = 1
+60	92	1	1	0	0

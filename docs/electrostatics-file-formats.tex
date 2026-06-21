@@ -1,0 +1,382 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{amsmath}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{gray!10},
+    frame=single,
+    framerule=0.5pt,
+    breaklines=true,
+    showstringspaces=false,
+    columns=flexible
+}
+
+\title{FEMM Electrostatics File Formats\\[0.5em]
+\large Input (\texttt{.fee}) and Output (\texttt{.res}) Specifications}
+\author{D.\ Meeker}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ======================================================================
+\section{Overview}
+
+The FEMM electrostatics solver (\texttt{belasolv}) reads a problem
+definition from a \texttt{.fee} file and writes the solution to a
+\texttt{.res} file.  The \texttt{.res} file begins with a verbatim
+copy of the input \texttt{.fee} file, followed by a \texttt{[Solution]}
+section containing the finite element mesh and computed voltage values.
+
+All floating-point values are written with 17 significant digits
+(\verb|%.17g| format).  Fields within a line are separated by tabs or
+spaces.  Section headers use square brackets (\verb|[Tag]|); property
+block delimiters use angle brackets (\verb|<BeginBlock>| /
+\verb|<EndBlock>|).  String comparisons during parsing are
+case-insensitive.
+
+% ======================================================================
+\section{The \texttt{.fee} Input File}
+
+% ----------------------------------------------------------------------
+\subsection{Global Problem Parameters}
+
+Each parameter occupies one line in the format
+\verb|[Tag] = value|.  All are optional; defaults are applied if
+missing.
+
+\begin{longtable}{lllp{6cm}}
+\toprule
+Tag & Type & Default & Description \\
+\midrule
+\endhead
+\verb|[Format]|      & int     & 1          & File format version \\
+\verb|[Precision]|   & double  & 1e-8       & Solver convergence tolerance \\
+\verb|[MinAngle]|    & double  & 30         & Minimum mesh element angle (degrees) \\
+\verb|[DoSmartMesh]| & int     & 1          & Adaptive meshing (0=off, 1=on) \\
+\verb|[Depth]|       & double  & 1.0        & Extrusion depth (planar problems) \\
+\verb|[LengthUnits]| & string  & millimeters & inches, millimeters, centimeters, meters, mils, microns \\
+\verb|[ProblemType]| & string  & planar     & planar or axisymmetric \\
+\verb|[Coordinates]| & string  & cartesian  & cartesian or polar \\
+\verb|[Comment]|     & string  & (empty)    & Problem description (quoted; \verb|\n| = newline) \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{Axisymmetric External Region}
+
+Written only when \verb|ProblemType| is axisymmetric and both
+\verb|extRo| and \verb|extRi| are nonzero:
+
+\begin{longtable}{llp{8cm}}
+\toprule
+Tag & Type & Description \\
+\midrule
+\verb|[extZo]| & double & Outer Z coordinate \\
+\verb|[extRo]| & double & Outer radius \\
+\verb|[extRi]| & double & Inner radius \\
+\bottomrule
+\end{longtable}
+
+% ----------------------------------------------------------------------
+\subsection{Point (Nodal) Properties}
+
+\begin{lstlisting}
+[PointProps] = <count>
+<BeginPoint>
+  <PointName> = "name"
+  <Vp> = 0        prescribed voltage (V)
+  <qp> = 0        point charge (C/m depth)
+<EndPoint>
+... repeated count times
+\end{lstlisting}
+
+% ----------------------------------------------------------------------
+\subsection{Boundary Properties}
+
+\begin{lstlisting}
+[BdryProps] = <count>
+<BeginBdry>
+  <BdryName> = "name"
+  <BdryType> = 0
+  <Vs> = 0          fixed voltage (V)
+  <qs> = 0          surface charge density (C/m^2)
+  <c0> = 0          mixed BC coefficient
+  <c1> = 0          mixed BC coefficient
+<EndBdry>
+\end{lstlisting}
+
+Boundary types:
+\begin{itemize}[nosep]
+  \item 0 = fixed voltage (Dirichlet): $V = V_s$
+  \item 1 = mixed (Robin): $\hat{n} \cdot D = -c_0 (V - c_1)$
+  \item 2 = surface charge density (Neumann): applies $q_s$
+  \item 3 = periodic
+  \item 4 = antiperiodic
+\end{itemize}
+
+% ----------------------------------------------------------------------
+\subsection{Material (Block) Properties}
+
+\begin{lstlisting}
+[BlockProps] = <count>
+<BeginBlock>
+  <BlockName> = "name"
+  <ex> = 1          relative permittivity, x-direction
+  <ey> = 1          relative permittivity, y-direction
+  <qv> = 0          volume charge density (C/m^3)
+<EndBlock>
+\end{lstlisting}
+
+% ----------------------------------------------------------------------
+\subsection{Conductor Properties}
+
+The electrostatics solver uses \emph{conductors} (analogous to
+\emph{circuits} in the magnetics solver) to enforce equipotential
+constraints or prescribe total charge on electrode surfaces.
+
+\begin{lstlisting}
+[ConductorProps] = <count>
+<BeginConductor>
+  <ConductorName> = "name"
+  <Vc> = 0           prescribed voltage (V)
+  <qc> = 0           prescribed total charge (C)
+  <ConductorType> = 0
+<EndConductor>
+\end{lstlisting}
+
+Conductor types:
+\begin{itemize}[nosep]
+  \item 0 = prescribed total charge ($q = q_c$; solver computes $V$)
+  \item 1 = prescribed voltage ($V = V_c$; solver computes $q$)
+\end{itemize}
+
+% ----------------------------------------------------------------------
+\subsection{Geometry}
+
+\subsubsection{Nodes}
+
+\begin{lstlisting}
+[NumPoints] = <count>
+x    y    propIdx    inGroup    conductorIdx    [lfs]
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{x}, \texttt{y}: coordinates (double)
+  \item \texttt{propIdx}: index into point property list (1-based; 0 = none)
+  \item \texttt{inGroup}: group number (int)
+  \item \texttt{conductorIdx}: index into conductor list (1-based; 0 = none)
+  \item \texttt{lfs}: local feature size constraint (double, optional; $-1$ = auto)
+\end{itemize}
+
+\subsubsection{Line Segments}
+
+\begin{lstlisting}
+[NumSegments] = <count>
+n0    n1    maxSideLength    propIdx    hidden    inGroup    conductorIdx
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{n0}, \texttt{n1}: endpoint node indices (0-based)
+  \item \texttt{maxSideLength}: mesh size constraint (double; $-1$ = auto)
+  \item \texttt{propIdx}: boundary property index (1-based; 0 = none)
+  \item \texttt{hidden}: 0 = visible, 1 = suppressed from mesh
+  \item \texttt{inGroup}: group number
+  \item \texttt{conductorIdx}: conductor index (1-based; 0 = none)
+\end{itemize}
+
+\subsubsection{Arc Segments}
+
+\begin{lstlisting}
+[NumArcSegments] = <count>
+n0  n1  arcAngle  maxSideLength  propIdx  hidden  inGroup  conductorIdx  mySideLength
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{n0}, \texttt{n1}: endpoint node indices (0-based)
+  \item \texttt{arcAngle}: arc span (degrees)
+  \item \texttt{maxSideLength}: mesh constraint (double)
+  \item \texttt{propIdx}: boundary property index (1-based; 0 = none)
+  \item \texttt{hidden}: 0 = visible, 1 = suppressed
+  \item \texttt{inGroup}: group number
+  \item \texttt{conductorIdx}: conductor index (1-based; 0 = none)
+  \item \texttt{mySideLength}: computed side length (0 = auto)
+\end{itemize}
+
+\subsubsection{Holes}
+
+\begin{lstlisting}
+[NumHoles] = <count>
+x    y    inGroup
+\end{lstlisting}
+
+Holes are seed points for regions excluded from the mesh.  They
+correspond to block labels with material \texttt{"<No Mesh>"}.
+
+\subsubsection{Block Labels}
+
+\begin{lstlisting}
+[NumBlockLabels] = <count>
+x    y    blockIdx    meshSize    inGroup    extFlags
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{x}, \texttt{y}: label position (double)
+  \item \texttt{blockIdx}: material index (1-based; 0 = unassigned)
+  \item \texttt{meshSize}: element size (double; $\leq 0$ = auto).
+        Stored as diameter; converted to area: $A = \pi d^2/4$
+  \item \texttt{inGroup}: group number
+  \item \texttt{extFlags}: bit 0 = external region, bit 1 = default region
+\end{itemize}
+
+% ----------------------------------------------------------------------
+\subsection{Differences from Magnetics (\texttt{.fem}) Format}
+
+\begin{itemize}
+  \item No \texttt{[Frequency]} or \texttt{[ACSolver]} fields
+        (electrostatics is always DC).
+  \item No \texttt{[PrevType]} or \texttt{[PrevSoln]} fields
+        (no incremental/frozen permeability).
+  \item Material properties are permittivity ($\varepsilon_x$,
+        $\varepsilon_y$) and volume charge ($q_v$), not permeability,
+        coercivity, conductivity, or B-H curves.
+  \item Point properties use voltage $V_p$ and point charge $q_p$,
+        not current and vector potential.
+  \item \emph{Conductors} replace \emph{circuits}; geometry entities
+        (nodes, segments, arcs) carry a conductor index.
+  \item Block labels have no circuit index, turns, or magnetization
+        direction fields.
+\end{itemize}
+
+
+% ======================================================================
+\section{The \texttt{.res} Output File}
+
+The \texttt{.res} file begins with a verbatim copy of the input
+\texttt{.fee} file (all sections described in Section~2), followed by
+the solver's solution data.
+
+% ----------------------------------------------------------------------
+\subsection{Solution Header}
+
+Immediately after the echoed \texttt{.fee} content:
+
+\begin{lstlisting}
+[Solution]
+\end{lstlisting}
+
+% ----------------------------------------------------------------------
+\subsection{Mesh Nodes}
+
+\begin{lstlisting}
+<NumNodes>
+\end{lstlisting}
+
+followed by \texttt{NumNodes} lines:
+
+\begin{lstlisting}
+x    y    V    Q
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{x}, \texttt{y}: node coordinates in model units
+  \item \texttt{V}: computed voltage (V)
+  \item \texttt{Q}: boundary/conductor marker (int):
+    \begin{itemize}[nosep]
+      \item $-2$ = interior node (no boundary condition)
+      \item $-1$ = fixed voltage boundary
+      \item $0 \ldots N-1$ = conductor index
+    \end{itemize}
+\end{itemize}
+
+Node indices are 0-based throughout the solution section.
+
+% ----------------------------------------------------------------------
+\subsection{Mesh Elements}
+
+\begin{lstlisting}
+<NumElements>
+\end{lstlisting}
+
+followed by \texttt{NumElements} lines:
+
+\begin{lstlisting}
+p0    p1    p2    labelIdx
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{p0}, \texttt{p1}, \texttt{p2}: vertex node indices (0-based)
+  \item \texttt{labelIdx}: block label index (0-based, into the block
+        label list from the \texttt{.fee} header)
+\end{itemize}
+
+% ----------------------------------------------------------------------
+\subsection{Conductor Solution Data}
+
+\begin{lstlisting}
+<NumConductors>
+\end{lstlisting}
+
+followed by \texttt{NumConductors} lines:
+
+\begin{lstlisting}
+V    q
+\end{lstlisting}
+
+\begin{itemize}[nosep]
+  \item \texttt{V}: voltage on the conductor (V).  For prescribed-voltage
+        conductors, this is the prescribed value; for prescribed-charge
+        conductors, this is the computed value.
+  \item \texttt{q}: total charge on the conductor (C).  For
+        prescribed-charge conductors, this is the prescribed value; for
+        prescribed-voltage conductors, this is the computed value.
+\end{itemize}
+
+% ======================================================================
+\section{Index Conventions}
+
+\begin{itemize}
+  \item \textbf{Property indices} (materials, boundaries, conductors,
+        point properties) are \textbf{1-based} in the file.  An index
+        of 0 means ``no property assigned.''  The parser converts to
+        0-based internally.
+
+  \item \textbf{Node indices} (in segments, arcs, and the solution
+        section) are \textbf{0-based}.
+
+  \item \textbf{Block label indices} in the solution element list are
+        \textbf{0-based}, referencing the block label array from the
+        \texttt{.fee} header.
+\end{itemize}
+
+% ======================================================================
+\section{Unit Conversion}
+
+The \verb|[LengthUnits]| tag determines the coordinate system.  All
+coordinates in the file are in the specified units.  Conversion to
+meters:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Unit & Meters per unit \\
+\midrule
+inches      & 0.0254 \\
+millimeters & 0.001 \\
+centimeters & 0.01 \\
+meters      & 1.0 \\
+mils        & $2.54 \times 10^{-5}$ \\
+microns     & $10^{-6}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

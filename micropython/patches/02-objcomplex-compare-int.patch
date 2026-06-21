@@ -1,0 +1,31 @@
+diff --git a/femm-qt/micropython/micropython_embed/py/objcomplex.c b/femm-qt/micropython/micropython_embed/py/objcomplex.c
+index 805899e..6acaa58 100644
+--- a/femm-qt/micropython/micropython_embed/py/objcomplex.c
++++ b/femm-qt/micropython/micropython_embed/py/objcomplex.c
+@@ -117,6 +117,9 @@ static mp_obj_t complex_unary_op(mp_unary_op_t op, mp_obj_t o_in) {
+             return mp_obj_new_complex(-o->real, -o->imag);
+         case MP_UNARY_OP_ABS:
+             return mp_obj_new_float(MICROPY_FLOAT_C_FUN(sqrt)(o->real * o->real + o->imag * o->imag));
++        // FEMM patch: int(z) extracts the real part and truncates to int.
++        case MP_UNARY_OP_INT_MAYBE:
++            return mp_obj_new_int_from_float(o->real);
+         default:
+             return MP_OBJ_NULL;      // op not supported
+     }
+@@ -242,6 +245,16 @@ mp_obj_t mp_obj_complex_binary_op(mp_binary_op_t op, mp_float_t lhs_real, mp_flo
+         case MP_BINARY_OP_EQUAL:
+             return mp_obj_new_bool(lhs_real == rhs_real && lhs_imag == rhs_imag);
+ 
++        // FEMM patch: compare on real part (matches Lua CComplex __lt/__le).
++        case MP_BINARY_OP_LESS:
++            return mp_obj_new_bool(lhs_real < rhs_real);
++        case MP_BINARY_OP_MORE:
++            return mp_obj_new_bool(lhs_real > rhs_real);
++        case MP_BINARY_OP_LESS_EQUAL:
++            return mp_obj_new_bool(lhs_real <= rhs_real);
++        case MP_BINARY_OP_MORE_EQUAL:
++            return mp_obj_new_bool(lhs_real >= rhs_real);
++
+         default:
+             return MP_OBJ_NULL; // op not supported
+     }
