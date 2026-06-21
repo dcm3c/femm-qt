@@ -61,7 +61,19 @@ bool DocumentBase::getBoundingBox(double &xmin, double &ymin, double &xmax, doub
         if (b.y > ymax) ymax = b.y;
     }
 
-    // Arc segments — traverse at discretization level to capture full extent
+    // Arc segments — traverse at discretization level to capture the full
+    // extent of the arc's bulge. Use the same rotation approach as the editor's
+    // drawArcSegments (and original FEMM): GetCircle places the center so that a
+    // positive (CCW) rotation by ArcLength carries n0 onto n1, so we simply step
+    // by a fixed +dt with no direction to guess.
+    //
+    // The earlier version reconstructed the sweep direction from arg()/atan2 and
+    // a CCW-vs-CW comparison that was exactly degenerate for a 180-degree arc:
+    // the swept angle and ArcLength both equal PI, so the test hinged on sub-ULP
+    // rounding and flipped between an FMA build (macOS/arm64) and a non-FMA x86
+    // build (Windows), sampling the wrong semicircle and corrupting the box. The
+    // rotation form needs no such sign and is robust at 180 deg. (cf.
+    // docs/arc-180-degree-fix.md)
     for (const auto &arc : arclist) {
         if (arc.n0 < 0 || arc.n0 >= (int)nodelist.size()) continue;
         if (arc.n1 < 0 || arc.n1 >= (int)nodelist.size()) continue;
@@ -76,31 +88,15 @@ bool DocumentBase::getBoundingBox(double &xmin, double &ymin, double &xmax, doub
         int nsteps = (int)ceil(arc.ArcLength / segAngle);
         if (nsteps < 1) nsteps = 1;
 
-        // Find start angle
-        CComplex p0 = nodelist[arc.n0].CC();
-        double startAngle = arg((p0 - c) / R);
-
-        // Direction: arc goes from n0 to n1 over ArcLength degrees
-        double totalRad = arc.ArcLength * PI / 180.0;
-        // Determine sign: check if going CCW or CW from n0 to n1
-        CComplex p1 = nodelist[arc.n1].CC();
-        double endAngle = arg((p1 - c) / R);
-        double diff = endAngle - startAngle;
-        // Normalize to [0, 2*PI)
-        while (diff < 0) diff += 2.0 * PI;
-        while (diff >= 2.0 * PI) diff -= 2.0 * PI;
-        double sign = 1.0;
-        if (fabs(diff - totalRad) > fabs(diff + totalRad - 2.0 * PI))
-            sign = -1.0;
-
+        double dt = arc.ArcLength * PI / (180.0 * nsteps);
+        CComplex rot(cos(dt), sin(dt));
+        CComplex pt = nodelist[arc.n0].CC();
         for (int k = 0; k <= nsteps; k++) {
-            double theta = startAngle + sign * totalRad * k / nsteps;
-            double px = c.re + R * cos(theta);
-            double py = c.im + R * sin(theta);
-            if (px < xmin) xmin = px;
-            if (px > xmax) xmax = px;
-            if (py < ymin) ymin = py;
-            if (py > ymax) ymax = py;
+            if (pt.re < xmin) xmin = pt.re;
+            if (pt.re > xmax) xmax = pt.re;
+            if (pt.im < ymin) ymin = pt.im;
+            if (pt.im > ymax) ymax = pt.im;
+            pt = (pt - c) * rot + c;   // advance CCW by dt
         }
     }
 
