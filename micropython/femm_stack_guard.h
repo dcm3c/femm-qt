@@ -40,6 +40,11 @@ extern "C" {
 #include <windows.h>
 #else
 #include <pthread.h>
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || \
+    defined(__DragonFly__)
+// BSDs declare the thread-stack query (pthread_attr_get_np) here, not pthread.h.
+#include <pthread_np.h>
+#endif
 #endif
 
 // Reserve below the OS stack limit: must exceed the deepest C-stack growth
@@ -63,6 +68,27 @@ static inline void femm_init_stack_guard() {
     size_t size = pthread_get_stacksize_np(pthread_self());
     size_t budget = size > reserve ? size - reserve : size / 2;
     mp_cstack_init_with_top(base, budget);
+
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || \
+    defined(__DragonFly__)
+    // BSD: like Linux, attr gives the LOW address + size (base = low + size),
+    // but the query is spelled pthread_attr_get_np and -- unlike glibc's
+    // pthread_getattr_np -- requires the attr to be initialized beforehand. We
+    // own the init here, so we must destroy it on both paths.
+    pthread_attr_t attr;
+    void *low = nullptr;
+    size_t size = 0;
+    pthread_attr_init(&attr);
+    if (pthread_attr_get_np(pthread_self(), &attr) == 0 &&
+        pthread_attr_getstack(&attr, &low, &size) == 0) {
+        pthread_attr_destroy(&attr);
+        size_t budget = size > reserve ? size - reserve : size / 2;
+        mp_cstack_init_with_top((char *)low + size, budget);
+    } else {
+        pthread_attr_destroy(&attr);
+        // Fall back to capturing here with a budget that fits an 8 MB stack.
+        mp_cstack_init_with_sp_here(8u * 1024 * 1024 - reserve);
+    }
 
 #else
     // Linux/glibc: attr gives the LOW address + size; base = low + size.

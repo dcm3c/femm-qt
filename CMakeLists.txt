@@ -45,17 +45,27 @@ target_include_directories(micropython_embed PUBLIC
 target_include_directories(micropython_embed PRIVATE "${MPY_DIR}/ulab/code")
 set_source_files_properties(${ULAB_SOURCES} PROPERTIES
     COMPILE_DEFINITIONS "MODULE_ULAB_ENABLED=1")
+# shared/runtime/gchelper_generic.c deliberately reads callee-saved CPU
+# registers (x19-x29 on AArch64) bound via `const register long x asm(...)` to
+# scan them for the GC. The compiler can't see they're live and flags them as
+# uninitialized const reads; the warnings are false positives for this
+# intentional pattern, and the file is vendored/regenerated, so silence them at
+# the target rather than patching the generated source. -Wno-uninitialized is
+# universally recognized. The const-init diagnostic, however, exists only on
+# newer Clang -- and Clang (unlike GCC) does NOT silently ignore an unknown
+# -Wno-... option: it emits -Wunknown-warning-option for EVERY file. So gate it
+# on the compiler actually knowing the warning. We probe the POSITIVE form,
+# because an unknown -W<name> is what Clang rejects (an unknown -Wno-<name> is
+# accepted without error and would mis-report as supported).
+include(CheckCCompilerFlag)
+check_c_compiler_flag("-Wdefault-const-init-var-unsafe" HAVE_WCONST_INIT_UNSAFE)
+set(_mpy_const_init_flag "")
+if(HAVE_WCONST_INIT_UNSAFE)
+    set(_mpy_const_init_flag -Wno-default-const-init-var-unsafe)
+endif()
 target_compile_options(micropython_embed PRIVATE -std=gnu11 -fno-common -Wall
     -Wno-unused-variable -Wno-sign-compare
-    # shared/runtime/gchelper_generic.c deliberately reads callee-saved CPU
-    # registers (x19-x29 on AArch64) bound via `const register long x asm(...)`
-    # to scan them for the GC. The compiler can't see they're live and flags
-    # them as uninitialized const reads; both warnings are false positives for
-    # this intentional pattern, and the file is vendored/regenerated, so silence
-    # them at the target rather than patching the generated source. The
-    # const-init flag is a newer-Clang diagnostic; GCC/older Clang silently
-    # ignore the unrecognized -Wno- option, so leaving it unconditional is safe.
-    -Wno-uninitialized -Wno-default-const-init-var-unsafe)
+    -Wno-uninitialized ${_mpy_const_init_flag})
 # Staleness guard (content-based, not mtime). The committed micropython_embed
 # package records the mpconfigport.h it was generated against in
 # mpconfigport.sha256 (line-ending-normalized, so it's identical across
@@ -117,6 +127,17 @@ endif()
 # compile flag (-fopenmp) and link flag from OpenMP.
 target_link_libraries(femm_common PUBLIC
     $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>)
+
+# --- Threads ---
+# py_state.cpp (via femm_stack_guard.h) calls pthread_attr_get{,stack} to size
+# the MicroPython C-stack guard. On Linux these live in libc (glibc folds in
+# libpthread) and on macOS/Windows the runtime is implicit, so the link
+# historically worked with no explicit thread lib. FreeBSD keeps them in
+# libpthread/libthr, so the symbol is unresolved unless we link the thread
+# library. Threads::Threads expands to the right flag (-pthread) where one is
+# needed and to nothing where it isn't. Linked PUBLIC on libfemm below so it
+# propagates to femm_headless, femm_gui, and anything else that uses libfemm.
+find_package(Threads REQUIRED)
 
 # --- Layer 1: libfemm (core engine, no Qt) ---
 add_subdirectory(libfemm)

@@ -13,7 +13,7 @@
     breaklines=true,
     showstringspaces=false,
     language=bash,
-    morekeywords={pkg,cmake,ninja,git,cd,mkdir,export,setenv,service,sysrc,doas}
+    morekeywords={pkg,cmake,ninja,git,cd,mkdir,export,setenv,service,sysrc,sudo,su,doas}
 }
 
 \title{Building femm-qt on FreeBSD}
@@ -47,8 +47,12 @@ The build produces six executables:
   \item \texttt{csolv} --- current flow solver
 \end{itemize}
 
-The commands below use \texttt{doas} for administrative actions; substitute
-\texttt{sudo} (from \texttt{pkg install sudo}) if you prefer it.
+The commands below use \texttt{sudo} for administrative actions.  GhostBSD
+ships \texttt{sudo} preconfigured; on a base FreeBSD system, either install it
+(\texttt{pkg install sudo}, run as root) and add your user to the
+\texttt{wheel} group, or simply run the privileged commands from a root shell
+(\texttt{su -}).  The base system's \texttt{doas} also works once you create
+\texttt{/usr/local/etc/doas.conf}.
 
 \section{Prerequisites}
 
@@ -58,7 +62,7 @@ FreeBSD ships clang, the C++ standard library, and the linker in the base
 system, so no separate ``build-essential'' package is required.  Install
 CMake, Ninja, git, and bash (the build script is a bash script):
 \begin{lstlisting}
-doas pkg install cmake ninja git bash
+sudo pkg install cmake ninja git bash
 \end{lstlisting}
 This provides \texttt{cmake}, \texttt{ninja}, \texttt{git}, and \texttt{bash};
 the C++ compiler is already present as \texttt{cc}/\texttt{c++}.
@@ -67,7 +71,7 @@ the C++ compiler is already present as \texttt{cc}/\texttt{c++}.
 
 Install the Qt~6 libraries and development files:
 \begin{lstlisting}
-doas pkg install qt6
+sudo pkg install qt6
 \end{lstlisting}
 The \texttt{qt6} metapackage pulls in everything, including the \texttt{moc},
 \texttt{rcc}, and \texttt{uic} code generators that the build needs.  If you
@@ -80,16 +84,15 @@ To verify the installation:
 qmake6 --version
 \end{lstlisting}
 
-\subsection{OpenMP (Optional)}
+\subsection{OpenMP}
 
-Unlike GCC on Linux, FreeBSD's base clang does not bundle the OpenMP runtime.
-For multithreaded solvers, install it:
-\begin{lstlisting}
-doas pkg install openmp
-\end{lstlisting}
-This provides \texttt{libomp} and \texttt{omp.h} under \texttt{/usr/local}.
-If OpenMP is not installed, CMake reports ``OpenMP not found'' and the solvers
-build and run single-threaded --- the build still succeeds.
+No action needed.  FreeBSD's base clang ships the OpenMP runtime
+(\texttt{libomp.so}, in \texttt{/usr/lib}) along with \texttt{omp.h}, so the
+multithreaded solvers build with no extra package --- CMake locates OpenMP
+automatically and reports the found version during configuration.  (Should you
+ever build on a stripped system where it is missing, CMake reports ``OpenMP
+not found'' and the solvers fall back to single-threaded; the build still
+succeeds.)
 
 \section{Getting the Source}
 
@@ -113,8 +116,9 @@ From the \texttt{femm-qt} directory, run the build script:
 \end{lstlisting}
 
 This checks that the build tools are present, configures the project with
-CMake (pointing it at \texttt{/usr/local} so Qt~6 and OpenMP are found), and
-builds it with Ninja.  All executables are placed in \texttt{build/bin/}.
+CMake (pointing it at \texttt{/usr/local} so Qt~6 is found; OpenMP comes from
+the base system), and builds it with Ninja.  All executables are placed in
+\texttt{build/bin/}.
 
 To wipe the build directory and rebuild from scratch, pass \texttt{clean}:
 \begin{lstlisting}
@@ -179,7 +183,7 @@ for the *.m language bindings.
 
 Install Octave and a JDK (OctaveFEMM uses Java for socket communication):
 \begin{lstlisting}
-doas pkg install octave openjdk21
+sudo pkg install octave openjdk21
 \end{lstlisting}
 Find the path to Java:
 \begin{lstlisting}
@@ -209,7 +213,7 @@ find and launch \texttt{femm\_gui} or \texttt{femm\_headless} automatically.
 The Python interface is/will be available as pyfemm-qt.  Install Python and
 pip first:
 \begin{lstlisting}
-doas pkg install python3 py311-pip
+sudo pkg install python3 py311-pip
 \end{lstlisting}
 Then install pyfemm from PyPI:
 \begin{lstlisting}
@@ -248,14 +252,15 @@ cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release \
 ninja
 \end{lstlisting}
 The \texttt{CMAKE\_PREFIX\_PATH=/usr/local} hint lets find\_package locate the
-Qt~6 and OpenMP packages installed by \texttt{pkg}.
+Qt~6 packages installed by \texttt{pkg}.  OpenMP needs no hint --- its runtime
+lives in the base system under \texttt{/usr/lib}.
 
 \subsection{``env: bash: No such file or directory''}
 
 The build script is a bash script, but bash is not part of the FreeBSD base
 system.  Install it:
 \begin{lstlisting}
-doas pkg install bash
+sudo pkg install bash
 \end{lstlisting}
 
 \subsection{Qt not found}
@@ -277,7 +282,7 @@ cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release \
 On minimal installations or VMs without a desktop, Qt may need the Mesa
 OpenGL libraries and DRI drivers:
 \begin{lstlisting}
-doas pkg install mesa-libs mesa-dri libglvnd
+sudo pkg install mesa-libs mesa-dri libglvnd
 \end{lstlisting}
 
 \subsection{VirtualBox Guest Additions}
@@ -285,18 +290,18 @@ doas pkg install mesa-libs mesa-dri libglvnd
 If running in a VirtualBox VM, install the FreeBSD guest additions for proper
 display scaling and shared folders:
 \begin{lstlisting}
-doas pkg install virtualbox-ose-additions
+sudo pkg install virtualbox-ose-additions
 \end{lstlisting}
 Enable the guest services so they start at boot:
 \begin{lstlisting}
-doas sysrc vboxguest_enable="YES"
-doas sysrc vboxservice_enable="YES"
+sudo sysrc vboxguest_enable="YES"
+sudo sysrc vboxservice_enable="YES"
 \end{lstlisting}
 Reboot after installation.  To use a shared folder, add your user to the
 \texttt{wheel}/\texttt{operator} group as appropriate and mount it with the
 \texttt{vboxsf} filesystem, e.g.:
 \begin{lstlisting}
-doas mount -t vboxvfs <share-name> /mnt
+sudo mount -t vboxvfs <share-name> /mnt
 \end{lstlisting}
 
 \subsection{MESA / OpenGL errors in VirtualBox}

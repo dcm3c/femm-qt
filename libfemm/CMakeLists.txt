@@ -33,7 +33,8 @@ target_include_directories(libfemm PUBLIC
     "${COMMON_DIR}"
     "${SOLVER_DIR}/fkn"
 )
-target_link_libraries(libfemm PUBLIC micropython_embed femm_common tangle_lib)
+target_link_libraries(libfemm PUBLIC micropython_embed femm_common tangle_lib
+    Threads::Threads)
 target_compile_options(libfemm PRIVATE -Wall
     -Wno-unused-variable -Wno-sign-compare -Wno-write-strings
     -Wno-unused-result
