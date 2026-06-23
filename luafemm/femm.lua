@@ -7,6 +7,22 @@
 _femm_conn = nil
 _femm_port = 48015
 
+local orig_dofile = dofile
+function dofile(filename)
+	-- Extract the substring from the beginning up to the last slash and set
+	-- FEMM's working directory to that path, so a script loaded by path can
+	-- open()/saveas() files relative to its own folder. Guard on _femm_conn:
+	-- dofile is a general function and may be called before openfemm() or for
+	-- non-FEMM files, where there is no connection to drive.
+	local _, last_slash = strfind(filename, ".*[/\\]")
+	if last_slash and _femm_conn then
+		callfemm("setcurrentdirectory", strsub(filename, 1, last_slash))
+	end
+
+	-- Now call the real dofile, preserving its return value.
+	return %orig_dofile(filename)
+end
+
 -- ============================================================
 -- Transport: openfemm / closefemm / callfemm
 -- ============================================================
@@ -107,11 +123,25 @@ function closefemm()
     end
 end
 
+-- Lua 4 has no unpack(): expand array t into the multiple return values
+-- t[i], t[i+1], ..., t[getn(t)] via tail recursion. Must be a GLOBAL, not a
+-- local -- Lua 4.0 functions cannot reach chunk-level locals without %upvalue
+-- syntax, so callfemm (a global) would not see a local helper.
+function _femm_unpack(t, i)
+    if i <= getn(t) then return t[i], _femm_unpack(t, i + 1) end
+end
+
 function format_arg(v)
     if v == nil then return nil end
     if type(v) == "string" then
         return '"' .. gsub(gsub(v, "\\", "\\\\"), '"', '\\"') .. '"'
     end
+    -- Numbers go on the wire at full double precision (%.17g) so they round-trip
+    -- losslessly into femm_gui/femm_headless, independent of how the interpreter
+    -- DISPLAYS numbers (tostring/print use %.14g for readable REPL output, see
+    -- CComplex::ToString in lua/common/complex.cpp). format() also emits the
+    -- server's I* notation for complex values, matching the old tostring path.
+    if type(v) == "number" then return format("%.17g", v) end
     return tostring(v)
 end
 
@@ -192,7 +222,10 @@ function callfemm(cmd, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
 
     if getn(results) == 0 then return nil end
     if getn(results) == 1 then return results[1] end
-    return results
+    -- Classic FEMM commands return MULTIPLE values, e.g.
+    -- i,v,flux = mo_getcircuitproperties("A"), not a table. Expand the parsed
+    -- array into a value list (Lua 4 has no unpack()).
+    return _femm_unpack(results, 1)
 end
 
 -- ============================================================
@@ -202,6 +235,30 @@ function opendocument(fn) return callfemm("open", fn) end
 function newdocument(n) return callfemm("create", n) end
 function smartmesh(n) return callfemm("smartmesh", n) end
 function setcurrentdirectory(d) return callfemm("setcurrentdirectory", d) end
+
+-- Legacy global aliases: classic FEMM scripts call open() and create(); the
+-- binding's canonical names are opendocument() and newdocument(). Both forms
+-- forward to the same server commands ("open" / "create").
+function open(fn) return opendocument(fn) end
+function create(n) return newdocument(n) end
+
+-- messagebox(message): show a dialog in the GUI (handled by the server; a no-op
+-- against the headless server). Classic legacy scripts use it for status notes.
+function messagebox(msg) return callfemm("messagebox", msg) end
+
+-- quit(): documented in the manual as "close all documents and exit". Make it
+-- the interpreter's exit() -- leaving lua4 drops the TCP connection, so femm-qt
+-- shuts down on its own (tcp_server exits on client disconnect).
+quit = exit
+
+-- Console window controls. In the GUI these show/hide/clear the floating Lua
+-- console window. Under luafemm every script's print() output goes to the
+-- terminal/REPL that launched lua4, never to a GUI window, so forwarding these
+-- would only pop an unrelated, empty console. Kept as no-ops purely for
+-- legacy-script compatibility.
+function showconsole() end
+function hideconsole() end
+function clearconsole() end
 
 function main_maximize() return callfemm("main_maximize") end
 function main_minimize() return callfemm("main_minimize") end
@@ -641,6 +698,117 @@ function co_smooth(flag) return callfemm("co_smooth",flag) end
 function co_reload() return callfemm("co_reload") end
 function co_zoomnatural() return callfemm("co_zoomnatural") end
 function co_gettitle() return callfemm("co_gettitle") end
+
+-- ============================================================
+-- Additional commands documented in the FEMM manual (completeness).
+-- These secondary-physics editor/view commands mirror their
+-- magnetics mi_/mo_ equivalents one-to-one.
+-- ============================================================
+-- ei_ commands (mirror mi_)
+function ei_attachdefault() return callfemm("ei_attachdefault") end
+function ei_attachouterspace() return callfemm("ei_attachouterspace") end
+function ei_defineouterspace(Zo,Ro,Ri) return callfemm("ei_defineouterspace",Zo,Ro,Ri) end
+function ei_deleteselectedarcsegments() return callfemm("ei_deleteselectedarcsegments") end
+function ei_deleteselectedlabels() return callfemm("ei_deleteselectedlabels") end
+function ei_deleteselectednodes() return callfemm("ei_deleteselectednodes") end
+function ei_deleteselectedsegments() return callfemm("ei_deleteselectedsegments") end
+function ei_detachdefault() return callfemm("ei_detachdefault") end
+function ei_detachouterspace() return callfemm("ei_detachouterspace") end
+function ei_getboundingbox() return callfemm("ei_getboundingbox") end
+function ei_gettitle() return callfemm("ei_gettitle") end
+function ei_makeABC(a1,a2,a3,a4,a5,a6,a7) return callfemm("ei_makeABC",a1,a2,a3,a4,a5,a6,a7) end
+function ei_maximize() return callfemm("ei_maximize") end
+function ei_minimize() return callfemm("ei_minimize") end
+function ei_readdxf(docname) return callfemm("ei_readdxf",docname) end
+function ei_resize(w,h) return callfemm("ei_resize",w,h) end
+function ei_restore() return callfemm("ei_restore") end
+function ei_savedxf(docname) return callfemm("ei_savedxf",docname) end
+function ei_selectcircle(x,y,R,editmode) return callfemm("ei_selectcircle",x,y,R,editmode) end
+function ei_selectrectangle(x1,y1,x2,y2,editmode) return callfemm("ei_selectrectangle",x1,y1,x2,y2,editmode) end
+function ei_setcomment(c) return callfemm("ei_setcomment",c) end
+function ei_setfocus(docname) return callfemm("ei_setfocus",docname) end
+function ei_setgroup(n) return callfemm("ei_setgroup",n) end
+function ei_smartmesh(n) return callfemm("ei_smartmesh",n) end
+
+-- eo_ commands (mirror mo_)
+function eo_maximize() return callfemm("eo_maximize") end
+function eo_minimize() return callfemm("eo_minimize") end
+function eo_numelements() return callfemm("eo_numelements") end
+function eo_numnodes() return callfemm("eo_numnodes") end
+function eo_refreshview() return callfemm("eo_refreshview") end
+function eo_resize(w,h) return callfemm("eo_resize",w,h) end
+function eo_restore() return callfemm("eo_restore") end
+
+-- hi_ commands (mirror mi_)
+function hi_attachdefault() return callfemm("hi_attachdefault") end
+function hi_attachouterspace() return callfemm("hi_attachouterspace") end
+function hi_defineouterspace(Zo,Ro,Ri) return callfemm("hi_defineouterspace",Zo,Ro,Ri) end
+function hi_deleteselectedarcsegments() return callfemm("hi_deleteselectedarcsegments") end
+function hi_deleteselectedlabels() return callfemm("hi_deleteselectedlabels") end
+function hi_deleteselectednodes() return callfemm("hi_deleteselectednodes") end
+function hi_deleteselectedsegments() return callfemm("hi_deleteselectedsegments") end
+function hi_detachdefault() return callfemm("hi_detachdefault") end
+function hi_detachouterspace() return callfemm("hi_detachouterspace") end
+function hi_getboundingbox() return callfemm("hi_getboundingbox") end
+function hi_gettitle() return callfemm("hi_gettitle") end
+function hi_makeABC(a1,a2,a3,a4,a5,a6,a7) return callfemm("hi_makeABC",a1,a2,a3,a4,a5,a6,a7) end
+function hi_maximize() return callfemm("hi_maximize") end
+function hi_minimize() return callfemm("hi_minimize") end
+function hi_readdxf(docname) return callfemm("hi_readdxf",docname) end
+function hi_resize(w,h) return callfemm("hi_resize",w,h) end
+function hi_restore() return callfemm("hi_restore") end
+function hi_savedxf(docname) return callfemm("hi_savedxf",docname) end
+function hi_selectcircle(x,y,R,editmode) return callfemm("hi_selectcircle",x,y,R,editmode) end
+function hi_selectrectangle(x1,y1,x2,y2,editmode) return callfemm("hi_selectrectangle",x1,y1,x2,y2,editmode) end
+function hi_setcomment(c) return callfemm("hi_setcomment",c) end
+function hi_setfocus(docname) return callfemm("hi_setfocus",docname) end
+function hi_setgroup(n) return callfemm("hi_setgroup",n) end
+function hi_smartmesh(n) return callfemm("hi_smartmesh",n) end
+
+-- ho_ commands (mirror mo_)
+function ho_maximize() return callfemm("ho_maximize") end
+function ho_minimize() return callfemm("ho_minimize") end
+function ho_numelements() return callfemm("ho_numelements") end
+function ho_numnodes() return callfemm("ho_numnodes") end
+function ho_refreshview() return callfemm("ho_refreshview") end
+function ho_resize(w,h) return callfemm("ho_resize",w,h) end
+function ho_restore() return callfemm("ho_restore") end
+
+-- ci_ commands (mirror mi_)
+function ci_attachdefault() return callfemm("ci_attachdefault") end
+function ci_attachouterspace() return callfemm("ci_attachouterspace") end
+function ci_defineouterspace(Zo,Ro,Ri) return callfemm("ci_defineouterspace",Zo,Ro,Ri) end
+function ci_deleteselectedarcsegments() return callfemm("ci_deleteselectedarcsegments") end
+function ci_deleteselectedlabels() return callfemm("ci_deleteselectedlabels") end
+function ci_deleteselectednodes() return callfemm("ci_deleteselectednodes") end
+function ci_deleteselectedsegments() return callfemm("ci_deleteselectedsegments") end
+function ci_detachdefault() return callfemm("ci_detachdefault") end
+function ci_detachouterspace() return callfemm("ci_detachouterspace") end
+function ci_getboundingbox() return callfemm("ci_getboundingbox") end
+function ci_gettitle() return callfemm("ci_gettitle") end
+function ci_makeABC(a1,a2,a3,a4,a5,a6,a7) return callfemm("ci_makeABC",a1,a2,a3,a4,a5,a6,a7) end
+function ci_maximize() return callfemm("ci_maximize") end
+function ci_minimize() return callfemm("ci_minimize") end
+function ci_readdxf(docname) return callfemm("ci_readdxf",docname) end
+function ci_resize(w,h) return callfemm("ci_resize",w,h) end
+function ci_restore() return callfemm("ci_restore") end
+function ci_savedxf(docname) return callfemm("ci_savedxf",docname) end
+function ci_selectcircle(x,y,R,editmode) return callfemm("ci_selectcircle",x,y,R,editmode) end
+function ci_selectrectangle(x1,y1,x2,y2,editmode) return callfemm("ci_selectrectangle",x1,y1,x2,y2,editmode) end
+function ci_setcomment(c) return callfemm("ci_setcomment",c) end
+function ci_setfocus(docname) return callfemm("ci_setfocus",docname) end
+function ci_setgroup(n) return callfemm("ci_setgroup",n) end
+function ci_smartmesh(n) return callfemm("ci_smartmesh",n) end
+
+-- co_ commands (mirror mo_)
+function co_maximize() return callfemm("co_maximize") end
+function co_minimize() return callfemm("co_minimize") end
+function co_numelements() return callfemm("co_numelements") end
+function co_numnodes() return callfemm("co_numnodes") end
+function co_refreshview() return callfemm("co_refreshview") end
+function co_resize(w,h) return callfemm("co_resize",w,h) end
+function co_restore() return callfemm("co_restore") end
+
 
 -- Unit Definitions
 

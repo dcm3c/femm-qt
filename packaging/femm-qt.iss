@@ -25,6 +25,14 @@ ChangesEnvironment= yes
 PrivilegesRequired= lowest
 PrivilegesRequiredOverridesAllowed= dialog
 
+[Tasks]
+; Optional, OFF by default. Adds {app}\bin to PATH so femm-lua, the solvers,
+; and femm_gui can be run by bare name from any folder. FEMM_DIR (set
+; unconditionally in [Registry] below) is what the GUI and the language
+; bindings actually use to locate the executables -- this task is purely
+; command-line convenience, and it is removed again on uninstall (see [Code]).
+Name: "addtopath"; Description: "Add femm-qt to the PATH (run femm-lua and the CLI solvers from any folder)"; Flags: unchecked
+
 [Dirs]
 Name: "{app}\bin"
 Name: "{app}\bin\platforms"
@@ -158,6 +166,7 @@ Source: "..\juliafemm\examples\ACElec2.jl";           DestDir: "{app}\examples";
 ; bin. Here we only add the docs and examples (no second femm.lua copy in
 ; {app}\luafemm, which would be orphaned and could drift from the bin copy).
 Source: "..\luafemm\README.md";                       DestDir: "{app}\luafemm";  Flags: ignoreversion
+Source: "..\luafemm\femm-lua.pdf";                    DestDir: "{app}\luafemm";  Flags: ignoreversion
 Source: "..\luafemm\examples\ac_magnetics.lua";       DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "..\luafemm\examples\coilgun.lua";            DestDir: "{app}\examples"; Flags: ignoreversion
 
@@ -169,6 +178,8 @@ Name: "{group}\Tutorial-Electrostatic";  Filename: "http://www.femm.info/wiki/El
 Name: "{group}\Tutorial-Heat Flow";      Filename: "http://www.femm.info/wiki/HeatFlowTutorial"
 Name: "{group}\OctaveFEMM Manual"; Filename: "{app}\octavefemm.pdf"; WorkingDir: "{app}"
 Name: "{group}\MathFEMM Manual";   Filename: "{app}\usage.nb";       WorkingDir: "{app}"
+Name: "{group}\Lua Scripting Guide"; Filename: "{app}\luafemm\femm-lua.pdf"; WorkingDir: "{app}\luafemm"
+Name: "{group}\femm-lua (Lua console)"; Filename: "{app}\bin\femm-lua.bat"; WorkingDir: "{app}\examples"
 
 [Registry]
 ; Set FEMM_DIR so octavefemm/mathfemm/pyfemm can find the executables.
@@ -187,15 +198,84 @@ Root: HKCU; Subkey: "Environment"; \
 const
     WM_SETTINGCHANGE = $001A;
     SMTO_ABORTIFHUNG = $0002;
+    // PATH lives in the system environment for an all-users install and the
+    // per-user environment otherwise -- the same split the FEMM_DIR entries use.
+    PathKeyHKLM = 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
+    PathKeyHKCU = 'Environment';
 
 function SendMessageTimeout(hWnd: HWND; Msg: UINT; wParam: LongInt; lParam: string;
     fuFlags: UINT; uTimeout: UINT; out lpdwResult: DWORD): LongInt;
     external 'SendMessageTimeoutW@user32.dll stdcall';
 
+// Pick the PATH registry location for this install's scope.
+procedure PathLocation(var RootKey: Integer; var SubKey: string);
+begin
+    if IsAdminInstallMode then begin
+        RootKey := HKEY_LOCAL_MACHINE;
+        SubKey := PathKeyHKLM;
+    end else begin
+        RootKey := HKEY_CURRENT_USER;
+        SubKey := PathKeyHKCU;
+    end;
+end;
+
+// Append Dir to PATH if not already present (case-insensitive). Reads and
+// rewrites as REG_EXPAND_SZ so existing %VAR% references are preserved.
+procedure EnvAddPath(Dir: string);
+var
+    RootKey: Integer;
+    SubKey, Paths: string;
+begin
+    PathLocation(RootKey, SubKey);
+    if not RegQueryStringValue(RootKey, SubKey, 'Path', Paths) then
+        Paths := '';
+    // Already there? Bracket both sides with ';' so we match whole entries only.
+    if Pos(';' + Uppercase(Dir) + ';', ';' + Uppercase(Paths) + ';') > 0 then
+        exit;
+    if Paths = '' then
+        Paths := Dir
+    else
+        Paths := Paths + ';' + Dir;
+    RegWriteExpandStringValue(RootKey, SubKey, 'Path', Paths);
+end;
+
+// Remove Dir from PATH if present -- only our own segment, never the whole
+// variable (so uninsdeletevalue must NOT be used for PATH). We always append at
+// the end, so on uninstall the entry is normally the last one.
+procedure EnvRemovePath(Dir: string);
+var
+    RootKey: Integer;
+    SubKey, Paths: string;
+    P: Integer;
+begin
+    PathLocation(RootKey, SubKey);
+    if not RegQueryStringValue(RootKey, SubKey, 'Path', Paths) then
+        exit;
+    P := Pos(';' + Uppercase(Dir) + ';', ';' + Uppercase(Paths) + ';');
+    if P = 0 then exit;
+    if P = 1 then
+        Delete(Paths, 1, Length(Dir) + 1)       // Dir was the first entry: drop "Dir;"
+    else
+        Delete(Paths, P - 1, Length(Dir) + 1);  // drop ";Dir"
+    RegWriteExpandStringValue(RootKey, SubKey, 'Path', Paths);
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
     Res: DWORD_PTR;
 begin
+    if (CurStep = ssPostInstall) and WizardIsTaskSelected('addtopath') then
+        EnvAddPath(ExpandConstant('{app}') + '\bin');
     if CurStep = ssDone then
         SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, Res);
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+    Res: DWORD_PTR;
+begin
+    if CurUninstallStep = usPostUninstall then begin
+        EnvRemovePath(ExpandConstant('{app}') + '\bin');
+        SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, Res);
+    end;
 end;

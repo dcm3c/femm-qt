@@ -127,28 +127,33 @@ char* CComplex::ToString(char *s)
 	return ToString(s, 256);
 }
 
+// DISPLAY precision. This drives the lua4 client's print()/tostring()/REPL
+// output, so it uses %.14g for readable numbers (0.1, not 0.10000000000000001).
+// It is deliberately NOT the wire format: luafemm's format_arg() sends command
+// arguments to femm_gui/femm_headless with an explicit %.17g via format(), so
+// values still round-trip losslessly regardless of this display precision.
 char* CComplex::ToString(char *s, size_t n)
 {
-	if (im==0) snprintf(s, n,"%.17g",re);
+	if (im==0) snprintf(s, n,"%.14g",re);
 	else if (im==1)
 	{
 		if (re==0) snprintf(s, n,"I");
-		else snprintf(s, n,"%.17g+I",re);
+		else snprintf(s, n,"%.14g+I",re);
 	}
 	else if (im==-1)
 	{
 		if (re==0) snprintf(s, n,"-I");
-		else snprintf(s, n,"%.17g-I",re);
+		else snprintf(s, n,"%.14g-I",re);
 	}
 	else if (im<0)
 	{
-		if (re!=0) snprintf(s, n,"%.17g-I*%.17g",re,fabs(im));
-		else  snprintf(s, n,"-I*%.17g",fabs(im));
+		if (re!=0) snprintf(s, n,"%.14g-I*%.14g",re,fabs(im));
+		else  snprintf(s, n,"-I*%.14g",fabs(im));
 	}
 	else if (im>0)
 	{
-		if (re!=0) snprintf(s, n,"%.17g+I*%.17g",re,im);
-		else snprintf(s, n,"I*%.17g",im);
+		if (re!=0) snprintf(s, n,"%.14g+I*%.14g",re,im);
+		else snprintf(s, n,"I*%.14g",im);
 	}
 	else s[0]=0;
 
