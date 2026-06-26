@@ -26,7 +26,8 @@ int main(int argc, char* argv[]) {
     if (Doc.OnOpenDocument() != TRUE) { fprintf(stderr, "Problem loading .fec file\n"); return 7; }
     fprintf(stderr, "Meshing...\n");
     Mesh tmesh;
-    if (tangle_mesh_fem(PathName, tmesh) != 0) { fprintf(stderr, "Meshing failed\n"); return 8; }
+    // Full .fec name -> mesh the current-flow geometry, not a same-named .fem.
+    if (tangle_mesh_fem(std::string(PathName) + ".fec", tmesh) != 0) { fprintf(stderr, "Meshing failed\n"); return 8; }
     if (LoadMeshFromTangle(Doc, tmesh) != TRUE) { fprintf(stderr, "Problem loading mesh\n"); return 2; }
     char *p = PathName; for (int i=0;i<(int)strlen(PathName);i++) if(PathName[i]=='\\'||PathName[i]=='/') p=PathName+i+1;
     fprintf(stderr, "%s - csolve\n", p);

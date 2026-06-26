@@ -419,9 +419,13 @@ void register_mag_editor_py(MagDocument *doc) {
         if (s_doc->filePath.empty())
             throw std::runtime_error("No file path - save before loading solution");
 
+        // Replace whatever extension the problem file has (any case, e.g. .FEM)
+        // with .ans -- strip after the last dot like the elec/heat/curr editors,
+        // rather than matching ".fem" case-sensitively.
         std::string ansPath = s_doc->filePath;
-        if (ansPath.size() > 4 && ansPath.substr(ansPath.size() - 4) == ".fem")
-            ansPath = ansPath.substr(0, ansPath.size() - 4) + ".ans";
+        auto dot = ansPath.rfind('.');
+        if (dot != std::string::npos) ansPath = ansPath.substr(0, dot);
+        ansPath += ".ans";
 
         namespace fs = std::filesystem;
         ansPath = fs::absolute(ansPath).string();

@@ -963,6 +963,14 @@ void MainWindow::onSaveAs()
         suggested = QString::fromStdString(editor->document()->filePath);
     QString path = QFileDialog::getSaveFileName(this, "Save FEMM File", suggested, filter);
     if (path.isEmpty()) return;
+    // Normalize the extension to lowercase (matching open() and the script
+    // saveas) so the stored path stays canonical and solver/results naming is
+    // consistent across platforms.
+    {
+        int dot = path.lastIndexOf('.');
+        int slash = qMax(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+        if (dot > slash) path = path.left(dot + 1) + path.mid(dot + 1).toLower();
+    }
     settings.setValue("lastDirectory", QFileInfo(path).absolutePath());
     auto *doc = editor->document();
     doc->filePath = path.toStdString();
@@ -1103,15 +1111,16 @@ void MainWindow::onViewResults()
     QString ansPath;
     if (e && e->document() && !e->document()->filePath.empty()) {
         std::string p = e->document()->filePath;
-        // Derive results file path from problem file
-        if (p.size() > 4 && p.substr(p.size() - 4) == ".fem")
-            p = p.substr(0, p.size() - 4) + ".ans";
-        else if (p.size() > 4 && p.substr(p.size() - 4) == ".fee")
-            p = p.substr(0, p.size() - 4) + ".res";
-        else if (p.size() > 4 && p.substr(p.size() - 4) == ".feh")
-            p = p.substr(0, p.size() - 4) + ".anh";
-        else if (p.size() > 4 && p.substr(p.size() - 4) == ".fec")
-            p = p.substr(0, p.size() - 4) + ".anc";
+        // Derive results file path from problem file. Match the extension
+        // case-insensitively (e.g. .FEM, .Fee) so an uppercase-named file still
+        // resolves to its solution; each type maps to its own results suffix.
+        std::string ext = (p.size() > 4) ? p.substr(p.size() - 4) : "";
+        for (auto &ch : ext) ch = (char)tolower((unsigned char)ch);
+        std::string base = (p.size() > 4) ? p.substr(0, p.size() - 4) : p;
+        if (ext == ".fem")      p = base + ".ans";
+        else if (ext == ".fee") p = base + ".res";
+        else if (ext == ".feh") p = base + ".anh";
+        else if (ext == ".fec") p = base + ".anc";
         ansPath = QString::fromStdString(p);
     }
     if (ansPath.isEmpty()) {
@@ -1621,9 +1630,10 @@ void MainWindow::createPreprocessorUI()
     m_preMenuMesh->addAction(tr("&Create Mesh"), QKeySequence(), this, &MainWindow::onCreateMesh);
     m_preMenuMesh->addAction(tr("&Show Mesh"), QKeySequence(), [this]() {
         auto *e = activeEditor(); if (!e) return;
-        if (e->meshEdgeCount() == 0) {
-            if (!e->loadMesh()) { updateStatus("No mesh to display"); return; }
-        }
+        // Pure display toggle. If nothing has been meshed this session there is
+        // no mesh to show -- prompt to Create Mesh rather than reading stale
+        // (and possibly deleted) .node/.ele off disk.
+        if (e->meshEdgeCount() == 0) { updateStatus("No mesh to display — run Create Mesh first"); return; }
         e->setShowMesh(!e->showMesh());
     });
     m_preMenuMesh->addAction(tr("&Purge Mesh"), QKeySequence(), [this]() {

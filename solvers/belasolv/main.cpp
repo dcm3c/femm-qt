@@ -48,7 +48,9 @@ int main(int argc, char* argv[])
     // Mesh and load directly into solver arrays
     fprintf(stderr, "Meshing...\n");
     Mesh tmesh;
-    if (tangle_mesh_fem(PathName, tmesh) != 0) {
+    // Pass the full .fee name so the mesher loads the electrostatics geometry,
+    // not a same-named .fem (PathName is the base, extension stripped).
+    if (tangle_mesh_fem(std::string(PathName) + ".fee", tmesh) != 0) {
         fprintf(stderr, "Meshing failed\n");
         return 8;
     }

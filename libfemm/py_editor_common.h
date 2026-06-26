@@ -259,6 +259,14 @@ void register_common_editor(femm_py::Module &m, const std::string &P,
     m.def(P + "_saveas", [&s_doc, errmsg, P](const std::string &path) {
         CHK();
         std::string fp = fixpath(path);
+        // Normalize the extension to lowercase so the stored path stays
+        // canonical (matching open()), keeping save/analyze/solver naming
+        // consistent across platforms.
+        auto dot = fp.find_last_of('.');
+        auto slash = fp.find_last_of("/\\");
+        if (dot != std::string::npos && (slash == std::string::npos || dot > slash))
+            for (size_t i = dot; i < fp.size(); ++i)
+                fp[i] = (char)tolower((unsigned char)fp[i]);
         if (!s_doc->SaveDocument(fp))
             throw std::runtime_error("Could not save to " + fp);
         s_doc->filePath = fp;

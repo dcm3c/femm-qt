@@ -149,12 +149,27 @@ void register_global_femm_funcs()
         std::string spath = fixpath(path);
         std::string ext;
         auto dot = spath.rfind('.');
-        if (dot != std::string::npos) ext = spath.substr(dot);
+        if (dot != std::string::npos) {
+            ext = spath.substr(dot);
+            // Dispatch on the extension case-insensitively, so .FEM/.Fee/etc.
+            // open like .fem/.fee. Only the type key is lowered; spath keeps its
+            // real case so the file still opens on case-sensitive filesystems.
+            for (auto &ch : ext) ch = (char)tolower((unsigned char)ch);
+        }
+        // Canonical path: the same file with its extension forced to lowercase.
+        // We OPEN the real on-disk spath (so the read still works on a
+        // case-sensitive filesystem) but STORE this normalized path -- so
+        // save/analyze and the solvers + tangle (which all rebuild
+        // base+lowercase-ext) stay consistent with no per-reader change. On a
+        // case-sensitive FS this leaves the original uppercase file as a
+        // harmless orphan after the first save; Windows is unaffected.
+        std::string canonical = (dot != std::string::npos)
+                                    ? spath.substr(0, dot) + ext : spath;
 
-        if (doc_registry_activate_input(spath)) {
+        if (doc_registry_activate_input(canonical)) {
             auto vcb = get_view_command_callback();
             if (vcb) {
-                std::string cmd = "setfocus:" + spath;
+                std::string cmd = "setfocus:" + canonical;
                 double args[4] = {};
                 vcb(cmd.c_str(), 0, args);
             }
@@ -164,9 +179,10 @@ void register_global_femm_funcs()
         auto docCb = get_doc_opened_callback();
         auto openOne = [&](auto *doc, auto registerFn) {
             if (doc->OpenDocument(spath)) {
+                doc->filePath = canonical;   // store the normalized lowercase-ext path
                 doc_registry_add(doc);
                 registerFn(doc);
-                std::string title = spath;
+                std::string title = canonical;
                 auto slash = title.find_last_of("/\\");
                 if (slash != std::string::npos) title = title.substr(slash + 1);
                 if (docCb) docCb(doc, title.c_str());

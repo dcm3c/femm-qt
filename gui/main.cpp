@@ -16,6 +16,7 @@
 #include <QMdiSubWindow>
 #include <QIcon>
 #include <QPixmap>
+#include <clocale>
 #include <cstring>
 #include <cstdlib>
 #include <string>
@@ -135,9 +136,6 @@ static const char *onViewCommand(const char *cmd, int nargs, double *args)
     QString c = QString::fromUtf8(cmd);
 
     auto *e = s_mainWindow->activeEditorWidget();
-    // Find active results widget via the public accessor
-    // For now, use the approach: if it starts with mo_, it's postprocessor
-    bool isPre = c.startsWith("mi_");
 
     // Python console show/hide
     if (c == "showconsole") { s_mainWindow->showPyConsole(); return nullptr; }
@@ -181,8 +179,8 @@ static const char *onViewCommand(const char *cmd, int nargs, double *args)
     // savebitmap: format is "mi_savebitmap:filename" or "mo_savebitmap:filename"
     if (c.contains("savebitmap:")) {
         QString fname = c.mid(c.indexOf(':') + 1);
-        QWidget *w = isPre ? (QWidget*)e : (QWidget*)s_mainWindow->activeEditorWidget();
-        // For postprocessor, we need the results widget — get it via MDI
+        // Grab whatever is in the active subwindow -- preprocessor editor or
+        // results view, any physics.
         QMdiSubWindow *sub = s_mainWindow->findChild<QMdiArea*>()->activeSubWindow();
         if (sub && sub->widget()) {
             QPixmap pix = sub->widget()->grab();
@@ -347,21 +345,25 @@ static const char *onViewCommand(const char *cmd, int nargs, double *args)
     }
 
     // Preprocessor-specific
-    if (c == "mi_showmesh") {
-        auto *ew = qobject_cast<EditorWidget*>(widget);
-        if (ew && ew->meshEdgeCount() == 0) ew->loadMesh();
-        if (ew) ew->setShowMesh(true);
-        return nullptr;
+    // Preprocessor mesh / name display. The preprocessor widget is an
+    // EditorWidget for every physics, so match on the widget type rather than a
+    // hardcoded "mi_" -- ei_/hi_/ci_ must work too. When the active widget is a
+    // results view instead, these fall through to the postprocessor handlers
+    // below (which match *o_show... against the results widgets).
+    if (c.endsWith("showmesh")) {
+        // Pure display toggle -- showing the mesh does not create it; the
+        // in-memory mesh comes from *i_createmesh. If none exists, nothing shows.
+        if (auto *ew = qobject_cast<EditorWidget*>(widget)) { ew->setShowMesh(true); return nullptr; }
     }
-    if (c == "mi_purgemesh") {
-        auto *ew = qobject_cast<EditorWidget*>(widget);
-        if (ew) { ew->clearMesh(); ew->setShowMesh(false); }
-        return nullptr;
+    if (c.endsWith("purgemesh")) {
+        if (auto *ew = qobject_cast<EditorWidget*>(widget)) { ew->clearMesh(); ew->setShowMesh(false); return nullptr; }
     }
-    if (c == "mi_shownames") {
-        auto *ew = qobject_cast<EditorWidget*>(widget);
-        if (ew) { ew->setShowNames(nargs == 0 || args[0] != 0); s_mainWindow->syncPreprocessorMenus(ew); }
-        return nullptr;
+    if (c.endsWith("shownames")) {
+        if (auto *ew = qobject_cast<EditorWidget*>(widget)) {
+            ew->setShowNames(nargs == 0 || args[0] != 0);
+            s_mainWindow->syncPreprocessorMenus(ew);
+            return nullptr;
+        }
     }
 
     if (c.endsWith("seteditmode")) {
@@ -587,6 +589,16 @@ static int onRunSolver(const char *exePath, const char *basePath, int hide)
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+
+    // Force the C numeric locale for the whole process. libfemm reads and writes
+    // the .fem/.fee/.feh/.fec format with C sscanf/fprintf, which honor LC_NUMERIC;
+    // the format itself is fixed to '.' decimals. Qt adopts the system locale on
+    // some platforms (notably Linux/glib), so on a comma-decimal locale (e.g.
+    // de_DE) sscanf("0.635","%lf") would read 0 and silently corrupt every file
+    // load. Reset it right after QApplication (which is what changed it). Qt's UI
+    // number formatting uses QLocale, not LC_NUMERIC, so this doesn't affect it.
+    setlocale(LC_NUMERIC, "C");
+
     app.setApplicationName("FEMM");
     app.setApplicationVersion("5.0.0");
     app.setOrganizationName("FEMM");

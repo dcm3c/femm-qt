@@ -243,7 +243,9 @@ int LoadMeshFromTangle(CFemmeDocCore& Doc, const Mesh& tmesh)
 int tangle_mesh_and_load(const std::string& inputBase, CFemmeDocCore& Doc)
 {
     Mesh tmesh;
-    if (tangle_mesh_fem(inputBase, tmesh) != 0)
+    // Full .fem name -> mesh the magnetics geometry (inputBase is the base, no
+    // extension); fkn is the magnetics solver.
+    if (tangle_mesh_fem(inputBase + ".fem", tmesh) != 0)
         return FALSE;
     return LoadMeshFromTangle(Doc, tmesh);
 }

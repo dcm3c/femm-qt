@@ -57,7 +57,6 @@ public:
     bool showNames() const { return m_showNames; }
     void setShowMesh(bool on) { m_showMesh = on; update(); }
     bool showMesh() const { return m_showMesh; }
-    bool loadMesh();  // load .node/.ele from document path (fallback)
     void loadMeshFromData(int numNodes, const double *nx, const double *ny,
                           int numTris, const int *triNodes, const int *triRegion);
     void clearMesh();

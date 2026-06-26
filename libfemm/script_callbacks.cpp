@@ -170,13 +170,16 @@ int createMeshForDocument(DocumentBase *doc, char *errmsg, int errmsg_size)
     doc->SaveDocument(doc->filePath);
 
     namespace fs = std::filesystem;
+    // Pass the FULL filename (with its extension) so the mesher loads THIS
+    // document's geometry. Stripping the extension made tangle_mesh_fem
+    // re-guess and pick .fem first -- silently meshing a same-named .fem into a
+    // .fee/.feh/.fec problem.
     fs::path p = fs::absolute(doc->filePath);
-    p.replace_extension();
-    std::string base = p.string();
-    std::replace(base.begin(), base.end(), '\\', '/');
+    std::string full = p.string();
+    std::replace(full.begin(), full.end(), '\\', '/');
 
     Mesh tmesh;
-    int ret = tangle_mesh_fem(base, tmesh);
+    int ret = tangle_mesh_fem(full, tmesh);
     if (ret != 0) {
         if (errmsg) snprintf(errmsg, errmsg_size, "Mesher failed (error %d)", ret);
         return ret;

@@ -27,7 +27,8 @@ int main(int argc, char* argv[]) {
     if (Doc.OnOpenDocument() != TRUE) { fprintf(stderr, "FAIL open\n"); return 7; }
     fprintf(stderr, "step2\n"); fflush(stderr);
     Mesh tmesh;
-    if (tangle_mesh_fem(PathName, tmesh) != 0) { fprintf(stderr, "FAIL mesh\n"); return 8; }
+    // Full .feh name -> mesh the heat-flow geometry, not a same-named .fem.
+    if (tangle_mesh_fem(std::string(PathName) + ".feh", tmesh) != 0) { fprintf(stderr, "FAIL mesh\n"); return 8; }
     fprintf(stderr, "step3\n"); fflush(stderr);
     if (LoadMeshFromTangle(Doc, tmesh) != TRUE) { fprintf(stderr, "FAIL load\n"); return 2; }
     fprintf(stderr, "step4\n"); fflush(stderr);
