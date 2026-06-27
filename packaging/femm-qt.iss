@@ -100,6 +100,10 @@ Source: "..\manual\manual.pdf";                DestDir: "{app}\bin"; Flags: igno
 Source: "..\LICENSE-MIT";                   DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "..\LICENSE-GPL";                   DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "..\NOTICE-Qt.txt";                 DestDir: "{app}\bin"; Flags: ignoreversion
+; Third-party MIT notices (compiled into the binaries)
+Source: "..\micropython\LICENSE.micropython"; DestDir: "{app}\bin"; DestName: "LICENSE-MicroPython.txt"; Flags: ignoreversion
+Source: "..\micropython\ulab\LICENSE";      DestDir: "{app}\bin"; DestName: "LICENSE-ulab.txt"; Flags: ignoreversion
+Source: "..\LICENSE-melihaltun.txt";        DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "..\readme.txt";                    DestDir: "{app}"    ; Flags: ignoreversion isreadme
 
 ; Example files

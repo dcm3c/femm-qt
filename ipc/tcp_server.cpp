@@ -282,17 +282,11 @@ void TcpServer::handleClient()
             select((int)m_clientSock + 1, nullptr, &wfds, nullptr, nullptr);
         }
 
-        // Skip the post-command callback (typically a GUI repaint of the
-        // active editor / results window) for commands that returned a
-        // value via __ipc_capture. Such commands are reads (e.g.
-        // mo_getpointvalues, mi_lineintegral) that don't modify visible
-        // state, so the GUI doesn't need to repaint after them. This
-        // avoids ~25ms/call of wasted MDI repaint when scripts call
-        // hundreds of getters in a row (e.g. Plot[MOGetB[0,z], ...]).
-        // Action commands (mi_addnode, etc.) leave the result empty
-        // and still trigger the callback, so geometry editing repaints
-        // are unaffected.
-        if (m_postCmdCb && py_last_result().empty()) m_postCmdCb();
+        // Post-command repaint is handled by the GUI's py_state post-exec hook
+        // (set_py_post_exec_hook), which fires once per top-level exec_python —
+        // here, once per command line — and applies the same getter/action
+        // gate (empty wire result => action => repaint). Keeping it off the
+        // transport means console/dofile/Run-Script paths refresh too.
 
         start = nl + 1;
     }

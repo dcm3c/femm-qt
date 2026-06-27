@@ -48,6 +48,16 @@ void set_py_output_sink(PyOutputSink sink);
 typedef void (*PyVmHook)();
 void set_py_vm_hook(PyVmHook hook);
 
+// Hook fired once after each *top-level* exec_python() / exec_python_file()
+// returns — i.e. once per interactive line and once per script file, but NOT
+// on event-pump re-entry (a nested exec_python while a script is already
+// running). The GUI installs a throttled MDI repaint here so geometry edited
+// by any script path — TCP line, console line, dofile, Run Script File —
+// refreshes consistently, instead of only the TCP transport doing so. Leave
+// unset in headless mode; set to nullptr to remove.
+typedef void (*PyPostExecHook)();
+void set_py_post_exec_hook(PyPostExecHook hook);
+
 // Ask the running script to stop: KeyboardInterrupt is raised at the next VM
 // branch (the standard MicroPython pending-exception mechanism). A request
 // made while no script is running is dropped at the next exec_python().

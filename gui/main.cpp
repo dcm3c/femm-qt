@@ -631,15 +631,21 @@ int main(int argc, char *argv[])
     set_run_solver_callback(onRunSolver);
     set_mesh_loaded_callback(onMeshLoaded);
     set_view_command_callback(onViewCommand);
-    server.setPostCommandCallback([]() {
+    // Repaint after any script path edits geometry — TCP line, console line,
+    // dofile, or Run Script File — via a single py_state post-exec hook rather
+    // than coupling the repaint to the TCP transport (which left internal
+    // scripts stale). Fires once per top-level exec_python: per line for
+    // interactive paths, once at end for a batch file. Getters leave a
+    // non-empty wire result and skip the repaint; action commands (and whole
+    // batch scripts) leave it empty and trigger a throttled MDI repaint.
+    // First command after a quiet period repaints immediately; bursts coalesce
+    // into ~10 FPS so a script drawing a motor with thousands of mi_addnode/
+    // mi_addsegment calls doesn't pay ~25ms of repaint per call. See
+    // py_state.h / MainWindow::scheduleDelayedRepaint for details.
+    set_py_post_exec_hook([]() {
         if (!s_mainWindow) return;
-        // Throttle the MDI subwindow repaint via MainWindow's ticker.
-        // First command after a quiet period repaints immediately;
-        // subsequent commands within the same burst are coalesced into
-        // ~10 FPS updates so a script drawing a motor with thousands of
-        // mi_addnode/mi_addsegment calls doesn't pay ~25ms of repaint
-        // per call. See MainWindow::scheduleDelayedRepaint for details.
-        s_mainWindow->scheduleDelayedRepaint();
+        if (py_last_result().empty())
+            s_mainWindow->scheduleDelayedRepaint();
     });
     w.show();
 
@@ -654,6 +660,7 @@ int main(int argc, char *argv[])
     int result = app.exec();
 
     s_mainWindow = nullptr;
+    set_py_post_exec_hook(nullptr);
     set_doc_opened_callback(nullptr);
     set_results_opened_callback(nullptr);
     set_run_solver_callback(nullptr);

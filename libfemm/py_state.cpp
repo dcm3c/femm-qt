@@ -5,6 +5,7 @@
 // See py_state.h for interface notes.
 #include "py_state.h"
 #include "py_bind.h"
+#include "py_clinalg.h"
 #include "py_init_script.h"
 #include "script_callbacks.h"
 
@@ -55,6 +56,12 @@ void set_py_output_sink(PyOutputSink sink) { s_output_sink = sink; }
 static int s_running_depth = 0;  // >0 while exec_python is on the stack
 
 void set_py_vm_hook(PyVmHook hook) { femm_vm_hook_fn = hook; }
+
+// Fired once when the outermost exec_python() unwinds (s_running_depth -> 0).
+// See py_state.h. Headless/TCP leave this null and pay nothing.
+static PyPostExecHook s_post_exec_hook = nullptr;
+
+void set_py_post_exec_hook(PyPostExecHook hook) { s_post_exec_hook = hook; }
 
 bool py_is_running() { return s_running_depth > 0; }
 
@@ -358,6 +365,11 @@ void init_py() {
     // linkable in the lightweight test harness.
     register_global_femm_funcs();
 
+    // Complex linear algebra (_clinalg_eig/_qr) backed by common/fullmatrix.cpp,
+    // filling ulab's complex-linalg gaps. Must precede the init script, which
+    // grafts these onto numpy.linalg / a `clinalg` namespace.
+    register_clinalg();
+
     // Run the embedded init script: complex-aware math (sqrt/sin/...), unit
     // constants, AWG, the asymptotic-BC permeability tables, and the
     // per-physics draw/makeABC helpers. (The FEMM document API it references
@@ -382,7 +394,17 @@ int exec_python(const char *cmd, char *errmsg, int errmsg_size) {
             if (s_running_depth++ == 0)
                 MP_STATE_THREAD(mp_pending_exception) = MP_OBJ_NULL;
         }
-        ~RunningGuard() { s_running_depth--; }
+        ~RunningGuard() {
+            // Fire only when the outermost script finishes, so a batch file
+            // (one exec_python call for the whole file) repaints once at the
+            // end while interactive lines repaint per line. Re-entrant execs
+            // via event pumping exit at depth>0 and stay silent. s_last_result
+            // is already captured by the time we unwind, so the GUI's hook can
+            // apply its mutator/getter gate. The nlr longjmps land in this
+            // frame's own bufs (see above), so this destructor always runs.
+            if (--s_running_depth == 0 && s_post_exec_hook)
+                s_post_exec_hook();
+        }
     } running_guard;
 
     nlr_buf_t nlr;

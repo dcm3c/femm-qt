@@ -2136,7 +2136,10 @@ void MainWindow::createLeftToolbars()
             "Damien P. George and contributors) and ulab (Copyright © 2019 "
             "Zoltán Vörös and contributors), both under the MIT License. See "
             "micropython/LICENSE.micropython and "
-            "micropython/ulab/LICENSE for details.");
+            "micropython/ulab/LICENSE for details.\n\n"
+            "It also uses a general complex eigen-decomposition adapted from "
+            "melihaltun/complexEigenPairSolver (Copyright © 2018 melihaltun), "
+            "under the MIT License. See LICENSE-melihaltun.txt for details.");
     });
     help->addAction(tr("About &Qt"), QKeySequence(), []() {
         QApplication::aboutQt();

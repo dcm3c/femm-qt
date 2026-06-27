@@ -98,6 +98,7 @@ add_library(femm_common STATIC
     "${COMMON_DIR}/complex.cpp"
     "${COMMON_DIR}/spars.cpp"
     "${COMMON_DIR}/StdAfx.cpp"
+    "${COMMON_DIR}/fullmatrix.cpp"   # CFullMatrix + complex eig/qr kernels (MIT)
 )
 target_include_directories(femm_common PUBLIC "${COMMON_DIR}")
 target_compile_options(femm_common PRIVATE -Wall
@@ -214,7 +215,8 @@ add_solver(fkn "${SOLVER_DIR}/fkn"
     "${SOLVER_DIR}/fkn/mag_dir_eval.cpp"
     "${SOLVER_COMMON_DIR}/expr_eval.cpp"
     "${SOLVER_COMMON_DIR}/cspars.cpp"      # CBigComplexLinProb (AC magnetics)
-    "${SOLVER_COMMON_DIR}/fullmatrix.cpp"  # CFullMatrix (matprop B-H interpolation)
+    # CFullMatrix (matprop B-H interpolation) now comes from the unified MIT
+    # common/fullmatrix.cpp via femm_common — see add_library(femm_common).
 )
 
 # --- belasolv (electrostatics solver) ---

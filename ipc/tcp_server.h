@@ -54,10 +54,10 @@ public:
     socket_t listenSocket() const { return m_listenSock; }
     socket_t clientSocket() const { return m_clientSock; }
 
-    // Optional callback invoked after each Lua command is executed.
-    // The GUI sets this to trigger a repaint of the active editor.
-    typedef void (*PostCommandCallback)();
-    void setPostCommandCallback(PostCommandCallback cb) { m_postCmdCb = cb; }
+    // NB: post-command repaint is no longer a transport concern. The GUI
+    // installs a py_state post-exec hook (set_py_post_exec_hook) that fires for
+    // every script path — TCP line, console, dofile, Run Script File — so all
+    // of them refresh the editor consistently. See libfemm/py_state.h.
 
 private:
     socket_t m_listenSock;
@@ -73,7 +73,6 @@ private:
     void closeClient();
     void initSockets();
     void cleanupSockets();
-    PostCommandCallback m_postCmdCb = nullptr;
 };
 
 #endif // TCP_SERVER_H

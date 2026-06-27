@@ -49,10 +49,159 @@ import math, cmath
 # just does the right thing. Guarded so a build without ulab still inits.
 try:
     import sys as _sys
-    from ulab import numpy as _numpy, scipy as _scipy
-    _sys.modules['numpy'] = _numpy
-    _sys.modules['scipy'] = _scipy
-    del _sys, _numpy, _scipy
+    from ulab import numpy as _unp, scipy as _uscipy
+
+    # Complex linear algebra. ulab's numpy.linalg and numpy.dot reject complex
+    # dtype (and ulab's eig is real-symmetric only); the _clinalg_* C kernels
+    # (fullmatrix.cpp, registered as globals before this script runs) provide
+    # general complex eig/qr/svd/solve/inv/det/dot/pinv/cond/rank/norm. Since
+    # ulab's numpy is a read-only module that can't be patched in place, we
+    # publish a thin proxy as `numpy`: it forwards everything to ulab but
+    # overrides linalg.* and dot with the complex-capable kernels.
+    #
+    # _asc coerces to a dense complex ndarray: an existing ndarray is multiplied
+    # by (1+0j) (real->complex, complex stays complex, fresh dense array); a
+    # list/tuple is built first. We avoid np.array() on an already-complex
+    # ndarray, which ulab rejects ("cannot convert complex type").
+    def _asc(a):
+        m = a if hasattr(a, 'dtype') else _unp.array(a)
+        return m * (1 + 0j)
+    def _eig(a):      return _clinalg_eig(_asc(a))
+    def _qr(a):       return _clinalg_qr(_asc(a))
+    def _svd(a):      return _clinalg_svd(_asc(a))
+    def _solve(a, b): return _clinalg_solve(_asc(a), _asc(b))
+    def _inv(a):      return _clinalg_inv(_asc(a))
+    def _det(a):      return _clinalg_det(_asc(a))
+    def _pinv(a):     return _clinalg_pinv(_asc(a))
+    def _cond(a):     return _clinalg_cond(_asc(a))
+    def _rank(a):     return _clinalg_rank(_asc(a))
+    def _norm(a):     return _clinalg_norm(_asc(a))
+    def _dot(a, b):   return _clinalg_dot(_asc(a), _asc(b))
+
+    # np.array on a complex Python list ("[[1+2j, 3], ...]") fails in ulab
+    # ("can't convert complex to float"). Patch np.array to fall back to building
+    # from real+imag parts, which ulab does accept. Re()/Im() (femm globals)
+    # split a scalar whether it's real or complex; _split mirrors list nesting.
+    def _split(x):
+        if isinstance(x, (list, tuple)):
+            r = []; i = []
+            for e in x:
+                er, ei = _split(e); r.append(er); i.append(ei)
+            return r, i
+        return Re(x), Im(x)
+    def _array(a, *args, **kw):
+        try:
+            return _unp.array(a, *args, **kw)        # real lists/ndarrays, dtype= cases
+        except (TypeError, ValueError):
+            if hasattr(a, 'dtype'):                  # a complex ndarray -> dense copy
+                return a * (1 + 0j)
+            r, i = _split(a)                         # complex nested list/tuple
+            return _unp.array(r) * (1 + 0j) + _unp.array(i) * 1j
+
+    # Linear reductions (sum/mean/trace) reject complex in ulab, but they're
+    # separable: f(A) = f(A.real) + f(A.imag)*1j. Try the real op first (fast
+    # path for real arrays); fall back to the split for complex.
+    def _reduce(fn):
+        def w(a, *args, **kw):
+            try:
+                return fn(a, *args, **kw)
+            except (TypeError, ValueError, NotImplementedError):
+                return fn(a.real, *args, **kw) + fn(a.imag, *args, **kw) * 1j
+        return w
+    _sum   = _reduce(_unp.sum)
+    _mean  = _reduce(_unp.mean)
+    _trace = _reduce(_unp.trace)
+
+    # Vectorized transcendentals: ulab's np.sqrt/sin/... reject complex arrays.
+    # We have complex-aware SCALAR versions (the _c* C helpers), so fall back to
+    # applying one element-wise (a Python loop — slow but correct, fine for the
+    # modest arrays FEMM scripts produce). Real arrays keep ulab's fast path.
+    def _elw(z, fn):
+        n = 1
+        for d in z.shape: n *= d
+        return _array([fn(x) for x in z.reshape((n,))]).reshape(z.shape)
+    def _vec(real_fn, scalar_fn):
+        def w(a, *args, **kw):
+            try:
+                return real_fn(a, *args, **kw)
+            except (TypeError, ValueError, NotImplementedError):
+                return _elw(a, scalar_fn)
+        return w
+    # Functions ulab lacks entirely (arcsin/arccos/arctan, angle): no real
+    # fast-path exists, so always apply the scalar helper element-wise.
+    def _velw(scalar_fn):
+        def w(a, *args, **kw):
+            if hasattr(a, 'shape'):
+                return _elw(a, scalar_fn)
+            if isinstance(a, (list, tuple)):
+                return _elw(_array(a), scalar_fn)
+            return scalar_fn(a)
+        return w
+
+    # real/imag: ndarrays expose .real/.imag (work for complex AND real); scalars
+    # use the Re()/Im() globals; lists are coerced to complex first.
+    def _real(a):
+        if hasattr(a, 'shape'):
+            try: return a.real
+            except AttributeError: return a            # real ndarray: real part is itself
+        if isinstance(a, (list, tuple)): return (_array(a) * (1 + 0j)).real
+        return Re(a)
+    def _imag(a):
+        if hasattr(a, 'shape'):
+            try: return a.imag
+            except AttributeError: return a * 0.0       # real ndarray: imag is zeros
+        if isinstance(a, (list, tuple)): return (_array(a) * (1 + 0j)).imag
+        return Im(a)
+    # power: ulab's elementwise ** rejects complex; fall back to Python's complex
+    # scalar ** (real arrays/scalars take ulab's fast path).
+    def _power(a, b):
+        try:
+            return a ** b
+        except (TypeError, ValueError, NotImplementedError):
+            if hasattr(b, 'shape'):                     # array ** array
+                n = 1
+                for d in a.shape: n *= d
+                af = a.reshape((n,)); bf = b.reshape((n,))
+                return _array([af[i] ** bf[i] for i in range(n)]).reshape(a.shape)
+            return _elw(a, lambda x: x ** b)            # array ** scalar
+
+    class _LinalgProxy:
+        eig   = staticmethod(_eig);   qr   = staticmethod(_qr)
+        svd   = staticmethod(_svd);   solve = staticmethod(_solve)
+        inv   = staticmethod(_inv);   det  = staticmethod(_det)
+        pinv  = staticmethod(_pinv);  cond = staticmethod(_cond)
+        rank  = staticmethod(_rank);  norm = staticmethod(_norm)
+        def __getattr__(self, k): return getattr(_unp.linalg, k)
+    class _NumpyProxy:
+        linalg = _LinalgProxy()
+        dot    = staticmethod(_dot)
+        array  = staticmethod(_array)
+        sum    = staticmethod(_sum)
+        mean   = staticmethod(_mean)
+        trace  = staticmethod(_trace)
+        abs    = staticmethod(abs)            # ulab has no np.abs; builtin abs works
+        # complex-array transcendentals (real arrays fall through to ulab)
+        sqrt = staticmethod(_vec(_unp.sqrt, _csqrt))
+        log  = staticmethod(_vec(_unp.log,  _clog))
+        sin  = staticmethod(_vec(_unp.sin,  _csin))
+        cos  = staticmethod(_vec(_unp.cos,  _ccos))
+        tan  = staticmethod(_vec(_unp.tan,  _ctan))
+        sinh = staticmethod(_vec(_unp.sinh, _csinh))
+        cosh = staticmethod(_vec(_unp.cosh, _ccosh))
+        tanh = staticmethod(_vec(_unp.tanh, _ctanh))
+        # ulab has none of these; serve them from the scalar complex helpers
+        arcsin = staticmethod(_velw(_casin))
+        arccos = staticmethod(_velw(_cacos))
+        arctan = staticmethod(_velw(_catan))
+        angle  = staticmethod(_velw(arg))     # phase; arg() returns a real
+        real   = staticmethod(_real)
+        imag   = staticmethod(_imag)
+        power  = staticmethod(_power)
+        def __getattr__(self, k): return getattr(_unp, k)
+
+    _sys.modules['numpy'] = _NumpyProxy()
+    _sys.modules['scipy'] = _uscipy
+    clinalg = _sys.modules['numpy'].linalg   # back-compat: clinalg.eig(), etc.
 except ImportError:
     pass
 

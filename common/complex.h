@@ -121,7 +121,8 @@ class CComplex
 double Re( const CComplex& a);
 double Im( const CComplex& a);
 double abs( const CComplex& x );
-double absq( const CComplex& x );
+// |x|^2 = re^2 + im^2 — squared magnitude (no sqrt; useful in tight loops).
+inline double absq( const CComplex& x ) { return x.re * x.re + x.im * x.im; }
 double arg( const CComplex& x );
 CComplex conj( const CComplex& x);
 CComplex exp( const CComplex& x );

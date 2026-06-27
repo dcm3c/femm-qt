@@ -2,6 +2,7 @@
 add_library(libfemm STATIC
     py_state.cpp
     py_state_globals.cpp
+    py_clinalg.cpp
     py_bind.cpp
     py_bind_type.c
     py_init_script.cpp
@@ -33,6 +34,9 @@ target_include_directories(libfemm PUBLIC
     "${COMMON_DIR}"
     "${SOLVER_DIR}/fkn"
 )
+# py_clinalg.cpp marshals ulab ndarrays; it needs ulab's headers (and the
+# embed's MicroPython headers, already reachable via micropython_embed).
+target_include_directories(libfemm PRIVATE "${MPY_DIR}/ulab/code")
 target_link_libraries(libfemm PUBLIC micropython_embed femm_common tangle_lib
     Threads::Threads)
 target_compile_options(libfemm PRIVATE -Wall
