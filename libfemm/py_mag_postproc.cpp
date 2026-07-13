@@ -62,6 +62,8 @@ static void appendInt(std::string &buf, int v) {
     buf += '\t';
 }
 
+void deactivate_mag_postproc_py() { s_rdoc = nullptr; }
+
 void register_mag_postproc_py(ResultsDoc *doc) {
     s_rdoc = doc;
     femm_py::Module &m = femm_py::femm_module;
@@ -102,13 +104,20 @@ void register_mag_postproc_py(ResultsDoc *doc) {
         check_doc(s_rdoc, MOERR);
         for (auto &lbl : s_rdoc->labellist) lbl.IsSelected = false;
     });
-    m.def("mo_blockintegral", [](int type) -> CComplex {
+    m.def("mo_blockintegral", [](int type) -> mp_obj_t {
         check_doc(s_rdoc, MOERR);
         bool anySelected = false;
         for (auto &lbl : s_rdoc->labellist)
             if (lbl.IsSelected) { anySelected = true; break; }
         if (!anySelected) throw std::runtime_error("No area selected for integration");
-        return s_rdoc->BlockIntegral(type);
+        CComplex v = s_rdoc->BlockIntegral(type);
+        // Return a plain float for real-valued quantities (everything at DC; the
+        // real types at AC), complex only for genuinely-complex phasor quantities.
+        // Keyed on the type (not the runtime value), so the Python return type is
+        // stable per (type, frequency). See mo_blockintegral_cases.xlsx.
+        if (s_rdoc->Frequency == 0 || !s_rdoc->BlockIntegralIsComplex(type))
+            return caster<double>::cast(v.re);
+        return caster<CComplex>::cast(v);
     });
     m.def("mo_lineintegral", [](int type) -> mp_obj_t {
         check_doc(s_rdoc, MOERR);
@@ -670,12 +679,18 @@ void register_mag_postproc_py(ResultsDoc *doc) {
     regv("mo_restore");
 
     m.def("mo_setfocus", [](optional<std::string> docname) {
-        if (docname) doc_registry_activate_results_byname(*docname);
+        // Magnetics results carry the .ans extension; normalize so a bare "temp"
+        // matches the "temp.ans" tab label (OF strips .ans from both sides).
+        std::string dn;
+        if (docname) {
+            dn = canonicalDocName(*docname, ".ans");
+            doc_registry_activate_results_byname(dn);
+        }
         auto cb = get_view_command_callback();
         if (!cb) return;
         double args[4] = {};
         if (docname)
-            cb(("mo_setfocus:" + *docname).c_str(), 0, args);
+            cb(("mo_setfocus:" + dn).c_str(), 0, args);
         else
             cb("mo_setfocus", 0, args);
     });

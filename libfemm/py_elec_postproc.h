@@ -8,6 +8,7 @@
 class ElecResultsDoc;
 
 void register_elec_postproc_py(ElecResultsDoc *doc);
+void deactivate_elec_postproc_py();   // clear active-results binding (window closed)
 ElecResultsDoc *active_elec_results();
 
 #endif  // PY_ELEC_POSTPROC_H

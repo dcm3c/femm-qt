@@ -24,6 +24,7 @@ static const char *COERR = "No current flow output in focus";
 
 static CurrResultsDoc *s_doc = nullptr;
 CurrResultsDoc *active_curr_results() { return s_doc; }
+void deactivate_curr_postproc_py() { s_doc = nullptr; }
 
 void register_curr_postproc_py(CurrResultsDoc *doc) {
     s_doc = doc;
@@ -67,7 +68,7 @@ void register_curr_postproc_py(CurrResultsDoc *doc) {
         for (auto &b : s_doc->labellist) b.IsSelected = false;
         s_doc->bHasMask = false;
     });
-    m.def("co_blockintegral", [](int type) -> CComplex {
+    m.def("co_blockintegral", [](int type) -> mp_obj_t {
         check_doc(s_doc, COERR);
         bool anySelected = false;
         for (const auto &b : s_doc->labellist)
@@ -79,7 +80,13 @@ void register_curr_postproc_py(CurrResultsDoc *doc) {
         if (!anySelected)
             throw std::runtime_error("Cannot integrate\nNo area has been selected");
         if (type >= 6) s_doc->MakeMask();
-        return s_doc->BlockIntegral(type);
+        CComplex v = s_doc->BlockIntegral(type);
+        // Real for real-valued quantities (everything at DC; the real types at
+        // AC), complex only for genuinely-complex phasor quantities. Keyed on the
+        // type, so the Python return type is stable. See co_blockintegral_cases.xlsx.
+        if (s_doc->Frequency == 0 || !s_doc->BlockIntegralIsComplex(type))
+            return caster<double>::cast(v.re);
+        return caster<CComplex>::cast(v);
     });
 
     // ---- Contour ----
@@ -243,12 +250,18 @@ void register_curr_postproc_py(CurrResultsDoc *doc) {
     regv("co_maximize");
     regv("co_restore");
     m.def("co_setfocus", [](optional<std::string> docname) {
-        if (docname) doc_registry_activate_results_byname(*docname);
+        // Current-flow results carry the .anc extension; normalize so a bare
+        // "temp" matches the "temp.anc" tab label.
+        std::string dn;
+        if (docname) {
+            dn = canonicalDocName(*docname, ".anc");
+            doc_registry_activate_results_byname(dn);
+        }
         auto cb = get_view_command_callback();
         if (!cb) return;
         double args[4] = {};
         if (docname)
-            cb(("co_setfocus:" + *docname).c_str(), 0, args);
+            cb(("co_setfocus:" + dn).c_str(), 0, args);
         else
             cb("co_setfocus", 0, args);
     });

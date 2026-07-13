@@ -1043,6 +1043,22 @@ void ResultsWidget::mousePressEvent(QMouseEvent *event)
     }
 }
 
+void ResultsWidget::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    if (event->button() != Qt::LeftButton || m_mode != 2 || !m_doc) return;
+    double xd, yd;
+    toDrawing(event->pos().x(), event->pos().y(), xd, yd);
+    int k = m_doc->InTriangle(xd, yd);
+    if (k < 0) return;
+    int lbl = m_doc->meshelem[k].lbl;
+    if (lbl < 0 || lbl >= (int)m_doc->labellist.size()) return;
+    int grp = m_doc->labellist[lbl].InGroup;
+    for (auto &label : m_doc->labellist)
+        if (label.InGroup == grp) label.IsSelected = true;
+    m_doc->bHasMask = false;
+    update();
+}
+
 void ResultsWidget::mouseMoveEvent(QMouseEvent *event)
 {
     double xd, yd;

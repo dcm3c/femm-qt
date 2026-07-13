@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+// Copyright (c) 2026 David Meeker
+
 ////////////////////////////////////////////////////
 // tangle
 // A 2D Delaunay triangulation tool compatible with Shewchuk's Triangle format.
@@ -6,8 +8,8 @@
 // Author: David Meeker
 // Generated with the assistance of Claude Code
 //
-// Version 0.4.3
-// 25 Jun 2026
+// Version 0.4.14
+// 12 Jul 2026
 //
 // Supports: -p -P -j -q -e -A -a -z -Q -I -Y options
 //
@@ -45,8 +47,10 @@
 
 #define _USE_MATH_DEFINES
 #include <chrono>
+#include <thread>
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 #include <sstream>
 #include <vector>
 #include <array>
@@ -67,6 +71,91 @@
 #include <numeric>
 #include <queue>
 #include <charconv>
+// SSE control-word access for the FP-environment pin (x86/x86-64 only).
+#if defined(__x86_64__)||defined(_M_X64)||defined(__i386__)||defined(_M_IX86)
+#define TANGLE_HAVE_MXCSR 1
+#include <xmmintrin.h>
+#endif
+
+// Process exit / library return status. Each distinct failure egress gets its
+// own code so a caller (notably femm-qt's "Mesher failed (error N)") can tell a
+// missing file from a parse error from a real meshing failure. Keep in sync with
+// the copy in tangle_mesh.h.
+enum TangleStatus {
+    TANGLE_OK          = 0,  // success
+    TANGLE_ERR_USAGE   = 1,  // bad invocation: no args / no input file named
+    TANGLE_ERR_NO_FILE = 2,  // input file not found / could not be opened
+    TANGLE_ERR_PARSE   = 3,  // file opened but could not be parsed
+    TANGLE_ERR_MESH    = 4,  // meshing failed (e.g. a segment could not be enforced)
+    TANGLE_ERR_OPTION  = 5,  // option not valid for this input (e.g. -g on a non-FEMM file)
+};
+
+// Build a filesystem::path from a UTF-8 std::string so non-ASCII paths open on
+// Windows. A narrow std::ifstream/ofstream on a std::string uses the ANSI code
+// page and cannot open a path containing characters outside it (e.g. an umlaut
+// in a user or model folder); routing through filesystem::path opens via the
+// wide (_wfopen) API instead. Pass-through on POSIX, where UTF-8 is already the
+// native encoding, so ASCII paths are byte-identical everywhere. Callers pass
+// UTF-8 (femm-qt's Qt paths and tangle's own derived names already are). Uses the
+// non-deprecated UTF-8 entry point for each C++ standard.
+//
+// Never throws: the UTF-8->native conversion raises filesystem_error on an
+// invalid byte sequence (e.g. an ANSI-mangled path), which as an uncaught
+// exception would crash the process -- and for the library entry would take down
+// the host (femm-qt) instead of returning an error code. On bad input, fall back
+// to interpreting the bytes in the native encoding; a wrong path then simply
+// fails to open (NO_FILE) rather than terminating.
+static inline std::filesystem::path fsPath(const std::string& p){
+    try {
+#if defined(__cpp_lib_char8_t)
+        std::u8string u8(p.size(), u8'\0');             // C++20: char8_t path ctor
+        for(std::size_t i = 0; i < p.size(); ++i) u8[i] = static_cast<char8_t>(p[i]);
+        return std::filesystem::path(std::move(u8));
+#else
+        return std::filesystem::u8path(p);              // C++17: u8path (not deprecated here)
+#endif
+    } catch(const std::exception&){
+        return std::filesystem::path(p);                // not valid UTF-8: native-encoding fallback
+    }
+}
+
+// Does a file exist? (Attribute query, NOT an open: succeeds even while another
+// process holds an exclusive lock on the file, so it is the right primitive for
+// filename-resolution probes. The error_code overload never throws.)
+static inline bool fileExists(const std::string& fn){
+    std::error_code ec;
+    return std::filesystem::exists(fsPath(fn), ec);
+}
+
+// Open a file stream, riding out transient locks. On Windows, OneDrive (and
+// antivirus scanners) briefly open just-changed files in synced folders with
+// exclusive access — typically for well under a second, e.g. right after
+// femm-qt saves a .fem and immediately asks us to mesh it, or while the
+// previous run's output file is still being uploaded. The lock belongs to the
+// OTHER process, so no open mode on our side can avoid it; a short bounded
+// retry is the only remedy. Backoff 25..400 ms, 8 attempts, ~1.6 s total.
+// With mustExist, a genuinely missing file fails immediately (fileExists is an
+// attribute query that succeeds even on a lock-held file), so only
+// plausibly-transient failures pay the wait. On POSIX such transient open
+// failures do not occur and the loop exits on the first attempt either way.
+template<typename Stream>
+static bool openWithRetry(Stream& f, const std::string& fn,
+                          std::ios::openmode mode, bool mustExist){
+    const auto p = fsPath(fn);
+    int delayMs = 25;
+    for(int attempt = 0; ; attempt++){
+        f.open(p, mode);
+        if(f.is_open()){
+            if(attempt > 0)
+                std::cerr << "note: '" << fn << "' was locked; open succeeded on retry\n";
+            return true;
+        }
+        if(mustExist && !fileExists(fn)) return false;
+        if(attempt >= 7) return false;
+        std::this_thread::sleep_for(std::chrono::milliseconds(delayMs));
+        delayMs = std::min(delayMs*2, 400);
+    }
+}
 
 
 struct PairHash {
@@ -291,6 +380,15 @@ struct PBCNodePair {
     int type; // 0=periodic, 1=anti-periodic
 };
 
+struct PBCDef {
+    // A PBC declaration from the input: the boundary with marker_a pairs with
+    // the boundary with marker_b. The .poly form allows the two chains to carry
+    // DIFFERENT markers; FEMM inputs use one shared marker for both (marker_a
+    // == marker_b there, and the .fem reader does not need to record defs).
+    int marker_a, marker_b;
+    int type; // 0=periodic, 1=anti-periodic
+};
+
 struct AGEDef {
     std::string name;
     int format;           // 0=periodic, 1=anti-periodic
@@ -315,6 +413,7 @@ struct Mesh {
     std::vector<PBCNodePair> pbc_pairs; // filled after refinement
     std::map<int,int> pbc_twin;          // node↔twin mapping for PBC boundaries
     std::map<int,int> pbc_node_type;     // node→PBC type (0=periodic, 1=anti-periodic)
+    std::vector<PBCDef> pbc_defs;        // PBC declarations (cross-marker .poly form)
     std::vector<AGEDef> age_defs;        // air gap element definitions
 
     void rebuildAdjacency(){
@@ -2052,11 +2151,114 @@ void refineQuality(Mesh& mesh, const Options& opts, int nInputVerts){
     for(int si=0;si<(int)mesh.segments.size();si++)
         edgeToSeg[edgeKey(mesh.segments[si].v0,mesh.segments[si].v1)]=si;
 
-    // Core segment split helper (no PBC synchronization)
-    auto splitSegmentCore=[&](int si, std::vector<int>& outAffected, int hintTri=-1) -> int {
+    // Vertex -> constrained-subsegment neighbor vertices, maintained across
+    // splits. Used by the corner-aligned split rule (splitFraction) below.
+    std::vector<std::vector<int>> segAdj(mesh.vertices.size());
+    for(auto& s : mesh.segments){
+        segAdj[s.v0].push_back(s.v1);
+        segAdj[s.v1].push_back(s.v0);
+    }
+
+    // Corner-aligned split position (anti-resonance rule).
+    //
+    // The default split is the midpoint. But pure midpoint splitting pins the
+    // innermost subsegment lengths of the two arms of a corner to L1/2^k and
+    // L2/2^j — their ratio (folded into [1/sqrt2,sqrt2)) is FIXED by the input
+    // and refinement can never change it. The wedge triangle between the two
+    // innermost rungs is then self-similar under halving, and its min angle is
+    // an invariant f(corner angle, folded ratio). If the quality bound exceeds
+    // that invariant, the wedge is perpetually bad: each fix attempt encroaches
+    // an arm, splits it, and reproduces the same shape at half scale — an
+    // unbounded cascade to the FP floor (MotorB tooth roots: theta=97.757deg,
+    // ratio 5.694 -> invariant 32.77deg, detonates at any bound above it;
+    // deterministic 7-point repro in corner_lab.py).
+    //
+    // Cure: when an endpoint of the segment being split is a genuine corner
+    // (another constrained subsegment leaves it in a non-collinear direction),
+    // snap the split so this arm's new corner-incident length equals the
+    // neighboring arm's innermost length (times a power of two, whichever lands
+    // in [1/3,2/3] of this segment — same 2:1 piece bound as a midpoint would
+    // give within one split). Aligned arms make the wedge isoceles (min angle
+    // >= min(theta,(180-theta)/2)), which meets any bound the corner itself can
+    // meet — the resonance cannot exist. On uniform chains (equal neighbor
+    // lengths) the rule reduces to the exact midpoint, so ordinary segment
+    // chains are unaffected.
+    auto splitFraction=[&](int si) -> double {
+        if(minAng<=0.0) return 0.5;   // no angle bound -> no resonance possible
+        const auto& seg=mesh.segments[si];
+        const auto& sa=mesh.vertices[seg.v0]; const auto& sb=mesh.vertices[seg.v1];
+        double sx=sb.x-sa.x, sy=sb.y-sa.y;
+        double L2seg=sx*sx+sy*sy;
+        if(L2seg<=0.0) return 0.5;
+        double t=0.5, bestD=1e9;
+        for(int side=0; side<2; side++){
+            int e   = side ? seg.v1 : seg.v0;
+            int far = side ? seg.v0 : seg.v1;
+            if(e>=(int)segAdj.size()) continue;
+            const auto& Pe=mesh.vertices[e]; const auto& Pf=mesh.vertices[far];
+            double dx=Pf.x-Pe.x, dy=Pf.y-Pe.y;
+            for(int n : segAdj[e]){
+                if(n==far) continue;
+                const auto& Pn=mesh.vertices[n];
+                double ox=Pn.x-Pe.x, oy=Pn.y-Pe.y;
+                double r2=ox*ox+oy*oy;
+                if(r2<=0.0) continue;
+                double dot=dx*ox+dy*oy;
+                double co=dot/std::sqrt(L2seg*r2);   // cos(corner angle theta)
+                // THE guard: snap iff it flips the corner's limit state from
+                // failing the bound to meeting it. Each split rule has an
+                // attractor — midpoint dynamics converge to the folded-ratio
+                // wedge; snap dynamics converge to the aligned isoceles wedge
+                // (min angle min(theta,(180-theta)/2)). Compare both against
+                // the bound and snap only when that comparison says it helps.
+                //
+                // (a) The ALIGNED attractor must MEET the bound:
+                //         minAng <= theta <= 180-2*minAng.
+                //     This rejects acute corners (theta<minAng: snapping cannot
+                //     help; shellApex/give-up territory) and near-collinear
+                //     junctions (theta~180: arc-chord chains and every Steiner
+                //     chain vertex), where aligning is meaningless.
+                if(co>cosMinAng) continue;                     // theta < minAng
+                if(co<1.0-2.0*cosMinAng*cosMinAng) continue;   // theta > 180-2*minAng
+                // (b) The MIDPOINT attractor must FAIL the bound: fold the
+                //     midpoint ratio (L/2)/r by octaves into [1/sqrt2, sqrt2)
+                //     — midpoint dynamics preserve this fold — and test the
+                //     invariant wedge (sides 1 and rho at theta). If it meets
+                //     the bound, midpoints are safe here and cost nothing;
+                //     transiently-bad-but-convergent states stay midpoint.
+                {
+                    double rho=0.5*std::sqrt(L2seg/r2);
+                    while(rho<0.70710678118654752) rho*=2.0;
+                    while(rho>=1.4142135623730951) rho*=0.5;
+                    double c2=1.0+rho*rho-2.0*rho*co;
+                    if(c2>0.0){
+                        double c=std::sqrt(c2);
+                        double cosA=(1.0+c2-rho*rho)/(2.0*c);        // opposite rho
+                        double cosB=(rho*rho+c2-1.0)/(2.0*rho*c);    // opposite 1
+                        if(co<=cosMinAng && cosA<=cosMinAng && cosB<=cosMinAng)
+                            continue;   // invariant wedge meets the bound: no snap
+                    }
+                }
+                double f=std::sqrt(r2/L2seg);   // neighbor arm length / this length
+                for(double cand : {0.5*f, f, 2.0*f}){
+                    if(cand<1.0/3.0 || cand>2.0/3.0) continue;
+                    double d=std::fabs(cand-0.5);
+                    if(d<bestD){ bestD=d; t = side ? 1.0-cand : cand; }
+                }
+            }
+        }
+        return t;
+    };
+
+    // Core segment split helper (no PBC synchronization). tFrac in (0,1) forces
+    // the split position (fraction from seg.v0 — used to keep PBC partners
+    // synchronized); tFrac<0 computes the corner-aligned fraction.
+    auto splitSegmentCore=[&](int si, std::vector<int>& outAffected, int hintTri=-1,
+                              double tFrac=-1.0) -> int {
         auto seg=mesh.segments[si]; // copy before modifying
         auto& sa=mesh.vertices[seg.v0]; auto& sb=mesh.vertices[seg.v1];
-        double mx=(sa.x+sb.x)*0.5, my=(sa.y+sb.y)*0.5;
+        double t=(tFrac>0.0 && tFrac<1.0)? tFrac : splitFraction(si);
+        double mx=sa.x+(sb.x-sa.x)*t, my=sa.y+(sb.y-sa.y)*t;
         double midLfs = seg.lfs;
         Point mid{mx,my,(int)mesh.vertices.size(),seg.marker,{},midLfs};
 
@@ -2082,6 +2284,11 @@ void refineQuality(Mesh& mesh, const Options& opts, int nInputVerts){
             if(a0>=0 && acuteApices.count(a0)) shellApex[midIdx]=a0;
             else if(a1>=0 && acuteApices.count(a1)) shellApex[midIdx]=a1;
         }
+        // Maintain the constrained-neighbor adjacency for splitFraction.
+        segAdj.resize(mesh.vertices.size());
+        for(int& nb : segAdj[seg.v0]) if(nb==seg.v1) nb=midIdx;
+        for(int& nb : segAdj[seg.v1]) if(nb==seg.v0) nb=midIdx;
+        segAdj[midIdx]={seg.v0,seg.v1};
         Segment s1{seg.v0,midIdx,seg.marker,seg.lfs,seg.pbc_type,seg.no_split};
         Segment s2{midIdx,seg.v1,seg.marker,seg.lfs,seg.pbc_type,seg.no_split};
         mesh.segments[si]=s1;
@@ -2104,7 +2311,8 @@ void refineQuality(Mesh& mesh, const Options& opts, int nInputVerts){
     // same edge, so splitting one splits the other).
     auto splitSegment=[&](int si, std::vector<int>& outAffected, int hintTri=-1) -> bool {
         auto seg=mesh.segments[si]; // copy — seg may be modified by splitSegmentCore
-        int midIdx=splitSegmentCore(si, outAffected, hintTri);
+        double tUsed=splitFraction(si);
+        int midIdx=splitSegmentCore(si, outAffected, hintTri, tUsed);
         if(midIdx<0) return false;
 
         // Synchronized PBC partner split: if this is a PBC segment, find and
@@ -2119,7 +2327,11 @@ void refineQuality(Mesh& mesh, const Options& opts, int nInputVerts){
                 if(pit!=edgeToSeg.end()){
                     int partnerSi=pit->second;
                     std::vector<int> partnerAffected;
-                    int partnerMid=splitSegmentCore(partnerSi, partnerAffected);
+                    // Split the partner at the SAME parametric position (oriented:
+                    // partner may be stored with endpoints in either order) so the
+                    // periodic boundaries keep matching node positions.
+                    double pt = (mesh.segments[partnerSi].v0==tv0) ? tUsed : 1.0-tUsed;
+                    int partnerMid=splitSegmentCore(partnerSi, partnerAffected, -1, pt);
                     if(partnerMid>=0){
                         // Link the two midpoints as PBC twins
                         mesh.pbc_twin[midIdx]=partnerMid;
@@ -2546,7 +2758,81 @@ void buildPbcTwinFromCDT(Mesh& mesh){
     };
     std::vector<BdryPair> bdryPairs;
 
+    // Build DIRECTED node chain following CDT segment orientation.
+    // This is the key difference from the old code: instead of walking
+    // by connectivity (which ignores orientation), we follow v0→v1
+    // direction of each oriented segment, like OF does after reading
+    // Triangle's .edge output.
+    auto buildDirectedChain=[&](const std::vector<int>& segIndices) -> std::vector<int> {
+        if(segIndices.empty()) return {};
+        // Build adjacency: for each node, which segments have it as v0 or v1
+        std::map<int,std::vector<int>> fromV0; // node → segments starting here
+        std::map<int,int> degree;
+        for(int si:segIndices){
+            fromV0[mesh.segments[si].v0].push_back(si);
+            degree[mesh.segments[si].v0]++;
+            degree[mesh.segments[si].v1]++;
+        }
+        // Find chain start: endpoint node (degree 1) that is v0 of some segment
+        int startNode=-1;
+        for(int si:segIndices){
+            int v0=mesh.segments[si].v0;
+            if(degree[v0]==1){ startNode=v0; break; }
+        }
+        // If no oriented start found, try the other endpoint
+        if(startNode<0){
+            for(int si:segIndices){
+                int v1=mesh.segments[si].v1;
+                if(degree[v1]==1){ startNode=v1; break; }
+            }
+        }
+        if(startNode<0) return {};
+        // Walk the chain following oriented direction
+        std::vector<int> chain; chain.push_back(startNode);
+        std::set<int> visited;
+        int curNode=startNode;
+        while(true){
+            bool found=false;
+            // Try following oriented direction: curNode is v0 of some segment
+            for(int si:fromV0[curNode]){
+                if(visited.count(si)) continue;
+                visited.insert(si);
+                chain.push_back(mesh.segments[si].v1);
+                curNode=mesh.segments[si].v1;
+                found=true; break;
+            }
+            if(!found){
+                // Try reverse: curNode is v1 of some segment
+                for(int si:segIndices){
+                    if(visited.count(si)) continue;
+                    if(mesh.segments[si].v1==curNode){
+                        visited.insert(si);
+                        chain.push_back(mesh.segments[si].v0);
+                        curNode=mesh.segments[si].v0;
+                        found=true; break;
+                    }
+                }
+            }
+            if(!found) break;
+        }
+        return chain;
+    };
+
+    // Markers belonging to a cross-marker declaration (.poly "markerA markerB
+    // type" with markerA != markerB) are paired BY DECLARATION below. The
+    // two-chains-in-one-marker-group scan cannot see that pairing: each such
+    // group holds only ONE chain, so it used to fall through silently, leaving
+    // pbc_twin empty — refinement then split the two boundaries independently
+    // and they could desynchronize (wedge_pbc: 6 vs 5 nodes on the twin edges).
+    std::set<int> crossMarkers;
+    for(auto& d:mesh.pbc_defs)
+        if(d.marker_a!=d.marker_b){
+            crossMarkers.insert(d.marker_a);
+            crossMarkers.insert(d.marker_b);
+        }
+
     for(auto [marker, pbcType]:pbcBoundaries){
+        if(crossMarkers.count(marker)) continue;
         std::vector<int> allSegs;
         for(int si=0;si<(int)mesh.segments.size();si++)
             if(mesh.segments[si].marker==marker && mesh.segments[si].pbc_type==pbcType)
@@ -2578,70 +2864,30 @@ void buildPbcTwinFromCDT(Mesh& mesh){
         auto sl1=extractChain(), sl2=extractChain();
         if(sl1.empty()||sl2.empty()) continue;
 
-        // Build DIRECTED node chain following CDT segment orientation.
-        // This is the key difference from the old code: instead of walking
-        // by connectivity (which ignores orientation), we follow v0→v1
-        // direction of each oriented segment, like OF does after reading
-        // Triangle's .edge output.
-        auto buildDirectedChain=[&](const std::vector<int>& segIndices) -> std::vector<int> {
-            if(segIndices.empty()) return {};
-            // Build adjacency: for each node, which segments have it as v0 or v1
-            std::map<int,std::vector<int>> fromV0; // node → segments starting here
-            std::map<int,int> degree;
-            for(int si:segIndices){
-                fromV0[mesh.segments[si].v0].push_back(si);
-                degree[mesh.segments[si].v0]++;
-                degree[mesh.segments[si].v1]++;
-            }
-            // Find chain start: endpoint node (degree 1) that is v0 of some segment
-            int startNode=-1;
-            for(int si:segIndices){
-                int v0=mesh.segments[si].v0;
-                if(degree[v0]==1){ startNode=v0; break; }
-            }
-            // If no oriented start found, try the other endpoint
-            if(startNode<0){
-                for(int si:segIndices){
-                    int v1=mesh.segments[si].v1;
-                    if(degree[v1]==1){ startNode=v1; break; }
-                }
-            }
-            if(startNode<0) return {};
-            // Walk the chain following oriented direction
-            std::vector<int> chain; chain.push_back(startNode);
-            std::set<int> visited;
-            int curNode=startNode;
-            while(true){
-                bool found=false;
-                // Try following oriented direction: curNode is v0 of some segment
-                for(int si:fromV0[curNode]){
-                    if(visited.count(si)) continue;
-                    visited.insert(si);
-                    chain.push_back(mesh.segments[si].v1);
-                    curNode=mesh.segments[si].v1;
-                    found=true; break;
-                }
-                if(!found){
-                    // Try reverse: curNode is v1 of some segment
-                    for(int si:segIndices){
-                        if(visited.count(si)) continue;
-                        if(mesh.segments[si].v1==curNode){
-                            visited.insert(si);
-                            chain.push_back(mesh.segments[si].v0);
-                            curNode=mesh.segments[si].v0;
-                            found=true; break;
-                        }
-                    }
-                }
-                if(!found) break;
-            }
-            return chain;
-        };
         auto chain1=buildDirectedChain(sl1), chain2=buildDirectedChain(sl2);
         if(chain1.empty()||chain2.empty()) continue;
         if(chain1.size()!=chain2.size()) continue;
 
         bdryPairs.push_back({chain1, chain2, pbcType});
+    }
+
+    // Cross-marker declarations: one chain per marker, paired by declaration
+    // (chain1 = marker_a's segments, chain2 = marker_b's).
+    for(auto& d:mesh.pbc_defs){
+        if(d.marker_a==d.marker_b) continue;
+        std::vector<int> segsA, segsB;
+        for(int si=0;si<(int)mesh.segments.size();si++){
+            auto& s=mesh.segments[si];
+            if(s.pbc_type!=d.type) continue;
+            if(s.marker==d.marker_a) segsA.push_back(si);
+            else if(s.marker==d.marker_b) segsB.push_back(si);
+        }
+        if(segsA.empty()||segsB.empty()) continue;
+        auto chain1=buildDirectedChain(segsA), chain2=buildDirectedChain(segsB);
+        if(chain1.empty()||chain2.empty()) continue;
+        if(chain1.size()!=chain2.size()) continue;
+
+        bdryPairs.push_back({chain1, chain2, d.type});
     }
 
     // Process boundaries using constraint propagation through shared
@@ -2769,8 +3015,8 @@ struct TokScan {
     const char* p=nullptr;
     const char* end=nullptr;
     bool load(const std::string& fn){
-        std::ifstream f(fn, std::ios::binary);
-        if(!f) return false;
+        std::ifstream f;
+        if(!openWithRetry(f, fn, std::ios::in|std::ios::binary, true)) return false;
         f.seekg(0, std::ios::end);
         std::streamsize sz=f.tellg();
         f.seekg(0, std::ios::beg);
@@ -2994,6 +3240,9 @@ bool readPolyFile(const std::string& filename, Mesh& mesh, int& nAttribs){
                         seg.pbc_type=type;
                     }
                 }
+                // Record the declaration: buildPbcTwinFromCDT needs to know
+                // WHICH markers pair when the two chains carry different ones.
+                mesh.pbc_defs.push_back({markerA, markerB, type});
             }
         }
     }
@@ -3049,8 +3298,9 @@ bool readFemFile(const std::string& filename,
                  Options& opts,
                  std::vector<AGEDef>& ageDefs)
 {
-    std::ifstream f(filename);
-    if(!f){std::cerr<<"Cannot open "<<filename<<"\n";return false;}
+    std::ifstream f;
+    if(!openWithRetry(f, filename, std::ios::in, true)){
+        std::cerr<<"Cannot open "<<filename<<"\n";return false;}
 
     // Detect file type from extension
     bool hasConductors = false;  // .fee, .feh, .fec have conductor columns
@@ -3749,7 +3999,9 @@ inline void flushIfBig(std::ofstream& f, std::string& s){
 
 void writeNodeFile(const std::string& fn, const std::vector<Point>& pts,
                    int nAttribs, bool hasMarkers, const Options& opts){
-    std::ofstream f(fn);
+    std::ofstream f;
+    if(!openWithRetry(f, fn, std::ios::out, false))
+        std::cerr<<"Cannot open output file "<<fn<<"\n";
     bool hasLfs=false;
     if(!opts.no_lfs_output)
         for(auto& p:pts) if(p.lfs>0){hasLfs=true;break;}
@@ -3769,7 +4021,9 @@ void writeNodeFile(const std::string& fn, const std::vector<Point>& pts,
 }
 
 void writeEleFile(const std::string& fn, const Mesh& mesh, bool hasAttrib, const Options& opts){
-    std::ofstream f(fn);
+    std::ofstream f;
+    if(!openWithRetry(f, fn, std::ios::out, false))
+        std::cerr<<"Cannot open output file "<<fn<<"\n";
     std::string out; out.reserve(1u<<20);
     appendInt(out,(long long)mesh.triangles.size()); out+=" 3 "; appendInt(out,hasAttrib?1:0); out+='\n';
     for(int i=0;i<(int)mesh.triangles.size();i++){
@@ -3786,7 +4040,9 @@ void writeEleFile(const std::string& fn, const Mesh& mesh, bool hasAttrib, const
 }
 
 void writeEdgeFile(const std::string& fn, const Mesh& mesh, const Options& opts){
-    std::ofstream f(fn);
+    std::ofstream f;
+    if(!openWithRetry(f, fn, std::ios::out, false))
+        std::cerr<<"Cannot open output file "<<fn<<"\n";
     // Build map from edge to segment marker
     std::unordered_map<std::pair<int,int>,int,PairHash> segMarker;
     segMarker.reserve(mesh.segments.size()*2+8);
@@ -3827,7 +4083,9 @@ void writeEdgeFile(const std::string& fn, const Mesh& mesh, const Options& opts)
 }
 
 void writeNeighFile(const std::string& fn, const Mesh& mesh, const Options& opts){
-    std::ofstream f(fn);
+    std::ofstream f;
+    if(!openWithRetry(f, fn, std::ios::out, false))
+        std::cerr<<"Cannot open output file "<<fn<<"\n";
     std::string out; out.reserve(1u<<20);
     appendInt(out,(long long)mesh.triangles.size()); out+=" 3\n";
     auto nb=[&](int n)->int{return(n<0)?-1:(opts.zero_indexed?n:(n+1));};
@@ -3843,7 +4101,9 @@ void writeNeighFile(const std::string& fn, const Mesh& mesh, const Options& opts
 }
 
 void writePolyFile(const std::string& fn, const Mesh& mesh, const Options& opts){
-    std::ofstream f(fn);
+    std::ofstream f;
+    if(!openWithRetry(f, fn, std::ios::out, false))
+        std::cerr<<"Cannot open output file "<<fn<<"\n";
     bool hasSegLfs=false;
     for(auto& s:mesh.segments) if(s.lfs>0){hasSegLfs=true;break;}
     std::string out; out.reserve(1u<<20);
@@ -3867,7 +4127,9 @@ void writePolyFile(const std::string& fn, const Mesh& mesh, const Options& opts)
 }
 
 void writePbcFile(const std::string& fn, const Mesh& mesh, const Options& opts){
-    std::ofstream f(fn);
+    std::ofstream f;
+    if(!openWithRetry(f, fn, std::ios::out, false))
+        std::cerr<<"Cannot open output file "<<fn<<"\n";
     f<<std::setprecision(17);
     f<<mesh.pbc_pairs.size()<<"\n";
     for(int i=0;i<(int)mesh.pbc_pairs.size();i++){
@@ -4401,8 +4663,25 @@ void printUsage(){
 // downstream solve, so callers must produce no output at all.
 // ============================================================
 
-static bool runMeshPipeline(Mesh& mesh, const Options& opts)
+static int runMeshPipeline(Mesh& mesh, const Options& opts)
 {
+#ifdef TANGLE_HAVE_MXCSR
+    // Pin the SSE control word to the IEEE default while meshing, then restore.
+    // The mesher has float-sensitive branches near collinear/cocircular geometry;
+    // if a DLL loaded into the host process (e.g. a GPU driver) left a non-default
+    // rounding mode or flush-to-zero/denormals-are-zero in MXCSR, the SAME binary
+    // can take a different path and fail to enforce a segment on one machine but
+    // not another. Forcing round-to-nearest with FTZ/DAZ off makes meshing
+    // reproducible regardless of the host's FP state. Restored on every exit so
+    // the host (e.g. femm-qt) is not disturbed.
+    struct MxcsrGuard {
+        unsigned saved;
+        MxcsrGuard(): saved(_mm_getcsr()){
+            _mm_setcsr(saved & ~0xE040u); // RC->nearest (13-14), FTZ off (15), DAZ off (6)
+        }
+        ~MxcsrGuard(){ _mm_setcsr(saved); }
+    } _mxguard;
+#endif
     // Shift coordinates to near the origin to maximize floating-point precision.
     double shiftX=0, shiftY=0;
     if(!mesh.vertices.empty()){
@@ -4507,7 +4786,7 @@ static bool runMeshPipeline(Mesh& mesh, const Options& opts)
                        "The mesh would be unusable, so no output is written. Try -C\n"
                        "(optionally with a larger tolerance) or repair the input\n"
                        "geometry near the listed segments.\n";
-            return false;
+            return TANGLE_ERR_MESH;
         }
     }
 
@@ -4683,18 +4962,19 @@ static bool runMeshPipeline(Mesh& mesh, const Options& opts)
         // far faster than an in-place comb sort on the Triangle array; ties are
         // broken by original index for deterministic output (the order within a
         // tied-score group is immaterial to the search).
+        // Stable counting sort by vertex-index sum (a bounded integer in
+        // 0..3(nv-1)): linear, no comparison sort, and it scatters the triangles
+        // straight into place — no index array, no separate gather.  ~3x faster
+        // than the std::sort + gather it replaces (bigModel 65->23ms).  Ties keep
+        // input order = ascending original index, so the output is BYTE-IDENTICAL
+        // to the prior index-sort-with-a<b-tiebreak.
         {
-            std::vector<int> score(ne), idx(ne);
-            for(int i=0;i<ne;i++){
-                score[i]=mesh.triangles[i].v[0]+mesh.triangles[i].v[1]+mesh.triangles[i].v[2];
-                idx[i]=i;
-            }
-            std::sort(idx.begin(), idx.end(), [&](int a, int b){
-                return score[a]<score[b] || (score[a]==score[b] && a<b);
-            });
-            std::vector<Triangle> sorted;
-            sorted.reserve(ne);
-            for(int i : idx) sorted.push_back(mesh.triangles[i]);
+            int maxScore=(nv>0)?3*(nv-1):0;
+            std::vector<int> cnt(maxScore+2, 0);
+            for(auto& t:mesh.triangles) cnt[t.v[0]+t.v[1]+t.v[2]+1]++;
+            for(int k=1;k<=maxScore+1;k++) cnt[k]+=cnt[k-1];
+            std::vector<Triangle> sorted(ne);
+            for(auto& t:mesh.triangles) sorted[cnt[t.v[0]+t.v[1]+t.v[2]]++]=t;
             mesh.triangles=std::move(sorted);
         }
 
@@ -4722,20 +5002,25 @@ static bool runMeshPipeline(Mesh& mesh, const Options& opts)
 
     if(!opts.quiet)
         std::cerr<<"Output: "<<mesh.vertices.size()<<" vertices, "<<mesh.triangles.size()<<" triangles\n";
-    return true;
+    return TANGLE_OK;
 }
 
 #ifndef TANGLE_AS_LIBRARY
-int main(int argc, char* argv[]){
-    if(argc<2){printUsage();return 1;}
+
+// The standalone CLI body. Takes already-decoded UTF-8 arguments (args[0] is the
+// program name) so the entry point can hand it the wide command line on Windows
+// (see wmain below) instead of the ANSI-mangled narrow argv.
+static int tangleMain(const std::vector<std::string>& args){
+    int argc = (int)args.size();
+    if(argc<2){printUsage();return TANGLE_ERR_USAGE;}
 
     std::string switchStr, inputFile;
     for(int i=1;i<argc;i++){
-        std::string arg=argv[i];
+        const std::string& arg=args[i];
         if(arg[0]=='-') switchStr+=arg.substr(1);
         else inputFile=arg;
     }
-    if(inputFile.empty()){std::cerr<<"No input file specified.\n";return 1;}
+    if(inputFile.empty()){std::cerr<<"No input file specified.\n";return TANGLE_ERR_USAGE;}
 
     Options opts=parseOptions(switchStr);
 
@@ -4747,14 +5032,23 @@ int main(int argc, char* argv[]){
         // two-step mesher invokes us with a bare name (and -p) and a deliberately
         // crafted .poly that must be honored even when the model's .fem sits in
         // the same directory. Only auto-detect a FEMM file when no .poly exists.
-        std::ifstream polyTest(inputFile+".poly");
-        if(polyTest.good()){ext=".poly";inputFile+=ext;}
+        // Resolution probes use an attribute query, not an open: a file that is
+        // momentarily lock-held (OneDrive sync) still EXISTS, and must not make
+        // the bare name silently resolve to a different extension.
+        if(fileExists(inputFile+".poly")){ext=".poly";inputFile+=ext;}
         else for(auto tryExt:{".fem",".fee",".feh",".fec"}){
-            std::ifstream test(inputFile+tryExt);
-            if(test.good()){ext=tryExt;inputFile+=ext;base=inputFile.substr(0,inputFile.size()-4);break;}
+            if(fileExists(inputFile+tryExt)){ext=tryExt;inputFile+=ext;base=inputFile.substr(0,inputFile.size()-4);break;}
         }
     }
     if(ext.empty()){ext=opts.pslg?".poly":".node";inputFile+=ext;}
+
+    // Separate "file not found" from "file unparseable" so the two get distinct
+    // exit codes: probe existence first, then a reader failure means a parse error.
+    {
+        std::ifstream probe;
+        if(!openWithRetry(probe, inputFile, std::ios::in, true)){
+            std::cerr<<"Cannot open "<<inputFile<<"\n";return TANGLE_ERR_NO_FILE;}
+    }
 
     Mesh mesh;
     int nAttribs=0, nMarkers=0;
@@ -4764,15 +5058,15 @@ int main(int argc, char* argv[]){
 
     if(isFem){
         if(!readFemFile(inputFile,mesh.vertices,mesh.segments,mesh.holes,mesh.regions,opts,mesh.age_defs))
-            return 1;
+            return TANGLE_ERR_PARSE;
     } else if(opts.pslg||ext==".poly"){
         opts.pslg=true;
         if(!readPolyFile(inputFile,mesh,nAttribs))
-            return 1;
+            return TANGLE_ERR_PARSE;
         // readPolyFile tags PBC segments with pbc_type;
         // buildPbcTwinFromCDT (after hole removal) handles node pairing.
     } else {
-        if(!readNodeFile(inputFile,mesh.vertices,nAttribs,nMarkers)) return 1;
+        if(!readNodeFile(inputFile,mesh.vertices,nAttribs,nMarkers)) return TANGLE_ERR_PARSE;
     }
 
     if(!opts.quiet){
@@ -4789,11 +5083,13 @@ int main(int argc, char* argv[]){
         if(!isFem){
             std::cerr<<"Error: -g generates a .poly from a FEMM input file "
                        "(.fem/.fee/.feh/.fec); '"<<inputFile<<"' is not one.\n";
-            return 1;
+            return TANGLE_ERR_OPTION;
         }
         // Distinct name (<base>_pslg.poly) so it never clobbers an existing .poly.
         std::string fn=base+"_pslg.poly";
-        std::ofstream f(fn);
+        std::ofstream f;
+        if(!openWithRetry(f, fn, std::ios::out, false))
+            std::cerr<<"Cannot open output file "<<fn<<"\n";
         f<<std::setprecision(17);
         const int off = opts.zero_indexed?0:1;
         f<<mesh.vertices.size()<<" 2 0 1\n";
@@ -4810,10 +5106,10 @@ int main(int argc, char* argv[]){
             f<<(i+off)<<" "<<mesh.regions[i].x<<" "<<mesh.regions[i].y<<" "<<mesh.regions[i].attrib<<" "<<mesh.regions[i].max_area<<"\n";
         if(!opts.quiet) std::cerr<<"Wrote PSLG to "<<fn<<" ("<<mesh.vertices.size()<<" verts, "
             <<mesh.segments.size()<<" segs, "<<mesh.holes.size()<<" holes, "<<mesh.regions.size()<<" regions)\n";
-        return 0;
+        return TANGLE_OK;
     }
 
-    if(!runMeshPipeline(mesh, opts)) return 1;
+    if(int rc=runMeshPipeline(mesh, opts)) return rc;
 
     std::string outBase=base+(opts.suppress_iter?"":".1");
     writeNodeFile(outBase+".node",mesh.vertices,nAttribs,nMarkers>0||opts.pslg,opts);
@@ -4846,7 +5142,9 @@ int main(int argc, char* argv[]){
 
         int nv=(int)mesh.vertices.size();
         std::string stampFile=base+".tstamp";
-        std::ofstream sf(stampFile);
+        std::ofstream sf;
+        if(!openWithRetry(sf, stampFile, std::ios::out, false))
+            std::cerr<<"Cannot open output file "<<stampFile<<"\n";
         sf<<std::setprecision(15);
         sf<<nv<<" "<<stampEdges.size()<<"\n";
         for(int i=0;i<nv;i++)
@@ -4868,8 +5166,29 @@ int main(int argc, char* argv[]){
         if(opts.stamp) std::cerr<<", "<<base<<".tstamp";
         std::cerr<<"\n";
     }
-    return 0;
+    return TANGLE_OK;
 }
+
+// Entry point. On Windows the narrow argv[] is transcoded through the ANSI code
+// page, which mangles any path character outside it (e.g. an umlaut in a folder),
+// so take the wide command line via wmain (needs -municode) and decode it to UTF-8
+// through the same std::filesystem path fsPath() uses. On POSIX the narrow argv is
+// already UTF-8, so pass it straight through.
+#ifdef _WIN32
+int wmain(int argc, wchar_t* wargv[]){
+    std::vector<std::string> args;
+    args.reserve(argc);
+    for(int i=0;i<argc;i++){
+        auto u = std::filesystem::path(wargv[i]).u8string(); // UTF-16 -> UTF-8
+        args.emplace_back(u.begin(), u.end());
+    }
+    return tangleMain(args);
+}
+#else
+int main(int argc, char* argv[]){
+    return tangleMain(std::vector<std::string>(argv, argv+argc));
+}
+#endif
 #endif // TANGLE_AS_LIBRARY
 
 // ============================================================
@@ -4892,15 +5211,16 @@ int tangle_mesh_fem(const std::string& inputBase, Mesh& outMesh)
         }
     }
     if(ext.empty()){
-        // Bare base (the usual caller): probe for an existing FEMM file, .fem first.
+        // Bare base (the usual caller): probe for an existing FEMM file, .fem
+        // first. Attribute query, not an open — see the resolution probes in
+        // main(): a lock-held file still exists and must resolve normally.
         for(auto tryExt : {".fem", ".fee", ".feh", ".fec"}){
-            std::ifstream test(inputFile + tryExt);
-            if(test.good()){ ext = tryExt; inputFile += ext; break; }
+            if(fileExists(inputFile + tryExt)){ ext = tryExt; inputFile += ext; break; }
         }
     }
     if(ext.empty()){
         std::cerr << "Could not find .fem file for: " << inputBase << "\n";
-        return 1;
+        return TANGLE_ERR_NO_FILE;
     }
 
     Options opts;
@@ -4908,7 +5228,7 @@ int tangle_mesh_fem(const std::string& inputBase, Mesh& outMesh)
 
     if(!readFemFile(inputFile, mesh.vertices, mesh.segments, mesh.holes,
                     mesh.regions, opts, mesh.age_defs))
-        return 1;
+        return TANGLE_ERR_PARSE;
 
     opts.quiet = true;  // suppress meshing diagnostics when called as library
 
@@ -4919,8 +5239,8 @@ int tangle_mesh_fem(const std::string& inputBase, Mesh& outMesh)
         std::cerr<<"\n";
     }
 
-    if(!runMeshPipeline(mesh, opts)) return 1;
+    if(int rc=runMeshPipeline(mesh, opts)) return rc;
 
     outMesh = std::move(mesh);
-    return 0;
+    return TANGLE_OK;
 }

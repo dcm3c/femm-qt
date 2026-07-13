@@ -205,6 +205,25 @@ try:
 except ImportError:
     pass
 
+# --- pyfemm drop-in compatibility ------------------------------------------
+# Let "import femm; femm.ei_..." scripts (and the pyfemm examples) run unchanged
+# in-process. openfemm/closefemm are connection-lifecycle no-ops here -- we ARE
+# femm, and closefemm must NOT exit the GUI. The `femm` module is a proxy whose
+# attribute lookups resolve to the global FEMM commands (which live in this one
+# shared namespace), so femm.ei_drawrectangle / from femm import X / bare
+# ei_drawrectangle all work.
+def openfemm(*a, **k):  pass
+def closefemm(*a, **k): pass
+import sys as _fsys
+class _FemmProxy:
+    def __getattr__(self, k):
+        try:
+            return globals()[k]
+        except KeyError:
+            raise AttributeError(k)
+_fsys.modules['femm'] = _FemmProxy()
+del _fsys
+
 # --- complex-aware elementary functions (override builtins/promoted names) ---
 # Each works for real AND complex arguments, matching original FEMM (where every
 # number was complex). A real, in-domain argument takes the real fast-path and

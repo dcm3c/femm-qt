@@ -10,7 +10,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <string>
+#include <vector>
+
 #include "lua.h"
+#include "utf8_io.h"   /* femm_utf8_args: decode a Unicode command line on Windows */
 
 #include "luadebug.h"
 #include "lualib.h"
@@ -313,6 +317,21 @@ static void register_getargs (char *argv[]) {
 int main (int argc, char *argv[]) {
   struct Options opt;
   int status;
+#ifdef _WIN32
+  /* Decode the Windows command line to UTF-8 so a Unicode script path or name
+     passed on the command line opens correctly. The CRT hands a narrow argv in
+     the ANSI code page, which mangles anything outside it (e.g. an umlaut in a
+     folder). femm_utf8_args re-fetches the wide command line and transcodes.
+     The vectors live for all of main(), so the char* views stay valid (they are
+     also stashed by register_getargs for the Lua `arg` table). */
+  std::vector<std::string> uargs = femm_utf8_args(argc, argv);
+  std::vector<char *> uargv;
+  for (size_t i = 0; i < uargs.size(); ++i)
+    uargv.push_back(const_cast<char *>(uargs[i].c_str()));
+  uargv.push_back(NULL);
+  argc = (int)uargs.size();
+  argv = uargv.data();
+#endif
   opt.toclose = 0;
   getstacksize(argc, argv, &opt);  /* handle option `-s' */
   L = lua_open(opt.stacksize);  /* create state */

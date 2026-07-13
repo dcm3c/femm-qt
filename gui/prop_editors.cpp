@@ -56,13 +56,19 @@ MaterialEditorDialog::MaterialEditorDialog(QWidget *parent) : QDialog(parent)
     form->addRow(QStringLiteral("\u03c3 (MS/m):"), m_Cduct);
 
     m_lamType = new QComboBox;
-    m_lamType->addItem(tr("Not laminated"));         // 0
-    m_lamType->addItem(tr("Laminated x-direction")); // 1
-    m_lamType->addItem(tr("Laminated y-direction")); // 2
-    m_lamType->addItem(tr("Magnet wire"));            // 3
-    m_lamType->addItem(tr("Plain stranded wire"));    // 4
-    m_lamType->addItem(tr("Litz wire"));              // 5
-    m_lamType->addItem(tr("Square wire"));            // 6
+    // The combo carries one more entry than the stored LamType: index 1
+    // "Laminated in-plane" is LamType 0 with a lamination thickness / fill
+    // factor (in-plane lamination is modeled via the fill factor on an
+    // otherwise-solid material, not a distinct LamType). Mirrors Original FEMM's
+    // MatDlg: stored LamType = comboIndex - 1, clamped at 0. See fromProp/toProp.
+    m_lamType->addItem(tr("Not laminated"));          // 0 -> LamType 0
+    m_lamType->addItem(tr("Laminated in-plane"));     // 1 -> LamType 0 (+ fill/thickness)
+    m_lamType->addItem(tr("Laminated x-direction"));  // 2 -> LamType 1
+    m_lamType->addItem(tr("Laminated y-direction"));  // 3 -> LamType 2
+    m_lamType->addItem(tr("Magnet wire"));            // 4 -> LamType 3
+    m_lamType->addItem(tr("Plain stranded wire"));    // 5 -> LamType 4
+    m_lamType->addItem(tr("Litz wire"));              // 6 -> LamType 5
+    m_lamType->addItem(tr("Square wire"));            // 7 -> LamType 6
     form->addRow(tr("Lamination:"), m_lamType);
     connect(m_lamType, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MaterialEditorDialog::onLamTypeChanged);
@@ -114,11 +120,13 @@ MaterialEditorDialog::MaterialEditorDialog(QWidget *parent) : QDialog(parent)
 
 void MaterialEditorDialog::onLamTypeChanged(int idx)
 {
-    bool isLaminated = (idx >= 1 && idx <= 2);
-    bool isWire = (idx >= 3);
+    // idx is the combo index: 0 not-laminated, 1 in-plane, 2 x, 3 y,
+    // 4 magnet / 5 stranded / 6 litz / 7 square wire.
+    bool isLaminated = (idx >= 1 && idx <= 3);   // in-plane, x, y
+    bool isWire = (idx >= 4);
     m_Lam_d->setEnabled(isLaminated);
     m_LamFill->setEnabled(isLaminated || isWire);
-    m_NStrands->setEnabled(isWire && idx != 3 && idx != 6);
+    m_NStrands->setEnabled(isWire && idx != 4 && idx != 7);  // not magnet(4)/square(7)
     m_WireD->setEnabled(isWire);
     m_wireLabel->setEnabled(isWire);
     m_Hc->setEnabled(!isWire);
@@ -157,7 +165,13 @@ void MaterialEditorDialog::fromProp(const FMaterialProp &m)
     m_Hc->setText(QString::number(m.H_c, 'g', 15));
     m_Jsrc->setText(toQString(m.Jsrc));
     m_Cduct->setText(QString::number(m.Cduct, 'g', 15));
-    m_lamType->setCurrentIndex(m.LamType);
+    // Stored LamType -> combo index (OF MatDlg::OnInitDialog): nonzero LamType
+    // shifts up by one; LamType 0 carrying a lamination thickness or fill != 1
+    // is the "Laminated in-plane" choice (combo index 1).
+    int lamIdx = m.LamType;
+    if (lamIdx != 0) lamIdx++;
+    else if (m.Lam_d != 0 || m.LamFill != 1) lamIdx = 1;
+    m_lamType->setCurrentIndex(lamIdx);
     m_Lam_d->setText(QString::number(m.Lam_d, 'g', 15));
     m_LamFill->setText(QString::number(m.LamFill, 'g', 15));
     m_Theta_hn->setText(QString::number(m.Theta_hn, 'g', 15));
@@ -166,7 +180,7 @@ void MaterialEditorDialog::fromProp(const FMaterialProp &m)
     m_NStrands->setText(QString::number(m.NStrands));
     m_WireD->setText(QString::number(m.WireD, 'g', 15));
     m_nonlinear->setChecked(m.BHpoints > 0);
-    onLamTypeChanged(m.LamType);
+    onLamTypeChanged(lamIdx);
     onNonlinearToggled(m.BHpoints > 0);
 
     // Load B-H data
@@ -187,11 +201,20 @@ void MaterialEditorDialog::toProp(FMaterialProp &m) const
     m.H_c = m_Hc->evaluateAsDouble(0);
     m.Jsrc = evalComplex(m_Jsrc);
     m.Cduct = m_Cduct->evaluateAsDouble(0);
-    m.LamType = m_lamType->currentIndex();
+    // Combo index -> stored LamType (OF MatDlg::OnOK): LamType = index - 1,
+    // clamped at 0, so both "Not laminated" (0) and "Laminated in-plane" (1)
+    // store LamType 0 -- they differ only by the lamination thickness / fill.
+    int lamIdx = m_lamType->currentIndex();
+    m.LamType = lamIdx - 1;
+    if (m.LamType < 0) m.LamType = 0;
     m.Lam_d = m_Lam_d->evaluateAsDouble(0);
     m.LamFill = m_LamFill->evaluateAsDouble(1);
     if (m.LamFill <= 0) m.LamFill = 1;
     if (m.LamFill > 1) m.LamFill = 1;
+    if (lamIdx == 0) {   // "Not laminated": force truly solid so it doesn't
+        m.Lam_d = 0;     // reload as "Laminated in-plane"
+        m.LamFill = 1;
+    }
     m.Theta_hn = m_Theta_hn->evaluateAsDouble(0);
     m.Theta_hx = m_Theta_hx->evaluateAsDouble(0);
     m.Theta_hy = m_Theta_hy->evaluateAsDouble(0);

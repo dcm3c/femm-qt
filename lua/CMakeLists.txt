@@ -11,11 +11,18 @@ set(LUA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/liblua")
 set(COMMON_DIR "${CMAKE_CURRENT_SOURCE_DIR}/common")
 set(SOCKET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/luasocket-1.0")
 
-# Lua 4 library (vendored copy of the femm-qt lua4 sources, now local)
+# Lua 4 library (vendored copy of the femm-qt lua4 sources, now local).
+# utf8_io.cpp (vendored into common/ too) makes the interpreter's file I/O and
+# command line Unicode-aware on Windows; it is self-contained (std::filesystem +
+# a little Win32), so lua4cli keeps building with no femm-qt-tree dependency.
 file(GLOB LUA_SOURCES "${LUA_DIR}/*.cpp")
-add_library(lua4 STATIC ${LUA_SOURCES})
+add_library(lua4 STATIC ${LUA_SOURCES} "${COMMON_DIR}/utf8_io.cpp")
 target_include_directories(lua4 PUBLIC "${LUA_DIR}" "${COMMON_DIR}")
 target_compile_definitions(lua4 PRIVATE "I=CComplex(0,1)")
+if(WIN32)
+    # femm_utf8_args() calls CommandLineToArgvW (shell32).
+    target_link_libraries(lua4 PUBLIC shell32)
+endif()
 
 # CComplex number type
 add_library(complex STATIC "${COMMON_DIR}/complex.cpp")

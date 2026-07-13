@@ -4,6 +4,7 @@
 // py_heat_editor.cpp - hi_* function implementations.
 // Operates on HeatDocument. All values real.
 #include "py_heat_editor.h"
+#include "utf8_io.h"
 #include "py_heat_postproc.h"
 #include "py_editor_common.h"
 #include "heat_document.h"
@@ -334,7 +335,7 @@ void register_heat_editor_py(HeatDocument *doc) {
         if (dot != std::string::npos) resPath = resPath.substr(0, dot);
         resPath += ".anh";
         namespace fs = std::filesystem;
-        resPath = fs::absolute(resPath).string();
+        resPath = femm_u8string(fs::absolute(femm_path(resPath)));
         std::replace(resPath.begin(), resPath.end(), '\\', '/');
         if (!fs::exists(resPath))
             throw std::runtime_error("Cannot open solution file " + resPath);
@@ -424,7 +425,7 @@ void register_heat_editor_py(HeatDocument *doc) {
     m.def("hi_getmaterial", [](const std::string &matname) {
         check_doc(s_doc, HERR);
         std::string libPath = exeDir() + "heatlib.dat";
-        FILE *fp = fopen(libPath.c_str(), "rt");
+        FILE *fp = femm_fopen(libPath, "rt");
         if (!fp) throw std::runtime_error("Couldn't open " + libPath);
         char s[1024], q[1024];
         char *v;

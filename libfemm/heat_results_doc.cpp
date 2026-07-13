@@ -6,6 +6,7 @@
 // Ported from femm42src/femm/hviewDoc.cpp.
 
 #include "heat_results_doc.h"
+#include "utf8_io.h"
 #include "fknDlg.h"   // CFknDlg (needed for MakeMask PCG solver progress)
 #include "spars.h"     // CBigLinProb (sparse matrix for MakeMask Laplace solve)
 #include <cstdio>
@@ -118,7 +119,7 @@ bool HeatResultsDoc::OpenDocument(const std::string &pathname)
     meshelem.clear();
     contour.clear();
 
-    fp = fopen(pathname.c_str(), "rt");
+    fp = femm_fopen(pathname, "rt");
     if (fp == nullptr) return false;
 
     filePath = pathname;
@@ -1617,7 +1618,7 @@ bool HeatResultsDoc::MakeMask()
     }
 
     // Solve
-    CFknDlg dummyView;
+    CFknDlg dummyView(true);   // quiet: don't leak PCGSolve progress to the terminal
     L.TheView = &dummyView;
     if (L.PCGSolve(0) == 0) return false;
 

@@ -15,11 +15,13 @@
 #include "mesh.h"
 #include "femmedoccore.h"
 #include "tangle_mesh.h"
+#include "utf8_io.h"
 
 extern int LoadMeshFromTangle(CFemmeDocCore& Doc, const Mesh& tmesh);
 
 int main(int argc, char* argv[])
 {
+    std::vector<std::string> args = femm_utf8_args(argc, argv);
 #ifdef _OPENMP
     int max_t = omp_get_max_threads();
     if (max_t > 4) omp_set_num_threads(4);
@@ -30,12 +32,12 @@ int main(int argc, char* argv[])
     CFemmeDocCore Doc;
     char PathName[4096];
 
-    if (argc < 2) {
+    if ((int)args.size() < 2) {
         fprintf(stderr, "Usage: belasolv <filename>\n");
         fprintf(stderr, "  filename: path to .fee file (without extension)\n");
         return 1;
     }
-    snprintf(PathName, sizeof(PathName), "%s", argv[1]);
+    snprintf(PathName, sizeof(PathName), "%s", args[1].c_str());
 
     Doc.PathName = PathName;
     Doc.TheView = &theView;

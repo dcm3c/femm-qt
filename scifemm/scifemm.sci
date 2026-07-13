@@ -148,13 +148,20 @@ function openfemm(varargin)
     // handles string-to-bytes + newline + flush in one call;
     // BufferedReader.readLine() blocks until a full line arrives.
     jimport('java.io.PrintWriter');
+    jimport('java.io.OutputStreamWriter');
     jimport('java.io.BufferedReader');
     jimport('java.io.InputStreamReader');
 
+    // Pin the streams to UTF-8 (the wire encoding) rather than the JVM default
+    // charset, so non-ASCII paths (e.g. an umlaut in a folder) survive in both
+    // directions. Recent JVMs (JEP 400) already default to UTF-8, but being
+    // explicit makes it correct on any JVM. OutputStreamWriter(stream,"UTF-8")
+    // is the Java 1.1 form, so it works even on old runtimes.
     conn = struct('socket', jsock, ...
-                  'writer', jnewInstance(PrintWriter, jsock.getOutputStream(), %t), ...
+                  'writer', jnewInstance(PrintWriter, ...
+                      jnewInstance(OutputStreamWriter, jsock.getOutputStream(), 'UTF-8'), %t), ...
                   'reader', jnewInstance(BufferedReader, ...
-                      jnewInstance(InputStreamReader, jsock.getInputStream())));
+                      jnewInstance(InputStreamReader, jsock.getInputStream(), 'UTF-8')));
 
     scifemm_ports = [scifemm_ports, port];
     scifemm_conns($+1) = conn;

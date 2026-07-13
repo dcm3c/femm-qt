@@ -29,6 +29,7 @@
 #include "elec_results_doc.h"
 #include "heat_results_doc.h"
 #include "curr_results_doc.h"
+#include "utf8_io.h"      // femm_widen for a Unicode-safe chdir on Windows
 
 #include <cstdio>
 #include <cstdlib>
@@ -203,7 +204,9 @@ void register_global_femm_funcs()
     m.def("setcurrentdirectory", [](const std::string &path) {
         std::string fp = fixpath(path);
 #ifdef _WIN32
-        _chdir(fp.c_str());
+        // fp is UTF-8; the narrow _chdir would decode it as ANSI, so widen and
+        // use _wchdir to honor a Unicode (umlaut/CJK) directory name.
+        _wchdir(femm_widen(fp).c_str());
 #else
         (void)chdir(fp.c_str());
 #endif
@@ -249,6 +252,24 @@ void register_global_femm_funcs()
         else if (auto *e = dynamic_cast<ElecResultsDoc*>(doc))  register_elec_postproc_py(e);
         else if (auto *h = dynamic_cast<HeatResultsDoc*>(doc))  register_heat_postproc_py(h);
         else if (auto *c = dynamic_cast<CurrResultsDoc*>(doc))  register_curr_postproc_py(c);
+    });
+    // When a results doc is removed (its window closed), clear BOTH bindings
+    // that may still point at it: the postproc active doc (s_doc/s_rdoc) AND the
+    // editor's cached results doc (s_resultsDoc). Otherwise a re-load can capture
+    // the stale s_resultsDoc as `oldDoc` and, if the freed block is reused at the
+    // same address, defeat the doc_registry_contains() guard and delete a live,
+    // widget-owned doc. (s_resultsDoc is kept in sync with the postproc doc, so
+    // it is either this doc or null here -- safe to clear.)
+    set_script_results_deactivate_callback([](ResultsDocBase *doc) {
+        if (doc == (ResultsDocBase*)active_results_document()) {
+            deactivate_mag_postproc_py();  clear_mag_results_doc();
+        } else if (doc == (ResultsDocBase*)active_elec_results()) {
+            deactivate_elec_postproc_py(); clear_elec_results_doc();
+        } else if (doc == (ResultsDocBase*)active_heat_results()) {
+            deactivate_heat_postproc_py(); clear_heat_results_doc();
+        } else if (doc == (ResultsDocBase*)active_curr_results()) {
+            deactivate_curr_postproc_py(); clear_curr_results_doc();
+        }
     });
 }
 

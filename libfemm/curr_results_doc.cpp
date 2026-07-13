@@ -6,6 +6,7 @@
 // Ported from femm42src/femm/CVIEWDOC.CPP and cv_problem.h.
 
 #include "curr_results_doc.h"
+#include "utf8_io.h"
 #include "fknDlg.h"
 #include "spars.h"
 #include <cstdio>
@@ -98,7 +99,7 @@ bool CurrResultsDoc::OpenDocument(const std::string &pathname)
     meshelem.clear();
     contour.clear();
 
-    fp = fopen(pathname.c_str(), "rt");
+    fp = femm_fopen(pathname, "rt");
     if (fp == nullptr) return false;
 
     filePath = pathname;
@@ -1152,6 +1153,19 @@ CComplex CurrResultsDoc::BlockIntegral(int inttype)
     return z;
 }
 
+bool CurrResultsDoc::BlockIntegralIsComplex(int type) const {
+    // Genuinely complex (phasor) block-integral types in an AC solve: the
+    // oscillating (2x) Henrotte force/torque components (8, 9, 11). All others —
+    // real/reactive/apparent power, time-average energy, area, volume, and the
+    // steady-state force/torque parts — are real. See co_blockintegral_cases.xlsx.
+    switch (type) {
+        case 8: case 9: case 11:
+            return true;
+        default:
+            return false;
+    }
+}
+
 // ================================================================
 // LineIntegral — current flow line integrals (complex results)
 // Ported from CVIEWDOC.CPP CcviewDoc::LineIntegral
@@ -1689,7 +1703,7 @@ bool CurrResultsDoc::MakeMask()
         }
     }
 
-    CFknDlg dummyView;
+    CFknDlg dummyView(true);   // quiet: don't leak PCGSolve progress to the terminal
     if (progressCallback)
         dummyView.m_prog1.onProgress = progressCallback;
     L.TheView = &dummyView;

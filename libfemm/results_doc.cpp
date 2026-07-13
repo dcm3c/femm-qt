@@ -6,6 +6,7 @@
 // Ported from femm42src/femm/FemmviewDoc.cpp
 
 #include "results_doc.h"
+#include "utf8_io.h"
 #include "fknDlg.h"   // CFknDlg (needed for MakeMask PCG solver progress)
 #include "spars.h"     // CBigLinProb (sparse matrix for MakeMask Laplace solve)
 #include <cstdio>
@@ -82,6 +83,35 @@ double RMaterialProp::GetH(double b) const
     return b / (mu_x * muo);
 }
 
+CComplex RMaterialProp::GetH(CComplex x) const
+{
+    // Cubic-Hermite interpolation of the (possibly complex) B-H curve, using the
+    // spline slopes from GetSlopes. Complex because the apparent AC curve carries
+    // hysteresis + lamination-eddy phase. Only meaningful for nonlinear materials
+    // (the linear case uses mu_fdx in GetMu). Ported from OF Problem.cpp.
+    double b = abs(x);
+    if (BHpoints == 0 || b == 0) return CComplex(0);
+    CComplex p = x / b;   // unit direction of B
+
+    if (b > Bdata[BHpoints - 1])
+        return p * (Hdata[BHpoints - 1] +
+                    slope[BHpoints - 1] * (b - Bdata[BHpoints - 1]));
+
+    for (int i = 0; i < BHpoints - 1; i++) {
+        if (b >= Bdata[i] && b <= Bdata[i + 1]) {
+            double l = Bdata[i + 1] - Bdata[i];
+            double z = (b - Bdata[i]) / l;
+            double z2 = z * z;
+            CComplex h = (1.0 - 3.0*z2 + 2.0*z2*z) * Hdata[i] +
+                         z * (1.0 - 2.0*z + z2) * l * slope[i] +
+                         z2 * (3.0 - 2.0*z) * Hdata[i + 1] +
+                         z2 * (z - 1.0) * l * slope[i + 1];
+            return p * h;
+        }
+    }
+    return CComplex(0);
+}
+
 void RMaterialProp::GetMu(double b1, double b2, double &mu1, double &mu2) const
 {
     if (BHpoints == 0) {
@@ -148,18 +178,33 @@ void RMaterialProp::GetMu(CComplex b1, CComplex b2, CComplex &mu1, CComplex &mu2
         mu2 = mu_fdy;
         return;
     }
-    // For nonlinear AC: use magnitude-based lookup
-    double bmag = sqrt(sqr(abs(b1)) + sqr(abs(b2)));
-    if (bmag < 1e-20) {
-        mu1 = mu_fdx;
-        mu2 = mu_fdy;
-        return;
+    // Nonlinear: read the permeability off the (complex) apparent AC B-H curve
+    // built by GetSlopes. Ported from OF Problem.cpp::GetMu(CComplex).
+    mu1 = mu2 = CComplex(muo, 0);
+    CComplex biron, muiron;
+    if (LamType == 0) {          // in-plane (lamination effect already in the curve)
+        biron = sqrt(b1*conj(b1) + b2*conj(b2));
+        if (abs(biron) < 1.e-8) mu1 = 1.0 / slope[0];
+        else mu1 = biron / GetH(biron);
+        mu2 = mu1;
     }
-    double h = GetH(bmag);
-    double mu_iron = bmag / (muo * h);
-    if (mu_iron < 1) mu_iron = 1;
-    mu1 = CComplex(mu_iron * LamFill + (1.0 - LamFill), 0);
-    mu2 = mu1;
+    else if (LamType == 1) {     // laminated parallel to x
+        biron = sqrt((b1/LamFill)*(b1/LamFill) + b2*b2);
+        if (abs(biron) < 1.e-8) muiron = 1.0 / slope[0];
+        else muiron = biron / GetH(biron);
+        mu1 = muiron * LamFill;
+        mu2 = 1.0 / (LamFill/muiron + (1.0 - LamFill)/muo);
+    }
+    else if (LamType == 2) {     // laminated parallel to y
+        biron = sqrt((b2/LamFill)*(b2/LamFill) + b1*b1);
+        if (abs(biron) < 1.e-8) muiron = 1.0 / slope[0];
+        else muiron = biron / GetH(biron);
+        mu2 = muiron * LamFill;
+        mu1 = 1.0 / (LamFill/muiron + (1.0 - LamFill)/muo);
+    }
+    // relative permeability
+    mu1 /= muo;
+    mu2 /= muo;
 }
 
 void RMaterialProp::GetSlopes(double omega)
@@ -218,6 +263,7 @@ void RMaterialProp::GetSlopes(double omega)
     std::vector<CComplex> rhs(n, CComplex(0, 0));
 
     bool curveOK = false;
+    bool processedLams = false;
     while (!curveOK) {
         // Clear
         for (int i = 0; i < n; i++) {
@@ -289,7 +335,115 @@ void RMaterialProp::GetSlopes(double omega)
             }
             for (int i = 1; i < n - 1; i++) { Bdata[i] = bn[i]; Hdata[i] = hn[i]; }
         }
+        else if (!processedLams) {
+            // Rewrite the B-H curve into its apparent AC form: first the
+            // lamination eddy-current effect (a 1-D FE solve per point), then the
+            // in-plane fill-factor mix. Both make Hdata complex, so GetH/GetMu
+            // yield a complex permeability; the slopes are then re-solved on the
+            // modified curve. Ported from OF Problem.cpp::GetSlopes.
+            if (omega != 0 && Lam_d != 0 && Cduct != 0) {
+                std::vector<double> bn(n);
+                std::vector<CComplex> hn(n);
+                for (int i = 1; i < n; i++) {
+                    CComplex mu = LaminatedBH(omega, i);
+                    bn[i] = abs(mu * Hdata[i]);
+                    hn[i] = bn[i] / mu;
+                }
+                for (int i = 1; i < n; i++) { Bdata[i] = bn[i]; Hdata[i] = hn[i]; }
+                curveOK = false;   // re-solve slopes on the apparent curve
+            }
+            if (LamType == 0 && LamFill != 1) {
+                for (int i = 1; i < n; i++) {
+                    CComplex mu = LamFill * Bdata[i] / Hdata[i] + (1.0 - LamFill) * muo;
+                    Bdata[i] = abs(mu * Hdata[i]);
+                    Hdata[i] = Bdata[i] / mu;
+                }
+                curveOK = false;
+            }
+            processedLams = true;
+        }
     }
+}
+
+CComplex RMaterialProp::LaminatedBH(double w, int i) const
+{
+    // 1-D nonlinear complex FE solve across a half-lamination to find the
+    // apparent AC permeability at B-H point i (accounts for eddy currents inside
+    // the lamination). Ported from OF Problem.cpp::LaminatedBH.
+    const int ElementsPerSkinDepth = 10;
+    const CComplex J(0, 1);
+
+    CComplex mu = Bdata[i] / Hdata[i];
+    double o = Cduct * 1.e6;                  // conductivity, S/m
+    double d = (Lam_d * 0.001) / 2.0;         // half lamination thickness, m
+    double ds = sqrt(2.0 / (w * o * abs(mu)));// skin depth at the surface
+    int n = ElementsPerSkinDepth * ((int)ceil(d / ds));
+    double L = d / (double)n;                 // element size
+
+    std::vector<CComplex> x(n + 1, CComplex(0, 0));
+    std::vector<CComplex> b(n + 1, CComplex(0, 0));
+    std::vector<CComplex> m0(n + 1, CComplex(0, 0));
+    std::vector<CComplex> m1(n + 1, CComplex(0, 0));
+
+    bool converged = false;
+    int iter = 0;
+    double res = 0, lastres = 0, Relax = 1;
+    do {
+        for (int k = 0; k <= n; k++) { m0[k] = 0; m1[k] = 0; b[k] = 0; }
+
+        // assemble the FE matrix; reluctivity vi/vo from the local B-H slope
+        for (int k = 0; k < n; k++) {
+            CComplex vi, vo;
+            if (iter != 0) {
+                double B = abs(x[k + 1] - x[k]) / L;
+                vi = GetdHdB(B);
+                vo = GetH(CComplex(B)) / B;
+            } else {
+                vo = 1.0 / mu;
+                vi = 1.0 / mu;
+            }
+            CComplex Md = ( (vi + vo) / (2.0 * L) + J * w * o * L / 4.0 );
+            CComplex Mo = ( -(vi + vo) / (2.0 * L) + J * w * o * L / 4.0 );
+            m0[k]     += Md;
+            m1[k]     += Mo;
+            m0[k + 1] += Md;
+
+            Md = ( (vi - vo) / (2.0 * L) );
+            Mo = ( -(vi - vo) / (2.0 * L) );
+            b[k]     += (Md * x[k] + Mo * x[k + 1]);
+            b[k + 1] += (Mo * x[k] + Md * x[k + 1]);
+        }
+
+        // boundary conditions
+        m1[0] = 0;
+        b[0]  = 0;
+        b[n] += Hdata[i];
+
+        // tridiagonal solve (result lands in b)
+        for (int k = 0; k < n; k++) {
+            CComplex c = m1[k] / m0[k];
+            m0[k + 1] -= m1[k] * c;
+            b[k + 1]  -= b[k] * c;
+        }
+        b[n] = b[n] / m0[n];
+        for (int k = n - 1; k >= 0; k--)
+            b[k] = (b[k] - m1[k] * b[k + 1]) / m0[k];
+
+        iter++;
+        lastres = res;
+        res = abs(b[n] - x[n]) / d;
+        if (res < 1.e-8) converged = true;
+
+        // same relaxation scheme as the solver so this converges
+        if (iter > 5) {
+            if ((res > lastres) && (Relax > 0.1)) Relax /= 2.0;
+            else Relax += 0.1 * (1.0 - Relax);
+        }
+        for (int k = 0; k <= n; k++) x[k] = Relax * b[k] + (1.0 - Relax) * x[k];
+        if (iter > 5000) break;   // safety: never hang the postproc on load
+    } while (!converged);
+
+    return x[n] / (Hdata[i] * d);
 }
 
 // ================================================================
@@ -1269,7 +1423,7 @@ void ResultsDoc::PostProcessing()
 
 bool ResultsDoc::OpenDocument(const std::string &pathname)
 {
-    FILE *fp = fopen(pathname.c_str(), "rt");
+    FILE *fp = femm_fopen(pathname, "rt");
     if (!fp) return false;
 
     nodelist.clear();
@@ -2389,8 +2543,10 @@ bool ResultsDoc::MakeMask()
         }
     }
 
-    // Solve — PCGSolve needs a non-null TheView for progress display
-    CFknDlg dummyView;
+    // Solve — PCGSolve needs a non-null TheView. Quiet: this in-process solve
+    // must not render its progress bar to the GUI/headless terminal; GUI
+    // progress (if wanted) arrives via progressCallback instead.
+    CFknDlg dummyView(true);
     if (progressCallback)
         dummyView.m_prog1.onProgress = progressCallback;
     L.TheView = &dummyView;
@@ -2549,7 +2705,7 @@ double RMaterialProp::GetB(double hc) const
     int iter = 0;
     do {
         bo = b;
-        double dHdB = GetdHdB(bo);
+        double dHdB = Re(GetdHdB(bo));  // GetdHdB is now complex; DC path uses Re()
         if (fabs(dHdB) < 1e-30) break;  // avoid division by zero
         b = bo + (hc - GetH(bo)) / dHdB;
         if (++iter > 200) break;  // safety limit
@@ -2557,29 +2713,30 @@ double RMaterialProp::GetB(double hc) const
     return b;
 }
 
-double RMaterialProp::GetdHdB(double B) const
+CComplex RMaterialProp::GetdHdB(double B) const
 {
-    // Analytic derivative of cubic Hermite spline H(B)
-    // Ported from OF Problem.cpp
+    // Analytic derivative dH/dB of the cubic-Hermite spline. Complex-valued for
+    // the apparent AC B-H curve. Ported from OF Problem.cpp. Real callers (e.g.
+    // GetB) take Re().
     double b = fabs(B);
 
-    if (BHpoints == 0) return b / (mu_x * muo);
+    if (BHpoints == 0) return CComplex(b / (mu_x * muo));
 
     if (b > Bdata[BHpoints - 1])
-        return slope[BHpoints - 1].re;
+        return slope[BHpoints - 1];
 
     for (int i = 0; i < BHpoints - 1; i++) {
         if (b >= Bdata[i] && b <= Bdata[i + 1]) {
             double l = Bdata[i + 1] - Bdata[i];
             double z = (b - Bdata[i]) / l;
-            double h = 6.0 * z * (z - 1.0) * Hdata[i].re / l +
-                       (1.0 - 4.0 * z + 3.0 * z * z) * slope[i].re +
-                       6.0 * z * (1.0 - z) * Hdata[i + 1].re / l +
-                       z * (3.0 * z - 2.0) * slope[i + 1].re;
+            CComplex h = 6.0 * z * (z - 1.0) * Hdata[i] / l +
+                         (1.0 - 4.0 * z + 3.0 * z * z) * slope[i] +
+                         6.0 * z * (1.0 - z) * Hdata[i + 1] / l +
+                         z * (3.0 * z - 2.0) * slope[i + 1];
             return h;
         }
     }
-    return 0;
+    return CComplex(0);
 }
 
 double RMaterialProp::GetEnergy(double b) const
@@ -3073,6 +3230,23 @@ CComplex ResultsDoc::BlockIntegral(int type)
         }
     }
     return z;
+}
+
+bool ResultsDoc::BlockIntegralIsComplex(int type) const {
+    // Genuinely complex (phasor) block-integral types in an AC solve: phasor
+    // field integrals (0 A.J, 1 integral-of-A, 7 total current, 8/9 integral-of-B)
+    // and the oscillating force/torque components (2x parts 13/14/16/20/21/23,
+    // 1x-incremental parts 25/26/27/28/29/30). Everything else — energy, losses,
+    // area, volume, moment of inertia, and the steady-state (time-averaged)
+    // force/torque parts — is real. See mo_blockintegral_cases.xlsx.
+    switch (type) {
+        case 0:  case 1:  case 7:  case 8:  case 9:
+        case 13: case 14: case 16: case 20: case 21: case 23:
+        case 25: case 26: case 27: case 28: case 29: case 30:
+            return true;
+        default:
+            return false;
+    }
 }
 
 // ================================================================

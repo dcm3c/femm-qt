@@ -180,6 +180,11 @@ public:
 
     // Integration — returns complex for current flow
     CComplex BlockIntegral(int type);
+    // True if BlockIntegral(type) is a genuinely complex (phasor) quantity in an
+    // AC solve, so the binding returns a Python complex; false for real types
+    // (power/energy/area/volume/steady-state force & torque). Keyed on the type,
+    // not the value. Kept next to BlockIntegral so the two stay in sync.
+    bool BlockIntegralIsComplex(int type) const;
     void LineIntegral(int type, CComplex *z);
 
     // Contour path for line integrals

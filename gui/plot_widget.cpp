@@ -6,6 +6,7 @@
 // Renders using QPainter instead of Windows GDI CDC.
 
 #include "plot_widget.h"
+#include "utf8_io.h"
 
 #include <QPainter>
 #include <QPen>
@@ -300,7 +301,7 @@ void PlotWidget::leaveEvent(QEvent *)
 
 bool PlotWidget::exportToFile(const QString &path, int format) const
 {
-    FILE *fp = fopen(path.toStdString().c_str(), "wt");
+    FILE *fp = femm_fopen(path.toStdString(), "wt");
     if (!fp) return false;
 
     if (m_series.empty()) { fclose(fp); return false; }

@@ -9,6 +9,7 @@
 #include "mesh.h"
 #include "spars.h"
 #include "femmedoccore.h"
+#include "utf8_io.h"
 
 //conversion to internal working units of mm
 double units[]={25.4,1.,10.,1000.,0.0254,0.001}; 
@@ -290,18 +291,18 @@ int CFemmeDocCore::WriteResults(CBigLinProb &L)
 	
 	// first, echo input .fee file to the .res file;
 	snprintf(c, sizeof(c),"%s.fee",PathName);
-	if((fz=fopen(c,"rt"))==NULL){
+	if((fz=femm_fopen(c,"rt"))==NULL){
 		Sleep(500);
-		if((fz=fopen(c,"rt"))==NULL){
+		if((fz=femm_fopen(c,"rt"))==NULL){
 			fprintf(stderr,"Couldn't open %s.fee\n",PathName);
 			return FALSE;
 		}
 	}
 
 	snprintf(c, sizeof(c),"%s.res",PathName);
-	if((fp=fopen(c,"wt"))==NULL){
+	if((fp=femm_fopen(c,"wt"))==NULL){
 		Sleep(500);
-		if((fp=fopen(c,"wt"))==NULL){
+		if((fp=femm_fopen(c,"wt"))==NULL){
 			fprintf(stderr,"Couldn't write to %s.res\n",PathName);
 			return FALSE;
 		}

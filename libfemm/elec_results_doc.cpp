@@ -6,6 +6,7 @@
 // Ported from femm42src/femm/belaviewDoc.cpp and bv_makemask.cpp.
 
 #include "elec_results_doc.h"
+#include "utf8_io.h"
 #include "fknDlg.h"   // CFknDlg (needed for MakeMask PCG solver progress)
 #include "spars.h"     // CBigLinProb (sparse matrix for MakeMask Laplace solve)
 #include <cstdio>
@@ -98,7 +99,7 @@ bool ElecResultsDoc::OpenDocument(const std::string &pathname)
     meshelem.clear();
     contour.clear();
 
-    fp = fopen(pathname.c_str(), "rt");
+    fp = femm_fopen(pathname, "rt");
     if (fp == nullptr) return false;
 
     filePath = pathname;
@@ -1698,7 +1699,7 @@ bool ElecResultsDoc::MakeMask()
     }
 
     // Solve
-    CFknDlg dummyView;
+    CFknDlg dummyView(true);   // quiet: don't leak PCGSolve progress to the terminal
     if (progressCallback)
         dummyView.m_prog1.onProgress = progressCallback;
     L.TheView = &dummyView;

@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "lua.h"
+#include "utf8_io.h"   /* femm_fopen/femm_freopen: Unicode (UTF-8) paths on Windows */
 
 #include "ldebug.h"
 #include "ldo.h"
@@ -262,13 +263,13 @@ static int parse_file (lua_State *L, const char *filename) {
   int status;
   int bin;  /* flag for file mode */
   int c;    /* look ahead char */
-  FILE *f = (filename == NULL) ? stdin : fopen(filename, "r");
+  FILE *f = (filename == NULL) ? stdin : femm_fopen(filename, "r");
   if (f == NULL) return LUA_ERRFILE;  /* unable to open file */
   c = fgetc(f);
   ungetc(c, f);
   bin = (c == ID_CHUNK);
   if (bin && f != stdin) {
-    f = freopen(filename, "rb", f);  /* set binary mode */
+    f = femm_freopen(filename, "rb", f);  /* set binary mode */
     if (f == NULL) return LUA_ERRFILE;  /* unable to reopen file */
   }
   lua_pushstring(L, "@");

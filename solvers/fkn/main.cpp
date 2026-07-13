@@ -16,6 +16,7 @@
 #include "femmedoccore.h"
 // Tangle meshing — in-memory mesh transfer (no file I/O)
 #include "tangle_mesh.h"
+#include "utf8_io.h"
 
 // fkn-local glue: mesh the .fem and populate the doc in one call. Defined in
 // load_tangle_mesh.cpp. Not part of the tangle interface (the doc type is
@@ -27,6 +28,7 @@ int tangle_mesh_and_load(const std::string& inputBase, CFemmeDocCore& Doc);
 
 int main(int argc, char* argv[])
 {
+    std::vector<std::string> args = femm_utf8_args(argc, argv);
 #ifdef _OPENMP
     // Cap threads at 4 by default — diminishing returns beyond that,
     // and users may prefer spare cores for other solver instances.
@@ -41,12 +43,12 @@ int main(int argc, char* argv[])
     char PathName[4096];
     char outstr[1024];
 
-    if (argc < 2) {
+    if ((int)args.size() < 2) {
         fprintf(stderr, "Usage: fkn <filename>\n");
         fprintf(stderr, "  filename: path to .fem file (without extension)\n");
         return 1;
     }
-    snprintf(PathName, sizeof(PathName), "%s", argv[1]);
+    snprintf(PathName, sizeof(PathName), "%s", args[1].c_str());
 
     Doc.PathName = PathName;
     Doc.TheView = &theView;

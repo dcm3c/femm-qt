@@ -99,6 +99,7 @@ add_library(femm_common STATIC
     "${COMMON_DIR}/spars.cpp"
     "${COMMON_DIR}/StdAfx.cpp"
     "${COMMON_DIR}/fullmatrix.cpp"   # CFullMatrix + complex eig/qr kernels (MIT)
+    "${COMMON_DIR}/utf8_io.cpp"      # UTF-8 path shims (femm_fopen/femm_path/...)
 )
 target_include_directories(femm_common PUBLIC "${COMMON_DIR}")
 target_compile_options(femm_common PRIVATE -Wall
@@ -127,7 +128,9 @@ endif()
 # femm_common's spars.cpp has #pragma omp directives, so it needs both the
 # compile flag (-fopenmp) and link flag from OpenMP.
 target_link_libraries(femm_common PUBLIC
-    $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>)
+    $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
+    # utf8_io.cpp's femm_utf8_args() calls CommandLineToArgvW (shell32) on Windows.
+    $<$<BOOL:${WIN32}>:shell32>)
 
 # --- Threads ---
 # py_state.cpp (via femm_stack_guard.h) calls pthread_attr_get{,stack} to size

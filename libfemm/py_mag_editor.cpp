@@ -4,6 +4,7 @@
 // py_mag_editor.cpp - mi_* function implementations.
 // Operates on MagDocument via femm_py::Module.
 #include "py_mag_editor.h"
+#include "utf8_io.h"
 #include "py_mag_postproc.h"
 #include "py_editor_common.h"
 #include "mag_document.h"
@@ -428,7 +429,7 @@ void register_mag_editor_py(MagDocument *doc) {
         ansPath += ".ans";
 
         namespace fs = std::filesystem;
-        ansPath = fs::absolute(ansPath).string();
+        ansPath = femm_u8string(fs::absolute(femm_path(ansPath)));
         std::replace(ansPath.begin(), ansPath.end(), '\\', '/');
 
         if (!fs::exists(ansPath))
@@ -522,7 +523,7 @@ void register_mag_editor_py(MagDocument *doc) {
     m.def("mi_getmaterial", [](const std::string &matname) {
         check_doc(s_doc, MAGERR);
         std::string libPath = exeDir() + "matlib.dat";
-        FILE *fp = fopen(libPath.c_str(), "rt");
+        FILE *fp = femm_fopen(libPath, "rt");
         if (!fp) throw std::runtime_error("Couldn't open " + libPath);
 
         char s[1024], q[1024];

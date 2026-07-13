@@ -130,6 +130,72 @@ The purpose of this document is to give a brief explanation of the
 kind of problems solved by FEMM and to provide a fairly detailed
 documentation of the programs' use.
 
+\section{Running FEMM from the Command Line} \label{commandline}
+
+Both the interactive shell ({\tt femm\_gui}) and the headless engine
+({\tt femm\_headless}) accept command-line arguments.  A file or script
+argument may be given as an absolute path or as a path relative to the current
+directory.
+
+\vspace{1ex}
+\noindent{\bf Interactive shell:} \texttt{femm\_gui [-{}-port {\itshape N}] [{\itshape file}]}\\
+\phantom{{\bf Interactive shell:} }\texttt{femm\_gui -run {\itshape script.py}}
+
+\begin{itemize}
+\item{\itshape file} --- A file to open on startup.  A problem document
+({\tt .fem}, {\tt .fee}, {\tt .feh}, or {\tt .fec}) or a solution file
+({\tt .ans}, {\tt .res}, {\tt .anh}, or {\tt .anc}) is opened in a window,
+and a Python script ({\tt .py}) is executed.  In each case the window is left
+open afterward.  This is also the action taken when a file is opened through an
+operating-system file association (\emph{e.g.}\ by double-clicking it).
+
+\item\texttt{-run {\itshape script.py}} --- Run {\itshape script.py} and then
+exit, instead of leaving the window open.  The exit code is {\tt 0} on success
+and {\tt 1} if the script raises an error (the error is also shown in a message
+box).  Because the geometry, solution, and any errors are displayed while the
+script runs, this is a convenient way to develop a script interactively before
+running the identical {\tt -run} command under {\tt femm\_headless}.
+
+\item\texttt{-{}-port {\itshape N}} --- Listen for scripting-interface
+connections on TCP port {\itshape N} rather than the default, 48015.
+\end{itemize}
+
+\vspace{1ex}
+\noindent{\bf Headless engine:} \texttt{femm\_headless [-{}-port {\itshape N}] [{\itshape script.py}]}\\
+\phantom{{\bf Headless engine:} }\texttt{femm\_headless -run {\itshape script.py}}\\
+\phantom{{\bf Headless engine:} }\texttt{femm\_headless -i [{\itshape script.py}]}
+
+\begin{itemize}
+\item{\itshape script.py} --- Run the script, and then continue listening for
+scripting-interface connections on the TCP port.
+
+\item\texttt{-run {\itshape script.py}} --- Run the script and then exit (batch
+mode).  The exit code is {\tt 0} on success, {\tt 1} on a script error, and
+{\tt 130} if the script is interrupted with Ctrl+C.
+
+\item\texttt{-i}, \texttt{-{}-interactive} --- Present an interactive Python
+read-eval-print loop (REPL).  If a script is also supplied, it is run first.
+Starting {\tt femm\_headless} with no arguments at a terminal also enters the
+REPL.
+
+\item\texttt{-{}-port {\itshape N}} --- Listen on TCP port {\itshape N} rather
+than the default, 48015.
+\end{itemize}
+
+\vspace{1ex}
+\noindent{\bf Legacy Lua scripts:} \texttt{femm-lua [-h] [{\itshape script.lua} [{\itshape args}\ldots]]}
+
+Scripts written for the Lua scripting interface of the original FEMM can be run
+with the bundled Lua~4 client, {\tt femm-lua}.  It launches the interpreter and
+connects to {\tt femm\_gui} --- or, with {\tt -h} (equivalently
+{\tt -{}-headless}), to {\tt femm\_headlessw} --- over the same TCP interface used
+by the Python bindings.  Given no script argument, {\tt femm-lua} opens an
+interactive Lua prompt.  The available Lua commands are documented in the
+separate {\itshape Lua Scripting Guide} ({\tt femm-lua.pdf}).
+
+Lua support is provided only for compatibility with scripts written for the
+original FEMM; new scripting should use FEMM's integrated Python interface.
+
 \section{Overview}
 
 The goal of this section is to give the user a brief description of

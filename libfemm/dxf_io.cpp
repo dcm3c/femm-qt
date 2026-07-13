@@ -7,6 +7,7 @@
 // Writer: ported from femm42src/femm/bd_movecopy.cpp WriteDXF.
 
 #include "dxf_io.h"
+#include "utf8_io.h"
 #include "document.h"
 #include <cstdio>
 #include <cstring>
@@ -87,7 +88,7 @@ static void addBulgeArc(DocumentBase &doc, int n0, int n1, double bulge, double 
 
 bool ReadDXF(DocumentBase &doc, const std::string &filename, double tolerance)
 {
-    FILE *fp = fopen(filename.c_str(), "rt");
+    FILE *fp = femm_fopen(filename, "rt");
     if (!fp) return false;
 
     // Compute default tolerance from existing geometry
@@ -328,7 +329,7 @@ bool ReadDXF(DocumentBase &doc, const std::string &filename, double tolerance)
 
 bool WriteDXF(const DocumentBase &doc, const std::string &filename)
 {
-    FILE *fp = fopen(filename.c_str(), "wt");
+    FILE *fp = femm_fopen(filename, "wt");
     if (!fp) return false;
 
     // Compute extents

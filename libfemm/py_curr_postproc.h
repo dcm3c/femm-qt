@@ -8,6 +8,7 @@
 class CurrResultsDoc;
 
 void register_curr_postproc_py(CurrResultsDoc *doc);
+void deactivate_curr_postproc_py();   // clear active-results binding (window closed)
 CurrResultsDoc *active_curr_results();
 
 #endif  // PY_CURR_POSTPROC_H

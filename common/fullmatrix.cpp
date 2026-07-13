@@ -146,7 +146,7 @@ static void hermitian(CComplex in[], unsigned N, unsigned M, CComplex out[]) {
     for (unsigned i = 0; i < N; i++) for (unsigned j = 0; j < M; j++) out[lin_index(j, i, N)] = conj(in[lin_index(i, j, M)]);
 }
 static void complexIdentity(CComplex matrix[], int size) {
-    memset(matrix, 0, (size_t)size * size * sizeof(CComplex));
+    std::fill_n(matrix, (size_t)size * size, CComplex(0.0, 0.0));
     for (int i = 0; i < size; i++) matrix[lin_index(i, i, size)] = CComplex(1, 0);
 }
 static double absMaxElement(CComplex in[], unsigned N, unsigned M) {
@@ -164,7 +164,7 @@ static void complexScalarMultiplication(CComplex V[], CComplex alpha, unsigned N
     for (unsigned i = 0; i < N * M; i++) U[i] = alpha * V[i];
 }
 static void complexMatrixMultiplication(CComplex M1[], CComplex M2[], unsigned N, unsigned K, unsigned M, CComplex Mout[]) {
-    memset(Mout, 0, (size_t)N * M * sizeof(CComplex));
+    std::fill_n(Mout, (size_t)N * M, CComplex(0.0, 0.0));
     for (unsigned i = 0; i < N; i++) for (unsigned j = 0; j < M; j++) for (unsigned k = 0; k < K; k++)
         Mout[i * M + j] = Mout[i * M + j] + M1[i * K + k] * M2[k * M + j];
 }
@@ -215,7 +215,7 @@ static void hessenberg(CComplex A[], unsigned N, CComplex H[], CComplex U[]) {
 
         alpha = ro * CComplex(complexVectorNorm(x, N - 1 - k), 0);
 
-        memset(e1, 0, (N - k - 1) * sizeof(CComplex));
+        std::fill_n(e1, (N - k - 1), CComplex(0.0, 0.0));
         e1[0] = CComplex(1, 0);
 
         complexScalarMultiplication(e1, alpha, N - k - 1, 1, x_alpha_e1);
@@ -506,7 +506,7 @@ static void solve2by2eig(CComplex A[], CComplex V[], CComplex D[]) {
     double tolr = EIG_EPS, r, theta, nV1, nV2, m1, m2, a1, a2;
     CComplex x, y, z, x2, V1[2], V2[2], a, b, c, delta;
 
-    memset(D, 0, 2 * sizeof(CComplex));
+    std::fill_n(D, 2, CComplex(0.0, 0.0));
     a = CComplex(1, 0);
     b = -(A[lin_index(0, 0, 2)] + A[lin_index(1, 1, 2)]);
     c = A[lin_index(0, 0, 2)] * A[lin_index(1, 1, 2)] - A[lin_index(0, 1, 2)] * A[lin_index(1, 0, 2)];

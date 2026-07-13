@@ -49,6 +49,12 @@ typedef const char *(*ViewCommandCallback)(const char *cmd, int nargs, double *a
 void set_view_command_callback(ViewCommandCallback cb);
 ViewCommandCallback get_view_command_callback();
 
+// Script messagebox(): show a modal message dialog in the GUI. NULL in headless
+// (the binding then falls back to stderr).
+typedef void (*MessageBoxCallback)(const char *msg);
+void set_message_box_callback(MessageBoxCallback cb);
+MessageBoxCallback get_message_box_callback();
+
 // Shared mesh creation for all physics types. 0 on success.
 int createMeshForDocument(DocumentBase *doc, char *errmsg = nullptr, int errmsg_size = 0);
 
@@ -73,6 +79,12 @@ bool doc_registry_activate_results(const std::string &path);
 bool doc_registry_activate_input_byname(const std::string &name);
 bool doc_registry_activate_results_byname(const std::string &name);
 
+// Normalize a script-supplied setfocus name to carry this physics' canonical
+// extension (".fem"/".ans"/etc.), so a bare "temp" and the GUI tab label
+// "temp.fem" both resolve to the same document. See the definition for why we
+// append (rather than strip) the extension.
+std::string canonicalDocName(const std::string &name, const std::string &ext);
+
 // Clean up the document registry (called by close_py / close_lua).
 // In headless mode, deletes owned documents; always clears the vectors.
 void doc_registry_cleanup();
@@ -83,9 +95,11 @@ void doc_registry_cleanup();
 typedef void (*ScriptDocActivateCallback)(DocumentBase *doc);
 typedef void (*ScriptDocDeactivateCallback)(DocumentBase *doc);
 typedef void (*ScriptResultsActivateCallback)(ResultsDocBase *doc);
+typedef void (*ScriptResultsDeactivateCallback)(ResultsDocBase *doc);
 void set_script_doc_activate_callback(ScriptDocActivateCallback cb);
 void set_script_doc_deactivate_callback(ScriptDocDeactivateCallback cb);
 void set_script_results_activate_callback(ScriptResultsActivateCallback cb);
+void set_script_results_deactivate_callback(ScriptResultsDeactivateCallback cb);
 
 // Normalize a file path: unescape C escape sequences that clients may embed
 // (pyfemm sends raw backslash paths like "C:\foo\bar"), convert backslashes

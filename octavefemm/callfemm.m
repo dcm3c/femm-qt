@@ -19,7 +19,12 @@ function z = callfemm(x)
 
     % Send command and read response, catching dead connections
     try
-        cmd = uint8([char(x), char(10)]);
+        % Encode the command as UTF-8 bytes for the wire so non-ASCII paths
+        % (e.g. an umlaut in a folder) survive. unicode2native(...,'UTF-8')
+        % yields real UTF-8 in both hosts: MATLAB converts from its UTF-16 char,
+        % and Octave (whose strings are already UTF-8) round-trips identically.
+        % A plain uint8(char(x)) would truncate MATLAB's UTF-16 to Latin-1.
+        cmd = [unicode2native(x, 'UTF-8'), uint8(10)];
         conn.out.write(cmd, 0, length(cmd));
         conn.out.flush();
 

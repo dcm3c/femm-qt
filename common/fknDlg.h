@@ -35,6 +35,7 @@ class CFknDlg {
     bool twoLines;    // true if last render used two lines
     bool vtEnabled;   // true if VT100 sequences are available
     bool piped;       // true if stderr is a pipe (not a terminal)
+    bool quiet;       // true => render nothing to stderr (in-process post-proc use)
 
     static bool isTTY() {
 #ifdef _WIN32
@@ -83,6 +84,7 @@ class CFknDlg {
     }
 
     void render() {
+        if (quiet) return;
         if (piped) {
             // Piped output: each bar on its own line for easy parsing.
             // No \r overwrites — the parent process reads complete lines.
@@ -130,8 +132,13 @@ public:
     CProgressCtrl m_prog2;
     CString ComLine;
 
-    CFknDlg() : started(false), twoLines(false) {
+    // quiet=true suppresses all stderr rendering — used for the in-process
+    // post-processor MakeMask solve, whose PCGSolve progress must not leak to
+    // the GUI/headless terminal. A progressCallback (via m_prog1.onProgress)
+    // still fires independently of render(), so GUI progress is unaffected.
+    CFknDlg(bool quiet = false) : started(false), twoLines(false), quiet(quiet) {
         label1[0] = 0; label2[0] = 0;
+        if (quiet) { piped = true; vtEnabled = false; return; }  // don't touch the console
         piped = !isTTY();
         vtEnabled = piped ? false : enableVT();
     }
@@ -146,6 +153,7 @@ public:
         render();
     }
     void SetWindowText(const char* text) {
+        if (quiet) return;
         fprintf(stderr, "\r%s\n", text);
     }
     void InvalidateRect(void* p, int b) { (void)p; (void)b; }

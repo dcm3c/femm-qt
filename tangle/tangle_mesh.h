@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (C) 2026 David Meeker
+// Copyright (c) 2026 David Meeker
 
 // tangle_mesh.h — Tangle mesh structures and library API
 #ifndef TANGLE_MESH_H
@@ -48,6 +48,13 @@ struct PBCNodePair {
     int type;
 };
 
+struct PBCDef {
+    // A PBC declaration from the input: the boundary with marker_a pairs with
+    // the boundary with marker_b (.poly form; FEMM inputs share one marker).
+    int marker_a, marker_b;
+    int type; // 0=periodic, 1=anti-periodic
+};
+
 struct AGEDef {
     std::string name;
     int format;
@@ -71,6 +78,7 @@ struct Mesh {
     std::vector<PBCNodePair> pbc_pairs;
     std::map<int,int> pbc_twin;
     std::map<int,int> pbc_node_type;
+    std::vector<PBCDef> pbc_defs;
     std::vector<AGEDef> age_defs;
 
     void rebuildAdjacency();
@@ -78,7 +86,21 @@ struct Mesh {
     bool hasEdge(int a, int b, const std::vector<std::vector<int>>& v2t) const;
 };
 
-// Mesh a .fem file in-memory. Returns 0 on success.
+// Library/process return status. Each distinct failure egress has its own code
+// so a caller (e.g. femm-qt's "Mesher failed (error N)") can tell a missing file
+// from a parse error from a real meshing failure. Keep in sync with the copy in
+// tangle.cpp.
+enum TangleStatus {
+    TANGLE_OK          = 0,  // success
+    TANGLE_ERR_USAGE   = 1,  // bad invocation: no args / no input file named
+    TANGLE_ERR_NO_FILE = 2,  // input file not found / could not be opened
+    TANGLE_ERR_PARSE   = 3,  // file opened but could not be parsed
+    TANGLE_ERR_MESH    = 4,  // meshing failed (e.g. a segment could not be enforced)
+    TANGLE_ERR_OPTION  = 5,  // option not valid for this input (e.g. -g on a non-FEMM file)
+};
+
+// Mesh a .fem file in-memory. Returns TANGLE_OK (0) on success, else one of the
+// TANGLE_ERR_* codes above (tangle_mesh_fem yields NO_FILE / PARSE / MESH).
 int tangle_mesh_fem(const std::string& inputBase, Mesh& outMesh);
 
 #endif

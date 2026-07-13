@@ -11,6 +11,7 @@
 #include "spars.h"
 #include "femmedoccore.h"
 #include "mag_dir_eval.h"
+#include "utf8_io.h"
 
 double Power(double x, int y)
 {
@@ -824,18 +825,18 @@ int CFemmeDocCore::WriteStatic2D(CBigLinProb &L)
 	
 	// first, echo input .fem file to the .ans file;
 	snprintf(s, sizeof(s),"%s.fem",PathName);
-	if((fz=fopen(s,"rt"))==NULL){
+	if((fz=femm_fopen(s,"rt"))==NULL){
 		Sleep(500);
-		if((fz=fopen(s,"rt"))==NULL){
+		if((fz=femm_fopen(s,"rt"))==NULL){
 			MsgBox("Couldn't open %s.fem\n",PathName);
 			return FALSE;
 		}
 	}
 
 	snprintf(s, sizeof(s),"%s.ans",PathName);
-	if((fp=fopen(s,"wt"))==NULL){
+	if((fp=femm_fopen(s,"wt"))==NULL){
 		Sleep(500);
-		if((fp=fopen(s,"wt"))==NULL){
+		if((fp=femm_fopen(s,"wt"))==NULL){
 			MsgBox("Couldn't write to %s.ans\n",PathName);
 			return FALSE;
 		}
@@ -979,7 +980,7 @@ int CFemmeDocCore::MatlabDumpStatic2D(CBigLinProb &L)
 	int k;
 
 	CString path = PathName;
-	if ((fp=fopen(path + ".m","wt"))==NULL){
+	if ((fp=femm_fopen(path + ".m","wt"))==NULL){
 		// couldn't open file
 		return 0;
 	}

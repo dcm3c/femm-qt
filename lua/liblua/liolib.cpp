@@ -19,6 +19,7 @@
 #endif
 
 #include "lua.h"
+#include "utf8_io.h"   /* femm_fopen: open Unicode (UTF-8) paths on Windows */
 
 #include "lauxlib.h"
 #include "lobject.h"  /* luaO_str2d: parse real/complex numbers without eval */
@@ -179,7 +180,7 @@ static int io_open (lua_State *L) {
   IOCtrl *ctrl = (IOCtrl *)lua_touserdata(L, -1);
   FILE *f;
   lua_pop(L, 1);  /* remove upvalue */
-  f = fopen(luaL_check_string(L, 1), luaL_check_string(L, 2));
+  f = femm_fopen(luaL_check_string(L, 1), luaL_check_string(L, 2));
   if (f) {
     lua_pushusertag(L, f, ctrl->iotag);
     return 1;
@@ -202,7 +203,7 @@ static int io_fromto (lua_State *L, int inout, const char *mode) {
     current = (FILE *)lua_touserdata(L, 1);
   else {
     const char *s = luaL_check_string(L, 1);
-    current = (*s == '|') ? popen(s+1, mode) : fopen(s, mode);
+    current = (*s == '|') ? popen(s+1, mode) : femm_fopen(s, mode);
   }
   return setreturn(L, ctrl, current, inout);
 }
@@ -222,7 +223,7 @@ static int io_appendto (lua_State *L) {
   IOCtrl *ctrl = (IOCtrl *)lua_touserdata(L, -1);
   FILE *current;
   lua_pop(L, 1);  /* remove upvalue */
-  current = fopen(luaL_check_string(L, 1), "a");
+  current = femm_fopen(luaL_check_string(L, 1), "a");
   return setreturn(L, ctrl, current, OUTFILE);
 }
 

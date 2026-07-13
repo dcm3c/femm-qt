@@ -20,8 +20,10 @@
 
 #include "py_state.h"
 #include "tcp_server.h"
+#include "utf8_io.h"
 
 #include <csignal>
+#include <vector>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -168,6 +170,36 @@ static void run_repl()
     }
 }
 
+// Change the working directory to the folder containing `script`, matching the
+// GUI's Run-Script behavior so a script referenced by a path (e.g.
+// `-run ../models/foo.py`) can open its companion files with relative names
+// (open("foo.fem")).
+//
+// Returns the script's ABSOLUTE path, which the caller must use to run it: a
+// relative path given on the command line is resolved against the old cwd, so
+// once we chdir away it no longer points at the script ("../../examples/x.py"
+// run from build/bin would be re-resolved against .../examples and miss).
+//
+// Unicode-safe on every platform: femm_path() builds the fs::path from UTF-8 --
+// the plain fs::path(std::string) ctor would decode ANSI on Windows -- and
+// generic_u8string() yields forward-slash UTF-8 that embeds safely in the Python
+// string literal (native backslashes would be mangled by Python's escape
+// parsing). The chdir itself is done by the setcurrentdirectory binding, which
+// widens to _wchdir on Windows.
+static std::string chdir_to_script_dir(const std::string &script)
+{
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    fs::path abs = fs::absolute(femm_path(script), ec);
+    if (ec) return script;                      // leave cwd alone; run it as given
+    auto u8 = abs.parent_path().generic_u8string();
+    std::string dirStr(u8.begin(), u8.end());   // u8string (C++20) or string (C++17)
+    std::string cmd = "setcurrentdirectory(\"" + dirStr + "\")";
+    char errmsg[1024] = {};
+    exec_python(cmd.c_str(), errmsg, sizeof(errmsg));
+    return femm_u8string(abs);
+}
+
 int main(int argc, char *argv[])
 {
     fprintf(stderr, "FEMM headless engine v5.0\n");
@@ -183,19 +215,25 @@ int main(int argc, char *argv[])
     bool portGiven = false;
     bool runAndExit = false;
     bool wantRepl = false;
-    const char *script = nullptr;
+    std::string script;               // empty => no script given
+    bool haveScript = false;
 
-    for (int i = 1; i < argc; i++) {
-        if ((strcmp(argv[i], "-port") == 0 || strcmp(argv[i], "--port") == 0) && i + 1 < argc) {
-            port = atoi(argv[++i]);
+    // Decode argv to UTF-8 so a Unicode script path (e.g. an umlaut in a folder
+    // name) survives the ANSI argv the CRT hands a narrow main() on Windows.
+    std::vector<std::string> args = femm_utf8_args(argc, argv);
+    for (size_t i = 1; i < args.size(); i++) {
+        if ((args[i] == "-port" || args[i] == "--port") && i + 1 < args.size()) {
+            port = atoi(args[++i].c_str());
             portGiven = true;
-        } else if (strcmp(argv[i], "-run") == 0 && i + 1 < argc) {
+        } else if (args[i] == "-run" && i + 1 < args.size()) {
             runAndExit = true;
-            script = argv[++i];
-        } else if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--interactive") == 0) {
+            script = args[++i];
+            haveScript = true;
+        } else if (args[i] == "-i" || args[i] == "--interactive") {
             wantRepl = true;
-        } else if (!script) {
-            script = argv[i];
+        } else if (!haveScript) {
+            script = args[i];
+            haveScript = true;
         }
     }
 
@@ -203,13 +241,16 @@ int main(int argc, char *argv[])
     // a terminal (no --port, no script, stdin is a TTY). The bindings always
     // pass --port, so they never land here. The REPL does not also serve TCP.
     bool replMode = wantRepl ||
-        (!portGiven && !runAndExit && script == nullptr && stdin_is_tty());
+        (!portGiven && !runAndExit && !haveScript && stdin_is_tty());
 
     if (replMode) {
-        if (script) {   // `-i script.py`: run the script first, then drop to the REPL
-            fprintf(stderr, "Executing: %s\n", script);
+        if (haveScript) {   // `-i script.py`: run the script first, then drop to the REPL
+            fprintf(stderr, "Executing: %s\n", script.c_str());
+            // chdir so the script's own relative paths resolve; run it by the
+            // absolute path it hands back (the relative one dies with the cwd).
+            const std::string absScript = chdir_to_script_dir(script);
             char errmsg[1024] = {};
-            if (exec_python_file(script, errmsg, sizeof(errmsg)) != 0)
+            if (exec_python_file(absScript.c_str(), errmsg, sizeof(errmsg)) != 0)
                 fprintf(stderr, "Script error: %s\n", errmsg);
         }
         g_repl_mode = 1;
@@ -227,10 +268,13 @@ int main(int argc, char *argv[])
     }
 
     // Execute startup script if provided
-    if (script) {
-        fprintf(stderr, "Executing: %s\n", script);
+    if (haveScript) {
+        fprintf(stderr, "Executing: %s\n", script.c_str());
+        // chdir so the script's own relative paths resolve; run it by the
+        // absolute path it hands back (the relative one dies with the cwd).
+        const std::string absScript = chdir_to_script_dir(script);
         char errmsg[1024] = {};
-        int status = exec_python_file(script, errmsg, sizeof(errmsg));
+        int status = exec_python_file(absScript.c_str(), errmsg, sizeof(errmsg));
         if (status != 0) {
             // A Ctrl+C interrupt surfaces as KeyboardInterrupt; report it
             // distinctly (and with the conventional 128+SIGINT exit code) so a

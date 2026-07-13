@@ -4,6 +4,7 @@
 // py_state.cpp - embedded MicroPython lifecycle + shared global namespace.
 // See py_state.h for interface notes.
 #include "py_state.h"
+#include "utf8_io.h"
 #include "py_bind.h"
 #include "py_clinalg.h"
 #include "py_init_script.h"
@@ -19,6 +20,7 @@ extern "C" {
 #include "py/gc.h"
 #include "py/stackctrl.h"
 #include "py/mpprint.h"
+#include "py/repl.h"
 #include "extmod/vfs.h"
 #include "extmod/vfs_posix.h"
 }
@@ -355,8 +357,12 @@ void init_py() {
     femm_py::femm_module.alias("hide_console",  "hideconsole");
     femm_py::femm_module.alias("clear_console", "clearconsole");
     femm_py::femm_module.def("messagebox", [](const std::string &msg) {
-        std::fprintf(stderr, "%s\n", msg.c_str());
+        // Show a modal dialog in the GUI; fall back to stderr in headless.
+        auto cb = get_message_box_callback();
+        if (cb) cb(msg.c_str());
+        else std::fprintf(stderr, "%s\n", msg.c_str());
     });
+    femm_py::femm_module.alias("message_box", "messagebox");
 
     // Global FEMM document functions (newdocument, open, quit, chdir, main_*)
     // and the scripting-layer dispatch hooks for the document registry. These
@@ -448,6 +454,10 @@ int exec_python(const char *cmd, char *errmsg, int errmsg_size) {
     }
 }
 
+bool py_repl_continue(const char *src) {
+    return mp_repl_continue_with_input(src);
+}
+
 // ---------------------------------------------------------------------------
 // Expression-only evaluator for line-edit widgets.
 // Compiles + executes as MP_PARSE_EVAL_INPUT only. Returns MP_OBJ_NULL on any
@@ -536,7 +546,7 @@ void close_py() {
 }
 
 int exec_python_file(const char *path, char *errmsg, int errmsg_size) {
-    FILE *f = std::fopen(path, "r");
+    FILE *f = femm_fopen(path, "r");
     if (!f) {
         if (errmsg) std::snprintf(errmsg, errmsg_size, "Cannot open %s", path);
         return -1;

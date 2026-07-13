@@ -15,6 +15,7 @@
 #include "mesh.h"
 #include "spars.h"
 #include "femmedoccore.h"
+#include "utf8_io.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CFemmeDocCore construction/destruction
@@ -99,7 +100,7 @@ int CFemmeDocCore::OnOpenDocument()
 	CBlockLabel   blk;
 
 	snprintf(s, sizeof(s),"%s.fec",PathName);
-	if ((fp=fopen(s,"rt"))==NULL){
+	if ((fp=femm_fopen(s,"rt"))==NULL){
 		fprintf(stderr,"Couldn't read from specified %s\n",s);
 		return FALSE;
 	}
@@ -470,7 +471,7 @@ int CFemmeDocCore::LoadMesh()
 
 	//read meshnodes;
 	snprintf(infile, sizeof(infile),"%s.node",PathName);
-	if((fp=fopen(infile,"rt"))==NULL){
+	if((fp=femm_fopen(infile,"rt"))==NULL){
 		return FALSE;
 	}
 	fgets(s,1024,fp);
@@ -510,7 +511,7 @@ int CFemmeDocCore::LoadMesh()
 	
 	//read in periodic boundary conditions;
 	snprintf(infile, sizeof(infile),"%s.pbc",PathName);
-	if((fp=fopen(infile,"rt"))==NULL){
+	if((fp=femm_fopen(infile,"rt"))==NULL){
 		return FALSE;
 	}
 	fgets(s,1024,fp);
@@ -530,7 +531,7 @@ int CFemmeDocCore::LoadMesh()
 
 	// read in elements;
 	snprintf(infile, sizeof(infile),"%s.ele",PathName);
-	if((fp=fopen(infile,"rt"))==NULL){
+	if((fp=femm_fopen(infile,"rt"))==NULL){
 		return FALSE;
 	}
 	fgets(s,1024,fp);
@@ -610,7 +611,7 @@ int CFemmeDocCore::LoadMesh()
 			}		
 
 	snprintf(infile, sizeof(infile),"%s.edge",PathName);
-	if((fp=fopen(infile,"rt"))==NULL)
+	if((fp=femm_fopen(infile,"rt"))==NULL)
 	{
 		return FALSE;
 	}

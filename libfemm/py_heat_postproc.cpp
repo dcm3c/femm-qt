@@ -23,6 +23,7 @@ static const char *HOERR = "No current heat flow output in focus";
 
 static HeatResultsDoc *s_doc = nullptr;
 HeatResultsDoc *active_heat_results() { return s_doc; }
+void deactivate_heat_postproc_py() { s_doc = nullptr; }
 
 void register_heat_postproc_py(HeatResultsDoc *doc) {
     s_doc = doc;
@@ -208,12 +209,18 @@ void register_heat_postproc_py(HeatResultsDoc *doc) {
     regv("ho_maximize");
     regv("ho_restore");
     m.def("ho_setfocus", [](optional<std::string> docname) {
-        if (docname) doc_registry_activate_results_byname(*docname);
+        // Heat-flow results carry the .anh extension; normalize so a bare "temp"
+        // matches the "temp.anh" tab label.
+        std::string dn;
+        if (docname) {
+            dn = canonicalDocName(*docname, ".anh");
+            doc_registry_activate_results_byname(dn);
+        }
         auto cb = get_view_command_callback();
         if (!cb) return;
         double args[4] = {};
         if (docname)
-            cb(("ho_setfocus:" + *docname).c_str(), 0, args);
+            cb(("ho_setfocus:" + dn).c_str(), 0, args);
         else
             cb("ho_setfocus", 0, args);
     });

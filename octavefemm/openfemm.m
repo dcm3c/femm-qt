@@ -169,8 +169,11 @@ function openfemm(varargin)
     jsock.setTcpNoDelay(true);
     conn.socket = jsock;
     conn.out = jsock.getOutputStream();
+    % Decode responses as UTF-8 (the wire encoding), not the JVM default
+    % charset (Cp1252 on many Windows JVMs) — otherwise a non-ASCII filename
+    % returned by e.g. mi_gettitle / getcurrentdirectory would be mangled.
     conn.reader = javaObject('java.io.BufferedReader', ...
-        javaObject('java.io.InputStreamReader', jsock.getInputStream()));
+        javaObject('java.io.InputStreamReader', jsock.getInputStream(), 'UTF-8'));
 
     % Store this connection and make it active
     femmSockets.(portkey) = conn;

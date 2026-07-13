@@ -79,6 +79,13 @@ void init_py();
 // formatted message into errmsg (truncated to errmsg_size).
 int exec_python(const char *cmd, char *errmsg, int errmsg_size);
 
+// True if `src` is an incomplete REPL statement needing more input — it opens a
+// block (trailing ':'), has an unclosed bracket/quote or trailing backslash, or
+// is a non-blank line inside an open compound statement (a blank line ends the
+// block). The GUI console uses this to decide whether Enter runs the input or
+// starts a continuation line, mirroring CPython's '...' prompt.
+bool py_repl_continue(const char *src);
+
 // Expression-only evaluation for property-dialog line edits.
 // These try MP_PARSE_EVAL_INPUT only (no statement fallback), matching
 // Python has expression-only eval (MP_PARSE_EVAL_INPUT), avoiding the side-effect of

@@ -3105,9 +3105,15 @@ femmTryConnect[port_] := Module[{sock},
 		(* like Plot[MOGetB[0,z], ...]. Matches the equivalent fix in *)
 		(* octavefemm/openfemm.m line 113. *)
 		femmSocket@setTcpNoDelay[True];
-		femmOut = JavaNew["java.io.PrintWriter", femmSocket@getOutputStream[], True];
+		(* Pin the streams to UTF-8 (the wire encoding), not the JVM default *)
+		(* charset -- J/Link's bundled JVM is old, so on Windows the default is *)
+		(* Cp1252, which would mangle a non-ASCII path (e.g. an umlaut in a *)
+		(* folder). OutputStreamWriter[stream,"UTF-8"] is the Java 1.1 form, so *)
+		(* it works even on that old runtime. *)
+		femmOut = JavaNew["java.io.PrintWriter",
+			JavaNew["java.io.OutputStreamWriter", femmSocket@getOutputStream[], "UTF-8"], True];
 		femmIn = JavaNew["java.io.BufferedReader",
-			JavaNew["java.io.InputStreamReader", femmSocket@getInputStream[]]];
+			JavaNew["java.io.InputStreamReader", femmSocket@getInputStream[], "UTF-8"]];
 		True
 	]
 ]

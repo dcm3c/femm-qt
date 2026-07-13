@@ -3,5 +3,7 @@
 % ActiveFEMM (C)2006 David Meeker, dmeeker@ieee.org
 
 function showpointprops()
-callfemm('showpointprops()');
+% In OF this displays the floating "FEMM Properties" window that always hangs out
+% over the preprocessor. femm-qt has no such persistent floating window, so
+% there is nothing to toggle -- kept as a no-op for legacy-script compatibility.
 

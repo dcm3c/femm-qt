@@ -171,12 +171,38 @@ static mp_obj_t float_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs
     return mp_obj_float_binary_op(op, lhs_val, rhs_in);
 }
 
+// FEMM patch: expose the CPython numeric-tower attributes on float — x.real,
+// x.imag, x.conjugate() — which MicroPython omits (unlike CPython 3.5+). Needed
+// so .real/.imag/.conjugate work uniformly across float/int/complex; in
+// particular block integrals now return a real float for real-valued quantities
+// and legacy scripts still write result.real on them. float has no locals_dict,
+// so any other attribute simply falls through to AttributeError.
+static mp_obj_t float_conjugate(mp_obj_t self_in) {
+    return self_in;  // conjugate of a real number is itself
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(float_conjugate_obj, float_conjugate);
+
+static void float_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+    if (dest[0] != MP_OBJ_NULL) {
+        return;  // load only
+    }
+    if (attr == MP_QSTR_real) {
+        dest[0] = self_in;                  // real part of a float is itself
+    } else if (attr == MP_QSTR_imag) {
+        dest[0] = mp_obj_new_float(0);      // imaginary part is 0.0
+    } else if (attr == MP_QSTR_conjugate) {
+        dest[0] = MP_OBJ_FROM_PTR(&float_conjugate_obj);
+        dest[1] = self_in;                  // bound method
+    }
+}
+
 MP_DEFINE_CONST_OBJ_TYPE(
     mp_type_float, MP_QSTR_float, MP_TYPE_FLAG_EQ_NOT_REFLEXIVE | MP_TYPE_FLAG_EQ_CHECKS_OTHER_TYPE,
     make_new, float_make_new,
     print, float_print,
     unary_op, float_unary_op,
-    binary_op, float_binary_op
+    binary_op, float_binary_op,
+    attr, float_attr
     );
 
 #if MICROPY_OBJ_REPR != MICROPY_OBJ_REPR_C && MICROPY_OBJ_REPR != MICROPY_OBJ_REPR_D

@@ -8,6 +8,7 @@
 #define PY_POSTPROC_COMMON_H
 
 #include "py_bind.h"
+#include "utf8_io.h"
 #include "script_callbacks.h"
 #include "mag_types.h"
 
@@ -195,7 +196,7 @@ double ppMakePlot(Doc *doc, int plotType, int numPoints, const std::string &file
     doc->GetLineValues(pts, plotType, numPoints);
 
     if (!filename.empty()) {
-        FILE *fp = fopen(filename.c_str(), "wt");
+        FILE *fp = femm_fopen(filename, "wt");
         if (!fp)
             throw std::runtime_error("Could not open output file: " + filename);
         for (auto &p : pts) {

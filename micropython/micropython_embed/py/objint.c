@@ -484,6 +484,32 @@ static const mp_rom_map_elem_t int_locals_dict_table[] = {
 
 static MP_DEFINE_CONST_DICT(int_locals_dict, int_locals_dict_table);
 
+// FEMM patch: expose the CPython numeric-tower attributes on int — x.real,
+// x.imag, x.conjugate() — which MicroPython omits (unlike CPython 3.5+), so
+// .real/.imag/.conjugate work uniformly across int/float/complex. Any other
+// attribute (to_bytes/from_bytes) is passed through to the locals_dict via the
+// MP_OBJ_SENTINEL fall-through signal.
+static mp_obj_t int_conjugate(mp_obj_t self_in) {
+    return self_in;  // conjugate of a real integer is itself
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(int_conjugate_obj, int_conjugate);
+
+static void int_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+    if (dest[0] != MP_OBJ_NULL) {
+        return;  // load only
+    }
+    if (attr == MP_QSTR_real) {
+        dest[0] = self_in;                     // real part of an int is itself
+    } else if (attr == MP_QSTR_imag) {
+        dest[0] = MP_OBJ_NEW_SMALL_INT(0);     // imaginary part is 0
+    } else if (attr == MP_QSTR_conjugate) {
+        dest[0] = MP_OBJ_FROM_PTR(&int_conjugate_obj);
+        dest[1] = self_in;                     // bound method
+    } else {
+        dest[1] = MP_OBJ_SENTINEL;             // fall through to locals_dict
+    }
+}
+
 MP_DEFINE_CONST_OBJ_TYPE(
     mp_type_int,
     MP_QSTR_int,
@@ -492,5 +518,6 @@ MP_DEFINE_CONST_OBJ_TYPE(
     print, mp_obj_int_print,
     unary_op, mp_obj_int_unary_op,
     binary_op, mp_obj_int_binary_op,
+    attr, int_attr,
     locals_dict, &int_locals_dict
     );

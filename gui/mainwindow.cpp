@@ -77,6 +77,9 @@ MainWindow::MainWindow(TcpServer *server, QWidget *parent)
     resize(1024, 768);
 
     m_mdiArea = new QMdiArea(this);
+    // Closing a tab returns to the most-recently-used one (e.g. close doc2.ans
+    // -> back to doc2.fem), not Qt's default creation-order fallback.
+    m_mdiArea->setActivationOrder(QMdiArea::ActivationHistoryOrder);
     m_mdiArea->setViewMode(QMdiArea::TabbedView);
     m_mdiArea->setTabsClosable(true);
     m_mdiArea->setTabPosition(QTabWidget::South);
@@ -829,6 +832,7 @@ void MainWindow::showPostprocessorUI()
 void MainWindow::syncPostprocessorMenus(QWidget *active)
 {
     bool density, contours, mesh, grid, snap, points, names;
+    int mode = 0;
     if (auto *rw = qobject_cast<ResultsWidget *>(active)) {
         density  = rw->showDensity();
         contours = rw->showContours();
@@ -837,6 +841,7 @@ void MainWindow::syncPostprocessorMenus(QWidget *active)
         snap     = rw->snapToGrid();
         points   = rw->m_showPoints;
         names    = rw->m_showNames;
+        mode     = rw->mode();
     } else if (auto *sw = qobject_cast<ScalarResultsWidget *>(active)) {
         density  = sw->showDensity();
         contours = sw->showContours();
@@ -845,6 +850,7 @@ void MainWindow::syncPostprocessorMenus(QWidget *active)
         snap     = sw->snapToGrid();
         points   = sw->m_showPoints;
         names    = sw->m_showNames;
+        mode     = sw->mode();
     } else {
         return;  // not a postprocessor widget
     }
@@ -864,6 +870,16 @@ void MainWindow::syncPostprocessorMenus(QWidget *active)
     m_ppActPoints->setChecked(points);
     m_ppActNames->setChecked(names);
     for (QAction *a : acts) a->blockSignals(false);
+
+    // Re-sync the postprocessor mode (Point/Contour/Area) toolbar/menu to this
+    // window — same fix as the preprocessor mode: it was only checked reactively
+    // on a mode-button click, so switching windows left it stale. m_ppModeGroup
+    // is exclusive; its actions are ordered 0=Point, 1=Contour, 2=Area to match
+    // ResultsWidget::mode(), and they use triggered (not toggled), so setChecked
+    // emits nothing.
+    auto modeActs = m_ppModeGroup->actions();
+    if (mode >= 0 && mode < modeActs.size())
+        modeActs[mode]->setChecked(true);
 }
 
 void MainWindow::syncPreprocessorMenus(EditorWidget *editor)
@@ -883,6 +899,23 @@ void MainWindow::syncPreprocessorMenus(EditorWidget *editor)
     m_snapGridTB->setChecked(snap);
     if (m_showNamesMenu) m_showNamesMenu->setChecked(names);
     for (QAction *a : acts) if (a) a->blockSignals(false);
+
+    // Re-sync the edit-mode (Node/Segment/Arc/Block/Group) toolbar buttons and
+    // Operation-menu checkmarks to this editor's mode. Each window keeps its own
+    // mode, so switching windows must reflect the newly-active one. (The mode
+    // actions otherwise only update via editActionChanged, which fires when the
+    // mode changes, not on a window switch.) m_modeGroup is exclusive, so
+    // checking one unchecks the rest; they use triggered (not toggled), so
+    // setChecked emits nothing.
+    QAction *modeAct = nullptr;
+    switch (editor->editAction()) {
+        case 0: modeAct = m_actNode;    break;
+        case 1: modeAct = m_actSegment; break;
+        case 2: modeAct = m_actBlock;   break;
+        case 3: modeAct = m_actArc;     break;
+        case 4: modeAct = m_actGroup;   break;
+    }
+    if (modeAct) modeAct->setChecked(true);
 }
 
 // ================================================================
@@ -1986,10 +2019,18 @@ void MainWindow::createLeftToolbars()
         char errmsg[1024] = {};
         exec_python(chdirCmd.c_str(), errmsg, sizeof(errmsg));
         updateStatus(QString("Running %1...").arg(QFileInfo(path).fileName()));
-        if (exec_python_file(scriptPath.toStdString().c_str(), errmsg, sizeof(errmsg)) != 0)
-            QMessageBox::warning(this, tr("Script Error"), QString::fromUtf8(errmsg));
-        else
+        if (exec_python_file(scriptPath.toStdString().c_str(), errmsg, sizeof(errmsg)) != 0) {
+            if (strstr(errmsg, "KeyboardInterrupt")) {
+                updateStatus("Script interrupted");   // user pressed Esc
+                QMessageBox::information(this, tr("Script Interrupted"),
+                                         tr("Script interrupted."));
+            } else {
+                updateStatus("Script failed");        // clear "Running..." before the dialog
+                QMessageBox::warning(this, tr("Script Error"), QString::fromUtf8(errmsg));
+            }
+        } else {
             updateStatus("Script completed");
+        }
     });
     m_leftScript->addAction(icon("lua_console"), tr("Python Console"), [this]() {
         showPyConsole();
@@ -2295,6 +2336,11 @@ void MainWindow::showPyConsole()
 void MainWindow::hidePyConsole()
 {
     if (m_pyConsole) m_pyConsole->hide();
+}
+
+void MainWindow::clearPyConsole()
+{
+    if (m_pyConsole) m_pyConsole->clearOutput();
 }
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *event)

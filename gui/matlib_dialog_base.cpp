@@ -7,6 +7,7 @@
 // to the subclass via pure virtual methods. See matlib_dialog_base.h.
 
 #include "matlib_dialog_base.h"
+#include "utf8_io.h"
 #include "matlib_tree.h"
 #include "document.h"
 
@@ -161,7 +162,7 @@ void MatLibDialogBase::loadLibrary()
 
 void MatLibDialogBase::readLibraryFile(const std::string &filename)
 {
-    FILE *fp = fopen(filename.c_str(), "rt");
+    FILE *fp = femm_fopen(filename, "rt");
     if (!fp) return;
     readFolderContents(fp, nullptr);
     fclose(fp);
@@ -230,7 +231,7 @@ void MatLibDialogBase::readFolderContents(FILE *fp, QTreeWidgetItem *parent)
 
 void MatLibDialogBase::saveLibrary()
 {
-    FILE *fp = fopen(m_libPath.c_str(), "wt");
+    FILE *fp = femm_fopen(m_libPath, "wt");
     if (!fp) return;
     for (int i = 0; i < m_libTree->topLevelItemCount(); i++)
         writeTreeItem(m_libTree->topLevelItem(i), fp, 0);
@@ -402,7 +403,7 @@ void MatLibDialogBase::importMaterials(MatLibTree *targetTree, QTreeWidgetItem *
     QString fn = QFileDialog::getOpenFileName(this, tr("Import Materials"),
                                               QString(), modelFileFilter());
     if (fn.isEmpty()) return;
-    FILE *fp = fopen(fn.toLocal8Bit().constData(), "rt");
+    FILE *fp = femm_fopen(fn.toStdString(), "rt");
     if (!fp) {
         QMessageBox::warning(this, tr("Import Materials"),
             tr("Could not open %1").arg(fn));

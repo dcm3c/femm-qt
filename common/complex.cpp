@@ -609,8 +609,29 @@ CComplex log( const CComplex& x)
 	return y;
 }
 
+// True if y is a real integer small enough to raise by repeated multiplication.
+// The 100 cutoff matches CPython's complex_pow (and our MicroPython patch): it
+// bounds the rounding that accumulates over the repeated multiplies. NaN fails
+// the range test, so it correctly falls through to the polar form.
+static bool IsSmallIntegerExponent(double y, int &n)
+{
+	if (!(y >= -100. && y <= 100.)) return false;
+	n = (int) y;
+	return (double) n == y;
+}
+
+// An integral exponent is raised by repeated multiplication (the pow(x,int)
+// overload below) rather than exp(y*log(x)). The polar form has to evaluate
+// cos()/sin() of a multiple of pi, and pi is not representable in binary, so it
+// leaves dirt behind: pow(-3, 2.) came out as 9.0000000000000018 - 2.2e-15i
+// rather than exactly 9, giving a real quantity a phantom imaginary part. This
+// matters because the expression evaluators (a "B^2" in a material property)
+// call these overloads, never pow(x,int) directly.
 CComplex pow( const CComplex& x, double y)
 {
+	int n;
+	if (IsSmallIntegerExponent(y, n)) return pow(x, n);
+
 	return exp(y*log(x));
 }
 
@@ -636,6 +657,9 @@ CComplex pow( const CComplex& x, int y)
 
 CComplex pow( const CComplex& x, const CComplex& y)
 {
+	int n;
+	if (y.im == 0 && IsSmallIntegerExponent(y.re, n)) return pow(x, n);
+
 	return exp(y*log(x));
 }
 

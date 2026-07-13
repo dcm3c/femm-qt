@@ -260,6 +260,13 @@ function showconsole() end
 function hideconsole() end
 function clearconsole() end
 
+-- Point-properties display controls. In OF these show/hide the floating "FEMM
+-- Properties" window that always hangs out over the preprocessor. femm-qt has
+-- no such persistent floating window, so there is nothing to toggle. Kept as
+-- no-ops purely for legacy-script compatibility.
+function showpointprops() end
+function hidepointprops() end
+
 function main_maximize() return callfemm("main_maximize") end
 function main_minimize() return callfemm("main_minimize") end
 function main_resize(w, h) return callfemm("main_resize", w, h) end

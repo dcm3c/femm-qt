@@ -1,0 +1,118 @@
+diff --git a/femm-qt/micropython/micropython_embed/py/objcomplex.c b/femm-qt/micropython/micropython_embed/py/objcomplex.c
+index 6acaa58..094256e 100644
+--- a/femm-qt/micropython/micropython_embed/py/objcomplex.c
++++ b/femm-qt/micropython/micropython_embed/py/objcomplex.c
+@@ -130,6 +130,15 @@ static mp_obj_t complex_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t r
+     return mp_obj_complex_binary_op(op, lhs->real, lhs->imag, rhs_in);
+ }
+ 
++// FEMM patch: complex.conjugate() for parity with float/int and CPython (real
++// and imag already handled below; conjugate rounds out the numeric tower so
++// x.conjugate() works on any numeric x).
++static mp_obj_t complex_conjugate(mp_obj_t self_in) {
++    mp_obj_complex_t *self = MP_OBJ_TO_PTR(self_in);
++    return mp_obj_new_complex(self->real, -self->imag);
++}
++static MP_DEFINE_CONST_FUN_OBJ_1(complex_conjugate_obj, complex_conjugate);
++
+ static void complex_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+     if (dest[0] != MP_OBJ_NULL) {
+         // not load attribute
+@@ -140,6 +149,9 @@ static void complex_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+         dest[0] = mp_obj_new_float(self->real);
+     } else if (attr == MP_QSTR_imag) {
+         dest[0] = mp_obj_new_float(self->imag);
++    } else if (attr == MP_QSTR_conjugate) {
++        dest[0] = MP_OBJ_FROM_PTR(&complex_conjugate_obj);
++        dest[1] = self_in;
+     }
+ }
+ 
+diff --git a/femm-qt/micropython/micropython_embed/py/objfloat.c b/femm-qt/micropython/micropython_embed/py/objfloat.c
+index b0ad70d..3059d2b 100644
+--- a/femm-qt/micropython/micropython_embed/py/objfloat.c
++++ b/femm-qt/micropython/micropython_embed/py/objfloat.c
+@@ -171,12 +171,38 @@ static mp_obj_t float_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs
+     return mp_obj_float_binary_op(op, lhs_val, rhs_in);
+ }
+ 
++// FEMM patch: expose the CPython numeric-tower attributes on float — x.real,
++// x.imag, x.conjugate() — which MicroPython omits (unlike CPython 3.5+). Needed
++// so .real/.imag/.conjugate work uniformly across float/int/complex; in
++// particular block integrals now return a real float for real-valued quantities
++// and legacy scripts still write result.real on them. float has no locals_dict,
++// so any other attribute simply falls through to AttributeError.
++static mp_obj_t float_conjugate(mp_obj_t self_in) {
++    return self_in;  // conjugate of a real number is itself
++}
++static MP_DEFINE_CONST_FUN_OBJ_1(float_conjugate_obj, float_conjugate);
++
++static void float_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
++    if (dest[0] != MP_OBJ_NULL) {
++        return;  // load only
++    }
++    if (attr == MP_QSTR_real) {
++        dest[0] = self_in;                  // real part of a float is itself
++    } else if (attr == MP_QSTR_imag) {
++        dest[0] = mp_obj_new_float(0);      // imaginary part is 0.0
++    } else if (attr == MP_QSTR_conjugate) {
++        dest[0] = MP_OBJ_FROM_PTR(&float_conjugate_obj);
++        dest[1] = self_in;                  // bound method
++    }
++}
++
+ MP_DEFINE_CONST_OBJ_TYPE(
+     mp_type_float, MP_QSTR_float, MP_TYPE_FLAG_EQ_NOT_REFLEXIVE | MP_TYPE_FLAG_EQ_CHECKS_OTHER_TYPE,
+     make_new, float_make_new,
+     print, float_print,
+     unary_op, float_unary_op,
+-    binary_op, float_binary_op
++    binary_op, float_binary_op,
++    attr, float_attr
+     );
+ 
+ #if MICROPY_OBJ_REPR != MICROPY_OBJ_REPR_C && MICROPY_OBJ_REPR != MICROPY_OBJ_REPR_D
+diff --git a/femm-qt/micropython/micropython_embed/py/objint.c b/femm-qt/micropython/micropython_embed/py/objint.c
+index 901264a..20211c5 100644
+--- a/femm-qt/micropython/micropython_embed/py/objint.c
++++ b/femm-qt/micropython/micropython_embed/py/objint.c
+@@ -484,6 +484,32 @@ static const mp_rom_map_elem_t int_locals_dict_table[] = {
+ 
+ static MP_DEFINE_CONST_DICT(int_locals_dict, int_locals_dict_table);
+ 
++// FEMM patch: expose the CPython numeric-tower attributes on int — x.real,
++// x.imag, x.conjugate() — which MicroPython omits (unlike CPython 3.5+), so
++// .real/.imag/.conjugate work uniformly across int/float/complex. Any other
++// attribute (to_bytes/from_bytes) is passed through to the locals_dict via the
++// MP_OBJ_SENTINEL fall-through signal.
++static mp_obj_t int_conjugate(mp_obj_t self_in) {
++    return self_in;  // conjugate of a real integer is itself
++}
++static MP_DEFINE_CONST_FUN_OBJ_1(int_conjugate_obj, int_conjugate);
++
++static void int_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
++    if (dest[0] != MP_OBJ_NULL) {
++        return;  // load only
++    }
++    if (attr == MP_QSTR_real) {
++        dest[0] = self_in;                     // real part of an int is itself
++    } else if (attr == MP_QSTR_imag) {
++        dest[0] = MP_OBJ_NEW_SMALL_INT(0);     // imaginary part is 0
++    } else if (attr == MP_QSTR_conjugate) {
++        dest[0] = MP_OBJ_FROM_PTR(&int_conjugate_obj);
++        dest[1] = self_in;                     // bound method
++    } else {
++        dest[1] = MP_OBJ_SENTINEL;             // fall through to locals_dict
++    }
++}
++
+ MP_DEFINE_CONST_OBJ_TYPE(
+     mp_type_int,
+     MP_QSTR_int,
+@@ -492,5 +518,6 @@ MP_DEFINE_CONST_OBJ_TYPE(
+     print, mp_obj_int_print,
+     unary_op, mp_obj_int_unary_op,
+     binary_op, mp_obj_int_binary_op,
++    attr, int_attr,
+     locals_dict, &int_locals_dict
+     );

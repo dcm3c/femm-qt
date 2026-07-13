@@ -5,6 +5,7 @@
 // Operates on ElecDocument. Electrostatics is DC, so
 // all material/boundary/point/conductor values are real (no CComplex).
 #include "py_elec_editor.h"
+#include "utf8_io.h"
 #include "py_elec_postproc.h"
 #include "py_editor_common.h"
 #include "elec_document.h"
@@ -300,7 +301,7 @@ void register_elec_editor_py(ElecDocument *doc) {
         if (dot != std::string::npos) resPath = resPath.substr(0, dot);
         resPath += ".res";
         namespace fs = std::filesystem;
-        resPath = fs::absolute(resPath).string();
+        resPath = femm_u8string(fs::absolute(femm_path(resPath)));
         std::replace(resPath.begin(), resPath.end(), '\\', '/');
         if (!fs::exists(resPath))
             throw std::runtime_error("Cannot open solution file " + resPath);
@@ -390,7 +391,7 @@ void register_elec_editor_py(ElecDocument *doc) {
     m.def("ei_getmaterial", [](const std::string &matname) {
         check_doc(s_doc, EERR);
         std::string libPath = exeDir() + "statlib.dat";
-        FILE *fp = fopen(libPath.c_str(), "rt");
+        FILE *fp = femm_fopen(libPath, "rt");
         if (!fp) throw std::runtime_error("Couldn't open " + libPath);
         char s[1024], q[1024];
         char *v;

@@ -5,6 +5,7 @@
 // Ported from femm42src/femm/FemmeDoc.cpp (OnSaveDocument / OnOpenDocument)
 
 #include "mag_document.h"
+#include "utf8_io.h"
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -71,7 +72,7 @@ static std::string ExtractQuoted(char *v)
 
 bool MagDocument::OpenDocument(const std::string &pathname)
 {
-    FILE *fp = fopen(pathname.c_str(), "rt");
+    FILE *fp = femm_fopen(pathname, "rt");
     if (!fp) return false;
 
     NewDocument();
@@ -516,7 +517,7 @@ bool MagDocument::OpenDocument(const std::string &pathname)
 
 bool MagDocument::SaveDocument(const std::string &pathname)
 {
-    FILE *fp = fopen(pathname.c_str(), "wt");
+    FILE *fp = femm_fopen(pathname, "wt");
     if (!fp) return false;
 
     int i, j, t;

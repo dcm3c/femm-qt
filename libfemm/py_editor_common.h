@@ -369,12 +369,20 @@ void register_common_editor(femm_py::Module &m, const std::string &P,
     });
 
     m.def(P + "_setfocus", [P](std::optional<std::string> docname) {
-        if (docname) doc_registry_activate_input_byname(*docname);
+        // Canonical input extension for this physics: mi->.fem, ei->.fee,
+        // hi->.feh, ci->.fec. Normalizing here makes a bare "temp" match the
+        // "temp.fem" tab label and keeps the name sent to the GUI focus matcher
+        // consistent with the activated document.
+        std::string dn;
+        if (docname) {
+            dn = canonicalDocName(*docname, std::string(".fe") + P[0]);
+            doc_registry_activate_input_byname(dn);
+        }
         auto cb = get_view_command_callback();
         if (!cb) return;
         double args[4] = {};
         if (docname)
-            cb((P + "_setfocus:" + *docname).c_str(), 0, args);
+            cb((P + "_setfocus:" + dn).c_str(), 0, args);
         else
             cb((P + "_setfocus").c_str(), 0, args);
     });

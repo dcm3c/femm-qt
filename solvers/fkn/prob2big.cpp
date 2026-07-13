@@ -10,6 +10,7 @@
 #include "mesh.h"
 #include "spars.h"
 #include "femmedoccore.h"
+#include "utf8_io.h"
 
 // #define NEWTON
 
@@ -867,18 +868,18 @@ int CFemmeDocCore::WriteHarmonic2D(CBigComplexLinProb &L)
 	
 	// first, echo input .fem file to the .ans file;
 	snprintf(c, sizeof(c),"%s.fem",PathName);
-	if((fz=fopen(c,"rt"))==NULL){
+	if((fz=femm_fopen(c,"rt"))==NULL){
 		Sleep(500);
-		if((fz=fopen(c,"rt"))==NULL){
+		if((fz=femm_fopen(c,"rt"))==NULL){
 			MsgBox("Couldn't open %s.fem\n",PathName);
 			return FALSE;
 		}
 	}
 
 	snprintf(c, sizeof(c),"%s.ans",PathName);
-	if((fp=fopen(c,"wt"))==NULL){
+	if((fp=femm_fopen(c,"wt"))==NULL){
 		Sleep(500);
-		if((fp=fopen(c,"wt"))==NULL){
+		if((fp=femm_fopen(c,"wt"))==NULL){
 			MsgBox("Couldn't write to %s.ans\n",PathName);
 			return FALSE;
 		}

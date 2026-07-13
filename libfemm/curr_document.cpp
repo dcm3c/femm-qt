@@ -6,6 +6,7 @@
 // and femm42src/csolv_cli/femmedoccore.cpp
 
 #include "curr_document.h"
+#include "utf8_io.h"
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -100,7 +101,7 @@ bool CurrDocument::OpenDocument(const std::string &pathname)
 {
     NewDocument();
 
-    FILE *fp = fopen(pathname.c_str(), "rt");
+    FILE *fp = femm_fopen(pathname, "rt");
     if (!fp) return false;
 
     char s[1024], q[1024];
@@ -522,7 +523,7 @@ bool CurrDocument::OpenDocument(const std::string &pathname)
 
 bool CurrDocument::SaveDocument(const std::string &pathname)
 {
-    FILE *fp = fopen(pathname.c_str(), "wt");
+    FILE *fp = femm_fopen(pathname, "wt");
     if (!fp) return false;
 
     int i, j, t;

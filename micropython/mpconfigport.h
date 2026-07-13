@@ -46,7 +46,7 @@
 #define MICROPY_GC_SPLIT_HEAP_AUTO          (1)
 #define MICROPY_PY_GC                       (1)
 #define MICROPY_ENABLE_FINALISER            (1)
-#define MICROPY_HELPER_REPL                 (0)   // femm provides its own console
+#define MICROPY_HELPER_REPL                 (1)   // GUI console uses mp_repl_continue_with_input()
 #define MICROPY_KBD_EXCEPTION               (1)
 // KBD_EXCEPTION pulls in shared/runtime/interrupt_char.c, whose
 // mp_hal_set_interrupt_char() is called by modmicropython.c (micropython.kbd_intr).

@@ -12,16 +12,18 @@
 #include "mesh.h"
 #include "femmedoccore.h"
 #include "tangle_mesh.h"
+#include "utf8_io.h"
 extern int LoadMeshFromTangle(CFemmeDocCore& Doc, const Mesh& tmesh);
 int main(int argc, char* argv[]) {
+    std::vector<std::string> args = femm_utf8_args(argc, argv);
 #ifdef _OPENMP
     int max_t = omp_get_max_threads();
     if (max_t > 4) omp_set_num_threads(4);
     fprintf(stderr, "OpenMP: %d threads\n", omp_get_max_threads());
 #endif
     CFknDlg theView; CFemmeDocCore Doc; char PathName[4096];
-    if (argc < 2) { fprintf(stderr, "Usage: csolv <filename>\n"); return 1; }
-    snprintf(PathName, sizeof(PathName), "%s", argv[1]);
+    if ((int)args.size() < 2) { fprintf(stderr, "Usage: csolv <filename>\n"); return 1; }
+    snprintf(PathName, sizeof(PathName), "%s", args[1].c_str());
     Doc.PathName = PathName; Doc.TheView = &theView;
     if (Doc.OnOpenDocument() != TRUE) { fprintf(stderr, "Problem loading .fec file\n"); return 7; }
     fprintf(stderr, "Meshing...\n");

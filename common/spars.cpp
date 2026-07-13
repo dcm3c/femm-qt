@@ -20,6 +20,7 @@
 #include "fknDlg.h"
 #include "complex.h"
 #include "spars.h"
+#include "utf8_io.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -343,7 +344,7 @@ void CBigLinProb::ComputeBandwidth()
 int CBigLinProb::SaveMe(CString myFile)
 {
 	FILE *fp;
-	if ((fp=fopen(myFile,"wt"))==NULL) return 0;
+	if ((fp=femm_fopen((const char*)myFile,"wt"))==NULL) return 0;
 	for(int i=0;i<n;i++){
 		for(auto& e : M[i]){
 			fprintf(fp,"%i %i %.15g\n",i+1,e.c+1,e.x);

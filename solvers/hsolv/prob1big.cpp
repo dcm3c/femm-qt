@@ -9,6 +9,7 @@
 #include "mesh.h"
 #include "spars.h"
 #include "hsolvdoc.h"
+#include "utf8_io.h"
 
 #define Ksb 5.67032e-8 // Stefan-Boltzmann Constant
 
@@ -436,18 +437,18 @@ int Chsolvdoc::WriteResults(CBigLinProb &L)
 	
 	// first, echo input .feh file to the .anh file;
 	snprintf(c, sizeof(c),"%s.feh",PathName);
-	if((fz=fopen(c,"rt"))==NULL){
+	if((fz=femm_fopen(c,"rt"))==NULL){
 		Sleep(500);
-		if((fz=fopen(c,"rt"))==NULL){
+		if((fz=femm_fopen(c,"rt"))==NULL){
 			fprintf(stderr,"Couldn't open %s.feh\n",PathName);
 			return FALSE;
 		}
 	}
 
 	snprintf(c, sizeof(c),"%s.anh",PathName);
-	if((fp=fopen(c,"wt"))==NULL){
+	if((fp=femm_fopen(c,"wt"))==NULL){
 		Sleep(500);
-		if((fp=fopen(c,"wt"))==NULL){
+		if((fp=femm_fopen(c,"wt"))==NULL){
 			fprintf(stderr,"Couldn't write to %s.anh\n",PathName);
 			return FALSE;
 		}

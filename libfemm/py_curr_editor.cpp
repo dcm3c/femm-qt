@@ -5,6 +5,7 @@
 // Operates on CurrDocument. Current flow can be AC, so
 // boundary/point properties are complex.
 #include "py_curr_editor.h"
+#include "utf8_io.h"
 #include "py_curr_postproc.h"
 #include "py_editor_common.h"
 #include "curr_document.h"
@@ -317,7 +318,7 @@ void register_curr_editor_py(CurrDocument *doc) {
         if (dot != std::string::npos) resPath = resPath.substr(0, dot);
         resPath += ".anc";
         namespace fs = std::filesystem;
-        resPath = fs::absolute(resPath).string();
+        resPath = femm_u8string(fs::absolute(femm_path(resPath)));
         std::replace(resPath.begin(), resPath.end(), '\\', '/');
         if (!fs::exists(resPath))
             throw std::runtime_error("Cannot open solution file " + resPath);
@@ -413,7 +414,7 @@ void register_curr_editor_py(CurrDocument *doc) {
     m.def("ci_getmaterial", [](const std::string &matname) {
         check_doc(s_doc, CIERR);
         std::string libPath = exeDir() + "condlib.dat";
-        FILE *fp = fopen(libPath.c_str(), "rt");
+        FILE *fp = femm_fopen(libPath, "rt");
         if (!fp) throw std::runtime_error("Couldn't open " + libPath);
         char s[1024], q[1024];
         char *v;

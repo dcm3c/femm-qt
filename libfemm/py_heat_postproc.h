@@ -8,6 +8,7 @@
 class HeatResultsDoc;
 
 void register_heat_postproc_py(HeatResultsDoc *doc);
+void deactivate_heat_postproc_py();   // clear active-results binding (window closed)
 HeatResultsDoc *active_heat_results();
 
 #endif  // PY_HEAT_POSTPROC_H

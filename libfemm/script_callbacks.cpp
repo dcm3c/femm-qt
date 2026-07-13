@@ -9,6 +9,7 @@
 // in their own TU so both the Lua and MicroPython backends can link against
 // them without cross-dependency.
 #include "script_callbacks.h"
+#include "utf8_io.h"
 #include "document.h"
 #include "results_doc_base.h"
 #include "tangle_mesh.h"
@@ -51,15 +52,21 @@ MeshLoadedCallback get_mesh_loaded_callback()            { return s_meshLoadedCb
 void set_view_command_callback(ViewCommandCallback cb)   { s_viewCmdCb = cb; }
 ViewCommandCallback get_view_command_callback()          { return s_viewCmdCb; }
 
+static MessageBoxCallback      s_messageBoxCb   = nullptr;
+void set_message_box_callback(MessageBoxCallback cb)     { s_messageBoxCb = cb; }
+MessageBoxCallback get_message_box_callback()            { return s_messageBoxCb; }
+
 // Scripting-layer dispatch hooks for activate/deactivate
 static ScriptDocActivateCallback   s_activateCb   = nullptr;
 static ScriptDocDeactivateCallback s_deactivateCb  = nullptr;
 
 static ScriptResultsActivateCallback s_resultsActivateCb = nullptr;
+static ScriptResultsDeactivateCallback s_resultsDeactivateCb = nullptr;
 
 void set_script_doc_activate_callback(ScriptDocActivateCallback cb)   { s_activateCb = cb; }
 void set_script_doc_deactivate_callback(ScriptDocDeactivateCallback cb) { s_deactivateCb = cb; }
 void set_script_results_activate_callback(ScriptResultsActivateCallback cb) { s_resultsActivateCb = cb; }
+void set_script_results_deactivate_callback(ScriptResultsDeactivateCallback cb) { s_resultsDeactivateCb = cb; }
 
 // ---------------------------------------------------------------------------
 // Document registry
@@ -91,6 +98,10 @@ void doc_registry_remove(ResultsDocBase *doc) {
     if (!doc) return;
     s_resultsDocs.erase(std::remove(s_resultsDocs.begin(), s_resultsDocs.end(), doc),
                         s_resultsDocs.end());
+    // Symmetric with the input-doc path: clear any postproc binding still
+    // pointing at this results doc, so a mo_/eo_/ho_/co_ command issued after
+    // its window is closed (which deletes the doc) can't use freed memory.
+    if (s_resultsDeactivateCb) s_resultsDeactivateCb(doc);
 }
 
 DocumentBase *doc_registry_find_input(const std::string &path) {
@@ -137,6 +148,26 @@ static std::string baseLower(const std::string &path) {
     return base;
 }
 
+// Normalize a script-supplied setfocus name so a bare "temp" and the tab label
+// "temp.fem" both resolve to the same document. OF's *_setfocus treats the
+// extension as optional -- lua_switchfocus strips the physics extension from
+// both the requested name and each document title before comparing. We instead
+// APPEND the canonical extension when it is missing, which yields the same
+// matches AND scopes the result to this physics: the input docs of all four
+// physics share one registry, so mi_setfocus("temp") normalized to "temp.fem"
+// cannot accidentally activate a same-named "temp.fee"/"temp.feh"/"temp.fec".
+// A name that already ends in `ext` is returned unchanged (dir stripped,
+// lowercased). "my.motor" (no canonical ext) -> "my.motor.fem", matching OF.
+std::string canonicalDocName(const std::string &name, const std::string &ext) {
+    std::string base = baseLower(name);
+    std::string e = ext;
+    for (auto &c : e) if (c >= 'A' && c <= 'Z') c = (char)(c + 32);
+    if (base.size() >= e.size() &&
+        base.compare(base.size() - e.size(), e.size(), e) == 0)
+        return base;
+    return base + e;
+}
+
 bool doc_registry_activate_input_byname(const std::string &name) {
     std::string want = baseLower(name);
     for (auto *d : s_inputDocs)
@@ -174,8 +205,8 @@ int createMeshForDocument(DocumentBase *doc, char *errmsg, int errmsg_size)
     // document's geometry. Stripping the extension made tangle_mesh_fem
     // re-guess and pick .fem first -- silently meshing a same-named .fem into a
     // .fee/.feh/.fec problem.
-    fs::path p = fs::absolute(doc->filePath);
-    std::string full = p.string();
+    fs::path p = fs::absolute(femm_path(doc->filePath));
+    std::string full = femm_u8string(p);
     std::replace(full.begin(), full.end(), '\\', '/');
 
     Mesh tmesh;
@@ -216,10 +247,10 @@ std::string exeDir()
     static std::string dir;
     if (!dir.empty()) return dir;
 #ifdef _WIN32
-    char buf[MAX_PATH];
-    DWORD n = GetModuleFileNameA(NULL, buf, MAX_PATH);
+    wchar_t wbuf[MAX_PATH];
+    DWORD n = GetModuleFileNameW(NULL, wbuf, MAX_PATH);
     if (n > 0) {
-        dir = buf;
+        dir = femm_u8string(std::filesystem::path(wbuf));
         std::replace(dir.begin(), dir.end(), '\\', '/');
         auto slash = dir.rfind('/');
         if (slash != std::string::npos)
@@ -263,9 +294,9 @@ int analyzeDocument(DocumentBase *doc, int hide, char *errmsg, int errmsg_size)
     int ret;
 
     namespace fs = std::filesystem;
-    fs::path p = fs::absolute(doc->filePath);
+    fs::path p = fs::absolute(femm_path(doc->filePath));
     p.replace_extension();
-    std::string base = p.string();
+    std::string base = femm_u8string(p);
     std::replace(base.begin(), base.end(), '\\', '/');
 
     std::string solver = exeDir() + doc->solverName();
@@ -278,16 +309,18 @@ int analyzeDocument(DocumentBase *doc, int hide, char *errmsg, int errmsg_size)
         ret = cb(solver.c_str(), base.c_str(), hide);
     } else {
 #ifdef _WIN32
-        STARTUPINFOA si = {};
+        STARTUPINFOW si;
+        ZeroMemory(&si, sizeof(si));
         si.cb = sizeof(si);
         PROCESS_INFORMATION pi = {};
         std::string cmdline = "\"" + solver + "\" \"" + base + "\"";
+        std::wstring wcmd = femm_widen(cmdline);
         // DETACHED_PROCESS, not CREATE_NO_WINDOW: the latter still lets
         // the child inherit the parent's console attachment, so when
         // femm_headless is launched from a terminal every solver stdout
         // write hits conhost and adds visible per-iteration latency.
-        BOOL ok = CreateProcessA(
-            nullptr, &cmdline[0], nullptr, nullptr,
+        BOOL ok = CreateProcessW(
+            nullptr, &wcmd[0], nullptr, nullptr,
             FALSE, DETACHED_PROCESS, nullptr, nullptr, &si, &pi);
         if (!ok) {
             ret = -1;

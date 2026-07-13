@@ -44,6 +44,7 @@ public:
     void setPreprocessorEditMode(int mode);
     void showPyConsole();
     void hidePyConsole();
+    void clearPyConsole();
 
     // Called from the IPC server's post-command callback after every action
     // command (one that didn't return data via __ipc_capture). Throttles

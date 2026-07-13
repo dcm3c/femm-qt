@@ -44,87 +44,13 @@ public:
 	// constructors
 	float256();
 	float256(double a);
-	float256(int a);
 	float256(double h, uint64_t l0, uint64_t l1, uint64_t l2);
 
-	// conversion operators
-	explicit operator double() const;
-	explicit operator int() const;
-
-	// member functions
-	float256 Sqrt() const;
-
-	// operator redefinition
-
-	// Addition
+	// arithmetic
 	float256 operator+(const float256& z) const;
-	float256 operator+(double z) const;
-	float256 operator+(int z) const;
-	friend float256 operator+(int x, const float256& y);
-	friend float256 operator+(double x, const float256& y);
-	float256& operator+=(const float256& z);
-	float256& operator+=(double z);
-	float256& operator+=(int z);
-
-	// Subtraction
 	float256 operator-() const;
 	float256 operator-(const float256& z) const;
-	float256 operator-(double z) const;
-	float256 operator-(int z) const;
-	friend float256 operator-(int x, const float256& y);
-	friend float256 operator-(double x, const float256& y);
-	float256& operator-=(const float256& z);
-	float256& operator-=(double z);
-	float256& operator-=(int z);
-
-	// Multiplication
 	float256 operator*(const float256& z) const;
-	float256 operator*(double z) const;
-	float256 operator*(int z) const;
-	friend float256 operator*(int x, const float256& y);
-	friend float256 operator*(double x, const float256& y);
-	float256& operator*=(const float256& z);
-	float256& operator*=(double z);
-	float256& operator*=(int z);
-
-	// Division
-	float256 operator/(const float256& z) const;
-	float256 operator/(double z) const;
-	float256 operator/(int z) const;
-	friend float256 operator/(int x, const float256& y);
-	friend float256 operator/(double x, const float256& y);
-	float256& operator/=(const float256& z);
-	float256& operator/=(double z);
-	float256& operator/=(int z);
-
-	// Assignment
-	float256& operator=(double z);
-	float256& operator=(int z);
-
-	// Comparison
-	bool operator==(const float256& z) const;
-	bool operator==(double z) const;
-	bool operator==(int z) const;
-
-	bool operator!=(const float256& z) const;
-	bool operator!=(double z) const;
-	bool operator!=(int z) const;
-
-	bool operator<(const float256& z) const;
-	bool operator<(double z) const;
-	bool operator<(int z) const;
-
-	bool operator<=(const float256& z) const;
-	bool operator<=(double z) const;
-	bool operator<=(int z) const;
-
-	bool operator>(const float256& z) const;
-	bool operator>(double z) const;
-	bool operator>(int z) const;
-
-	bool operator>=(const float256& z) const;
-	bool operator>=(double z) const;
-	bool operator>=(int z) const;
 };
 
 // float128: extended-precision floating point (d+1xu64 format).
@@ -142,85 +68,13 @@ public:
 	// constructors
 	float128();
 	float128(double a);
-	float128(int a);
 	float128(double h, uint64_t l);
 
-	// conversion operators
-	explicit operator double() const;
-	explicit operator int() const;
-
-	// member functions
-	float128 Sqrt() const;
-
-	// Addition
+	// arithmetic
 	float128 operator+(const float128& z) const;
-	float128 operator+(double z) const;
-	float128 operator+(int z) const;
-	friend float128 operator+(int x, const float128& y);
-	friend float128 operator+(double x, const float128& y);
-	float128& operator+=(const float128& z);
-	float128& operator+=(double z);
-	float128& operator+=(int z);
-
-	// Subtraction
 	float128 operator-() const;
 	float128 operator-(const float128& z) const;
-	float128 operator-(double z) const;
-	float128 operator-(int z) const;
-	friend float128 operator-(int x, const float128& y);
-	friend float128 operator-(double x, const float128& y);
-	float128& operator-=(const float128& z);
-	float128& operator-=(double z);
-	float128& operator-=(int z);
-
-	// Multiplication
 	float128 operator*(const float128& z) const;
-	float128 operator*(double z) const;
-	float128 operator*(int z) const;
-	friend float128 operator*(int x, const float128& y);
-	friend float128 operator*(double x, const float128& y);
-	float128& operator*=(const float128& z);
-	float128& operator*=(double z);
-	float128& operator*=(int z);
-
-	// Division
-	float128 operator/(const float128& z) const;
-	float128 operator/(double z) const;
-	float128 operator/(int z) const;
-	friend float128 operator/(int x, const float128& y);
-	friend float128 operator/(double x, const float128& y);
-	float128& operator/=(const float128& z);
-	float128& operator/=(double z);
-	float128& operator/=(int z);
-
-	// Assignment
-	float128& operator=(double z);
-	float128& operator=(int z);
-
-	// Comparison
-	bool operator==(const float128& z) const;
-	bool operator==(double z) const;
-	bool operator==(int z) const;
-
-	bool operator!=(const float128& z) const;
-	bool operator!=(double z) const;
-	bool operator!=(int z) const;
-
-	bool operator<(const float128& z) const;
-	bool operator<(double z) const;
-	bool operator<(int z) const;
-
-	bool operator<=(const float128& z) const;
-	bool operator<=(double z) const;
-	bool operator<=(int z) const;
-
-	bool operator>(const float128& z) const;
-	bool operator>(double z) const;
-	bool operator>(int z) const;
-
-	bool operator>=(const float128& z) const;
-	bool operator>=(double z) const;
-	bool operator>=(int z) const;
 };
 
 #endif // FLOAT256_H

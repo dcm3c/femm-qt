@@ -1179,6 +1179,22 @@ void ScalarResultsWidget::mousePressEvent(QMouseEvent *event)
     }
 }
 
+void ScalarResultsWidget::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    if (event->button() != Qt::LeftButton || m_mode != 2 || !m_view.meshelem) return;
+    double xd, yd;
+    toDrawing(event->pos().x(), event->pos().y(), xd, yd);
+    int k = m_view.InTriangle(xd, yd);
+    if (k < 0) return;
+    int lbl = (*m_view.meshelem)[k].lbl;
+    if (lbl < 0 || lbl >= (int)(*m_view.labellist).size()) return;
+    int grp = (*m_view.labellist)[lbl].InGroup;
+    for (auto &label : *m_view.labellist)
+        if (label.InGroup == grp) label.IsSelected = true;
+    (*m_view.bHasMask) = false;
+    update();
+}
+
 void ScalarResultsWidget::mouseMoveEvent(QMouseEvent *event)
 {
     double xd, yd;

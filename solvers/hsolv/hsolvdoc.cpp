@@ -14,6 +14,7 @@
 #include "mesh.h"
 #include "spars.h"
 #include "hsolvdoc.h"
+#include "utf8_io.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // Chsolvdoc construction/destruction
@@ -100,7 +101,7 @@ int Chsolvdoc::OnOpenDocument()
 	CBlockLabel   blk;
 
 	snprintf(s, sizeof(s),"%s.feh",PathName);
-	if ((fp=fopen(s,"rt"))==NULL){
+	if ((fp=femm_fopen(s,"rt"))==NULL){
 		fprintf(stderr,"Couldn't read from specified .feh file\n");
 		return FALSE;
 	}
@@ -451,7 +452,7 @@ int Chsolvdoc::LoadPrev()
 	int k;
 	char s[1024],q[256];
 
-	if ((fp=fopen(PrevSoln,"rt"))==NULL){
+	if ((fp=femm_fopen(PrevSoln,"rt"))==NULL){
 		MsgBox("Couldn't read from specified previous solution\n");
 		return FALSE;
 	}
@@ -508,7 +509,7 @@ int Chsolvdoc::LoadMesh()
 
 	//read meshnodes;
 	snprintf(infile, sizeof(infile),"%s.node",PathName);
-	if((fp=fopen(infile,"rt"))==NULL){
+	if((fp=femm_fopen(infile,"rt"))==NULL){
 		return FALSE;
 	}
 	fgets(s,1024,fp);
@@ -548,7 +549,7 @@ int Chsolvdoc::LoadMesh()
 	
 	//read in periodic boundary conditions;
 	snprintf(infile, sizeof(infile),"%s.pbc",PathName);
-	if((fp=fopen(infile,"rt"))==NULL){
+	if((fp=femm_fopen(infile,"rt"))==NULL){
 		return FALSE;
 	}
 	fgets(s,1024,fp);
@@ -567,7 +568,7 @@ int Chsolvdoc::LoadMesh()
 
 	// read in elements;
 	snprintf(infile, sizeof(infile),"%s.ele",PathName);
-	if((fp=fopen(infile,"rt"))==NULL){
+	if((fp=femm_fopen(infile,"rt"))==NULL){
 		return FALSE;
 	}
 	fgets(s,1024,fp);
@@ -647,7 +648,7 @@ int Chsolvdoc::LoadMesh()
 			}		
 
 	snprintf(infile, sizeof(infile),"%s.edge",PathName);
-	if((fp=fopen(infile,"rt"))==NULL)
+	if((fp=femm_fopen(infile,"rt"))==NULL)
 	{
 		return FALSE;
 	}

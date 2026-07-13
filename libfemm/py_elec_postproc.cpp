@@ -36,6 +36,8 @@ static void appendInt(std::string &buf, int v) {
     buf += '\t';
 }
 
+void deactivate_elec_postproc_py() { s_doc = nullptr; }
+
 void register_elec_postproc_py(ElecResultsDoc *doc) {
     s_doc = doc;
     femm_py::Module &m = femm_py::femm_module;
@@ -269,12 +271,18 @@ void register_elec_postproc_py(ElecResultsDoc *doc) {
     regv("eo_maximize");
     regv("eo_restore");
     m.def("eo_setfocus", [](optional<std::string> docname) {
-        if (docname) doc_registry_activate_results_byname(*docname);
+        // Electrostatics results carry the .res extension; normalize so a bare
+        // "temp" matches the "temp.res" tab label.
+        std::string dn;
+        if (docname) {
+            dn = canonicalDocName(*docname, ".res");
+            doc_registry_activate_results_byname(dn);
+        }
         auto cb = get_view_command_callback();
         if (!cb) return;
         double args[4] = {};
         if (docname)
-            cb(("eo_setfocus:" + *docname).c_str(), 0, args);
+            cb(("eo_setfocus:" + dn).c_str(), 0, args);
         else
             cb("eo_setfocus", 0, args);
     });

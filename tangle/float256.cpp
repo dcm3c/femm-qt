@@ -177,7 +177,7 @@ void u256_mul(u256 a, u256 b, u256& rhi, u256& rlo) {
 #else // MSVC and other compilers
 
 // 64x64 -> 128-bit multiply using 32-bit pieces (portable)
-void mul64(uint64_t a, uint64_t b, uint64_t& hi, uint64_t& lo) {
+void mul64_256(uint64_t a, uint64_t b, uint64_t& hi, uint64_t& lo) {
 	uint64_t a_lo = (uint32_t)a, a_hi = a >> 32;
 	uint64_t b_lo = (uint32_t)b, b_hi = b >> 32;
 
@@ -202,7 +202,7 @@ void u256_mul(u256 a, u256 b, u256& rhi, u256& rlo) {
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
 			uint64_t ph, pl;
-			mul64(a.w[i], b.w[j], ph, pl);
+			mul64_256(a.w[i], b.w[j], ph, pl);
 			acc_lo[i + j] += ph;
 			if (acc_lo[i + j] < ph) acc_hi[i + j]++;
 			acc_lo[i + j + 1] += pl;
@@ -225,17 +225,6 @@ void u256_mul(u256 a, u256 b, u256& rhi, u256& rlo) {
 
 // ============================================================
 // Pack / unpack between float256 and (sign, exponent, mantissa)
-//
-// The 245-bit mantissa (1 implicit + 52 double fraction + 192 lo)
-// is left-justified in a 256-bit u256, with 11 trailing zero bits.
-//
-// Bit layout of u256 mantissa:
-//   w[0] bit 63     = implicit 1
-//   w[0] bits 62..11 = 52-bit double fraction
-//   w[0] bits 10..0  = top 11 bits of lo[0]
-//   w[1]             = (lo[0] << 11) | (lo[1] >> 53)
-//   w[2]             = (lo[1] << 11) | (lo[2] >> 53)
-//   w[3]             = lo[2] << 11
 // ============================================================
 
 bool f256_is_zero(const float256& a) {
@@ -287,37 +276,18 @@ void f256_pack(bool sign, int exp, u256 m, double& hi, uint64_t lo[3]) {
 } // anonymous namespace
 
 // ============================================================
-// Constructors
+// float256 Constructors
 // ============================================================
 
 float256::float256() : hi(0.0), lo{0, 0, 0} {}
 
 float256::float256(double a) : hi(a), lo{0, 0, 0} {}
 
-float256::float256(int a) : hi(static_cast<double>(a)), lo{0, 0, 0} {}
-
 float256::float256(double h, uint64_t l0, uint64_t l1, uint64_t l2)
 	: hi(h), lo{l0, l1, l2} {}
 
 // ============================================================
-// Conversion operators
-// ============================================================
-
-float256::operator double() const {
-	return hi;
-}
-
-float256::operator int() const {
-	return static_cast<int>(hi);
-}
-
-// ============================================================
-// Addition
-//
-// Unpack both operands to (sign, exponent, 256-bit mantissa).
-// Align mantissas by shifting the smaller-exponent operand right.
-// Same sign: add mantissas, handle carry.
-// Different sign: subtract mantissas, normalize result.
+// float256 Addition
 // ============================================================
 
 float256 float256::operator+(const float256& b) const {
@@ -385,18 +355,8 @@ float256 float256::operator+(const float256& b) const {
 	return float256(rhi, rlo[0], rlo[1], rlo[2]);
 }
 
-float256 float256::operator+(double z) const { return *this + float256(z); }
-float256 float256::operator+(int z) const { return *this + float256(z); }
-
-float256 operator+(int x, const float256& y) { return float256(static_cast<double>(x)) + y; }
-float256 operator+(double x, const float256& y) { return float256(x) + y; }
-
-float256& float256::operator+=(const float256& z) { *this = *this + z; return *this; }
-float256& float256::operator+=(double z) { *this = *this + float256(z); return *this; }
-float256& float256::operator+=(int z) { *this = *this + float256(z); return *this; }
-
 // ============================================================
-// Negation and Subtraction
+// float256 Negation and Subtraction
 // ============================================================
 
 float256 float256::operator-() const {
@@ -404,23 +364,9 @@ float256 float256::operator-() const {
 }
 
 float256 float256::operator-(const float256& z) const { return *this + (-z); }
-float256 float256::operator-(double z) const { return *this + float256(-z); }
-float256 float256::operator-(int z) const { return *this + float256(static_cast<double>(-z)); }
-
-float256 operator-(int x, const float256& y) { return float256(static_cast<double>(x)) + (-y); }
-float256 operator-(double x, const float256& y) { return float256(x) + (-y); }
-
-float256& float256::operator-=(const float256& z) { *this = *this - z; return *this; }
-float256& float256::operator-=(double z) { *this = *this - float256(z); return *this; }
-float256& float256::operator-=(int z) { *this = *this - float256(z); return *this; }
 
 // ============================================================
-// Multiplication
-//
-// Unpack both operands. Multiply 256-bit mantissas to get a
-// 512-bit product. Take the top 256 bits (normalized) as
-// the result mantissa. Result exponent = sum of exponents
-// (adjusted by 1 if the product overflows into an extra bit).
+// float256 Multiplication
 // ============================================================
 
 float256 float256::operator*(const float256& b) const {
@@ -460,152 +406,10 @@ float256 float256::operator*(const float256& b) const {
 	return float256(rhi, rlo[0], rlo[1], rlo[2]);
 }
 
-float256 float256::operator*(double z) const { return *this * float256(z); }
-float256 float256::operator*(int z) const { return *this * float256(z); }
-
-float256 operator*(int x, const float256& y) { return float256(static_cast<double>(x)) * y; }
-float256 operator*(double x, const float256& y) { return float256(x) * y; }
-
-float256& float256::operator*=(const float256& z) { *this = *this * z; return *this; }
-float256& float256::operator*=(double z) { *this = *this * float256(z); return *this; }
-float256& float256::operator*=(int z) { *this = *this * float256(z); return *this; }
-
-// ============================================================
-// Division: iterative refinement (long division)
-//
-// Extract quotient digits as doubles, compute remainder using
-// float256 arithmetic, and repeat. Five iterations capture
-// ~260 bits, exceeding our 245-bit precision.
-// ============================================================
-
-float256 float256::operator/(const float256& b) const {
-	if (b.hi == 0.0) return float256(hi / b.hi); // propagate inf/nan
-
-	double q0, q1, q2, q3, q4;
-	float256 r;
-
-	q0 = hi / b.hi;
-	r = *this - b * float256(q0);
-
-	q1 = r.hi / b.hi;
-	r = r - b * float256(q1);
-
-	q2 = r.hi / b.hi;
-	r = r - b * float256(q2);
-
-	q3 = r.hi / b.hi;
-	r = r - b * float256(q3);
-
-	q4 = r.hi / b.hi;
-
-	float256 result = float256(q0);
-	result = result + float256(q1);
-	result = result + float256(q2);
-	result = result + float256(q3);
-	result = result + float256(q4);
-	return result;
-}
-
-float256 float256::operator/(double z) const { return *this / float256(z); }
-float256 float256::operator/(int z) const { return *this / float256(static_cast<double>(z)); }
-
-float256 operator/(int x, const float256& y) { return float256(static_cast<double>(x)) / y; }
-float256 operator/(double x, const float256& y) { return float256(x) / y; }
-
-float256& float256::operator/=(const float256& z) { *this = *this / z; return *this; }
-float256& float256::operator/=(double z) { *this = *this / float256(z); return *this; }
-float256& float256::operator/=(int z) { *this = *this / float256(static_cast<double>(z)); return *this; }
-
-// ============================================================
-// Assignment
-// ============================================================
-
-float256& float256::operator=(double z) {
-	hi = z; lo[0] = lo[1] = lo[2] = 0;
-	return *this;
-}
-
-float256& float256::operator=(int z) {
-	hi = static_cast<double>(z); lo[0] = lo[1] = lo[2] = 0;
-	return *this;
-}
-
-// ============================================================
-// Comparison
-//
-// Compare hi first (IEEE comparison handles sign).
-// If hi values are equal, compare lo bits, accounting for
-// sign: for negative numbers, larger lo = more negative.
-// ============================================================
-
-bool float256::operator==(const float256& z) const {
-	return hi == z.hi && lo[0] == z.lo[0] && lo[1] == z.lo[1] && lo[2] == z.lo[2];
-}
-bool float256::operator==(double z) const {
-	return hi == z && lo[0] == 0 && lo[1] == 0 && lo[2] == 0;
-}
-bool float256::operator==(int z) const { return *this == static_cast<double>(z); }
-
-bool float256::operator!=(const float256& z) const { return !(*this == z); }
-bool float256::operator!=(double z) const { return !(*this == z); }
-bool float256::operator!=(int z) const { return !(*this == z); }
-
-bool float256::operator<(const float256& z) const {
-	if (hi < z.hi) return true;
-	if (hi > z.hi) return false;
-	// hi == z.hi
-	if (hi == 0.0) return false;
-	if (hi > 0.0) {
-		if (lo[0] != z.lo[0]) return lo[0] < z.lo[0];
-		if (lo[1] != z.lo[1]) return lo[1] < z.lo[1];
-		return lo[2] < z.lo[2];
-	} else {
-		if (lo[0] != z.lo[0]) return lo[0] > z.lo[0];
-		if (lo[1] != z.lo[1]) return lo[1] > z.lo[1];
-		return lo[2] > z.lo[2];
-	}
-}
-bool float256::operator<(double z) const { return *this < float256(z); }
-bool float256::operator<(int z) const { return *this < float256(z); }
-
-bool float256::operator<=(const float256& z) const { return !(z < *this); }
-bool float256::operator<=(double z) const { return *this <= float256(z); }
-bool float256::operator<=(int z) const { return *this <= float256(z); }
-
-bool float256::operator>(const float256& z) const { return z < *this; }
-bool float256::operator>(double z) const { return *this > float256(z); }
-bool float256::operator>(int z) const { return *this > float256(z); }
-
-bool float256::operator>=(const float256& z) const { return !(*this < z); }
-bool float256::operator>=(double z) const { return *this >= float256(z); }
-bool float256::operator>=(int z) const { return *this >= float256(z); }
-
-// ============================================================
-// Sqrt: Newton-Raphson
-//
-// Uses the iteration r_{n+1} = (r_n + a / r_n) / 2
-// Three iterations from a double-precision seed, then
-// a final residual correction for full precision.
-// ============================================================
-
-float256 float256::Sqrt() const {
-	if (hi == 0.0) return float256(0.0);
-	if (hi < 0.0) return float256(0.0);
-
-	float256 r(std::sqrt(hi));
-	for (int i = 0; i < 3; i++) {
-		r = (r + *this / r) * 0.5;
-	}
-	float256 residual = *this - r * r;
-	r = r + residual / (r * 2.0);
-	return r;
-}
-
 // ============================================================
 // float128: extended-precision floating point (d+1xu64 format)
 //
 // 128-bit unsigned integer helpers for mantissa arithmetic
-// Portable: no compiler-specific 128-bit integer types.
 // ============================================================
 
 namespace {
@@ -686,7 +490,7 @@ int u128_clz(u128 a) {
 }
 
 // 64x64 -> 128-bit multiply using 32-bit pieces (portable)
-void mul64(uint64_t a, uint64_t b, uint64_t& hi, uint64_t& lo) {
+void mul64_128(uint64_t a, uint64_t b, uint64_t& hi, uint64_t& lo) {
 	uint64_t a_lo = (uint32_t)a, a_hi = a >> 32;
 	uint64_t b_lo = (uint32_t)b, b_hi = b >> 32;
 
@@ -711,7 +515,7 @@ void u128_mul(u128 a, u128 b, u128& rhi, u128& rlo) {
 	for (int i = 0; i < 2; i++) {
 		for (int j = 0; j < 2; j++) {
 			uint64_t ph, pl;
-			mul64(a.w[i], b.w[j], ph, pl);
+			mul64_128(a.w[i], b.w[j], ph, pl);
 			accum_lo[i + j] += ph;
 			if (accum_lo[i + j] < ph) accum_hi[i + j]++;
 			accum_lo[i + j + 1] += pl;
@@ -784,17 +588,7 @@ float128::float128() : hi(0.0), lo(0) {}
 
 float128::float128(double a) : hi(a), lo(0) {}
 
-float128::float128(int a) : hi(static_cast<double>(a)), lo(0) {}
-
 float128::float128(double h, uint64_t l) : hi(h), lo(l) {}
-
-// ============================================================
-// float128 Conversion operators
-// ============================================================
-
-float128::operator double() const { return hi; }
-
-float128::operator int() const { return static_cast<int>(hi); }
 
 // ============================================================
 // float128 Addition
@@ -864,16 +658,6 @@ float128 float128::operator+(const float128& b) const {
 	return float128(rhi, rlo);
 }
 
-float128 float128::operator+(double z) const { return *this + float128(z); }
-float128 float128::operator+(int z) const { return *this + float128(z); }
-
-float128 operator+(int x, const float128& y) { return float128(static_cast<double>(x)) + y; }
-float128 operator+(double x, const float128& y) { return float128(x) + y; }
-
-float128& float128::operator+=(const float128& z) { *this = *this + z; return *this; }
-float128& float128::operator+=(double z) { *this = *this + float128(z); return *this; }
-float128& float128::operator+=(int z) { *this = *this + float128(z); return *this; }
-
 // ============================================================
 // float128 Negation and Subtraction
 // ============================================================
@@ -883,15 +667,6 @@ float128 float128::operator-() const {
 }
 
 float128 float128::operator-(const float128& z) const { return *this + (-z); }
-float128 float128::operator-(double z) const { return *this + float128(-z); }
-float128 float128::operator-(int z) const { return *this + float128(static_cast<double>(-z)); }
-
-float128 operator-(int x, const float128& y) { return float128(static_cast<double>(x)) + (-y); }
-float128 operator-(double x, const float128& y) { return float128(x) + (-y); }
-
-float128& float128::operator-=(const float128& z) { *this = *this - z; return *this; }
-float128& float128::operator-=(double z) { *this = *this - float128(z); return *this; }
-float128& float128::operator-=(int z) { *this = *this - float128(z); return *this; }
 
 // ============================================================
 // float128 Multiplication
@@ -928,117 +703,4 @@ float128 float128::operator*(const float128& b) const {
 	uint64_t rlo;
 	f128_pack(result_sign, result_exp, result_m, rhi, rlo);
 	return float128(rhi, rlo);
-}
-
-float128 float128::operator*(double z) const { return *this * float128(z); }
-float128 float128::operator*(int z) const { return *this * float128(z); }
-
-float128 operator*(int x, const float128& y) { return float128(static_cast<double>(x)) * y; }
-float128 operator*(double x, const float128& y) { return float128(x) * y; }
-
-float128& float128::operator*=(const float128& z) { *this = *this * z; return *this; }
-float128& float128::operator*=(double z) { *this = *this * float128(z); return *this; }
-float128& float128::operator*=(int z) { *this = *this * float128(z); return *this; }
-
-// ============================================================
-// float128 Division
-// ============================================================
-
-float128 float128::operator/(const float128& b) const {
-	if (b.hi == 0.0) return float128(hi / b.hi);
-
-	double q0, q1, q2;
-	float128 r;
-
-	q0 = hi / b.hi;
-	r = *this - b * float128(q0);
-
-	q1 = r.hi / b.hi;
-	r = r - b * float128(q1);
-
-	q2 = r.hi / b.hi;
-
-	float128 result = float128(q0);
-	result = result + float128(q1);
-	result = result + float128(q2);
-	return result;
-}
-
-float128 float128::operator/(double z) const { return *this / float128(z); }
-float128 float128::operator/(int z) const { return *this / float128(static_cast<double>(z)); }
-
-float128 operator/(int x, const float128& y) { return float128(static_cast<double>(x)) / y; }
-float128 operator/(double x, const float128& y) { return float128(x) / y; }
-
-float128& float128::operator/=(const float128& z) { *this = *this / z; return *this; }
-float128& float128::operator/=(double z) { *this = *this / float128(z); return *this; }
-float128& float128::operator/=(int z) { *this = *this / float128(static_cast<double>(z)); return *this; }
-
-// ============================================================
-// float128 Assignment
-// ============================================================
-
-float128& float128::operator=(double z) {
-	hi = z; lo = 0;
-	return *this;
-}
-
-float128& float128::operator=(int z) {
-	hi = static_cast<double>(z); lo = 0;
-	return *this;
-}
-
-// ============================================================
-// float128 Comparison
-// ============================================================
-
-bool float128::operator==(const float128& z) const {
-	return hi == z.hi && lo == z.lo;
-}
-bool float128::operator==(double z) const {
-	return hi == z && lo == 0;
-}
-bool float128::operator==(int z) const { return *this == static_cast<double>(z); }
-
-bool float128::operator!=(const float128& z) const { return !(*this == z); }
-bool float128::operator!=(double z) const { return !(*this == z); }
-bool float128::operator!=(int z) const { return !(*this == z); }
-
-bool float128::operator<(const float128& z) const {
-	if (hi < z.hi) return true;
-	if (hi > z.hi) return false;
-	if (hi == 0.0) return false;
-	if (hi > 0.0) return lo < z.lo;
-	return lo > z.lo;
-}
-bool float128::operator<(double z) const { return *this < float128(z); }
-bool float128::operator<(int z) const { return *this < float128(z); }
-
-bool float128::operator<=(const float128& z) const { return !(z < *this); }
-bool float128::operator<=(double z) const { return *this <= float128(z); }
-bool float128::operator<=(int z) const { return *this <= float128(z); }
-
-bool float128::operator>(const float128& z) const { return z < *this; }
-bool float128::operator>(double z) const { return *this > float128(z); }
-bool float128::operator>(int z) const { return *this > float128(z); }
-
-bool float128::operator>=(const float128& z) const { return !(*this < z); }
-bool float128::operator>=(double z) const { return *this >= float128(z); }
-bool float128::operator>=(int z) const { return *this >= float128(z); }
-
-// ============================================================
-// float128 Sqrt: Newton-Raphson
-// ============================================================
-
-float128 float128::Sqrt() const {
-	if (hi == 0.0) return float128(0.0);
-	if (hi < 0.0) return float128(0.0);
-
-	float128 r(std::sqrt(hi));
-	for (int i = 0; i < 3; i++) {
-		r = (r + *this / r) * 0.5;
-	}
-	float128 residual = *this - r * r;
-	r = r + residual / (r * 2.0);
-	return r;
 }

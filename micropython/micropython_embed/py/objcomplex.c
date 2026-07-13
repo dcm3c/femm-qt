@@ -130,6 +130,15 @@ static mp_obj_t complex_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t r
     return mp_obj_complex_binary_op(op, lhs->real, lhs->imag, rhs_in);
 }
 
+// FEMM patch: complex.conjugate() for parity with float/int and CPython (real
+// and imag already handled below; conjugate rounds out the numeric tower so
+// x.conjugate() works on any numeric x).
+static mp_obj_t complex_conjugate(mp_obj_t self_in) {
+    mp_obj_complex_t *self = MP_OBJ_TO_PTR(self_in);
+    return mp_obj_new_complex(self->real, -self->imag);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(complex_conjugate_obj, complex_conjugate);
+
 static void complex_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     if (dest[0] != MP_OBJ_NULL) {
         // not load attribute
@@ -140,6 +149,9 @@ static void complex_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
         dest[0] = mp_obj_new_float(self->real);
     } else if (attr == MP_QSTR_imag) {
         dest[0] = mp_obj_new_float(self->imag);
+    } else if (attr == MP_QSTR_conjugate) {
+        dest[0] = MP_OBJ_FROM_PTR(&complex_conjugate_obj);
+        dest[1] = self_in;
     }
 }
 
@@ -230,6 +242,45 @@ mp_obj_t mp_obj_complex_binary_op(mp_binary_op_t op, mp_float_t lhs_real, mp_flo
                 } else {
                     mp_raise_msg(&mp_type_ZeroDivisionError, MP_ERROR_TEXT("0.0 to a complex power"));
                 }
+            } else if (rhs_imag == 0 && rhs_real >= -100 && rhs_real <= 100
+                       && (mp_float_t)(int)rhs_real == rhs_real) {
+                // FEMM patch: CPython parity for small integer exponents.
+                //
+                // The polar form below has to evaluate cos()/sin() of a multiple of
+                // pi, and pi is not representable in binary, so it leaves dirt:
+                // (1j)**2 came out as -1+1.2246e-16j instead of exactly -1. (The
+                // imaginary part is literally sin(pi_double), i.e. pi's own
+                // representation error -- no libm or FPU setting can make it zero.)
+                //
+                // So do what CPython's complex_pow/c_powi does, and what femm's own
+                // CComplex pow(x, int) does: repeated multiplication. Binary
+                // exponentiation, O(log n), exact for exponents like 2. The
+                // |exponent| <= 100 cutoff matches CPython's. Non-integer, complex,
+                // or large exponents still fall through to the polar form below.
+                int n = (int)rhs_real;
+                unsigned int un = (n < 0) ? (unsigned int)(-n) : (unsigned int)n;
+                mp_float_t rr = 1, ri = 0;                 // accumulator = 1+0j
+                mp_float_t pr = lhs_real, pi = lhs_imag;   // running square of z
+                while (un != 0) {
+                    if (un & 1) {
+                        mp_float_t t = rr * pr - ri * pi;
+                        ri = rr * pi + ri * pr;
+                        rr = t;
+                    }
+                    un >>= 1;
+                    if (un != 0) {
+                        mp_float_t t = pr * pr - pi * pi;
+                        pi = 2 * pr * pi;
+                        pr = t;
+                    }
+                }
+                if (n < 0) {                               // z**-n == 1 / z**n
+                    mp_float_t d = rr * rr + ri * ri;
+                    rr = rr / d;
+                    ri = -ri / d;
+                }
+                lhs_real = rr;
+                lhs_imag = ri;
             } else {
                 mp_float_t ln1 = MICROPY_FLOAT_C_FUN(log)(abs1);
                 mp_float_t arg1 = MICROPY_FLOAT_C_FUN(atan2)(lhs_imag, lhs_real);

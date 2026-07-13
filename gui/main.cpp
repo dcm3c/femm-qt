@@ -12,6 +12,7 @@
 #include <QEventLoop>
 #include <QProcess>
 #include <QFileInfo>
+#include <QDir>
 #include <QMdiArea>
 #include <QMdiSubWindow>
 #include <QIcon>
@@ -20,6 +21,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <string>
+#include "utf8_io.h"
 #include "mainwindow.h"
 #include "plot_widget.h"
 #include "editor_widget.h"
@@ -129,6 +131,12 @@ static void onResultsOpened(const char *ansPath, void *doc)
         s_mainWindow->openResultsFile(QString::fromUtf8(ansPath), doc);
 }
 
+// Script messagebox(): a modal info dialog, mirroring Original FEMM.
+static void onMessageBox(const char *msg)
+{
+    QMessageBox::information(s_mainWindow, "FEMM", QString::fromUtf8(msg));
+}
+
 static const char *onViewCommand(const char *cmd, int nargs, double *args)
 {
     if (!s_mainWindow) return nullptr;
@@ -137,9 +145,10 @@ static const char *onViewCommand(const char *cmd, int nargs, double *args)
 
     auto *e = s_mainWindow->activeEditorWidget();
 
-    // Python console show/hide
+    // Python console show/hide/clear
     if (c == "showconsole") { s_mainWindow->showPyConsole(); return nullptr; }
     if (c == "hideconsole") { s_mainWindow->hidePyConsole(); return nullptr; }
+    if (c == "clearconsole") { s_mainWindow->clearPyConsole(); return nullptr; }
 
     // Script X-Y plot of arbitrary data (the global plot() function).
     //   cmd  = "plot\n<title>\n<xlabel>\n<ylabel>\n<label0>\n<label1>..."
@@ -210,6 +219,14 @@ static const char *onViewCommand(const char *cmd, int nargs, double *args)
     // close
     if (c.endsWith("close")) {
         if (sub) sub->close();
+        // The doc/registry teardown lives in ~EditorWidget / ~ResultsWidget,
+        // which Qt runs on a *deferred* delete. Scripted close/reopen loops
+        // (mi_close then open(sameFile) then mi_analyze — very common) would
+        // otherwise race that teardown: if it fires after the reopen, it
+        // removes the doc and nulls the active-doc pointer, so the next
+        // command sees "No <physics> input in focus". Flush the deferred
+        // deletes now so close is synchronous, matching the headless server.
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
         return nullptr;
     }
 
@@ -554,11 +571,19 @@ static const char *onViewCommand(const char *cmd, int nargs, double *args)
 static int onRunSolver(const char *exePath, const char *basePath, int hide)
 {
     if (hide) {
-        // Silent mode (e.g. mi_analyze(1)) — no UI, just run and wait.
+        // Silent mode (e.g. mi_analyze(1)) — no UI, just run and wait. Discard
+        // the solver's output rather than forwarding it: the caller asked for a
+        // hidden solve, so its progress bar and status chatter ("OpenMP: N
+        // threads", "Meshing...", "Results written to disk") have no business on
+        // the terminal that launched the GUI. ForwardedChannels used to dump all
+        // of it there, once per solve. femm_headless likewise sends the spawned
+        // solver's output to the null device. A failure still surfaces: the exit
+        // code is returned below and analyzeDocument turns it into a script error.
         QProcess proc;
         proc.setProgram(QString::fromUtf8(exePath));
         proc.setArguments({ QString::fromUtf8(basePath) });
-        proc.setProcessChannelMode(QProcess::ForwardedChannels);
+        proc.setStandardOutputFile(QProcess::nullDevice());
+        proc.setStandardErrorFile(QProcess::nullDevice());
 
         QEventLoop loop;
         int  exitCode    = 0;
@@ -604,14 +629,21 @@ int main(int argc, char *argv[])
     app.setOrganizationName("FEMM");
     app.setWindowIcon(QIcon(":/icons/femm.ico"));
 
-    // Parse command line for --port and script arguments
+    // Parse command line for --port and a positional file argument. Use Qt's
+    // Unicode-correct arguments (app.arguments()) rather than the narrow argv,
+    // which is ANSI-mangled on Windows and would corrupt non-ASCII paths.
+    const QStringList qargs = app.arguments();
     int port = 48015;
-    const char *script = nullptr;
-    for (int i = 1; i < argc; i++) {
-        if ((strcmp(argv[i], "-port") == 0 || strcmp(argv[i], "--port") == 0) && i + 1 < argc) {
-            port = atoi(argv[++i]);
-        } else if (argv[i][0] != '-' && !script) {
-            script = argv[i];
+    QString fileArg;   // positional arg: a document to open, or a .py script to run
+    bool runAndExit = false;   // -run <script>: run the script, then exit (like femm_headless -run)
+    for (int i = 1; i < qargs.size(); i++) {
+        if ((qargs[i] == "-port" || qargs[i] == "--port") && i + 1 < qargs.size()) {
+            port = qargs[++i].toInt();
+        } else if (qargs[i] == "-run" && i + 1 < qargs.size()) {
+            fileArg = qargs[++i];
+            runAndExit = true;
+        } else if (!qargs[i].startsWith('-') && fileArg.isEmpty()) {
+            fileArg = qargs[i];
         }
     }
 
@@ -631,6 +663,7 @@ int main(int argc, char *argv[])
     set_run_solver_callback(onRunSolver);
     set_mesh_loaded_callback(onMeshLoaded);
     set_view_command_callback(onViewCommand);
+    set_message_box_callback(onMessageBox);
     // Repaint after any script path edits geometry — TCP line, console line,
     // dofile, or Run Script File — via a single py_state post-exec hook rather
     // than coupling the repaint to the TCP transport (which left internal
@@ -649,15 +682,55 @@ int main(int argc, char *argv[])
     });
     w.show();
 
-    // Run any startup script passed on command line
-    if (script) {
-        char errmsg[1024] = {};
-        std::string cmd = std::string("dofile(\"") + script + "\")";
-        if (exec_python(cmd.c_str(), errmsg, sizeof(errmsg)) != 0)
-            QMessageBox::warning(&w, "Script Error", QString::fromUtf8(errmsg));
+    // Open a file passed on the command line (a double-click via an OS file
+    // association, or `femm_gui <path>`). Dispatch on extension, mirroring
+    // File>Open (MainWindow::onOpen): a .py file runs as a MicroPython script;
+    // a solution file (.ans/.res/.anh/.anc) opens via openResultsFile(); any
+    // other file — a FEMM problem document (.fem/.fee/.feh/.fec), a DXF, ... —
+    // opens via the same open() command File>Open uses. Forward slashes keep
+    // the path safe inside the Python string literal (a Windows backslash would
+    // otherwise be read as an escape).
+    int runStatus = 0;   // -run exit code: 0 = ok, 1 = script error
+    if (!fileArg.isEmpty()) {
+        const QString normalized = QDir::fromNativeSeparators(fileArg);
+        const QString suffix = QFileInfo(fileArg).suffix().toLower();
+        // -run always executes the file as a script (mirroring femm_headless
+        // -run); a bare positional arg is dispatched by extension.
+        if (runAndExit || suffix == "py") {
+            char errmsg[1024] = {};
+            // Run the script the same way File>Run Script and femm_headless do:
+            // exec_python_file(). (The old dofile() here was a Lua builtin that
+            // doesn't exist in the MicroPython interpreter -> "name 'dofile' isn't
+            // defined".) chdir to the script's own folder first so its relative
+            // paths resolve, which matters for a double-click via file
+            // association where the cwd is not the script's directory. Use the
+            // absolute path so it still resolves after the chdir.
+            const QString absPath = QFileInfo(fileArg).absoluteFilePath();
+            QString scriptDir = QFileInfo(absPath).absolutePath();
+            scriptDir.replace('\\', '/');
+            std::string chdirCmd = "setcurrentdirectory(\"" + scriptDir.toStdString() + "\")";
+            exec_python(chdirCmd.c_str(), errmsg, sizeof(errmsg));
+            if (exec_python_file(absPath.toStdString().c_str(), errmsg, sizeof(errmsg)) != 0) {
+                // Show errors in a dialog (handy while developing a script here
+                // to run under femm_headless later) and set a nonzero exit code.
+                QMessageBox::warning(&w, "Script Error", QString::fromUtf8(errmsg));
+                runStatus = 1;
+            }
+        } else if (suffix == "ans" || suffix == "res" || suffix == "anh" || suffix == "anc") {
+            w.openResultsFile(normalized);
+        } else {
+            char errmsg[1024] = {};
+            std::string cmd = "open(\"" + normalized.toStdString() + "\")";
+            if (exec_python(cmd.c_str(), errmsg, sizeof(errmsg)) != 0)
+                QMessageBox::warning(&w, "Open Error", QString::fromUtf8(errmsg));
+        }
     }
 
-    int result = app.exec();
+    // -run: the script has finished (its visuals were driven live by the nested
+    // solver event loops during mi_analyze), so exit now with its status instead
+    // of entering the main event loop and leaving the window open. Mirrors
+    // femm_headless -run, so a script developed here runs the same way headless.
+    int result = runAndExit ? runStatus : app.exec();
 
     s_mainWindow = nullptr;
     set_py_post_exec_hook(nullptr);
@@ -665,6 +738,7 @@ int main(int argc, char *argv[])
     set_results_opened_callback(nullptr);
     set_run_solver_callback(nullptr);
     set_mesh_loaded_callback(nullptr);
+    set_message_box_callback(nullptr);
     server.stop();
     close_py();
     return result;

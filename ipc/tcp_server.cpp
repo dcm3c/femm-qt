@@ -307,7 +307,7 @@ void TcpServer::processEvents()
 void TcpServer::run()
 {
     m_running = true;
-    fprintf(stderr, "IPC: headless mode — waiting for commands on port %d\n", m_port);
+    fprintf(stderr, "IPC: headless mode - waiting for commands on port %d\n", m_port);
 
     // Event-driven main loop using select() — blocks the kernel thread
     // until any watched socket is ready, with no polling and no Sleep

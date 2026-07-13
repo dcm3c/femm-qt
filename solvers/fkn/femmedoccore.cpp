@@ -15,6 +15,7 @@
 #include "mesh.h"
 #include "spars.h"
 #include "femmedoccore.h"
+#include "utf8_io.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CFemmeDocCore construction/destruction
@@ -251,7 +252,7 @@ int CFemmeDocCore::LoadPrevA(CString myFile, double *V)
 	double prevFreq=0;
 	int prevNumNodes;
 
-	if ((fp=fopen(myFile,"rt"))==NULL){
+	if ((fp=femm_fopen(myFile,"rt"))==NULL){
 //		MsgBox("Couldn't read from specified previous solution\n");
 		return FALSE;
 	}
@@ -328,7 +329,7 @@ int CFemmeDocCore::LoadPrev()
 	char *v;
 	double prevFreq=0;
 	double c[]={2.54,0.1,1.,100.,0.00254,1.e-04};
-	if ((fp=fopen(PrevSoln,"rt"))==NULL){
+	if ((fp=femm_fopen(PrevSoln,"rt"))==NULL){
 		MsgBox("Couldn't read from specified previous solution\n");
 		return FALSE;
 	}
@@ -467,7 +468,7 @@ int CFemmeDocCore::OnOpenDocument()
 	CBlockLabel   blk;
 
 	snprintf(s, sizeof(s),"%s.fem",PathName);
-	if ((fp=fopen(s,"rt"))==NULL){
+	if ((fp=femm_fopen(s,"rt"))==NULL){
 		MsgBox("Couldn't read from specified .fem file");
 		return FALSE;
 	}
@@ -965,7 +966,11 @@ int CFemmeDocCore::OnOpenDocument()
 		if( _strnicmp(q,"<circuitname>",13)==0){
 			CString thisName;
 			ParseString(s,&thisName);
-			strcpy(CProp.CircName,thisName);
+			// Bounded copy into the 256-byte CircName: a plain strcpy would
+			// overflow on a >=256-byte name (strcpy into a calloc'd buffer trips
+			// no compiler warning, so this slipped the sprintf->snprintf pass).
+			strncpy(CProp.CircName,thisName,255);
+			CProp.CircName[255]=0;
 			q[0]=0;
 		}
 
@@ -1077,7 +1082,7 @@ int CFemmeDocCore::OnOpenDocument()
 	if ((ProblemType==0) && (Frequency==0))
 	{
 		snprintf(s, sizeof(s),"%s.tmp",PathName);
-		if ((fp=fopen(s,"rt"))!=NULL) // may not have a tmp file. If we see one, read it it.
+		if ((fp=femm_fopen(s,"rt"))!=NULL) // may not have a tmp file. If we see one, read it it.
 		{
 			while (fgets(s,1024,fp)!=NULL)
 			{
@@ -1262,7 +1267,7 @@ int CFemmeDocCore::LoadMesh()
 
 	//read meshnodes;
 	snprintf(infile, sizeof(infile),"%s.node",PathName);
-	if((fp=fopen(infile,"rt"))==NULL){
+	if((fp=femm_fopen(infile,"rt"))==NULL){
 		return FALSE;
 	}
 	fgets(s,1024,fp);
@@ -1289,7 +1294,7 @@ int CFemmeDocCore::LoadMesh()
 
 	//read in periodic boundary conditions;
 	snprintf(infile, sizeof(infile),"%s.pbc",PathName);
-	if((fp=fopen(infile,"rt"))!=NULL){
+	if((fp=femm_fopen(infile,"rt"))!=NULL){
 	
 		fgets(s,1024,fp);
 		sscanf(s,"%i",&k); NumPBCs=k;
@@ -1336,7 +1341,7 @@ MsgBox("Succefully read %s.pbc",PathName);
 
 	// read in elements;
 	snprintf(infile, sizeof(infile),"%s.ele",PathName);
-	if((fp=fopen(infile,"rt"))==NULL){
+	if((fp=femm_fopen(infile,"rt"))==NULL){
 		return FALSE;
 	}
 	fgets(s,1024,fp);
@@ -1421,7 +1426,7 @@ MsgBox("Succefully read %s.ele",PathName);
 			}		
 
 	snprintf(infile, sizeof(infile),"%s.edge",PathName);
-	if((fp=fopen(infile,"rt"))==NULL)
+	if((fp=femm_fopen(infile,"rt"))==NULL)
 	{
 		return FALSE;
 	}

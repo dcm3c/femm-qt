@@ -65,13 +65,16 @@ struct RMaterialProp {
 
     // B-H curve lookups
     double GetH(double b) const;
+    CComplex GetH(CComplex b) const;   // complex cubic-Hermite lookup (OF Problem.cpp)
     void GetMu(double b1, double b2, double &mu1, double &mu2) const;
     void GetMu(CComplex b1, CComplex b2, CComplex &mu1, CComplex &mu2) const;
+    // 1-D nonlinear lamination FE solve for the apparent AC B-H (OF Problem.cpp)
+    CComplex LaminatedBH(double omega, int i) const;
     void GetSlopes(double omega);
 
     // Energy density
     double GetB(double h) const;
-    double GetdHdB(double B) const;
+    CComplex GetdHdB(double B) const;  // complex (OF); real callers take Re()
     double GetEnergy(double b) const;
     double GetCoEnergy(double b) const;
     double DoEnergy(double b1, double b2) const;
@@ -245,6 +248,13 @@ public:
 
     // Integration
     CComplex BlockIntegral(int type);
+    // True if BlockIntegral(type) is a genuinely complex (phasor) quantity in an
+    // AC solve, so the binding should return a Python complex; false for
+    // semantically-real types (area/volume/energy/losses/steady-state force &
+    // torque), which return a real. Keyed on the type, never the runtime value,
+    // so the returned Python type is stable per (type, frequency). Kept next to
+    // BlockIntegral so the two stay in sync.
+    bool BlockIntegralIsComplex(int type) const;
     void LineIntegral(int type, CComplex *z);
 
     // Circuit results
