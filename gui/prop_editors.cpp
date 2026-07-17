@@ -69,7 +69,7 @@ MaterialEditorDialog::MaterialEditorDialog(QWidget *parent) : QDialog(parent)
     m_lamType->addItem(tr("Plain stranded wire"));    // 5 -> LamType 4
     m_lamType->addItem(tr("Litz wire"));              // 6 -> LamType 5
     m_lamType->addItem(tr("Square wire"));            // 7 -> LamType 6
-    form->addRow(tr("Lamination:"), m_lamType);
+    form->addRow(tr("Material Type:"), m_lamType);
     connect(m_lamType, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MaterialEditorDialog::onLamTypeChanged);
 
@@ -105,7 +105,6 @@ MaterialEditorDialog::MaterialEditorDialog(QWidget *parent) : QDialog(parent)
     m_bhButton->setEnabled(false);
     form->addRow(m_bhButton);
     connect(m_bhButton, &QPushButton::clicked, this, &MaterialEditorDialog::onEditBHCurve);
-    connect(m_nonlinear, &QCheckBox::toggled, m_bhButton, &QPushButton::setEnabled);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -116,28 +115,99 @@ MaterialEditorDialog::MaterialEditorDialog(QWidget *parent) : QDialog(parent)
     layout->addWidget(buttons);
 
     onLamTypeChanged(0);
+    onNonlinearToggled(false);
 }
 
+// Apply the field defaults and enable/disable rules that Original FEMM's
+// CMatDlg imposes when the material type changes (MatDlg.cpp OnSelchangeLamDir
+// and IsWire). idx is the combo index: 0 not-laminated, 1 in-plane, 2 x, 3 y,
+// 4 magnet / 5 stranded / 6 litz / 7 square wire.
 void MaterialEditorDialog::onLamTypeChanged(int idx)
 {
-    // idx is the combo index: 0 not-laminated, 1 in-plane, 2 x, 3 y,
-    // 4 magnet / 5 stranded / 6 litz / 7 square wire.
-    bool isLaminated = (idx >= 1 && idx <= 3);   // in-plane, x, y
-    bool isWire = (idx >= 4);
+    const bool isLaminated = (idx >= 1 && idx <= 3);   // in-plane, x, y
+    const bool isWire = (idx >= 4);
+
+    if (isWire) {
+        // Magnet (4) and square (7) wire are a single strand; stranded (5) and
+        // litz (6) let the user set the strand count.
+        if (idx == 4 || idx == 7) {
+            m_NStrands->setText("1");
+            m_NStrands->setEnabled(false);
+        } else {
+            m_NStrands->setEnabled(true);
+        }
+        m_WireD->setEnabled(true);
+        m_wireLabel->setEnabled(true);
+        applyWireDefaults();
+        return;
+    }
+
+    m_NStrands->setEnabled(false);
+    m_WireD->setEnabled(false);
+    m_wireLabel->setEnabled(false);
     m_Lam_d->setEnabled(isLaminated);
-    m_LamFill->setEnabled(isLaminated || isWire);
-    m_NStrands->setEnabled(isWire && idx != 4 && idx != 7);  // not magnet(4)/square(7)
-    m_WireD->setEnabled(isWire);
-    m_wireLabel->setEnabled(isWire);
-    m_Hc->setEnabled(!isWire);
-    m_hcLabel->setEnabled(!isWire);
+    m_LamFill->setEnabled(isLaminated);
+
+    if (isLaminated) {
+        // A lamination is soft-magnetic: it carries no coercivity.
+        m_Hc->setText("0");
+        m_Hc->setEnabled(false);
+        m_hcLabel->setEnabled(false);
+    } else {
+        m_Hc->setEnabled(true);
+        m_hcLabel->setEnabled(true);
+    }
 }
 
+// OF CMatDlg::IsWire(): a wire's magnetic and source properties are fixed by its
+// geometry, so reset them and lock the fields that don't apply. The wire's own
+// parameters (strand count, diameter) are left untouched.
+void MaterialEditorDialog::applyWireDefaults()
+{
+    m_mu_x->setText("1");
+    m_mu_y->setText("1");
+    m_Hc->setText("0");
+    m_Jsrc->setText("0");
+    m_Lam_d->setText("0");
+    m_LamFill->setText("1");
+    m_Theta_hn->setText("0");
+    m_Theta_hx->setText("0");
+    m_Theta_hy->setText("0");
+    m_bhB.clear();
+    m_bhH.clear();
+    m_bhPoints = 0;
+    m_nonlinear->setChecked(false);   // a wire cannot be nonlinear
+
+    m_mu_x->setEnabled(true);
+    m_mu_y->setEnabled(true);
+    m_muLabel->setEnabled(true);
+    m_Theta_hx->setEnabled(true);
+    m_Theta_hy->setEnabled(true);
+    m_Lam_d->setEnabled(false);
+    m_LamFill->setEnabled(false);
+    m_Hc->setEnabled(false);
+    m_hcLabel->setEnabled(false);
+    m_bhButton->setEnabled(false);
+    m_Theta_hn->setEnabled(false);
+}
+
+// OF CMatDlg::OnSelchangeNlcombo(): the nonlinear (B-H curve) choice decides
+// whether the linear permeability / directional hysteresis-angle fields are
+// active, or the B-H curve editor and single hysteresis-lag angle instead.
 void MaterialEditorDialog::onNonlinearToggled(bool on)
 {
     m_mu_x->setEnabled(!on);
     m_mu_y->setEnabled(!on);
     m_muLabel->setEnabled(!on);
+    m_Theta_hx->setEnabled(!on);
+    m_Theta_hy->setEnabled(!on);
+    m_bhButton->setEnabled(on);
+    m_Theta_hn->setEnabled(on);
+
+    // A wire can't carry a B-H curve; if one is selected when nonlinear is
+    // turned on, revert the material type to "Not laminated".
+    if (on && m_lamType->currentIndex() > 3)
+        m_lamType->setCurrentIndex(0);   // fires onLamTypeChanged(0)
 }
 
 void MaterialEditorDialog::onEditBHCurve()
@@ -171,7 +241,15 @@ void MaterialEditorDialog::fromProp(const FMaterialProp &m)
     int lamIdx = m.LamType;
     if (lamIdx != 0) lamIdx++;
     else if (m.Lam_d != 0 || m.LamFill != 1) lamIdx = 1;
+    // Populate the combo and nonlinear check without firing their handlers
+    // mid-load; the handlers run once, explicitly, after every field is in
+    // place (mirrors OF OnInitDialog, where MFC's SetCurSel doesn't notify).
+    m_lamType->blockSignals(true);
+    m_nonlinear->blockSignals(true);
     m_lamType->setCurrentIndex(lamIdx);
+    m_nonlinear->setChecked(m.BHpoints > 0);
+    m_lamType->blockSignals(false);
+    m_nonlinear->blockSignals(false);
     m_Lam_d->setText(QString::number(m.Lam_d, 'g', 15));
     m_LamFill->setText(QString::number(m.LamFill, 'g', 15));
     m_Theta_hn->setText(QString::number(m.Theta_hn, 'g', 15));
@@ -179,7 +257,6 @@ void MaterialEditorDialog::fromProp(const FMaterialProp &m)
     m_Theta_hy->setText(QString::number(m.Theta_hy, 'g', 15));
     m_NStrands->setText(QString::number(m.NStrands));
     m_WireD->setText(QString::number(m.WireD, 'g', 15));
-    m_nonlinear->setChecked(m.BHpoints > 0);
     onLamTypeChanged(lamIdx);
     onNonlinearToggled(m.BHpoints > 0);
 
@@ -220,6 +297,14 @@ void MaterialEditorDialog::toProp(FMaterialProp &m) const
     m.Theta_hy = m_Theta_hy->evaluateAsDouble(0);
     m.NStrands = (int)m_NStrands->evaluateAsDouble(0);
     m.WireD = m_WireD->evaluateAsDouble(0);
+
+    // Zero-diameter wire guard (OF MatDlg::OnOK): a wire needs a positive strand
+    // diameter; without one it isn't a valid wire, so fall back to a plain solid
+    // material ("Not laminated"). lamIdx >= 4 is any of the wire choices.
+    if (lamIdx >= 4 && m.WireD <= 0) {
+        m.WireD = 0;
+        m.LamType = 0;
+    }
 
     // B-H curve data
     if (m_nonlinear->isChecked() && m_bhPoints > 0) {

@@ -390,6 +390,18 @@ int exec_python(const char *cmd, char *errmsg, int errmsg_size) {
     s_last_result.clear();
     s_last_display.clear();
 
+    // Skip a leading UTF-8 BOM (EF BB BF). Windows editors (Notepad, etc.)
+    // often save a .py "as UTF-8" with a BOM; without this the first token
+    // parses as a stray identifier -- e.g. "name '﻿import' isn't defined".
+    // CPython's tokenizer strips it likewise. This is the one chokepoint every
+    // entry path funnels through (files via exec_python_file, the console, TCP,
+    // the init script), so one strip here covers them all. The short-circuit
+    // makes it safe on any NUL-terminated string, including "" and a lone BOM.
+    if ((unsigned char)cmd[0] == 0xEF &&
+        (unsigned char)cmd[1] == 0xBB &&
+        (unsigned char)cmd[2] == 0xBF)
+        cmd += 3;
+
     // Track nesting (event pumping can re-enter via toolbar actions) and
     // drop any interrupt requested after the previous script already ended,
     // so a stale Stop click can't kill the next script at its first branch.

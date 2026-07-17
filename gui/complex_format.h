@@ -18,11 +18,37 @@
 #include <QString>
 #include "complex.h"
 
+// Assemble the "x+yj" form from a per-component number formatter. One place
+// owns the sign / zero-part logic; callers choose how each component number is
+// rendered -- fixed significant digits for readouts, shortest round-trip for
+// editable fields.
+template <typename FmtFn>
+inline QString femmFmtComplexWith(CComplex z, FmtFn fmt) {
+    if (z.im == 0)  return fmt(z.re);
+    if (z.re == 0)  return fmt(z.im) + "j";
+    return z.im > 0 ? fmt(z.re) + "+" + fmt(z.im) + "j"
+                    : fmt(z.re) + "-" + fmt(-z.im) + "j";
+}
+
+// Readout form: fixed significant digits, to keep solver noise off the screen.
 inline QString femmFmtComplex(CComplex z, int prec = 8) {
-    if (z.im == 0)  return QString("%1").arg(z.re, 0, 'g', prec);
-    if (z.re == 0)  return QString("%1j").arg(z.im, 0, 'g', prec);
-    return z.im > 0 ? QString("%1+%2j").arg(z.re, 0, 'g', prec).arg(z.im, 0, 'g', prec)
-                    : QString("%1-%2j").arg(z.re, 0, 'g', prec).arg(-z.im, 0, 'g', prec);
+    return femmFmtComplexWith(z, [prec](double v) {
+        return QString::number(v, 'g', prec);
+    });
+}
+
+// Editable-field form: the shortest decimal that reads back as the identical
+// double (like Python's repr) -- readable ("0.1", "20+10j") yet lossless, so a
+// value survives an open/OK round-trip through the Python evaluator exactly.
+// Values that genuinely need 16-17 digits still get them.
+inline QString femmFmtComplexExact(CComplex z) {
+    return femmFmtComplexWith(z, [](double v) -> QString {
+        for (int p = 15; p <= 17; ++p) {
+            QString s = QString::number(v, 'g', p);
+            if (s.toDouble() == v) return s;
+        }
+        return QString::number(v, 'g', 17);
+    });
 }
 
 #endif // GUI_COMPLEX_FORMAT_H

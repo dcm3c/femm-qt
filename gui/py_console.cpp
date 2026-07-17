@@ -24,9 +24,11 @@
 #include <QMouseEvent>
 #include <QPlainTextEdit>
 #include <QScrollBar>
+#include <QSettings>
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTimer>
+#include <QWheelEvent>
 
 static PyConsole *s_console = nullptr;
 
@@ -46,10 +48,33 @@ class ConsoleEdit : public QPlainTextEdit
 {
 public:
     PyConsole *owner = nullptr;
-    explicit ConsoleEdit(PyConsole *o) : owner(o) {}
+    explicit ConsoleEdit(PyConsole *o) : owner(o) {
+        // Restore the font size the user last left the console at.
+        setFontSize(QSettings().value("console/fontSize", kDefaultPt).toInt());
+    }
+
+    static constexpr int kDefaultPt = 9;    // Consolas 9, the historical default
+    static constexpr int kMinPt = 5;
+    static constexpr int kMaxPt = 48;
+
+    // Apply and persist a console font size (clamped to a sane range).
+    void setFontSize(int pt) {
+        m_fontPt = qBound(kMinPt, pt, kMaxPt);
+        setFont(QFont("Consolas", m_fontPt));
+        QSettings().setValue("console/fontSize", m_fontPt);
+    }
 
 protected:
     void keyPressEvent(QKeyEvent *e) override {
+        // Ctrl +/-/0 zoom in / out / reset, like an editor or terminal.
+        // "+" is usually Shift+"=", so accept Key_Equal for zoom-in too.
+        if (e->modifiers() & Qt::ControlModifier) {
+            switch (e->key()) {
+                case Qt::Key_Plus:  case Qt::Key_Equal: setFontSize(m_fontPt + 1); return;
+                case Qt::Key_Minus:                     setFontSize(m_fontPt - 1); return;
+                case Qt::Key_0:                         setFontSize(kDefaultPt);   return;
+            }
+        }
         if (owner && owner->handleKeyPress(e)) return;
         QPlainTextEdit::keyPressEvent(e);
     }
@@ -61,6 +86,21 @@ protected:
         QPlainTextEdit::mouseReleaseEvent(e);   // let it finish the click/selection
         if (owner) owner->handleMouseRelease();
     }
+    // Ctrl+wheel resizes the console font (like a terminal / editor); a plain
+    // wheel scrolls the scrollback as usual.
+    void wheelEvent(QWheelEvent *e) override {
+        if (e->modifiers() & Qt::ControlModifier) {
+            const int d = e->angleDelta().y();
+            if (d > 0)      setFontSize(m_fontPt + 1);
+            else if (d < 0) setFontSize(m_fontPt - 1);
+            e->accept();
+            return;
+        }
+        QPlainTextEdit::wheelEvent(e);
+    }
+
+private:
+    int m_fontPt = kDefaultPt;
 };
 
 // ---------------------------------------------------------------------------
@@ -70,8 +110,7 @@ PyConsole::PyConsole(QWidget *parent)
 {
     s_console = this;
 
-    m_term = new ConsoleEdit(this);
-    m_term->setFont(QFont("Consolas", 9));
+    m_term = new ConsoleEdit(this);   // sets its font from the saved size
     m_term->setUndoRedoEnabled(false);
     m_term->setMaximumBlockCount(5000);
     m_term->setLineWrapMode(QPlainTextEdit::WidgetWidth);

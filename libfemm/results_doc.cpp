@@ -1514,9 +1514,26 @@ bool ResultsDoc::OpenDocument(const std::string &pathname)
                 v = StripKey(s); PProp.PointName = ExtractQuoted(v);
             }
             if (_strnicmp(q, "<I_re>", 6) == 0) { v = StripKey(s); sscanf(v, "%lf", &PProp.Jr); }
-            if (_strnicmp(q, "<I_im>", 6) == 0) { v = StripKey(s); sscanf(v, "%lf", &PProp.Ji); }
+            if (_strnicmp(q, "<I_im>", 6) == 0) {
+                // Point current source: discard the imaginary part at DC (phasor
+                // artifact). This diverges from OF, which reads <I_im>
+                // unconditionally -- but Ji IS consumed here: GetPointB tests
+                // Ji != 0 to detect a point source and fall back to element-
+                // average B near it. A purely imaginary DC current injects
+                // nothing, yet would otherwise trigger that fallback and degrade
+                // the smoothed field. Ji stays 0 from the <beginpoint> reset.
+                double im; v = StripKey(s); sscanf(v, "%lf", &im);
+                if (Frequency != 0) PProp.Ji = im;
+            }
             if (_strnicmp(q, "<A_re>", 6) == 0) { v = StripKey(s); sscanf(v, "%lf", &PProp.Ar); }
-            if (_strnicmp(q, "<A_im>", 6) == 0) { v = StripKey(s); sscanf(v, "%lf", &PProp.Ai); }
+            if (_strnicmp(q, "<A_im>", 6) == 0) {
+                // Specified vector potential. No postprocessor consumer today,
+                // so this is a no-op now -- but discard the imaginary part at DC
+                // too, so the zero-imaginary-at-DC invariant holds uniformly and
+                // any future consumer is already safe. Ai stays 0 from the reset.
+                double im; v = StripKey(s); sscanf(v, "%lf", &im);
+                if (Frequency != 0) PProp.Ai = im;
+            }
             if (_strnicmp(q, "<endpoint>", 9) == 0) {
                 nodeproplist.push_back(PProp);
             }
@@ -1532,7 +1549,14 @@ bool ResultsDoc::OpenDocument(const std::string &pathname)
                 v = StripKey(s); sscanf(v, "%lf", &MProp.H_c);
             }
             if (_strnicmp(q, "<J_re>", 6) == 0) { v = StripKey(s); sscanf(v, "%lf", &MProp.Jsrc.re); }
-            if (_strnicmp(q, "<J_im>", 6) == 0) { v = StripKey(s); sscanf(v, "%lf", &MProp.Jsrc.im); }
+            if (_strnicmp(q, "<J_im>", 6) == 0) {
+                // Block source current density: discard the imaginary part at DC
+                // (phasor artifact, as with the circuit current), matching OF,
+                // which reads <J_im> only when Frequency != 0. Jsrc.im stays 0
+                // from the <beginblock> RMaterialProp() reset.
+                double im; v = StripKey(s); sscanf(v, "%lf", &im);
+                if (Frequency != 0) MProp.Jsrc.im = im;
+            }
             if (_strnicmp(q, "<Sigma>", 7) == 0 && _strnicmp(q, "<Sigma_ssd>", 11) != 0) {
                 v = StripKey(s); sscanf(v, "%lf", &MProp.Cduct);
             }
@@ -1570,7 +1594,15 @@ bool ResultsDoc::OpenDocument(const std::string &pathname)
                 v = StripKey(s); CProp.CircName = ExtractQuoted(v);
             }
             if (_strnicmp(q, "<TotalAmps_re>", 14) == 0) { v = StripKey(s); sscanf(v, "%lf", &CProp.Amps.re); }
-            if (_strnicmp(q, "<TotalAmps_im>", 14) == 0) { v = StripKey(s); sscanf(v, "%lf", &CProp.Amps.im); }
+            if (_strnicmp(q, "<TotalAmps_im>", 14) == 0) {
+                // Phasor convention: real <-> cos(wt), imag <-> sin(wt). At DC
+                // (w=0) the sin component can't contribute, so a user-defined
+                // current's imaginary part is meaningless -- discard it at load,
+                // so every consumer (Circuit dialog, mo_getcircuitproperties)
+                // sees a real current. Matches OF (FemmviewDoc::OnOpenDocument).
+                double im; v = StripKey(s); sscanf(v, "%lf", &im);
+                if (Frequency != 0) CProp.Amps.im = im;
+            }
             if (_strnicmp(q, "<CircuitType>", 13) == 0) { v = StripKey(s); sscanf(v, "%i", &CProp.CircType); }
             if (_strnicmp(q, "<endcircuit>", 11) == 0) circproplist.push_back(CProp);
 

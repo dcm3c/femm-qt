@@ -1,0 +1,32 @@
+Block Integral Number,Description,Uses Weighted Stress Tensor Mask,Freq=0,Freq!=0
+0,A.J,N,double,complex
+1,Integral of A over elements,N,double,complex
+2,Stored Energy,N,double,double
+3,Hysteresis & Laminated eddy current losses,N,double,double
+4,Resistive Losses,N,double,double
+5,Cross-section area,N,double,double
+6,Total losses,N,double,double
+7,Total current ,N,double,complex
+8,Integrate x or r part of b over the block,N,double,complex
+9,Integrate y or z part of b over the block,N,double,complex
+10,volume,N,double,double
+11,"x (or r) direction Lorentz force, steady-state part.",N,double,double
+12,"y (or z) direction Lorentz force, steady-state part",N,double,double
+13,"x (or r) direction Lorentz force, 2x part",N,double,complex
+14,"y (or z) direction Lorentz force, 2x part",N,double,complex
+15,"Lorentz Torque, steady-state part",N,double,double
+16,"Lorentz Torque, 2x",N,double,complex
+17,Coenergy,N,double,double
+18,"x (or r) direction Henrotte force, SS part",Y,double,double
+19,"y (or z) direction Henrotte force, SS part",Y,double,double
+20,"x (or r) direction Henrotte force, 2x part",Y,double,complex
+21,"y (or z) direction Henrotte force, 2x part",Y,double,complex
+22,"Henrotte torque, SS part",Y,double,double
+23,"Henrotte torque, 2x part",Y,double,complex
+24,Moment of Inertia-like integral,N,double,double
+25,"x (or r) direction Henrotte force, 1x part for incremental AC problems",Y,double,complex
+26,"y (or z) direction Henrotte force, 1x part for incremental AC problems",Y,double,complex
+27,"Henrotte torque, 1x part for incremental AC problems",Y,double,complex
+28,"x (or r) direction Lorentz force, 1X part for incremental AC problems",N,double,complex
+29,"y (or z) direction Lorentz force, 1X part for incremental AC problems",N,double,complex
+30,"Lorentz Torque, 1X part for incremental AC problems",N,double,complex

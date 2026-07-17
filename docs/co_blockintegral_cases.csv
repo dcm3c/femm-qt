@@ -1,0 +1,13 @@
+Block Integral Number,Description,Uses Weighted Stress Tensor Mask,Freq=0,Freq!=0
+0,Real Power,N,double,double
+1,Reactive Power,N,double,double
+2,Apparent Power,N,double,double
+3,Time Average Stored Energy,N,double,double
+4,cross-section area,N,double,double
+5,volume,N,double,double
+6,"x (or r) direction Henrotte force, SS part",Y,double,double
+7,"y (or z) direction Henrotte force, SS part",Y,double,double
+8,"x (or r) direction Henrotte force, 2x part",Y,double,complex
+9,"y (or z) direction Henrotte force, 2x part",Y,double,complex
+10,"Henrotte torque, SS part",Y,double,double
+11,"Henrotte torque, 2x part",Y,double,complex

@@ -40,6 +40,7 @@ private slots:
     void onNonlinearToggled(bool on);
     void onEditBHCurve();
 private:
+    void applyWireDefaults();   // OF CMatDlg::IsWire()
     // B-H curve data (preserved across dialog open/close)
     std::vector<double> m_bhB, m_bhH;
     int m_bhPoints = 0;
