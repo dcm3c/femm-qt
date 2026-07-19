@@ -91,13 +91,10 @@ ProblemDialog::ProblemDialog(DocumentBase *doc, QWidget *parent)
     m_smartMesh = new QComboBox;
     m_smartMesh->addItem(tr("Off"));   // 0
     m_smartMesh->addItem(tr("On"));    // 1
-    if (isMag) {
-        auto *magDoc = dynamic_cast<MagDocument*>(doc);
-        m_smartMesh->setCurrentIndex(magDoc ? magDoc->SmartMesh : 0);
-    } else {
-        auto *elecDoc = dynamic_cast<ElecDocument*>(doc);
-        m_smartMesh->setCurrentIndex(elecDoc ? elecDoc->SmartMesh : 0);
-    }
+    // SmartMesh is a common DocumentBase field; read it directly so every
+    // physics restores the saved setting (the old code cast to ElecDocument in
+    // the non-magnetics branch, so heat/current-flow always fell back to Off).
+    m_smartMesh->setCurrentIndex(doc ? doc->SmartMesh : 1);
     form->addRow(tr("Smart Mesh:"), m_smartMesh);
 
     // Previous solution file + browse button (magnetics only)
@@ -176,23 +173,21 @@ void ProblemDialog::accept()
 
     m_doc->ProblemNote = m_comment->toPlainText().toStdString();
 
+    // SmartMesh is common to every physics (heat has no branch below), so store
+    // it once here rather than per-physics.
+    if (m_doc) m_doc->SmartMesh = m_smartMesh->currentIndex();
+
     // Magnetics-specific fields
     if (auto *magDoc = dynamic_cast<MagDocument*>(m_doc)) {
         magDoc->Frequency = fabs(m_frequency->evaluateAsDouble(0));
         magDoc->ACSolver = m_acSolver->currentIndex();
-        magDoc->SmartMesh = m_smartMesh->currentIndex();
         magDoc->PrevSoln = m_prevSoln->text().toStdString();
         magDoc->PrevType = m_prevType->currentIndex();
         if (magDoc->PrevSoln.empty()) magDoc->PrevType = 0;
     }
-    // Electrostatics-specific fields
-    else if (auto *elecDoc = dynamic_cast<ElecDocument*>(m_doc)) {
-        elecDoc->SmartMesh = m_smartMesh->currentIndex();
-    }
     // Current flow-specific fields
     else if (auto *currDoc = dynamic_cast<CurrDocument*>(m_doc)) {
         currDoc->Frequency = fabs(m_frequency->evaluateAsDouble(60));
-        currDoc->SmartMesh = m_smartMesh->currentIndex();
     }
 
     QDialog::accept();

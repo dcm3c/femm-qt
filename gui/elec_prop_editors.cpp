@@ -163,6 +163,10 @@ ElecConductorEditorDialog::ElecConductorEditorDialog(QWidget *parent) : QDialog(
     m_q = new PyLineEdit; m_q->setText("0");
     form->addRow(tr("Charge (C):"), m_q);
 
+    connect(m_type, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &ElecConductorEditorDialog::onTypeChanged);
+    onTypeChanged(m_type->currentIndex());
+
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
@@ -172,10 +176,19 @@ ElecConductorEditorDialog::ElecConductorEditorDialog(QWidget *parent) : QDialog(
     layout->addWidget(buttons);
 }
 
+void ElecConductorEditorDialog::onTypeChanged(int idx)
+{
+    // CircType 0 = prescribed charge (q), 1 = prescribed voltage (V): only the
+    // prescribed quantity's box is editable (matches OF's bd_CircProp).
+    m_q->setEnabled(idx == 0);
+    m_V->setEnabled(idx == 1);
+}
+
 void ElecConductorEditorDialog::fromProp(const ECircuit &c)
 {
     m_name->setText(QString::fromStdString(c.CircName));
     m_type->setCurrentIndex(c.CircType);
+    onTypeChanged(m_type->currentIndex());
     m_V->setText(QString::number(c.V, 'g', 15));
     m_q->setText(QString::number(c.q, 'g', 15));
 }

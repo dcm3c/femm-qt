@@ -74,8 +74,7 @@ void register_elec_postproc_py(ElecResultsDoc *doc) {
     });
     m.def("eo_clearblock", []() {
         check_doc(s_doc, EOERR);
-        for (auto &lbl : s_doc->labellist) lbl.IsSelected = false;
-        s_doc->bHasMask = false;
+        ppClearSelection(s_doc);
     });
     m.def("eo_blockintegral", [](int type) -> std::tuple<double, double> {
         check_doc(s_doc, EOERR);

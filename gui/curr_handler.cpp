@@ -82,7 +82,14 @@ void CurrentFlowHandler::showIntegrateDialog(QWidget *parent, OutputDialog *out)
         bool blocksSelected = false;
         for (auto &lbl : m_doc->labellist)
             if (lbl.IsSelected) { blocksSelected = true; break; }
-        if (!blocksSelected) { m_widget->emitStatus("Select blocks for integration (use Area mode)"); return; }
+        // Henrotte force/torque acts on a conductor (mesh-node selection).
+        bool nodesSelected = false;
+        for (auto &mn : m_doc->meshnode)
+            if (mn.IsSelected) { nodesSelected = true; break; }
+        if (!blocksSelected && !nodesSelected) {
+            m_widget->emitStatus("Select a block or a conductor for integration (Area mode)");
+            return;
+        }
         QStringList types;
         types << "Real Power" << "Reactive Power" << "Apparent Power"
               << "Time-Avg Stored Energy" << "Cross-section area" << "Volume"
@@ -94,6 +101,12 @@ void CurrentFlowHandler::showIntegrateDialog(QWidget *parent, OutputDialog *out)
             tr("Integral type:"), types, 0, false, &ok);
         if (!ok) return;
         int intType = types.indexOf(choice);
+        // Force/torque (>= 6) may use a conductor (mesh-node) selection; the
+        // power/energy/geometry integrals need selected blocks.
+        if (intType < 6 && !blocksSelected) {
+            m_widget->emitStatus("Select one or more blocks for this integral");
+            return;
+        }
 
         // Set up progress dialog for block integrals that may trigger MakeMask
         QProgressDialog progDlg(tr("Masking..."),

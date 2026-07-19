@@ -85,8 +85,26 @@ int SolverProgressDialog::runSolver(const QString &exePath, const QString &baseP
 
     delete m_proc;
     m_proc = nullptr;
-    hide();
 
+    // On failure, keep the dialog up so the solver's captured output (the log
+    // pane, which holds the actual diagnostic like "Meshing failed") stays
+    // visible instead of vanishing the instant the process exits. Turn the
+    // Abort button into Close and wait modally for the user to dismiss it.
+    // (A user-initiated abort is excluded -- they already know it stopped.)
+    if (m_exitCode != 0 && !m_aborted) {
+        m_statusLabel->setText(tr("Solver FAILED (exit code %1) - see the log below")
+                                   .arg(m_exitCode));
+        m_solverLabel->setVisible(false);
+        m_solverBar->setVisible(false);
+        m_overallLabel->setVisible(false);
+        m_overallBar->setVisible(false);
+        m_abortBtn->setText(tr("Close"));
+        disconnect(m_abortBtn, &QPushButton::clicked, this, &SolverProgressDialog::onAbort);
+        connect(m_abortBtn, &QPushButton::clicked, this, &QDialog::accept);
+        exec();  // modal until the user closes it
+    }
+
+    hide();
     return m_exitCode;
 }
 

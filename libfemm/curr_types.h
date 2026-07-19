@@ -16,7 +16,7 @@
 
 struct CurrMaterialProp {
     std::string BlockName = "New Material";
-    double ox = 0.0, oy = 0.0;    // electrical conductivity (MS/m)
+    double ox = 0.0, oy = 0.0;    // electrical conductivity (S/m)
     double ex = 1.0, ey = 1.0;    // relative permittivity
     double ltx = 0.0, lty = 0.0;  // dielectric loss tangent
 };

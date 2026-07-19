@@ -283,11 +283,73 @@ std::string exeDir()
     return dir;
 }
 
+// Human-readable text for the exit codes the solvers (fkn/belasolv/hsolv/csolv)
+// return. The codes are shared across the four solvers; where they diverge
+// slightly (fkn folds meshing into 2; hsolv's 5 is an allocation failure) the
+// wording is kept general enough to cover both. Returns nullptr for unknown
+// codes so the caller falls back to the bare number.
+static const char *solverErrorText(int code)
+{
+    switch (code) {
+    case 1: return "invalid solver arguments";
+    case 2: return "meshing or mesh loading failed";
+    case 3: return "could not load the previous (bias) solution";
+    case 4: return "out of memory (matrix allocation failed)";
+    case 5: return "the solve failed -- out of memory, non-convergence, or an "
+                   "ill-posed problem (e.g. a region with no material assigned)";
+    case 6: return "failed to write the results file";
+    case 7: return "could not load the problem file";
+    case 8: return "meshing failed";
+    default: return nullptr;
+    }
+}
+
 int analyzeDocument(DocumentBase *doc, int hide, char *errmsg, int errmsg_size)
 {
     if (!doc || doc->filePath.empty()) {
         if (errmsg) snprintf(errmsg, errmsg_size, "File must be saved before analysis");
         return -1;
+    }
+
+    // Reject a region with no material assigned before we mesh. A "<None>" block
+    // label is written to the solver file as material index 0, which the mesher
+    // reads as a hole -- silently voiding the region (and, if it's the only one,
+    // producing an empty mesh that crashes downstream). Catch it here while the
+    // literal "<None>" is still known (the saved file only keeps the flattened
+    // index), matching OF, which rejects this before meshing. A default block
+    // label covers unmaterialed regions, so it's only an error when none exists.
+    // (Standalone solver/tangle CLI use is hardened separately in the mesher.)
+    {
+        bool hasNone = false, hasDefault = false;
+        for (const auto &b : doc->blocklist) {
+            if (b.BlockType == "<None>") hasNone = true;
+            if (b.IsDefault) hasDefault = true;
+        }
+        if (hasNone && !hasDefault) {
+            if (errmsg) snprintf(errmsg, errmsg_size,
+                "A block label has no material assigned. Assign a material to "
+                "every region (or add a default block label) before analyzing.");
+            return -1;
+        }
+    }
+
+    // Axisymmetric problems live in r >= 0; geometry drawn to the left of the
+    // r = 0 axis is invalid (it yields negative volumes/energies/forces, since
+    // every element carries a 2*pi*r weight). It otherwise meshes and "solves"
+    // silently, so reject it up front. Tolerance scales with the model size so
+    // nodes sitting on the axis (r ~ 0 with FP noise) don't trip it.
+    if (doc->ProblemType == 1 && !doc->nodelist.empty()) {
+        double minX = doc->nodelist[0].x, maxAbs = 0;
+        for (const auto &n : doc->nodelist) {
+            if (n.x < minX) minX = n.x;
+            if (std::fabs(n.x) > maxAbs) maxAbs = std::fabs(n.x);
+        }
+        if (minX < -1e-6 * (maxAbs > 0 ? maxAbs : 1.0)) {
+            if (errmsg) snprintf(errmsg, errmsg_size,
+                "Axisymmetric problems require r >= 0, but the geometry extends "
+                "to r = %g. Move it onto or to the right of the r = 0 axis.", minX);
+            return -1;
+        }
     }
 
     doc->SaveDocument(doc->filePath);
@@ -337,8 +399,11 @@ int analyzeDocument(DocumentBase *doc, int hide, char *errmsg, int errmsg_size)
         ret = system(cmd.c_str());
 #endif
     }
-    if (ret != 0 && errmsg)
-        snprintf(errmsg, errmsg_size, "Solver returned error code %d", ret);
+    if (ret != 0 && errmsg) {
+        const char *t = solverErrorText(ret);
+        if (t) snprintf(errmsg, errmsg_size, "Solver failed: %s (exit code %d)", t, ret);
+        else   snprintf(errmsg, errmsg_size, "Solver returned error code %d", ret);
+    }
     return ret;
 }
 

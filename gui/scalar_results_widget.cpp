@@ -45,14 +45,24 @@ QColor ScalarResultsWidget::densityColor(int level)
 // Constructor
 // ================================================================
 
+void ScalarResultsWidget::clearAreaSelection()
+{
+    if (m_view.labellist) for (auto &lbl : *m_view.labellist) lbl.IsSelected = false;
+    if (m_view.meshnode)  for (auto &mn : *m_view.meshnode) mn.IsSelected = false;
+    if (m_view.nodelist)  for (auto &n : *m_view.nodelist) n.IsSelected = false;
+    if (m_view.linelist)  for (auto &s : *m_view.linelist) s.IsSelected = false;
+    if (m_view.arclist)   for (auto &a : *m_view.arclist) a.IsSelected = false;
+    if (m_view.bHasMask)  *m_view.bHasMask = false;
+}
+
 void ScalarResultsWidget::setMode(int mode)
 {
     // Clear contour when leaving contour mode
     if (m_mode == 1 && mode != 1 && m_view.contour)
         (*m_view.contour).clear();
-    // Clear block selections when leaving area mode
-    if (m_mode == 2 && mode != 2 && m_view.labellist)
-        for (auto &lbl : (*m_view.labellist)) lbl.IsSelected = false;
+    // Clear block/conductor selections when leaving area mode
+    if (m_mode == 2 && mode != 2)
+        clearAreaSelection();
     m_mode = mode;
     update();
 }
@@ -746,14 +756,15 @@ void ScalarResultsWidget::drawGeometry(QPainter &p)
     QColor kLineColor = viewColors().line();
     QColor kNodeColor = viewColors().node();
 
-    // Draw segments
-    p.setPen(QPen(kLineColor, 1));
+    // Draw segments (selected ones — e.g. a selected conductor — highlighted)
+    QColor kSelColor = viewColors().selected();
     for (auto &seg : (*m_view.linelist)) {
         if (seg.Hidden) continue;
         if (seg.n0 < 0 || seg.n0 >= (int)(*m_view.nodelist).size()) continue;
         if (seg.n1 < 0 || seg.n1 >= (int)(*m_view.nodelist).size()) continue;
         QPointF p0 = toScreen((*m_view.nodelist)[seg.n0].x, (*m_view.nodelist)[seg.n0].y);
         QPointF p1 = toScreen((*m_view.nodelist)[seg.n1].x, (*m_view.nodelist)[seg.n1].y);
+        p.setPen(seg.IsSelected ? QPen(kSelColor, 2) : QPen(kLineColor, 1));
         p.drawLine(p0, p1);
     }
 
@@ -776,7 +787,7 @@ void ScalarResultsWidget::drawGeometry(QPainter &p)
         if (k < 1) k = 1;
         double dt = arc.ArcLength * PI / (180.0 * k);
 
-        p.setPen(QPen(kLineColor, 1));
+        p.setPen(arc.IsSelected ? QPen(kSelColor, 2) : QPen(kLineColor, 1));
         CComplex pt = a0;
         QPointF prev = toScreen(pt.re, pt.im);
         CComplex rot(cos(dt), sin(dt));
@@ -1177,6 +1188,19 @@ void ScalarResultsWidget::mousePressEvent(QMouseEvent *event)
         emit statusMessage(QString("Contour: %1 points").arg((*m_view.contour).size()));
         update();
     }
+
+    // Right-click in area mode: select the conductor nearest the click. This is
+    // how a conductor is selected for a weighted-stress-tensor force/torque
+    // integral in electrostatics/current flow (matches OF's block-mode
+    // right-click).
+    if (event->button() == Qt::RightButton && m_mode == 2 && m_view.meshnode) {
+        double xd, yd;
+        toDrawing(event->pos().x(), event->pos().y(), xd, yd);
+        if (m_view.SelectConductorNear(xd, yd)) {
+            if (m_view.bHasMask) *m_view.bHasMask = false;  // invalidate mask
+            update();
+        }
+    }
 }
 
 void ScalarResultsWidget::mouseDoubleClickEvent(QMouseEvent *event)
@@ -1358,7 +1382,7 @@ void ScalarResultsWidget::keyPressEvent(QKeyEvent *event)
             update();
         }
         if (m_mode == 2 && m_view.meshnode) {
-            for (auto &lbl : (*m_view.labellist)) lbl.IsSelected = false;
+            clearAreaSelection();
             update();
         }
         break;

@@ -54,10 +54,11 @@ public:
     CurrConductorEditorDialog(QWidget *parent = nullptr);
     void fromProp(const CurrCircuit &c);
     void toProp(CurrCircuit &c) const;
+private slots:
+    void onTypeChanged(int idx);
 private:
     PyLineEdit *m_name;
-    PyLineEdit *m_vcRe, *m_vcIm;
-    PyLineEdit *m_qcRe, *m_qcIm;
+    PyLineEdit *m_vc, *m_qc;   // single complex-valued boxes (V and I)
     QComboBox *m_type;
 };
 

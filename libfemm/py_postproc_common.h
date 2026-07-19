@@ -11,6 +11,7 @@
 #include "utf8_io.h"
 #include "script_callbacks.h"
 #include "mag_types.h"
+#include "postproc_select.h"
 
 #include <cmath>
 #include <cstdio>
@@ -163,25 +164,8 @@ void ppSelectPoint(double mx, double my, Doc *doc) {
     }
 }
 
-// selectconductor("name") - toggle selection on geometry and mesh entities.
-template<class Doc>
-void ppSelectConductor(const std::string &name, Doc *doc) {
-    int j = -1;
-    for (int i = 0; i < (int)doc->circproplist.size(); i++) {
-        if (name == doc->circproplist[i].CircName) { j = i; break; }
-    }
-    if (j < 0) return;
-
-    for (auto &n : doc->nodelist)
-        if (n.InConductor == name) n.ToggleSelect();
-    for (auto &s : doc->linelist)
-        if (s.InConductor == name) s.ToggleSelect();
-    for (auto &a : doc->arclist)
-        if (a.InConductor == name) a.ToggleSelect();
-
-    for (auto &mn : doc->meshnode)
-        if (mn.Q == j) mn.IsSelected = !mn.IsSelected;
-}
+// ppSelectConductor / ppSelectConductorNear live in postproc_select.h (Python-
+// free) so the GUI can share them; included below.
 
 // makeplot(plotType, numPoints, filename) - sample field values along the
 // contour, optionally write to a file, return number of points. File I/O is

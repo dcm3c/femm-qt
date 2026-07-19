@@ -1,0 +1,65 @@
+[Format]      =  1
+[Precision]   =  1e-008
+[Frequency]   =  100000
+[MinAngle]    =  30
+[DoSmartMesh] =  1
+[Depth]       =  1
+[LengthUnits] =  millimeters
+[ProblemType] =  planar
+[Coordinates] =  cartesian
+[Comment]     =  ""
+[PointProps]   = 0
+[BdryProps]   = 0
+[BlockProps]  = 1
+  <BeginBlock>
+    <BlockName> = "myLossyDielectric"
+    <ox> = 0.050000000000000003
+    <oy> = 0.050000000000000003
+    <ex> = 5
+    <ey> = 5
+    <ltx> = 0
+    <lty> = 0
+  <EndBlock>
+[ConductorProps]  = 2
+  <BeginConductor>
+    <ConductorName> = "Vhi"
+    <vcr> = 866.02540378443871
+    <vci> = 499.99999999999994
+    <qcr> = 0
+    <qci> = 0
+    <ConductorType> = 1
+  <EndConductor>
+  <BeginConductor>
+    <ConductorName> = "Vlo"
+    <vcr> = 0
+    <vci> = 0
+    <qcr> = 0
+    <qci> = 0
+    <ConductorType> = 1
+  <EndConductor>
+[NumPoints] = 10
+-5	3	0	0	0
+-4	3	0	0	0
+-3	1	0	0	0
+-3	-1	0	0	0
+-4	-3	0	0	0
+-5	-3	0	0	0
+-3.5	1	0	1	0
+-4	1.5	0	0	0
+-4	-1.5	0	0	0
+-3.5	-1	0	0	0
+[NumSegments] = 8
+0	5	-1	0	0	0	1
+5	4	-1	0	0	0	0
+0	1	-1	0	0	0	0
+1	7	-1	0	0	0	0
+6	2	-1	0	0	0	0
+2	3	-1	0	0	0	2
+3	9	-1	0	0	0	0
+8	4	-1	0	0	0	0
+[NumArcSegments] = 2
+7	6	90	10	0	0	0	0	10
+9	8	90	10	0	0	0	0	10
+[NumHoles] = 0
+[NumBlockLabels] = 1
+-4	0	1	-1	1	0

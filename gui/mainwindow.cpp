@@ -723,6 +723,9 @@ void MainWindow::onSubWindowActivated(QMdiSubWindow *sub)
             register_curr_editor_py(d);
         if (m_actExteriorRegion)
             m_actExteriorRegion->setEnabled(doc && doc->ProblemType == 1);
+        if (m_actCircuits)
+            m_actCircuits->setText(doc && doc->physicsType() == 0
+                                       ? tr("&Circuits...") : tr("&Conductors..."));
         // Refresh Grid-menu / toolbar checkmarks for the newly-active tab.
         syncPreprocessorMenus(ew);
     }
@@ -752,7 +755,7 @@ void MainWindow::showEmptyUI()
     m_preTopBar2->hide();
     m_ppTopBar->hide();
     m_leftNav->hide();
-    m_preMenuProblem->menuAction()->setVisible(false);
+    m_actProblem->setVisible(false);
     m_preMenuView->menuAction()->setVisible(false);
     m_preMenuGrid->menuAction()->setVisible(false);
     m_preMenuOperation->menuAction()->setVisible(false);
@@ -784,7 +787,7 @@ void MainWindow::showPreprocessorUI()
     if (m_actRedo) m_actRedo->setVisible(true);
     if (m_actDeleteSelected) m_actDeleteSelected->setVisible(true);
     if (m_windowMenu) m_windowMenu->menuAction()->setVisible(true);
-    m_preMenuProblem->menuAction()->setVisible(true);
+    m_actProblem->setVisible(true);
     m_preMenuView->menuAction()->setVisible(true);
     m_preMenuGrid->menuAction()->setVisible(true);
     m_preMenuOperation->menuAction()->setVisible(true);
@@ -813,7 +816,7 @@ void MainWindow::showPostprocessorUI()
     if (m_actRedo) m_actRedo->setVisible(false);
     if (m_actDeleteSelected) m_actDeleteSelected->setVisible(false);
     if (m_windowMenu) m_windowMenu->menuAction()->setVisible(true);
-    m_preMenuProblem->menuAction()->setVisible(false);
+    m_actProblem->setVisible(false);
     m_preMenuView->menuAction()->setVisible(false);
     m_preMenuGrid->menuAction()->setVisible(false);
     m_preMenuOperation->menuAction()->setVisible(false);
@@ -1132,10 +1135,16 @@ void MainWindow::onAnalyze()
     if (e->document()->physicsType() == 1) solveCmd = "ei_analyse(0)";
     else if (e->document()->physicsType() == 2) solveCmd = "hi_analyse(0)";
     else if (e->document()->physicsType() == 3) solveCmd = "ci_analyse(0)";
-    if (exec_python(solveCmd, errmsg, sizeof(errmsg)) != 0)
-        updateStatus(QString("Solver error: %1").arg(errmsg));
-    else
+    if (exec_python(solveCmd, errmsg, sizeof(errmsg)) != 0) {
+        // A pre-mesh validation failure (e.g. a region with no material) returns
+        // before the solver runs, so there's no progress dialog to carry the
+        // message -- surface it in a pop-up rather than a easily-missed status
+        // line.
+        updateStatus(tr("Analysis failed"));
+        QMessageBox::warning(this, tr("Analysis Failed"), QString::fromUtf8(errmsg));
+    } else {
         updateStatus("Analysis complete");
+    }
 }
 
 void MainWindow::onViewResults()
@@ -1522,13 +1531,17 @@ void MainWindow::createPreprocessorUI()
         else updateStatus(tr("No orphaned nodes found"));
     });
 
-    m_preMenuProblem = menuBar()->addMenu(tr("&Problem"));
-    m_preMenuProblem->addAction(tr("&Problem Definition..."), QKeySequence(), [this]() {
+    // "Problem" has only ever had the one entry (Problem Definition), so make
+    // the menu-bar item itself open that dialog directly rather than dropping a
+    // single-item menu.
+    m_actProblem = new QAction(tr("&Problem"), this);
+    connect(m_actProblem, &QAction::triggered, this, [this]() {
         auto *e = activeEditor();
         if (!e || !e->document()) return;
         ProblemDialog dlg(e->document(), this);
         dlg.exec();
     });
+    menuBar()->addAction(m_actProblem);
 
     m_preMenuGrid = menuBar()->addMenu(tr("&Grid"));
     m_showGridMenu = m_preMenuGrid->addAction(tr("&Show Grid"));
@@ -1598,7 +1611,10 @@ void MainWindow::createPreprocessorUI()
         dlg.exec();
         e->update();
     });
-    m_preMenuProperties->addAction(tr("&Circuits..."), QKeySequence(), [this]() {
+    // Magnetics calls these "Circuits"; the scalar physics (electrostatics,
+    // heat flow, current flow) call them "Conductors". Same dialog; the label
+    // is retargeted per active document in the tab-switch handler below.
+    m_actCircuits = m_preMenuProperties->addAction(tr("&Circuits..."), QKeySequence(), [this]() {
         auto *e = activeEditor();
         if (!e || !e->document()) return;
         PropertyListDialog dlg(e->document(), 3, this);

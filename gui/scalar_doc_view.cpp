@@ -5,6 +5,7 @@
 #include "scalar_doc_view.h"
 #include "heat_results_doc.h"
 #include "curr_results_doc.h"
+#include "postproc_select.h"
 
 // ================================================================
 // Factory methods
@@ -175,6 +176,14 @@ double ScalarDocView::ShortestDistanceFromInputArc(CComplex p, int arcIdx) const
     if (currDoc) return currDoc->ShortestDistanceFromInputArc(p, arcIdx);
     if (heatDoc) return heatDoc->ShortestDistanceFromInputArc(p, arcIdx);
     return elecDoc->ShortestDistanceFromInputArc(p, arcIdx);
+}
+
+bool ScalarDocView::SelectConductorNear(double x, double y)
+{
+    if (currDoc) return ppSelectConductorNear(x, y, currDoc);
+    if (heatDoc) return ppSelectConductorNear(x, y, heatDoc);
+    if (elecDoc) return ppSelectConductorNear(x, y, elecDoc);
+    return false;
 }
 
 void ScalarDocView::GetInputCircle(int arcIdx, CComplex &c, double &R) const

@@ -65,8 +65,7 @@ void register_curr_postproc_py(CurrResultsDoc *doc) {
     });
     m.def("co_clearblock", []() {
         check_doc(s_doc, COERR);
-        for (auto &b : s_doc->labellist) b.IsSelected = false;
-        s_doc->bHasMask = false;
+        ppClearSelection(s_doc);
     });
     m.def("co_blockintegral", [](int type) -> mp_obj_t {
         check_doc(s_doc, COERR);

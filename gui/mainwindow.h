@@ -148,7 +148,7 @@ private:
     // Preprocessor UI
     QToolBar *m_preTopBar1 = nullptr;  // File: New, Open
     QToolBar *m_preTopBar2 = nullptr;  // Editor: modes, mesh, solve, etc.
-    QMenu *m_preMenuProblem = nullptr;
+    QAction *m_actProblem = nullptr;   // menu-bar item that opens Problem Definition directly
     QMenu *m_preMenuView = nullptr;
     QMenu *m_preMenuGrid = nullptr;
     QMenu *m_preMenuOperation = nullptr;
@@ -204,6 +204,7 @@ private:
     QAction *m_actRedo = nullptr;
     QAction *m_actDeleteSelected = nullptr;
     QAction *m_actExteriorRegion = nullptr;
+    QAction *m_actCircuits = nullptr;   // "Circuits" (mi) / "Conductors" (ei/hi/ci)
     QMenu *m_windowMenu = nullptr;
 
     // File menu DXF actions (preprocessor only)

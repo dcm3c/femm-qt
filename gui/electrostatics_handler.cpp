@@ -71,7 +71,15 @@ void ElectrostaticsHandler::showIntegrateDialog(QWidget *parent, OutputDialog *o
         bool blocksSelected = false;
         for (auto &lbl : doc->labellist)
             if (lbl.IsSelected) { blocksSelected = true; break; }
-        if (!blocksSelected) { m_widget->emitStatus("Select blocks for integration (use Area mode)"); return; }
+        // A weighted-stress-tensor force/torque acts on a conductor, which is a
+        // mesh-node selection (right-click) rather than a block selection.
+        bool nodesSelected = false;
+        for (auto &mn : doc->meshnode)
+            if (mn.IsSelected) { nodesSelected = true; break; }
+        if (!blocksSelected && !nodesSelected) {
+            m_widget->emitStatus("Select a block or a conductor for integration (Area mode)");
+            return;
+        }
         QStringList types;
         types << "Stored energy" << "Block cross-section area" << "Block volume"
               << "Average D over block" << "Average E over block"
@@ -81,6 +89,12 @@ void ElectrostaticsHandler::showIntegrateDialog(QWidget *parent, OutputDialog *o
             tr("Integral type:"), types, 0, false, &ok);
         if (!ok) return;
         int intType = types.indexOf(choice);
+        // Force/torque (5, 6) may use a conductor (mesh-node) selection; the
+        // block-based integrals need selected blocks.
+        if (intType < 5 && !blocksSelected) {
+            m_widget->emitStatus("Select one or more blocks for this integral");
+            return;
+        }
 
         // Set up progress dialog for block integrals that may trigger MakeMask
         QProgressDialog progDlg(tr("Masking..."),

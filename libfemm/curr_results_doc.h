@@ -57,7 +57,7 @@ struct CRElement {
 struct CRMaterialProp {
     std::string BlockName;
     CComplex Kx, Ky;       // effective conductivity = ox + j*2*pi*f*eo*ex
-    double ox = 0, oy = 0; // DC conductivity (MS/m)
+    double ox = 0, oy = 0; // DC conductivity (S/m)
     CComplex ex, ey;        // complex permittivity (with loss tangent)
 };
 

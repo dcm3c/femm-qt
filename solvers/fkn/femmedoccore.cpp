@@ -16,6 +16,17 @@
 #include "spars.h"
 #include "femmedoccore.h"
 #include "utf8_io.h"
+#include <string.h>
+
+// The .ans stores an air-gap-element name quoted ("AGE") with a trailing newline.
+// Strip both so the name round-trips without accumulating quotes when a previous
+// solution is reloaded (e.g. an incremental analysis) and re-written.
+static void stripAgeName(char *s)
+{
+	int L = (int)strlen(s);
+	while (L > 0 && (s[L-1] == '\n' || s[L-1] == '\r')) s[--L] = 0;
+	if (L >= 2 && s[0] == '"' && s[L-1] == '"') { s[L-1] = 0; memmove(s, s + 1, L - 1); }
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // CFemmeDocCore construction/destruction
@@ -429,6 +440,7 @@ int CFemmeDocCore::LoadPrev()
 	CAirGapElement age;
 	for(i=0;i<NumAGEs;i++){
 		fgets(age.BdryName,80,fp);
+		stripAgeName(age.BdryName);   // the .ans stores the name as "AGE" -- drop quotes/newline
 		fgets(s,1024,fp);
 		sscanf(s,"%i %lf %lf %lf %lf %lf %lf %lf %i %lf %lf",
 			&age.BdryFormat,&age.InnerAngle,&age.OuterAngle,
@@ -1313,6 +1325,7 @@ int CFemmeDocCore::LoadMesh()
 		CAirGapElement age;
 		for(i=0;i<NumAGEs;i++){
 			fgets(age.BdryName,80,fp);
+			stripAgeName(age.BdryName);   // the .ans stores the name as "AGE" -- drop quotes/newline
 			fgets(s,1024,fp);
 			sscanf(s,"%i %lf %lf %lf %lf %lf %lf %lf %i %lf %lf",
 				&age.BdryFormat,&age.InnerAngle,&age.OuterAngle,

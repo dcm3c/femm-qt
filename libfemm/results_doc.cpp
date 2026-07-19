@@ -63,24 +63,10 @@ ResultsDoc::~ResultsDoc() {}
 double RMaterialProp::GetH(double b) const
 {
     if (BHpoints == 0) return b / (mu_x * muo);
-    if (b <= 0) return 0;
-
-    // Linear interpolation on BH curve
-    // BHdata stores (B, H) pairs sorted by B
-    for (int i = 0; i < BHpoints - 1; i++) {
-        if (b >= Bdata[i] && b <= Bdata[i + 1]) {
-            double t = (b - Bdata[i]) / (Bdata[i + 1] - Bdata[i]);
-            return Hdata[i].re + t * (Hdata[i + 1].re - Hdata[i].re);
-        }
-    }
-    // Extrapolate beyond curve
-    if (BHpoints >= 2) {
-        int n = BHpoints - 1;
-        double dHdB = (Hdata[n].re - Hdata[n - 1].re) /
-                       (Bdata[n] - Bdata[n - 1]);
-        return Hdata[n].re + dHdB * (b - Bdata[n]);
-    }
-    return b / (mu_x * muo);
+    // Use the cubic-spline interpolant (same one the complex GetH and Original
+    // FEMM use), not a cruder linear interp between raw points, so the derived
+    // energy/coenergy match OF. This also handles b<0 correctly (H is odd in B).
+    return Re(GetH(CComplex(b)));
 }
 
 CComplex RMaterialProp::GetH(CComplex x) const
@@ -154,20 +140,22 @@ void RMaterialProp::GetMu(double b1, double b2, double &mu1, double &mu2) const
     }
 
     h = GetH(b);
-    double mu_iron = b / (muo * h);
-    if (mu_iron < 1) mu_iron = 1;
+    double mu_iron = b / (muo * h);   // relative iron permeability
 
-    if (LamType == 0) {
-        mu1 = mu_iron * LamFill + (1.0 - LamFill);
-        mu2 = mu1;
-    }
-    else if (LamType == 1) {
-        mu1 = mu_iron * LamFill + (1.0 - LamFill);
+    // The lamination fill factor is already baked into the B-H curve (GetH), so
+    // it is NOT re-applied for LamType 0 (in-plane) -- mirror the complex GetMu
+    // and OF. For LamType 1/2 the perpendicular fill correction still applies.
+    if (LamType == 1) {
+        mu1 = mu_iron * LamFill;
         mu2 = mu_iron / (LamFill + mu_iron * (1.0 - LamFill));
     }
-    else {
+    else if (LamType == 2) {
         mu1 = mu_iron / (LamFill + mu_iron * (1.0 - LamFill));
-        mu2 = mu_iron * LamFill + (1.0 - LamFill);
+        mu2 = mu_iron * LamFill;
+    }
+    else {
+        mu1 = mu_iron;
+        mu2 = mu_iron;
     }
 }
 
@@ -2408,11 +2396,24 @@ CComplex ResultsDoc::AxiInt(double a, CComplex *u, CComplex *v, double *r) const
 
 bool ResultsDoc::IsKosher(int k) const
 {
-    // For axisymmetric: a node on r=0 is "kosher" (can be set to zero)
-    // only if it doesn't have a neighbor that's in a selected block
-    for (int j = 0; j < NumList[k]; j++) {
-        int elm = ConList[k][j];
-        if (labellist[meshelem[elm].lbl].IsSelected) return false;
+    // For axisymmetric: a node on r=0 may be fixed to zero only if it lies at the
+    // extents (or a break) of the r=0 sub-interval -- i.e. it has at most one
+    // other on-axis neighbor. A node interior to the axis line (>=2 on-axis
+    // neighbors) must stay free; otherwise the weighted-stress-tensor mask gets
+    // pinned to zero along the axis and its contour is dragged in to the r=0
+    // surface of the body. Matches OF (makemask.cpp) and the elec/curr/heat
+    // versions here; the previous selected-block-adjacency test was incorrect.
+    if (ProblemType == 0 || meshnode[k].x > 1.e-6) return true;
+
+    int score = 0;
+    for (int i = 0; i < NumList[k]; i++) {
+        for (int j = 0; j < 3; j++) {
+            int n = meshelem[ConList[k][i]].p[j];
+            if (n != k && meshnode[n].x < 1.e-6) {
+                score++;
+                if (score > 1) return false;
+            }
+        }
     }
     return true;
 }
@@ -2771,20 +2772,36 @@ CComplex RMaterialProp::GetdHdB(double B) const
     return CComplex(0);
 }
 
-double RMaterialProp::GetEnergy(double b) const
+double RMaterialProp::GetEnergy(double x) const
 {
-    if (BHpoints == 0 || b <= 0) return b * b / (2.0 * mu_x * muo);
-    // Integrate H dB from 0 to b using trapezoidal rule on BH curve
-    double nrg = 0;
-    double bprev = 0, hprev = 0;
-    for (int i = 0; i < BHpoints && Bdata[i] <= b; i++) {
-        double bi = Bdata[i], hi = Hdata[i].re;
-        nrg += 0.5 * (hi + hprev) * (bi - bprev);
-        bprev = bi; hprev = hi;
+    // Integrate H dB along the BH curve using the cubic-spline (Hermite)
+    // interpolant, matching Original FEMM (CMaterialProp::GetEnergy). A plain
+    // trapezoidal rule over the raw sample points over-estimates the area on the
+    // convex BH curve; that showed up as a few-percent stored-energy error (and
+    // a larger coenergy error) for bodies operating near the knee of the curve.
+    if (BHpoints == 0) return 0;
+
+    double b = fabs(x);
+    double nrg = 0.0;
+    for (int i = 0; i < BHpoints - 1; i++) {
+        double b0 = Bdata[i],     h0 = Hdata[i].re;
+        double b1 = Bdata[i + 1], h1 = Hdata[i + 1].re;
+        double dh0 = slope[i].re, dh1 = slope[i + 1].re;
+        if (b >= b0 && b <= b1) {
+            double l = b1 - b0, z = (b - b0) / l, z2 = z * z;
+            nrg += (dh0 * l * l * (6.0 + z * (-8.0 + 3.0 * z)) * z2) / 12.0 +
+                   (h0 * l * z * (2.0 + (-2.0 + z) * z2)) / 2.0 -
+                   (h1 * l * (-2.0 + z) * z2 * z) / 2.0 +
+                   (dh1 * l * l * (-4.0 + 3.0 * z) * z2 * z) / 12.0;
+            return nrg;
+        }
+        // whole segment lies below b: add its full energy contribution
+        nrg += ((b0 - b1) * ((b0 - b1) * (dh0 - dh1) - 6.0 * (h0 + h1))) / 12.0;
     }
-    // Add remainder from last BH point to b
-    double hb = GetH(b);
-    nrg += 0.5 * (hb + hprev) * (b - bprev);
+    // off the top of the curve: linear extrapolation from the last point
+    double h0 = Hdata[BHpoints - 1].re, dh0 = slope[BHpoints - 1].re;
+    double b0 = Bdata[BHpoints - 1];
+    nrg += ((b - b0) * (b * dh0 - b0 * dh0 + 2.0 * h0)) / 2.0;
     return nrg;
 }
 
@@ -2851,6 +2868,158 @@ double RMaterialProp::DoEnergy(CComplex b1, CComplex b2) const
     h1 = b1 / (mu1c * muo);
     h2 = b2 / (mu2c * muo);
     return (h1.re * b1.re + h1.im * b1.im + h2.re * b2.re + h2.im * b2.im) / 4.0;
+}
+
+// ================================================================
+// Solver-consistent axisymmetric quadrature.
+//
+// The axisymmetric solver models the flux function v = 2*pi*r*A within an
+// element as linear in (u, z) with u = r^2 (see fkn prob3big.cpp, "c0 + c1 r^2
+// + c2 z interpolation"), so B_z = c1/pi is constant over the element while
+// B_r = -c2/(2*pi*r) varies as 1/r. Block integrals of B-quadratic quantities
+// therefore need three distinct radial moments — ∫r dA for B_z^2 terms (the
+// arithmetic-centroid weight, exact there), ∫dA for B_r*B_z cross terms, and
+// ∫(1/r) dA for B_r^2 terms — instead of a single 2*pi*Rbar*Area weight.
+// One-point centroid quadrature makes an O(1)-relative error on the B_r^2
+// terms of axis-adjacent elements, which showed up as non-monotone, erratic
+// mesh sensitivity of the axisymmetric Henrotte force (and, more weakly, the
+// energy integrals) on on-axis bodies.
+//
+// TriInvRIntegral: closed form for I = ∫∫ (1/r) dr dz over a triangle, via
+// Green's theorem: ∫∫(1/r)dA = -∮(z/r)dr. Per CCW edge P→Q the log part is
+// (r_Q z_P - r_P z_Q)/L with L the log-mean radius; the Δz parts cancel around
+// the loop. An edge endpoint on the axis contributes its finite part only (the
+// ln(0) divergences cancel between the two edges sharing an axis vertex). An
+// edge lying ON the axis makes the integral divergent — the caller must only
+// use this when the 1/r-term coefficient vanishes there (it does: v == 0 on
+// the axis forces c2 == 0 for axis-edge elements).
+// Coordinates in meters; nodes in either orientation.
+// ================================================================
+static double TriInvRIntegral(const double r[3], const double z[3])
+{
+    double s = 0;
+    for (int e = 0; e < 3; e++) {
+        double rP = r[e], zP = z[e];
+        double rQ = r[(e + 1) % 3], zQ = z[(e + 1) % 3];
+        bool onP = (rP <= 0), onQ = (rQ <= 0);
+        if (onP && onQ) continue;               // axis edge (coefficient must be 0)
+        if (onP)      s += zP * log(rQ);        // finite part; ln(0) partner cancels
+        else if (onQ) s += -zQ * log(rP);
+        else {
+            double L;                            // log-mean radius, stable near rP==rQ
+            if (fabs(rQ - rP) < 1e-9 * (rP + rQ)) L = 0.5 * (rP + rQ);
+            else L = (rQ - rP) / log(rQ / rP);
+            s += (rQ * zP - rP * zQ) / L;
+        }
+    }
+    double a2 = (r[1] - r[0]) * (z[2] - z[0]) - (r[2] - r[0]) * (z[1] - z[0]);
+    return (a2 >= 0) ? -s : s;
+}
+
+// Fit the solver-consistent flux-function model to element i's nodal solution:
+// v = c0 + c1*u + c2*z (u = r^2, meters) through the three nodal v = 2*pi*r*A
+// values (which is what the .ans stores for axisymmetric problems). Returns
+// false if the element is degenerate in (u, z) — the rare sliver whose nodes
+// are collinear there — in which case the caller falls back to the naive
+// centroid quadrature. Also computes the element's radial moments.
+bool ResultsDoc::AxiFluxFit(int i, AxiField &f, bool wantPrev) const
+{
+    if (ProblemType != 1) return false;
+    int n[3];
+    for (int j = 0; j < 3; j++) n[j] = meshelem[i].p[j];
+    double lc = LengthConv();
+    double rr[3], zz[3];
+    for (int j = 0; j < 3; j++) {
+        rr[j] = meshnode[n[j]].x * lc;
+        zz[j] = meshnode[n[j]].y * lc;
+    }
+    double u0 = rr[0]*rr[0], u1 = rr[1]*rr[1], u2 = rr[2]*rr[2];
+    double D = (u1 - u0) * (zz[2] - zz[0]) - (u2 - u0) * (zz[1] - zz[0]);
+    double uscale = fabs(u1-u0) + fabs(u2-u0) + fabs(u2-u1);
+    double zscale = fabs(zz[1]-zz[0]) + fabs(zz[2]-zz[0]);
+    if (fabs(D) < 1e-12 * uscale * zscale) return false;
+
+    CComplex v0 = meshnode[n[0]].A, v1 = meshnode[n[1]].A, v2 = meshnode[n[2]].A;
+    CComplex c1f = ((v1 - v0) * (zz[2] - zz[0]) - (v2 - v0) * (zz[1] - zz[0])) / D;
+    CComplex c2f = ((u1 - u0) * (v2 - v0) - (u2 - u0) * (v1 - v0)) / D;
+    f.Bz = c1f / PI;
+    f.k  = -c2f / (2.0 * PI);
+    f.Bzp = f.kp = CComplex(0, 0);
+    if (wantPrev) {
+        double p0 = meshnode[n[0]].Aprev, p1 = meshnode[n[1]].Aprev, p2 = meshnode[n[2]].Aprev;
+        double c1p = ((p1 - p0) * (zz[2] - zz[0]) - (p2 - p0) * (zz[1] - zz[0])) / D;
+        double c2p = ((u1 - u0) * (p2 - p0) - (u2 - u0) * (p1 - p0)) / D;
+        f.Bzp = CComplex(c1p / PI, 0);
+        f.kp  = CComplex(-c2p / (2.0 * PI), 0);
+    }
+
+    double A_el = ElmArea(i) * lc * lc;
+    f.I0 = A_el;
+    f.I1 = A_el * (rr[0] + rr[1] + rr[2]) / 3.0;   // exact: r is linear over the element
+    int axisNodes = 0;
+    for (int j = 0; j < 3; j++) if (meshnode[n[j]].x < 1e-6) axisNodes++;
+    if (axisNodes < 2) {
+        double rc[3];   // snap on-axis vertices to exactly 0 for the axis-vertex branch
+        for (int j = 0; j < 3; j++) rc[j] = (meshnode[n[j]].x < 1e-6) ? 0.0 : rr[j];
+        f.Im1 = TriInvRIntegral(rc, zz);
+    } else {
+        f.Im1 = 0.0;    // axis-edge element: divergent, but its coefficient (k, kp) is 0
+    }
+    return true;
+}
+
+// Integrate dens(B1, B2) * 2*pi*r over element i with the model field
+// (B1 = k/r, B2 = Bz constant) and exact triangle geometry: the z-extent h(r)
+// is piecewise linear with a break at the middle vertex radius, and each piece
+// gets 5-point Gauss–Legendre in r. Used for the energy-type integrals, whose
+// nonlinear densities admit no closed form. For a density that's quadratic in
+// B this reproduces the closed-form moments to quadrature accuracy.
+double ResultsDoc::AxiDensityIntegral(int i, CComplex kk, CComplex Bz,
+        const std::function<double(CComplex, CComplex)> &dens) const
+{
+    static const double gx[5] = { -0.9061798459386640, -0.5384693101056831, 0.0,
+                                   0.5384693101056831,  0.9061798459386640 };
+    static const double gw[5] = { 0.2369268850561891, 0.4786286704993665,
+                                  0.5688888888888889, 0.4786286704993665,
+                                  0.2369268850561891 };
+    int n[3];
+    for (int j = 0; j < 3; j++) n[j] = meshelem[i].p[j];
+    double lc = LengthConv();
+    double rr[3], zz[3];
+    for (int j = 0; j < 3; j++) {
+        rr[j] = meshnode[n[j]].x * lc;
+        zz[j] = meshnode[n[j]].y * lc;
+    }
+    // sort vertices by radius
+    int s[3] = {0, 1, 2};
+    if (rr[s[0]] > rr[s[1]]) std::swap(s[0], s[1]);
+    if (rr[s[1]] > rr[s[2]]) std::swap(s[1], s[2]);
+    if (rr[s[0]] > rr[s[1]]) std::swap(s[0], s[1]);
+    double rlo = rr[s[0]], rmid = rr[s[1]], rhi = rr[s[2]];
+    double zlo = zz[s[0]], zmid = zz[s[1]], zhi = zz[s[2]];
+
+    double A_el = ElmArea(i) * lc * lc;
+    double Rbar = (rr[0] + rr[1] + rr[2]) / 3.0;
+    if (rhi - rlo < 1e-6 * Rbar)   // radially thin: B effectively constant
+        return 2.0 * PI * Rbar * A_el * dens(kk / Rbar, Bz);
+
+    // z-extent of the element at r = rmid (chord against the long edge)
+    double zsplit = zlo + (zhi - zlo) * (rmid - rlo) / (rhi - rlo);
+    double H = fabs(zmid - zsplit);
+
+    double tot = 0;
+    for (int half = 0; half < 2; half++) {
+        double ra = half ? rmid : rlo, rb = half ? rhi : rmid;
+        if (rb - ra < 1e-14) continue;
+        double ctr = 0.5 * (ra + rb), hw = 0.5 * (rb - ra);
+        for (int g = 0; g < 5; g++) {
+            double rg = ctr + hw * gx[g];
+            double h = half ? H * (rhi - rg) / (rhi - rmid)
+                            : H * (rg - rlo) / (rmid - rlo);
+            tot += gw[g] * hw * dens(kk / rg, Bz) * 2.0 * PI * rg * h;
+        }
+    }
+    return tot;
 }
 
 // ================================================================
@@ -2940,53 +3109,76 @@ CComplex ResultsDoc::BlockIntegral(int type)
             // is super-small and may interfere with future transient solution
             // capability. It's kept here for now to match OF, but may be a
             // candidate for removal later. — DM
+            //
+            // The energy density is expressed as a lambda of the local B so the
+            // axisymmetric case can integrate the intra-element 1/r variation
+            // of B_r through it (AxiDensityIntegral); planar and degenerate
+            // elements evaluate it once at the element B with the centroid
+            // volume weight, which reproduces the historical behavior. The
+            // wound-conductor J terms are uniform over the element, so the
+            // centroid weight is already exact for them.
             // ============================================================
             if (ProblemType == 1) a *= 2.0 * PI * R; else a *= Depth;
 
+            int bk = meshelem[i].blk;
+            const RMaterialProp &mat = blockproplist[bk];
+            std::function<double(CComplex, CComplex)> dens;
+            double jterm = 0;
+
             if (Frequency != 0) {
                 // AC: special handling for wound regions with prox/skin effects
-                if (blockproplist[meshelem[i].blk].LamType > 2) {
+                if (mat.LamType > 2) {
                     CComplex mu = muo * labellist[meshelem[i].lbl].mu;
-                    double localE = labellist[meshelem[i].lbl].LocalEnergy;
-                    y = a * Re(B1 * conj(B1) + B2 * conj(B2)) * Re(1.0 / mu) / 4.0;
-                    y = y + a * Re(J * conj(J)) * localE / 4.0;
+                    double remu = Re(1.0 / mu);
+                    dens = [remu](CComplex b1, CComplex b2) {
+                        return Re(b1 * conj(b1) + b2 * conj(b2)) * remu / 4.0;
+                    };
+                    jterm = Re(J * conj(J)) * labellist[meshelem[i].lbl].LocalEnergy / 4.0;
                 } else {
-                    y = a * blockproplist[meshelem[i].blk].DoEnergy(B1, B2);
+                    dens = [&mat](CComplex b1, CComplex b2) {
+                        return mat.DoEnergy(b1, b2);
+                    };
                 }
             }
             else {
                 // DC: correct energy for PM second-quadrant representation
-                int bk = meshelem[i].blk;
-                if (blockproplist[bk].H_c != 0) {
-                    if (blockproplist[bk].BHpoints == 0) {
+                if (mat.H_c != 0) {
+                    if (mat.BHpoints == 0) {
                         // Linear PM
-                        double mu1v = blockproplist[bk].mu_x;
-                        double mu2v = blockproplist[bk].mu_y;
-                        double h1v = B1.re / (mu1v * muo);
-                        double h2v = B2.re / (mu2v * muo);
-                        CComplex Hc = blockproplist[bk].H_c *
+                        double mu1v = mat.mu_x, mu2v = mat.mu_y;
+                        CComplex Hc = mat.H_c *
                             CComplex(cos(meshelem[i].magdir * PI / 180.0),
                                      sin(meshelem[i].magdir * PI / 180.0));
-                        h1v -= Hc.re;
-                        h2v -= Hc.im;
-                        y = a * 0.5 * muo * (mu1v * h1v * h1v + mu2v * h2v * h2v);
+                        dens = [mu1v, mu2v, Hc](CComplex b1, CComplex b2) {
+                            double h1v = b1.re / (mu1v * muo) - Hc.re;
+                            double h2v = b2.re / (mu2v * muo) - Hc.im;
+                            return 0.5 * muo * (mu1v * h1v * h1v + mu2v * h2v * h2v);
+                        };
                     } else {
                         // Nonlinear PM
-                        y = blockproplist[bk].DoEnergy(B1.re, B2.re);
-                        y = y + blockproplist[bk].Nrg
-                              - blockproplist[bk].H_c * Re((B1.re + CComplex(0,1) * B2.re) /
-                                exp(CComplex(0,1) * PI * meshelem[i].magdir / 180.0));
-                        y = y * a;
+                        double magdir = meshelem[i].magdir;
+                        dens = [&mat, magdir](CComplex b1, CComplex b2) {
+                            return mat.DoEnergy(b1.re, b2.re) + mat.Nrg
+                                 - mat.H_c * Re((b1.re + CComplex(0,1) * b2.re) /
+                                   exp(CComplex(0,1) * PI * magdir / 180.0));
+                        };
                     }
                 } else {
-                    y = a * blockproplist[bk].DoEnergy(B1.re, B2.re);
+                    dens = [&mat](CComplex b1, CComplex b2) {
+                        return mat.DoEnergy(b1.re, b2.re);
+                    };
                 }
-                // Add "local" stored energy for wound conductors (DC prox/skin)
-                if (blockproplist[meshelem[i].blk].LamType > 2) {
-                    double localE = labellist[meshelem[i].lbl].LocalEnergy;
-                    y += a * Re(J * J) * localE / 2.0;
-                }
+                // "Local" stored energy for wound conductors (DC prox/skin)
+                if (mat.LamType > 2)
+                    jterm = Re(J * J) * labellist[meshelem[i].lbl].LocalEnergy / 2.0;
             }
+
+            AxiField f;
+            if (ProblemType == 1 && AxiFluxFit(i, f, false))
+                y = AxiDensityIntegral(i, f.k, f.Bz, dens) + a * jterm;
+            else
+                y = a * (dens(B1, B2) + jterm);
+
             y = y * AECF(i);  // correction for axisymmetric external region
             z = z + y;
             break;
@@ -2998,9 +3190,7 @@ CComplex ResultsDoc::BlockIntegral(int type)
                 GetMu(B1, B2, mu1c, mu2c, i);
                 H1 = B1 / (mu1c * muo);
                 H2 = B2 / (mu2c * muo);
-                // y = a * pi * f * Im(H1*B1* + H2*B2*)
-                y = CComplex(a * PI * Frequency *
-                    (H1.re * B1.im - H1.im * B1.re + H2.re * B2.im - H2.im * B2.re), 0);
+                y = a * PI * Frequency * Im(H1 * conj(B1) + H2 * conj(B2));
                 z = z + y;
             }
             break;
@@ -3104,25 +3294,43 @@ CComplex ResultsDoc::BlockIntegral(int type)
             // The LocalEnergy contribution for wound conductors (LamType>2)
             // is kept to match OF but may be removed for transient. — DM
             // ============================================================
+            // Same density-lambda structure as case 2: axisymmetric elements
+            // integrate the 1/r variation of B_r through the density; planar
+            // and degenerate elements use the centroid evaluation.
             if (ProblemType == 1) a *= 2.0 * PI * R; else a *= Depth;
 
+            const RMaterialProp &mat = blockproplist[meshelem[i].blk];
+            std::function<double(CComplex, CComplex)> dens;
+            double jterm = 0;
+
             if (Frequency != 0) {
-                if (blockproplist[meshelem[i].blk].LamType > 2) {
+                if (mat.LamType > 2) {
                     CComplex mu = muo * labellist[meshelem[i].lbl].mu;
-                    double localE = labellist[meshelem[i].lbl].LocalEnergy;
-                    y = a * Re(B1 * conj(B1) + B2 * conj(B2)) * Re(1.0 / mu) / 4.0;
-                    y = y + a * Re(J * conj(J)) * localE / 4.0;
+                    double remu = Re(1.0 / mu);
+                    dens = [remu](CComplex b1, CComplex b2) {
+                        return Re(b1 * conj(b1) + b2 * conj(b2)) * remu / 4.0;
+                    };
+                    jterm = Re(J * conj(J)) * labellist[meshelem[i].lbl].LocalEnergy / 4.0;
                 } else {
-                    y = a * blockproplist[meshelem[i].blk].DoCoEnergy(B1, B2);
+                    dens = [&mat](CComplex b1, CComplex b2) {
+                        return mat.DoCoEnergy(b1, b2);
+                    };
                 }
             } else {
-                y = a * blockproplist[meshelem[i].blk].DoCoEnergy(B1.re, B2.re);
+                dens = [&mat](CComplex b1, CComplex b2) {
+                    return mat.DoCoEnergy(b1.re, b2.re);
+                };
                 // Local stored energy for wound conductors (DC case)
-                if (blockproplist[meshelem[i].blk].LamType > 2) {
-                    double localE = labellist[meshelem[i].lbl].LocalEnergy;
-                    y = y + a * Re(J * J) * localE / 2.0;
-                }
+                if (mat.LamType > 2)
+                    jterm = Re(J * J) * labellist[meshelem[i].lbl].LocalEnergy / 2.0;
             }
+
+            AxiField f;
+            if (ProblemType == 1 && AxiFluxFit(i, f, false))
+                y = AxiDensityIntegral(i, f.k, f.Bz, dens) + a * jterm;
+            else
+                y = a * (dens(B1, B2) + jterm);
+
             y = y * AECF(i);  // correction for axisymmetric external region
             z = z + y;
             break;
@@ -3137,13 +3345,27 @@ CComplex ResultsDoc::BlockIntegral(int type)
             z = z + ah * y;
             break;
 
-        case 19: // y Henrotte force, SS
+        case 19: { // y/z Henrotte force, SS
             c = HenrotteVector(i);
-            y = ((B2 * conj(B2) - B1 * conj(B1)) * c.im + 2.0 * CComplex(B1.re*B2.re + B1.im*B2.im, 0) * c.re) / (2.0 * muo);
+            if (c.re == 0 && c.im == 0) break;      // outside mask transition band
+            // Axisymmetric: solver-consistent quadrature (B_z constant,
+            // B_r = k/r within the element — each stress term gets its own
+            // radial moment; see AxiFluxFit). Planar and degenerate elements
+            // use the centroid rule, which is exact there.
+            AxiField f;
+            if (ProblemType == 1 && AxiFluxFit(i, f, false)) {
+                y = ((f.Bz * conj(f.Bz)) * f.I1 - (f.k * conj(f.k)) * f.Im1) * c.im
+                  + 2.0 * CComplex(f.k.re*f.Bz.re + f.k.im*f.Bz.im, 0) * f.I0 * c.re;
+                y = y * (2.0 * PI) / (2.0 * muo);   // volume weight folded into moments
+            } else {
+                y = ah * ((B2 * conj(B2) - B1 * conj(B1)) * c.im
+                  + 2.0 * CComplex(B1.re*B2.re + B1.im*B2.im, 0) * c.re) / (2.0 * muo);
+            }
             y = y * AECF(i);
             if (Frequency != 0) y = y * 0.5;
-            z = z + ah * y;
+            z = z + y;
             break;
+        }
 
         case 20: // x Henrotte force, 2x
             if (ProblemType != 0) break;
@@ -3151,10 +3373,21 @@ CComplex ResultsDoc::BlockIntegral(int type)
             z = z + ah * (((B1 * B1 - B2 * B2) * c.re + 2.0 * B1 * B2 * c.im) / (4.0 * muo)) * AECF(i);
             break;
 
-        case 21: // y Henrotte force, 2x
+        case 21: { // y/z Henrotte force, 2x
             c = HenrotteVector(i);
-            z = z + ah * (((B2 * B2 - B1 * B1) * c.im + 2.0 * B1 * B2 * c.re) / (4.0 * muo)) * AECF(i);
+            if (c.re == 0 && c.im == 0) break;
+            // Same axisymmetric treatment as case 19 (phasor form, no conj)
+            AxiField f;
+            if (ProblemType == 1 && AxiFluxFit(i, f, false)) {
+                y = ((f.Bz * f.Bz) * f.I1 - (f.k * f.k) * f.Im1) * c.im
+                  + 2.0 * (f.k * f.Bz) * f.I0 * c.re;
+                y = y * (2.0 * PI) / (4.0 * muo);
+            } else {
+                y = ah * (((B2 * B2 - B1 * B1) * c.im + 2.0 * B1 * B2 * c.re) / (4.0 * muo));
+            }
+            z = z + y * AECF(i);
             break;
+        }
 
         case 22: // Henrotte torque, SS
             if (ProblemType != 0) break;
@@ -3184,11 +3417,23 @@ CComplex ResultsDoc::BlockIntegral(int type)
                          (meshelem[i].B1p * B2 + B1 * meshelem[i].B2p) * c.im) / muo * AECF(i);
             break;
 
-        case 26: // y Henrotte force, 1x incremental
+        case 26: { // y/z Henrotte force, 1x incremental
             c = HenrotteVector(i);
-            z = z + ah * ((meshelem[i].B1p * B2 + B1 * meshelem[i].B2p) * c.re +
-                         (-(B1 * meshelem[i].B1p) + B2 * meshelem[i].B2p) * c.im) / muo * AECF(i);
+            if (c.re == 0 && c.im == 0) break;
+            // Same axisymmetric treatment as case 19, with the bias-solution
+            // field (Bzp, kp) fitted from the previous solution's nodal values
+            AxiField f;
+            if (ProblemType == 1 && AxiFluxFit(i, f, true)) {
+                y = (f.kp * f.Bz + f.k * f.Bzp) * f.I0 * c.re
+                  + ((f.Bz * f.Bzp) * f.I1 - (f.k * f.kp) * f.Im1) * c.im;
+                y = y * (2.0 * PI) / muo;
+            } else {
+                y = ah * ((meshelem[i].B1p * B2 + B1 * meshelem[i].B2p) * c.re +
+                         (-(B1 * meshelem[i].B1p) + B2 * meshelem[i].B2p) * c.im) / muo;
+            }
+            z = z + y * AECF(i);
             break;
+        }
 
         case 27: // Henrotte torque, 1x incremental
             if (ProblemType != 0) break;
@@ -3328,6 +3573,8 @@ void ResultsDoc::LineIntegral(int type, CComplex *z)
             for (int i = 0; i < kk - 1; i++)
                 z[0].im += PI * (contour[i].re + contour[i + 1].re) * abs(contour[i + 1] - contour[i]);
             z[0].im *= lc * lc;
+        } else {
+            z[0].im = z[0].re * Depth;   // planar: swept area = contour length * Depth
         }
         return;
     }

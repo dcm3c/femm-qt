@@ -338,7 +338,10 @@ bool HeatResultsDoc::OpenDocument(const std::string &pathname)
             sscanf(v, "%i", &k);
             for (i = 0; i < k; i++) {
                 fgets(s, 1024, fp);
-                sscanf(s, "%lf\t%lf\t%i\t%i", &node.x, &node.y, &t, &node.InGroup);
+                int ncond = 0;
+                sscanf(s, "%lf\t%lf\t%i\t%i\t%i", &node.x, &node.y, &t, &node.InGroup, &ncond);
+                node.InConductor = (ncond > 0 && ncond <= (int)circproplist.size())
+                                 ? circproplist[ncond - 1].CircName : std::string();
                 nodelist.push_back(node);
             }
             q[0] = 0;
@@ -350,11 +353,13 @@ bool HeatResultsDoc::OpenDocument(const std::string &pathname)
             sscanf(v, "%i", &k);
             for (i = 0; i < k; i++) {
                 fgets(s, 1024, fp);
-                int hidden = 0, ingroup = 0;
-                sscanf(s, "%i\t%i\t%lf\t%i\t%i\t%i",
-                       &segm.n0, &segm.n1, &segm.MaxSideLength, &t, &hidden, &ingroup);
+                int hidden = 0, ingroup = 0, scond = 0;
+                sscanf(s, "%i\t%i\t%lf\t%i\t%i\t%i\t%i",
+                       &segm.n0, &segm.n1, &segm.MaxSideLength, &t, &hidden, &ingroup, &scond);
                 segm.Hidden = (hidden != 0);
                 segm.InGroup = ingroup;
+                segm.InConductor = (scond > 0 && scond <= (int)circproplist.size())
+                                 ? circproplist[scond - 1].CircName : std::string();
                 linelist.push_back(segm);
             }
             q[0] = 0;
@@ -366,12 +371,14 @@ bool HeatResultsDoc::OpenDocument(const std::string &pathname)
             sscanf(v, "%i", &k);
             for (i = 0; i < k; i++) {
                 fgets(s, 1024, fp);
-                int hidden = 0, ingroup = 0;
-                sscanf(s, "%i\t%i\t%lf\t%lf\t%i\t%i\t%i",
+                int hidden = 0, ingroup = 0, acond = 0;
+                sscanf(s, "%i\t%i\t%lf\t%lf\t%i\t%i\t%i\t%i",
                        &asegm.n0, &asegm.n1, &asegm.ArcLength,
-                       &asegm.MaxSideLength, &t, &hidden, &ingroup);
+                       &asegm.MaxSideLength, &t, &hidden, &ingroup, &acond);
                 asegm.Hidden = (hidden != 0);
                 asegm.InGroup = ingroup;
+                asegm.InConductor = (acond > 0 && acond <= (int)circproplist.size())
+                                  ? circproplist[acond - 1].CircName : std::string();
                 arclist.push_back(asegm);
             }
             q[0] = 0;
@@ -1204,7 +1211,8 @@ void HeatResultsDoc::LineIntegral(int inttype, double *z)
     if (inttype == 3) {
         CComplex pt;
         HPointVals v;
-        double dz, u, d;
+        double dz, u, d, pnum = 0, plen = 0; // pnum/plen: plain (unweighted) T
+                                             // integral and arc length (r=0 fallback)
         int i, j, k2, m, elm;
         int NumPlotPoints = d_LineIntegralPoints;
         bool flg;
@@ -1242,10 +1250,13 @@ void HeatResultsDoc::LineIntegral(int inttype, double *z)
 
                     z[0] += v.T * dz * d;
                     z[1] += dz * d;
+                    pnum += v.T * dz;   // unweighted, for the r=0 axis fallback
+                    plen += dz;
                 }
             }
         }
-        if (z[1] != 0) z[0] = z[0] / z[1]; // average temperature
+        if (z[1] != 0)      z[0] = z[0] / z[1];   // area/Depth-weighted average
+        else if (plen != 0) z[0] = pnum / plen;   // r=0 axis: plain line average
     }
 }
 

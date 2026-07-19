@@ -6,20 +6,91 @@
 //
 
 #include "complex.h"
+#include "complex_format.h"   // femmFmtComplex — shared compact display formatter
 #include "py_line_edit.h"
 #include "py_state.h"
 // NB: deliberately does NOT include py_bind.h. Qt's slots/signals/emit
 // keyword macros collide with MicroPython's obj.h. See py_console.cpp.
 
 #include <QKeyEvent>
+#include <QFocusEvent>
 #include <QMenu>
 #include <QAction>
 #include <QContextMenuEvent>
 #include <string>
 
+// Significant figures in a field's compact (unfocused) display form. Matches
+// the post-processor readouts; keeps long values readable and their exponents
+// visible without overflowing a narrow box.
+static constexpr int kDisplayDigits = 8;
+
 PyLineEdit::PyLineEdit(QWidget *parent)
     : QLineEdit(parent)
 {
+    // Capture a programmatically-set value (a dialog loading a stored number)
+    // as the canonical full-precision value, and show a compact rounded form.
+    // Discriminate a load from the user typing by focus -- a field being
+    // populated isn't focused; keying off isModified() would risk rounding
+    // mid-keystroke if Qt set that flag after emitting textChanged. The focused
+    // paths (evaluate, and focus-in showing the full value) capture explicitly.
+    connect(this, &QLineEdit::textChanged, this, [this](const QString &t) {
+        if (m_rounding || hasFocus()) return;
+        m_canonical = t.trimmed();
+        setDisplayText(roundedForDisplay(m_canonical));
+    });
+}
+
+void PyLineEdit::setDisplayText(const QString &s)
+{
+    m_rounding = true;
+    setText(s);
+    setCursorPosition(0);   // show the start, not the scrolled-to-end tail
+    setModified(false);     // a display/canonical update, not a user edit
+    m_rounding = false;
+}
+
+QString PyLineEdit::sourceText() const
+{
+    // Unedited field -> the canonical (full-precision) value; edited -> as typed.
+    if (!isModified() && !m_canonical.isEmpty())
+        return m_canonical.trimmed();
+    return text().trimmed();
+}
+
+QString PyLineEdit::roundedForDisplay(const QString &s) const
+{
+    bool ok;
+    double v = s.toDouble(&ok);
+    if (ok) return QString::number(v, 'g', kDisplayDigits);
+    // Complex ("20+10j") only if it even looks numeric -- leave names alone.
+    if (!s.isEmpty()) {
+        QChar c = s.at(0);
+        if (c.isDigit() || c == '+' || c == '-' || c == '.') {
+            double re = 0, im = 0;
+            if (py_eval_complex(s.toStdString().c_str(), &re, &im))
+                return femmFmtComplex(CComplex(re, im), kDisplayDigits);
+        }
+    }
+    return s;   // not a number (a name/label) -> unchanged
+}
+
+void PyLineEdit::focusInEvent(QFocusEvent *event)
+{
+    QLineEdit::focusInEvent(event);
+    // Editing operates on the FULL value, so nothing is silently lost.
+    if (!m_canonical.isEmpty() && m_canonical != text())
+        setDisplayText(m_canonical);
+}
+
+void PyLineEdit::focusOutEvent(QFocusEvent *event)
+{
+    QLineEdit::focusOutEvent(event);
+    // If the user edited the field, their text is the new full value.
+    if (isModified())
+        m_canonical = text().trimmed();
+    // Back to the compact form.
+    if (!m_canonical.isEmpty())
+        setDisplayText(roundedForDisplay(m_canonical));
 }
 
 void PyLineEdit::evaluateSelection()
@@ -36,16 +107,21 @@ void PyLineEdit::evaluateSelection()
 
     std::string result;
     if (py_eval_string(sel.toStdString().c_str(), &result) && !result.empty()) {
-        if (hasSelection)
+        if (hasSelection) {
             insert(QString::fromUtf8(result.c_str()));
-        else
-            setText(QString::fromUtf8(result.c_str()));
+        } else {
+            // Whole-field replace. The field has focus, so show the full result
+            // (focused == full) and record it as the canonical value; it rounds
+            // to the compact form once focus leaves.
+            m_canonical = QString::fromUtf8(result.c_str()).trimmed();
+            setDisplayText(m_canonical);
+        }
     }
 }
 
 double PyLineEdit::evaluateAsDouble(double defaultVal) const
 {
-    QString t = text().trimmed();
+    QString t = sourceText();
     if (t.isEmpty()) return defaultVal;
 
     bool ok;
@@ -62,7 +138,7 @@ double PyLineEdit::evaluateAsDouble(double defaultVal) const
 void PyLineEdit::evaluateAsComplex(double &re, double &im) const
 {
     re = 0; im = 0;
-    QString t = text().trimmed();
+    QString t = sourceText();
     if (t.isEmpty()) return;
 
     bool ok;

@@ -1,0 +1,65 @@
+[Format]      =  1
+[Precision]   =  1e-008
+[Frequency]   =  0
+[MinAngle]    =  30
+[DoSmartMesh] =  1
+[Depth]       =  1
+[LengthUnits] =  millimeters
+[ProblemType] =  axisymmetric
+[Coordinates] =  cartesian
+[Comment]     =  ""
+[PointProps]   = 0
+[BdryProps]   = 0
+[BlockProps]  = 1
+  <BeginBlock>
+    <BlockName> = "Copper"
+    <ox> = 58000000
+    <oy> = 58000000
+    <ex> = 1
+    <ey> = 1
+    <ltx> = 0
+    <lty> = 0
+  <EndBlock>
+[ConductorProps]  = 2
+  <BeginConductor>
+    <ConductorName> = "Gnd"
+    <vcr> = 0
+    <vci> = 0
+    <qcr> = 0
+    <qci> = 0
+    <ConductorType> = 1
+  <EndConductor>
+  <BeginConductor>
+    <ConductorName> = "Isrc"
+    <vcr> = 0
+    <vci> = 0
+    <qcr> = 100
+    <qci> = 0
+    <ConductorType> = 0
+  <EndConductor>
+[NumPoints] = 10
+3	-3	0	0	0
+3	-2.75	0	0	0
+3	1	0	0	0
+0	1	0	0	0
+0	-3	0	0	0
+3	0.75	0	0	0
+1	0.24999999999999989	0	0	0
+1.5	0.75	0	0	0
+1.5	-2.75	0	0	0
+1	-2.25	0	0	0
+[NumSegments] = 8
+4	0	-1	0	0	0	0
+0	1	-1	0	0	0	1
+1	8	-1	0	0	0	0
+9	6	-1	0	0	0	0
+3	2	-1	0	0	0	0
+2	5	-1	0	0	0	2
+7	5	-1	0	0	0	0
+3	4	-1	0	0	0	0
+[NumArcSegments] = 2
+7	6	90	10	0	0	0	0	10
+9	8	90	10	0	0	0	0	10
+[NumHoles] = 0
+[NumBlockLabels] = 1
+0.67249999999999943	-0.92500000000000027	1	-1	1	0

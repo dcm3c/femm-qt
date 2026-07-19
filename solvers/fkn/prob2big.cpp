@@ -958,7 +958,7 @@ int CFemmeDocCore::WriteHarmonic2D(CBigComplexLinProb &L)
 	// print out air gap element info
 	fprintf(fp,"%i\n",NumAGEs);
 	for(i=0;i<NumAGEs;i++){
-		fprintf(fp,"%s",agelist[i].BdryName);
+		fprintf(fp,"\"%s\"\n",agelist[i].BdryName);
 		fprintf(fp,"%i %.17g %.17g %.17g %.17g %.17g %.17g %.17g %i %.17g %.17g\n",
 			agelist[i].BdryFormat,agelist[i].InnerAngle,agelist[i].OuterAngle,
 			agelist[i].ri,agelist[i].ro,agelist[i].totalArcLength,

@@ -316,6 +316,19 @@ private:
     void ComputeAGEHarmonics();
     bool MakeMask();
     bool IsKosher(int k) const;
+
+    // Axisymmetric solver-consistent element field model: within an element the
+    // flux function v = 2*pi*r*A is linear in (u, z) with u = r^2, so B_z is
+    // constant and B_r = k/r. Used for quadrature-exact axisymmetric block
+    // integrals (WST forces, energy, coenergy).
+    struct AxiField {
+        CComplex Bz, k;       // B_z (constant), B_r = k/r
+        CComplex Bzp, kp;     // same for the previous (bias) solution
+        double I0, I1, Im1;   // ∫dA, ∫r dA, ∫(1/r)dA over the element (meters)
+    };
+    bool AxiFluxFit(int i, AxiField &f, bool wantPrev) const;
+    double AxiDensityIntegral(int i, CComplex k, CComplex Bz,
+                              const std::function<double(CComplex, CComplex)> &dens) const;
 };
 
 #endif // RESULTS_DOC_H

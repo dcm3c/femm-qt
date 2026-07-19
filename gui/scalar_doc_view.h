@@ -68,6 +68,11 @@ struct ScalarDocView {
     double ShortestDistanceFromInputArc(CComplex p, int arcIdx) const;
     void GetInputCircle(int arcIdx, CComplex &c, double &R) const;
 
+    // Block mode: select the conductor whose nearest input entity is closest to
+    // (x, y), toggling its geometry entities and mesh nodes. Returns true if a
+    // conductor was toggled. Used for right-click conductor selection.
+    bool SelectConductorNear(double x, double y);
+
     // Raw doc pointers for method dispatch
     ElecResultsDoc *elecDoc = nullptr;
     HeatResultsDoc *heatDoc = nullptr;

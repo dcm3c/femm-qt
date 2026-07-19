@@ -1,0 +1,61 @@
+[Format]      =  1
+[Precision]   =  1e-008
+[Frequency]   =  0
+[MinAngle]    =  30
+[DoSmartMesh] =  1
+[Depth]       =  0.5
+[LengthUnits] =  millimeters
+[ProblemType] =  planar
+[Coordinates] =  cartesian
+[Comment]     =  ""
+[PointProps]   = 0
+[BdryProps]   = 0
+[BlockProps]  = 1
+  <BeginBlock>
+    <BlockName> = "Copper"
+    <ox> = 58000000
+    <oy> = 58000000
+    <ex> = 1
+    <ey> = 1
+    <ltx> = 0
+    <lty> = 0
+  <EndBlock>
+[ConductorProps]  = 2
+  <BeginConductor>
+    <ConductorName> = "Gnd"
+    <vcr> = 0
+    <vci> = 0
+    <qcr> = 0
+    <qci> = 0
+    <ConductorType> = 1
+  <EndConductor>
+  <BeginConductor>
+    <ConductorName> = "InputCurrent"
+    <vcr> = 0
+    <vci> = 0
+    <qcr> = 10
+    <qci> = 0
+    <ConductorType> = 0
+  <EndConductor>
+[NumPoints] = 8
+-3	-2	0	0	0
+-2	-2	0	0	0
+-2	1	0	0	0
+0	1	0	0	0
+-0	-2	0	0	0
+1	-2	0	0	0
+1	1	0	0	0
+-3	1	0	0	0
+[NumSegments] = 6
+7	0	-1	0	0	0	0
+0	1	-1	0	0	0	2
+2	1	-1	0	0	0	0
+3	4	-1	0	0	0	0
+6	5	-1	0	0	0	0
+4	5	-1	0	0	0	1
+[NumArcSegments] = 2
+6	7	180	1	0	0	0	0	1
+3	2	180	1	0	0	0	0	1
+[NumHoles] = 0
+[NumBlockLabels] = 1
+-0	2	1	-1	1	0

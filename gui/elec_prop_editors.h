@@ -47,6 +47,8 @@ public:
     ElecConductorEditorDialog(QWidget *parent = nullptr);
     void fromProp(const ECircuit &c);
     void toProp(ECircuit &c) const;
+private slots:
+    void onTypeChanged(int idx);
 private:
     PyLineEdit *m_name, *m_V, *m_q;
     QComboBox *m_type;

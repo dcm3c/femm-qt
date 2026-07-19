@@ -181,8 +181,10 @@ HeatConductorEditorDialog::HeatConductorEditorDialog(QWidget *parent) : QDialog(
     form->addRow(tr("Name:"), m_name);
 
     m_type = new QComboBox;
-    m_type->addItem(tr("Prescribed temperature"));   // 0
-    m_type->addItem(tr("Prescribed heat flux"));     // 1
+    // Order must match the CircType stored in the .feh and used by hsolv:
+    //   CircType 0 -> prescribed heat flux (q),  1 -> prescribed temperature (T).
+    m_type->addItem(tr("Prescribed heat flux"));     // 0
+    m_type->addItem(tr("Prescribed temperature"));   // 1
     form->addRow(tr("Type:"), m_type);
 
     m_T = new PyLineEdit; m_T->setText("0");
@@ -190,6 +192,10 @@ HeatConductorEditorDialog::HeatConductorEditorDialog(QWidget *parent) : QDialog(
 
     m_q = new PyLineEdit; m_q->setText("0");
     form->addRow(tr("Heat flux (W/m):"), m_q);
+
+    connect(m_type, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &HeatConductorEditorDialog::onTypeChanged);
+    onTypeChanged(m_type->currentIndex());
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -200,10 +206,20 @@ HeatConductorEditorDialog::HeatConductorEditorDialog(QWidget *parent) : QDialog(
     layout->addWidget(buttons);
 }
 
+void HeatConductorEditorDialog::onTypeChanged(int idx)
+{
+    // Match OF hd_CircProp: a heat-flux conductor (type 0) enables the flux box
+    // and disables temperature; a fixed-temperature conductor (type 1) does the
+    // reverse -- only the field the conductor actually prescribes is editable.
+    m_q->setEnabled(idx == 0);
+    m_T->setEnabled(idx == 1);
+}
+
 void HeatConductorEditorDialog::fromProp(const HCircuit &c)
 {
     m_name->setText(QString::fromStdString(c.CircName));
     m_type->setCurrentIndex(c.CircType);
+    onTypeChanged(m_type->currentIndex());
     m_T->setText(QString::number(c.T, 'g', 15));
     m_q->setText(QString::number(c.q, 'g', 15));
 }

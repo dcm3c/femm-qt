@@ -221,7 +221,11 @@ bool CurrResultsDoc::OpenDocument(const std::string &pathname)
             for (i = 0; i < k; i++) {
                 fgets(s, 1024, fp);
                 node = FNode();
-                sscanf(s, "%lf\t%lf", &node.x, &node.y);
+                int nboundary = 0, ncond = 0;
+                sscanf(s, "%lf\t%lf\t%i\t%i\t%i", &node.x, &node.y,
+                       &nboundary, &node.InGroup, &ncond);
+                node.InConductor = (ncond > 0 && ncond <= (int)circproplist.size())
+                                 ? circproplist[ncond - 1].CircName : std::string();
                 nodelist.push_back(node);
             }
             q[0] = 0;
@@ -232,11 +236,13 @@ bool CurrResultsDoc::OpenDocument(const std::string &pathname)
             for (i = 0; i < k; i++) {
                 fgets(s, 1024, fp);
                 segm = FSegment();
-                int hidden = 0, ingroup = 0;
-                sscanf(s, "%i\t%i\t%lf\t%i\t%i\t%i",
-                       &segm.n0, &segm.n1, &segm.MaxSideLength, &t, &hidden, &ingroup);
+                int hidden = 0, ingroup = 0, scond = 0;
+                sscanf(s, "%i\t%i\t%lf\t%i\t%i\t%i\t%i",
+                       &segm.n0, &segm.n1, &segm.MaxSideLength, &t, &hidden, &ingroup, &scond);
                 segm.Hidden = (hidden != 0);
                 segm.InGroup = ingroup;
+                segm.InConductor = (scond > 0 && scond <= (int)circproplist.size())
+                                 ? circproplist[scond - 1].CircName : std::string();
                 linelist.push_back(segm);
             }
             q[0] = 0;
@@ -247,12 +253,14 @@ bool CurrResultsDoc::OpenDocument(const std::string &pathname)
             for (i = 0; i < k; i++) {
                 fgets(s, 1024, fp);
                 asegm = FArcSegment();
-                int hidden = 0, ingroup = 0;
-                sscanf(s, "%i\t%i\t%lf\t%lf\t%i\t%i\t%i",
+                int hidden = 0, ingroup = 0, acond = 0;
+                sscanf(s, "%i\t%i\t%lf\t%lf\t%i\t%i\t%i\t%i",
                        &asegm.n0, &asegm.n1, &asegm.ArcLength,
-                       &asegm.MaxSideLength, &t, &hidden, &ingroup);
+                       &asegm.MaxSideLength, &t, &hidden, &ingroup, &acond);
                 asegm.Hidden = (hidden != 0);
                 asegm.InGroup = ingroup;
+                asegm.InConductor = (acond > 0 && acond <= (int)circproplist.size())
+                                  ? circproplist[acond - 1].CircName : std::string();
                 arclist.push_back(asegm);
             }
             q[0] = 0;
@@ -291,13 +299,13 @@ bool CurrResultsDoc::OpenDocument(const std::string &pathname)
     }
 
     // Compute effective conductivity from raw material data
-    // K = ox*1e6 + j*2*pi*f*eo*ex  (ox in MS/m -> S/m)
+    // K = ox + j*2*pi*f*eo*ex   (ox is conductivity in S/m, as csolv and OF use it)
     // Permittivity with loss tangent: ex_complex = ex * exp(-j*atan(ltx))
     for (auto &rm : rawMats) {
         CRMaterialProp mp;
         mp.BlockName = rm.name;
-        mp.ox = rm.ox * 1.e6;   // MS/m to S/m
-        mp.oy = rm.oy * 1.e6;
+        mp.ox = rm.ox;   // S/m (no unit conversion -- see note above)
+        mp.oy = rm.oy;
 
         // Complex permittivity with loss tangent
         mp.ex = rm.ex * exp(CComplex(0, -atan(rm.ltx)));
@@ -1015,10 +1023,9 @@ CComplex CurrResultsDoc::BlockIntegral(int inttype)
             switch (inttype) {
             case 0: { // Real Power
                 if (ProblemType == 1) a *= (2.0 * PI * R); else a *= Depth;
-                c  = Re(cmeshelem[i].Jx * conj(cmeshelem[i].Jx) /
-                        (blockproplist[blk].Kx / aecf));
-                c += Re(cmeshelem[i].Jy * conj(cmeshelem[i].Jy) /
-                        (blockproplist[blk].Ky / aecf));
+                Ex = cmeshelem[i].Jx / (blockproplist[blk].Kx / aecf);
+                Ey = cmeshelem[i].Jy / (blockproplist[blk].Ky / aecf);
+                c  = Re(cmeshelem[i].Jx * conj(Ex) + cmeshelem[i].Jy * conj(Ey));
                 if (Frequency != 0) c = c / 2.0;
                 z += a * c;
                 break;
@@ -1026,18 +1033,21 @@ CComplex CurrResultsDoc::BlockIntegral(int inttype)
             case 1: { // Reactive Power
                 if (Frequency == 0) break;
                 if (ProblemType == 1) a *= (2.0 * PI * R); else a *= Depth;
-                double ex = eo * Re(blockproplist[blk].ex) / aecf;
-                double ey = eo * Re(blockproplist[blk].ey) / aecf;
                 Ex = cmeshelem[i].Jx / (blockproplist[blk].Kx / aecf);
                 Ey = cmeshelem[i].Jy / (blockproplist[blk].Ky / aecf);
-                z += a * (ex * Ex * Ex + ey * Ey * Ey) * PI * Frequency;
+                c = Im(cmeshelem[i].Jx * conj(Ex) + cmeshelem[i].Jy * conj(Ey));
+                if (Frequency != 0) c = c / 2.0;
+                z += a * c;
                 break;
             }
             case 2: { // Apparent Power
+                // Accumulate the complex block power S = integral( 1/2 J.conj(E) );
+                // the scalar apparent power |S| = sqrt(P^2 + Q^2) is taken as the
+                // magnitude of the block total after the element loop (see below).
                 if (ProblemType == 1) a *= (2.0 * PI * R); else a *= Depth;
                 Ex = cmeshelem[i].Jx / (blockproplist[blk].Kx / aecf);
                 Ey = cmeshelem[i].Jy / (blockproplist[blk].Ky / aecf);
-                c = (cmeshelem[i].Jx * Ex + cmeshelem[i].Jy * Ey);
+                c = cmeshelem[i].Jx * conj(Ex) + cmeshelem[i].Jy * conj(Ey);
                 if (Frequency != 0) c = c / 2.0;
                 z += a * c;
                 break;
@@ -1150,14 +1160,20 @@ CComplex CurrResultsDoc::BlockIntegral(int inttype)
         }
     }
 
+    // Apparent power is the magnitude of the complex block power accumulated above:
+    // |S| = sqrt(P^2 + Q^2). Collapse to the real magnitude of the block totals
+    // (not the integral of the per-element magnitude) here, after the loop.
+    if (inttype == 2)
+        z = abs(z);
+
     return z;
 }
 
 bool CurrResultsDoc::BlockIntegralIsComplex(int type) const {
     // Genuinely complex (phasor) block-integral types in an AC solve: the
-    // oscillating (2x) Henrotte force/torque components (8, 9, 11). All others —
+    // oscillating (2x) Henrotte force/torque components (8, 9, 11). All others --
     // real/reactive/apparent power, time-average energy, area, volume, and the
-    // steady-state force/torque parts — are real. See co_blockintegral_cases.xlsx.
+    // steady-state force/torque parts -- are real. See co_blockintegral_cases.xlsx.
     switch (type) {
         case 8: case 9: case 11:
             return true;
@@ -1257,9 +1273,9 @@ void CurrResultsDoc::LineIntegral(int inttype, CComplex *z)
 
     // inttype==3 => Average Voltage
     if (inttype == 3) {
-        CComplex pt;
+        CComplex pt, pnum(0, 0);   // pnum: plain (unweighted) V integral
         CPointVals v;
-        double dz, uu, d;
+        double dz, uu, d, plen = 0; // plen: plain arc length (r=0 axis fallback)
         int i, j, k2, m, elm;
         int NumPlotPoints = d_LineIntegralPoints;
         bool flg;
@@ -1289,10 +1305,13 @@ void CurrResultsDoc::LineIntegral(int inttype, CComplex *z)
                         d = Depth * lc;
                     z[0] = z[0] + v.V * dz * d;
                     z[1] = z[1] + dz * d;
+                    pnum = pnum + v.V * dz;   // unweighted, for the r=0 axis fallback
+                    plen = plen + dz;
                 }
             }
         }
-        if (abs(z[1]) != 0) z[0] = z[0] / z[1]; // average voltage
+        if (abs(z[1]) != 0) z[0] = z[0] / z[1];   // area/Depth-weighted average
+        else if (plen != 0) z[0] = pnum / plen;   // r=0 axis: plain line average
     }
 }
 

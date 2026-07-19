@@ -1,0 +1,73 @@
+[Format]      =  1
+[Frequency]   =  0
+[Precision]   =  1e-08
+[MinAngle]    =  30
+[DoSmartMesh] =  1
+[Depth]       =  150
+[LengthUnits] =  inches
+[ProblemType] =  planar
+[Coordinates] =  cartesian
+[Comment]     =  ""
+[ACSolver]    =  0
+[dT]          =  0
+[PrevSoln]    =  ""
+[PointProps]   = 0
+[BdryProps]   = 1
+  <BeginBdry>
+    <BdryName> = "zero"
+    <BdryType> = 0
+    <Tset> = 273.14999999999998
+    <qs> = 0
+    <Tinf> = 0
+    <h> = 0
+    <beta> = 0
+    <TinfRad> = 0
+  <EndBdry>
+[BlockProps]  = 3
+  <BeginBlock>
+    <BlockName> = "Air"
+    <Kx> = 1
+    <Ky> = 1
+    <Kt> = 0
+    <qv> = 0
+    <TKPoints> = 0
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Concrete"
+    <Kx> = 1
+    <Ky> = 1
+    <Kt> = 1.5109999999999999
+    <qv> = 0
+    <TKPoints> = 0
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Plaster"
+    <Kx> = 0.5
+    <Ky> = 0.5
+    <Kt> = 1.3600000000000001
+    <qv> = 0
+    <TKPoints> = 0
+  <EndBlock>
+[ConductorProps]  = 1
+  <BeginConductor>
+    <ConductorName> = "Bdry"
+    <Tc> = 500
+    <qc> = 100
+    <ConductorType> = 0
+  <EndConductor>
+[NumPoints] = 5
+0	150	0	0	0	-1
+0	0	0	0	0	-1
+150	0	0	0	0	-1
+0	10	0	0	0	-1
+0	60	0	0	0	-1
+[NumSegments] = 3
+1	2	-1	1	0	0	0
+0	4	-1	0	0	0	0
+3	1	-1	0	0	0	0
+[NumArcSegments] = 2
+3	4	180	1	0	0	1	1	1
+2	0	90	1	1	0	0	0	1
+[NumHoles] = 0
+[NumBlockLabels] = 1
+60	92	3	1	1	0

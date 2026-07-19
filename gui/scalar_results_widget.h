@@ -179,6 +179,10 @@ private:
     QPushButton *m_playBtn = nullptr;
     QTimer *m_playTimer = nullptr;
     void updatePhaseSliderVisibility();
+    // Clear all area-mode selection: blocks, mesh nodes, and input geometry
+    // (mesh nodes carry conductor selections, so clearing only labels would
+    // leave a conductor selected). Invalidates the stress-tensor mask.
+    void clearAreaSelection();
 };
 
 #endif // SCALAR_RESULTS_WIDGET_H

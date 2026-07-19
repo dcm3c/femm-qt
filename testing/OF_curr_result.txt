@@ -1,0 +1,54 @@
+===================  currentFlow1 (planar, DC)  ===================
+  [0] Real power:   re=0.03635501406582394   im=0
+  [1] Reactive power:   re=0   im=0
+  [2] Apparent power:   re=0.03635501406582394   im=0
+  [3] Time-avg stored energy:   re=0   im=0
+  [4] Cross-section area:   re=1.071214973806655e-005   im=0
+  [5] Volume:   re=5.356074869033285e-009   im=0
+===================  currentFlow2 (axisymmetric, DC)  ===================
+  [0] Real power:   re=0.4242140755150732   im=0
+  [1] Reactive power:   re=0   im=0
+  [2] Apparent power:   re=0.4242140755150732   im=0
+  [3] Time-avg stored energy:   re=0   im=0
+  [4] Cross-section area:   re=5.109291600249386e-006   im=0
+  [5] Volume:   re=2.589701358528633e-008   im=0
+===================  currentFlow3 (axisymmetric, force/torque)  ===================
+  [0] Real power:   re=0   im=0
+  [1] Reactive power:   re=9.702387553228024e-015   im=84.5428947394439
+  [2] Apparent power:   re=-84.5428947394439   im=9.799085930549527e-015
+  [3] Time-avg stored energy:   re=0.1121284966756696   im=0
+  [4] Cross-section area:   re=20399.68157437978   im=0
+  [5] Volume:   re=9342123.272895249   im=0
+  [6] WST force x/r (SS):   re=0   im=0
+  [7] WST force y/z (SS):   re=-0.002376831080290567   im=0
+  [8] WST force x/r (2x):   re=0   im=0
+  [9] WST force y/z (2x):   re=9.068895538901963e-018   im=-0.002376831080290567
+  [10] WST torque (SS):   re=0   im=0
+  [11] WST torque (2x):   re=0   im=0
+===================  currentFlow4 (planar, force/torque)  ===================
+  [0] Real power:   re=0   im=0
+  [1] Reactive power:   re=-90.73117227221195   im=157.1510002057504
+  [2] Apparent power:   re=-157.1510002057504   im=-90.73117227221196
+  [3] Time-avg stored energy:   re=0.2406719093274118   im=0
+  [4] Cross-section area:   re=40799.38687582047   im=0
+  [5] Volume:   re=6119908.031373253   im=0
+  [6] WST force x/r (SS):   re=-1.213690459590917e-007   im=0
+  [7] WST force y/z (SS):   re=-0.01133370287723128   im=0
+  [8] WST force x/r (2x):   re=6.068452298551296e-008   im=-1.0510867702895e-007
+  [9] WST force y/z (2x):   re=0.005666851438615657   im=-0.00981527461062706
+  [10] WST torque (SS):   re=-1.700048361597065   im=0
+  [11] WST torque (2x):   re=0.8500241807985364   im=-1.472285068805171
+===================  currentFlow5 (axisymmetric, lossy dielectric)  ===================
+  [0] Real power:   re=16.53164136590156   im=0
+  [1] Reactive power:   re=0.004598482923106966   im=0.007964806060559092
+  [2] Apparent power:   re=8.257855876890213   im=14.32141987204754
+  [3] Time-avg stored energy:   re=7.318712879361417e-009   im=0
+  [4] Cross-section area:   re=8.109291600249384e-006   im=0
+  [5] Volume:   re=3.846338419964561e-008   im=0
+===================  currentFlow6 (planar, lossy dielectric)  ===================
+  [0] Real power:   re=30.90144719223343   im=0
+  [1] Reactive power:   re=0.008595624237643706   im=0.01488805790236945
+  [2] Apparent power:   re=15.43583553821433   im=26.77003390641506
+  [3] Time-avg stored energy:   re=1.368036086381505e-008   im=0
+  [4] Cross-section area:   re=8.109291600249394e-006   im=0
+  [5] Volume:   re=8.109291600249392e-009   im=0

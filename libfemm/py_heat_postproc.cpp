@@ -92,8 +92,7 @@ void register_heat_postproc_py(HeatResultsDoc *doc) {
     });
     m.def("ho_clearblock", []() {
         check_doc(s_doc, HOERR);
-        for (auto &lbl : s_doc->labellist) lbl.IsSelected = false;
-        s_doc->bHasMask = false;
+        ppClearSelection(s_doc);
     });
     m.def("ho_blockintegral", [](int type) -> std::tuple<double, double> {
         check_doc(s_doc, HOERR);

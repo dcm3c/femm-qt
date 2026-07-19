@@ -322,8 +322,11 @@ bool ElecResultsDoc::OpenDocument(const std::string &pathname)
             sscanf(v, "%i", &k);
             for (i = 0; i < k; i++) {
                 fgets(s, 1024, fp);
-                sscanf(s, "%lf\t%lf\t%i\t%i", &node.x, &node.y, &t, &node.InGroup);
+                int ncond = 0;
+                sscanf(s, "%lf\t%lf\t%i\t%i\t%i", &node.x, &node.y, &t, &node.InGroup, &ncond);
                 // BoundaryMarker stored as string in FNode; skip numeric marker
+                node.InConductor = (ncond > 0 && ncond <= (int)circproplist.size())
+                                 ? circproplist[ncond - 1].CircName : std::string();
                 nodelist.push_back(node);
             }
             q[0] = 0;
@@ -335,11 +338,13 @@ bool ElecResultsDoc::OpenDocument(const std::string &pathname)
             sscanf(v, "%i", &k);
             for (i = 0; i < k; i++) {
                 fgets(s, 1024, fp);
-                int hidden = 0, ingroup = 0;
-                sscanf(s, "%i\t%i\t%lf\t%i\t%i\t%i",
-                       &segm.n0, &segm.n1, &segm.MaxSideLength, &t, &hidden, &ingroup);
+                int hidden = 0, ingroup = 0, scond = 0;
+                sscanf(s, "%i\t%i\t%lf\t%i\t%i\t%i\t%i",
+                       &segm.n0, &segm.n1, &segm.MaxSideLength, &t, &hidden, &ingroup, &scond);
                 segm.Hidden = (hidden != 0);
                 segm.InGroup = ingroup;
+                segm.InConductor = (scond > 0 && scond <= (int)circproplist.size())
+                                 ? circproplist[scond - 1].CircName : std::string();
                 linelist.push_back(segm);
             }
             q[0] = 0;
@@ -351,13 +356,14 @@ bool ElecResultsDoc::OpenDocument(const std::string &pathname)
             sscanf(v, "%i", &k);
             for (i = 0; i < k; i++) {
                 fgets(s, 1024, fp);
-                int hidden = 0, ingroup = 0;
-                double maxside2 = 0;
-                sscanf(s, "%i\t%i\t%lf\t%lf\t%i\t%i\t%i",
+                int hidden = 0, ingroup = 0, acond = 0;
+                sscanf(s, "%i\t%i\t%lf\t%lf\t%i\t%i\t%i\t%i",
                        &asegm.n0, &asegm.n1, &asegm.ArcLength,
-                       &asegm.MaxSideLength, &t, &hidden, &ingroup);
+                       &asegm.MaxSideLength, &t, &hidden, &ingroup, &acond);
                 asegm.Hidden = (hidden != 0);
                 asegm.InGroup = ingroup;
+                asegm.InConductor = (acond > 0 && acond <= (int)circproplist.size())
+                                  ? circproplist[acond - 1].CircName : std::string();
                 arclist.push_back(asegm);
             }
             q[0] = 0;

@@ -1,0 +1,461 @@
+--> ===================  RMB (planar, x)  DC   i1=12 i2=6 i3=0 i4=6  ===================
+-->   [0] A.J:   re=1.249098545579401   im=0
+-->   [1] Integral of A over the block:   re=1.018859344191355e-007   im=0
+-->   [2] Stored energy:   re=0.001343357676909399   im=0
+-->   [3] Hysteresis & laminated eddy losses:   re=0   im=0
+-->   [4] Resistive losses:   re=39.22909524912176   im=0
+-->   [5] Cross-section area:   re=0.001296760085472638   im=0
+-->   [6] Total losses:   re=0   im=0
+-->   [7] Total current:   re=9.661080529327348e-013   im=0
+-->   [8] Integral of Bx (or Br):   re=-8.776048337033767e-011   im=0
+-->   [9] Integral of By (or Bz):   re=-1.094382447267982e-005   im=0
+-->   [10] Volume:   re=5.270032987360806e-005   im=0
+-->   [11] Lorentz force, x/r, steady-state:   re=6.754645686644892   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=6.773425404334781e-005   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=0   im=0
+-->   [14] Lorentz force, y/z, 2x:   re=0   im=0
+-->   [15] Lorentz torque, steady-state:   re=6.162579003733119e-006   im=0
+-->   [16] Lorentz torque, 2x:   re=0   im=0
+-->   [17] Coenergy:   re=0.001901379992666605   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=399.663075239373   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=0.08787081158237807   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=199.8315376196865   im=0
+-->   [21] Henrotte force, y/z, 2x:   re=0.04393540579118904   im=0
+-->   [22] Henrotte torque, steady-state:   re=0.003772979012630577   im=0
+-->   [23] Henrotte torque, 2x:   re=0.001886489506315288   im=0
+-->   [24] Moment-of-inertia-like integral:   re=2.311277728559849e-008   im=0
+--> ===================  RMB (planar, x)  AC 60Hz   i1=12 i2=6 i3=0 i4=6  ===================
+-->   [0] A.J:   re=1.325595639495485   im=-0.005648982713124921
+-->   [1] Integral of A over the block:   re=1.265038075573421e-007   im=5.984407963908351e-009
+-->   [2] Stored energy:   re=0.0007428554393013693   im=0
+-->   [3] Hysteresis & laminated eddy losses:   re=0.2015041737066142   im=0
+-->   [4] Resistive losses:   re=19.61452115175768   im=0
+-->   [5] Cross-section area:   re=0.001296760085472638   im=0
+-->   [6] Total losses:   re=0.2015041737066142   im=0
+-->   [7] Total current:   re=9.661080529327348e-013   im=0
+-->   [8] Integral of Bx (or Br):   re=-4.519551588771169e-010   im=4.727025661378464e-012
+-->   [9] Integral of By (or Bz):   re=-1.171418695517458e-005   im=1.12486021941707e-007
+-->   [10] Volume:   re=5.270032987360806e-005   im=0
+-->   [11] Lorentz force, x/r, steady-state:   re=3.669826909738783   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=7.285434270481222e-005   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=3.669826909738784   im=-0.01854794235703323
+-->   [14] Lorentz force, y/z, 2x:   re=7.285434270475762e-005   im=-3.154333656498981e-007
+-->   [15] Lorentz torque, steady-state:   re=3.765015751076981e-006   im=0
+-->   [16] Lorentz torque, 2x:   re=3.765015751076981e-006   im=-1.777023455770826e-008
+-->   [17] Coenergy:   re=0.0007428554393013693   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=224.6373320033761   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=0.05707610266361125   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=224.6271259265206   im=-2.156050048820987
+-->   [21] Henrotte force, y/z, 2x:   re=0.05707370592557074   im=-0.0005280566640518484
+-->   [22] Henrotte torque, steady-state:   re=0.002264934593587577   im=0
+-->   [23] Henrotte torque, 2x:   re=0.002264832494031338   im=-2.087978803497841e-005
+--> ===================  RMB (planar, x)  Incremental AC   bias 6A all; AC i1=1 i2=0 i3=-1 i4=0  ===================
+-->   [18] Henrotte force, x/r, steady-state:   re=2.138437084731713e-005   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=1.818386494203898e-005   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=2.138429061194436e-005   im=-7.608470526136297e-008
+-->   [21] Henrotte force, y/z, 2x:   re=1.818381721068531e-005   im=-3.561265125948774e-008
+-->   [22] Henrotte torque, steady-state:   re=2.037401930540668e-005   im=0
+-->   [23] Henrotte torque, 2x:   re=2.037399069869245e-005   im=-3.106381295752341e-008
+-->   [24] Moment-of-inertia-like integral:   re=2.311277728559849e-008   im=0
+-->   [25] Henrotte force, x/r, 1x (incremental):   re=76.23387888801264   im=-0.07085828145772834
+-->   [26] Henrotte force, y/z, 1x (incremental):   re=0.01966512358190628   im=-1.613047503225939e-005
+-->   [27] Henrotte torque, 1x (incremental):   re=1.65250947984602e-005   im=-8.312033431050752e-008
+-->   [28] Lorentz force, x/r, 1x (incremental):   re=0.2853329336837544   im=3.562505285549616e-011
+-->   [29] Lorentz force, y/z, 1x (incremental):   re=4.701367299014216e-006   im=-2.23223625523054e-015
+-->   [30] Lorentz torque, 1x (incremental):   re=3.195936489583782e-007   im=-6.14221287542505e-017
+--> ===================  RMB (planar, y)  DC   i1=6 i2=12 i3=6 i4=0  ===================
+-->   [0] A.J:   re=0.331169665519576   im=0
+-->   [1] Integral of A over the block:   re=1.147624720154956e-007   im=0
+-->   [2] Stored energy:   re=0.00134331787872774   im=0
+-->   [3] Hysteresis & laminated eddy losses:   re=0   im=0
+-->   [4] Resistive losses:   re=9.807273812280439   im=0
+-->   [5] Cross-section area:   re=0.001296760085472638   im=0
+-->   [6] Total losses:   re=0   im=0
+-->   [7] Total current:   re=4.830540264663674e-013   im=0
+-->   [8] Integral of Bx (or Br):   re=-1.094336393162413e-005   im=0
+-->   [9] Integral of By (or Bz):   re=-4.322405330046518e-010   im=0
+-->   [10] Volume:   re=5.270032987360806e-005   im=0
+-->   [11] Lorentz force, x/r, steady-state:   re=1.728964677300561   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=-0.3120308765582532   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=0   im=0
+-->   [14] Lorentz force, y/z, 2x:   re=0   im=0
+-->   [15] Lorentz torque, steady-state:   re=-0.003589305845395932   im=0
+-->   [16] Lorentz torque, 2x:   re=0   im=0
+-->   [17] Coenergy:   re=0.00190115306680879   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=-0.09570931767783986   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=399.6841954322509   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=-0.04785465883891993   im=0
+-->   [21] Henrotte force, y/z, 2x:   re=199.8420977161254   im=0
+-->   [22] Henrotte torque, steady-state:   re=0.003663174809125815   im=0
+-->   [23] Henrotte torque, 2x:   re=0.001831587404562908   im=0
+-->   [24] Moment-of-inertia-like integral:   re=2.311277728559849e-008   im=0
+--> ===================  RMB (planar, y)  AC 60Hz   i1=6 i2=12 i3=6 i4=0  ===================
+-->   [0] A.J:   re=0.3312990223666881   im=-0.001399395569858539
+-->   [1] Integral of A over the block:   re=9.92531810425016e-008   im=-7.267072065987862e-009
+-->   [2] Stored energy:   re=0.0007428100210005278   im=0
+-->   [3] Hysteresis & laminated eddy losses:   re=0.2015002348536308   im=0
+-->   [4] Resistive losses:   re=4.903630287939421   im=0
+-->   [5] Cross-section area:   re=0.001296760085472638   im=0
+-->   [6] Total losses:   re=0.2015002348536308   im=0
+-->   [7] Total current:   re=4.830540264663674e-013   im=0
+-->   [8] Integral of Bx (or Br):   re=-1.171365547717512e-005   im=1.124770587104954e-007
+-->   [9] Integral of By (or Bz):   re=-4.06057321763786e-010   im=6.31385518691719e-012
+-->   [10] Volume:   re=5.270032987360806e-005   im=0
+-->   [11] Lorentz force, x/r, steady-state:   re=0.8572915589346802   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=-0.164714347429695   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=0.8572915589346801   im=-0.004333929703634283
+-->   [14] Lorentz force, y/z, 2x:   re=-0.164714347429695   im=0.0003829588029509617
+-->   [15] Lorentz torque, steady-state:   re=-0.001884015884591975   im=0
+-->   [16] Lorentz torque, 2x:   re=-0.001884015884591975   im=3.947046596304718e-006
+-->   [17] Coenergy:   re=0.0007428100210005278   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=-0.06075797791334961   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=224.6464083976849   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=-0.06075553185712362   im=0.0005502745241660116
+-->   [21] Henrotte force, y/z, 2x:   re=224.6362021125885   im=-2.156111973466732
+-->   [22] Henrotte torque, steady-state:   re=0.002205459366288983   im=0
+-->   [23] Henrotte torque, 2x:   re=0.002205370753850517   im=-1.905510500950086e-005
+--> ===================  RMB (planar, y)  Incremental AC   bias 6A all; AC i1=0 i2=1 i3=0 i4=-1  ===================
+-->   [18] Henrotte force, x/r, steady-state:   re=-4.959386446480798e-005   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=5.20322861024911e-005   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=-4.959378805799608e-005   im=7.095552458016303e-008
+-->   [21] Henrotte force, y/z, 2x:   re=5.203226861299389e-005   im=-4.874220885174601e-008
+-->   [22] Henrotte torque, steady-state:   re=2.083585989640079e-005   im=0
+-->   [23] Henrotte torque, 2x:   re=2.083583105865154e-005   im=-3.171857843131075e-008
+-->   [24] Moment-of-inertia-like integral:   re=2.311277728559849e-008   im=0
+-->   [25] Henrotte force, x/r, 1x (incremental):   re=-0.0212447619925351   im=1.73495806552885e-005
+-->   [26] Henrotte force, y/z, 1x (incremental):   re=76.23563477221441   im=-0.07086184324710732
+-->   [27] Henrotte torque, 1x (incremental):   re=-8.591485515706021e-006   im=1.394906017568981e-008
+-->   [28] Lorentz force, x/r, 1x (incremental):   re=-7.692491332497365e-013   im=1.91920121368159e-015
+-->   [29] Lorentz force, y/z, 1x (incremental):   re=-1.328752686010853e-008   im=1.253047053680194e-011
+-->   [30] Lorentz torque, 1x (incremental):   re=-1.54856188679015e-010   im=-9.314562635525462e-015
+--> ===================  roters1b (axi)  DC   coil=0.8A  ===================
+-->   [0] A.J:   re=2.762004567595707   im=0
+-->   [1] Integral of A over the block:   re=2.675086043954425e-006   im=0
+-->   [2] Stored energy:   re=0.1911195432992326   im=0
+-->   [3] Hysteresis & laminated eddy losses:   re=0   im=0
+-->   [4] Resistive losses:   re=9.759824416986216   im=0
+-->   [5] Cross-section area:   re=0.002990165390624991   im=0
+-->   [6] Total losses:   re=0   im=0
+-->   [7] Total current:   re=2040   im=0
+-->   [8] Integral of Bx (or Br):   re=-3.555051821668185e-006   im=0
+-->   [9] Integral of By (or Bz):   re=0.0001606398299257221   im=0
+-->   [10] Volume:   re=0.0001532189893633063   im=0
+-->   [11] Lorentz force, x/r, steady-state:   re=0   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=-7.954082460293117   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=0   im=0
+-->   [14] Lorentz force, y/z, 2x:   re=0   im=0
+-->   [15] Lorentz torque, steady-state:   re=0   im=0
+-->   [16] Lorentz torque, 2x:   re=0   im=0
+-->   [17] Coenergy:   re=0.400118133292971   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=0   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=39.14401915116582   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=0   im=0
+-->   [21] Henrotte force, y/z, 2x:   re=19.57200957558291   im=0
+-->   [22] Henrotte torque, steady-state:   re=0   im=0
+-->   [23] Henrotte torque, 2x:   re=0   im=0
+-->   [24] Moment-of-inertia-like integral:   re=2.059181368483158e-008   im=0
+--> ===================  roters1b (axi)  AC 60Hz   coil=0.8A  ===================
+-->   [0] A.J:   re=2.954461091082067   im=-0.0003810927097073898
+-->   [1] Integral of A over the block:   re=2.861486083290528e-006   im=-3.69099964986096e-010
+-->   [2] Stored energy:   re=0.1206512467652558   im=0
+-->   [3] Hysteresis & laminated eddy losses:   re=7.799361195398014e-021   im=0
+-->   [4] Resistive losses:   re=4.87990913667841   im=0
+-->   [5] Cross-section area:   re=0.002990165390624991   im=0
+-->   [6] Total losses:   re=7.799361195398014e-021   im=0
+-->   [7] Total current:   re=2040   im=0
+-->   [8] Integral of Bx (or Br):   re=-3.784930587031082e-006   im=-1.252125818196083e-010
+-->   [9] Integral of By (or Bz):   re=0.0001722363161219288   im=-1.932826682620952e-008
+-->   [10] Volume:   re=0.0001532189893633063   im=0
+-->   [11] Lorentz force, x/r, steady-state:   re=0   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=-4.411552434622324   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=0   im=0
+-->   [14] Lorentz force, y/z, 2x:   re=-4.411552434622324   im=0.002449385363538035
+-->   [15] Lorentz torque, steady-state:   re=0   im=0
+-->   [16] Lorentz torque, 2x:   re=0   im=0
+-->   [17] Coenergy:   re=0.1206512467652558   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=0   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=22.12690704977151   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=0   im=0
+-->   [21] Henrotte force, y/z, 2x:   re=22.12690632787589   im=0.00103077340050939
+-->   [22] Henrotte torque, steady-state:   re=0   im=0
+-->   [23] Henrotte torque, 2x:   re=0   im=0
+--> ===================  roters1b (axi)  Incremental AC   bias 0.8A; AC 0.1A  ===================
+-->   [18] Henrotte force, x/r, steady-state:   re=0   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=0.1017144852927365   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=0   im=0
+-->   [21] Henrotte force, y/z, 2x:   re=0.1017144821819964   im=1.30207949994167e-005
+-->   [22] Henrotte torque, steady-state:   re=0   im=0
+-->   [23] Henrotte torque, 2x:   re=0   im=0
+-->   [24] Moment-of-inertia-like integral:   re=2.059181368483158e-008   im=0
+-->   [25] Henrotte force, x/r, 1x (incremental):   re=0   im=0
+-->   [26] Henrotte force, y/z, 1x (incremental):   re=5.853138671784778   im=0.0002759470409287192
+-->   [27] Henrotte torque, 1x (incremental):   re=0   im=0
+-->   [28] Lorentz force, x/r, 1x (incremental):   re=0   im=0
+-->   [29] Lorentz force, y/z, 1x (incremental):   re=-0.9942600030258171   im=-1.140277539209402e-010
+-->   [30] Lorentz torque, 1x (incremental):   re=0   im=0
+--> ===================  torque (planar)  DC   i1=2 i2=0  ===================
+-->   [11] Lorentz force, x/r, steady-state:   re=0   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=0   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=0   im=0
+-->   [14] Lorentz force, y/z, 2x:   re=0   im=0
+-->   [15] Lorentz torque, steady-state:   re=0   im=0
+-->   [16] Lorentz torque, 2x:   re=0   im=0
+-->   [17] Coenergy:   re=0.003846702087345756   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=0.1119083816045066   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=491.8375000088658   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=0.05595419080225331   im=0
+-->   [21] Henrotte force, y/z, 2x:   re=245.9187500044329   im=0
+-->   [22] Henrotte torque, steady-state:   re=37.50175269788497   im=0
+-->   [23] Henrotte torque, 2x:   re=18.75087634894248   im=0
+-->   [24] Moment-of-inertia-like integral:   re=4.453572196063595e-007   im=0
+--> ===================  torque (planar)  AC 60Hz   i1=2 i2=0  ===================
+-->   [11] Lorentz force, x/r, steady-state:   re=0   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=0   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=0   im=0
+-->   [14] Lorentz force, y/z, 2x:   re=0   im=0
+-->   [15] Lorentz torque, steady-state:   re=0   im=0
+-->   [16] Lorentz torque, 2x:   re=0   im=0
+-->   [17] Coenergy:   re=0.001264314895550826   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=0.06308188103398404   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=267.2653863493089   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=0.06307959513464742   im=-0.0005576016833802806
+-->   [21] Henrotte force, y/z, 2x:   re=267.2587833201162   im=-1.894943073851218
+-->   [22] Henrotte torque, steady-state:   re=20.37962280774152   im=0
+-->   [23] Henrotte torque, 2x:   re=20.37911837344644   im=-0.1446469882276485
+--> ===================  torque (planar)  Incremental AC   bias i1=1 i2=1; AC i1=1 i2=-1  ===================
+-->   [18] Henrotte force, x/r, steady-state:   re=0.001129237896530583   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=0.008892525819570811   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=0.001128269835268728   im=-0.0001441423306270722
+-->   [21] Henrotte force, y/z, 2x:   re=0.008892473661745922   im=-4.289817994294321e-005
+-->   [22] Henrotte torque, steady-state:   re=0.0003491279449866658   im=0
+-->   [23] Henrotte torque, 2x:   re=0.0003491376863423403   im=-2.834739997387471e-007
+-->   [24] Moment-of-inertia-like integral:   re=4.453572196063595e-007   im=0
+-->   [25] Henrotte force, x/r, 1x (incremental):   re=0.139397947201992   im=-0.0005252942597839472
+-->   [26] Henrotte force, y/z, 1x (incremental):   re=538.9843492401766   im=-2.215779811795096
+-->   [27] Henrotte torque, 1x (incremental):   re=41.0996984651697   im=-0.1692687526728789
+-->   [28] Lorentz force, x/r, 1x (incremental):   re=1.472619215728563e-011   im=-8.71437267426294e-014
+-->   [29] Lorentz force, y/z, 1x (incremental):   re=-3.506188898913466e-005   im=1.659241999129887e-007
+-->   [30] Lorentz torque, 1x (incremental):   re=-2.651892143026536e-006   im=1.226102228118711e-008
+--> ===================  AxiLorentz (axi)  DC   i1=16  ===================
+-->   [0] A.J:   re=1.453364645700008   im=0
+-->   [1] Integral of A over the block:   re=1.465082398155956e-007   im=0
+-->   [2] Stored energy:   re=0.400369318319299   im=0
+-->   [3] Hysteresis & laminated eddy losses:   re=0   im=0
+-->   [4] Resistive losses:   re=385.1307420050471   im=0
+-->   [5] Cross-section area:   re=0.0009677400000000018   im=0
+-->   [6] Total losses:   re=385.1307420050471   im=0
+-->   [7] Total current:   re=9600.000000000033   im=0
+-->   [8] Integral of Bx (or Br):   re=7.227444989168375e-008   im=0
+-->   [9] Integral of By (or Bz):   re=7.237967138241371e-006   im=0
+-->   [10] Volume:   re=0.0001158333297216879   im=0
+-->   [11] Lorentz force, x/r, steady-state:   re=0   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=-0.7169639768534776   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=0   im=0
+-->   [14] Lorentz force, y/z, 2x:   re=0   im=0
+-->   [15] Lorentz torque, steady-state:   re=0   im=0
+-->   [16] Lorentz torque, 2x:   re=0   im=0
+-->   [17] Coenergy:   re=0.400369318319299   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=0   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=-0.7194269359174148   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=0   im=0
+-->   [21] Henrotte force, y/z, 2x:   re=-0.3597134679587074   im=0
+-->   [22] Henrotte torque, steady-state:   re=0   im=0
+-->   [23] Henrotte torque, 2x:   re=0   im=0
+-->   [24] Moment-of-inertia-like integral:   re=6.071896269013593e-008   im=0
+--> ===================  AxiLorentz (axi)  AC 60Hz   i1=16  ===================
+-->   [0] A.J:   re=1.453363581594644   im=-0.0007343568657042234
+-->   [1] Integral of A over the block:   re=1.465081325471256e-007   im=-7.402776179339639e-011
+-->   [2] Stored energy:   re=0.2001844652501225   im=0
+-->   [3] Hysteresis & laminated eddy losses:   re=0.1384163600914319   im=0
+-->   [4] Resistive losses:   re=192.565142049166   im=0
+-->   [5] Cross-section area:   re=0.0009677400000000018   im=0
+-->   [6] Total losses:   re=192.7035584092574   im=0
+-->   [7] Total current:   re=9600.000000000031   im=0
+-->   [8] Integral of Bx (or Br):   re=7.227448269292744e-008   im=2.248304541354936e-011
+-->   [9] Integral of By (or Bz):   re=7.237961963973011e-006   im=-3.989584140741814e-009
+-->   [10] Volume:   re=0.0001158333297216879   im=0
+-->   [11] Lorentz force, x/r, steady-state:   re=0   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=-0.358482151121241   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=0   im=0
+-->   [14] Lorentz force, y/z, 2x:   re=-0.3584821511212415   im=-0.000111516128283454
+-->   [15] Lorentz torque, steady-state:   re=0   im=0
+-->   [16] Lorentz torque, 2x:   re=0   im=0
+-->   [17] Coenergy:   re=0.2001844652501225   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=0   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=-0.3597135241538707   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=0   im=0
+-->   [21] Henrotte force, y/z, 2x:   re=-0.3597135268188658   im=-2.328967060786675e-005
+-->   [22] Henrotte torque, steady-state:   re=0   im=0
+-->   [23] Henrotte torque, 2x:   re=0   im=0
+--> ===================  AxiLorentz (axi)  Incremental AC   bias i1=16; AC i1=1  ===================
+-->   [18] Henrotte force, x/r, steady-state:   re=0   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=-0.001405130953726057   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=0   im=0
+-->   [21] Henrotte force, y/z, 2x:   re=-0.001405130964136194   im=-9.097527581197948e-008
+-->   [22] Henrotte torque, steady-state:   re=0   im=0
+-->   [23] Henrotte torque, 2x:   re=0   im=0
+-->   [24] Moment-of-inertia-like integral:   re=6.071896269013593e-008   im=0
+-->   [25] Henrotte force, x/r, 1x (incremental):   re=0   im=0
+-->   [26] Henrotte force, y/z, 1x (incremental):   re=-0.08992837418063437   im=-2.911208977734998e-006
+-->   [27] Henrotte torque, 1x (incremental):   re=0   im=0
+-->   [28] Lorentz force, x/r, 1x (incremental):   re=0   im=0
+-->   [29] Lorentz force, y/z, 1x (incremental):   re=-0.04481024403618482   im=1.405190338346835e-012
+-->   [30] Lorentz torque, 1x (incremental):   re=0   im=0
+--> ===================  PlanarLorentz-y (planar)  DC   i1=16  ===================
+-->   [0] A.J:   re=4.024634810396865   im=0
+-->   [1] Integral of A over the block:   re=-1.348170289408117e-010   im=0
+-->   [2] Stored energy:   re=0.5668395192841911   im=0
+-->   [3] Hysteresis & laminated eddy losses:   re=0   im=0
+-->   [4] Resistive losses:   re=653.8182541520275   im=0
+-->   [5] Cross-section area:   re=0.001935480000000007   im=0
+-->   [6] Total losses:   re=653.8182541520275   im=0
+-->   [7] Total current:   re=2.798557913186173e-011   im=0
+-->   [8] Integral of Bx (or Br):   re=-1.319145619814454e-011   im=0
+-->   [9] Integral of By (or Bz):   re=8.555461971620291e-006   im=0
+-->   [10] Volume:   re=0.0001966447679999989   im=0
+-->   [11] Lorentz force, x/r, steady-state:   re=0.0001637166269520429   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=-4.213938385756319   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=0   im=0
+-->   [14] Lorentz force, y/z, 2x:   re=0   im=0
+-->   [15] Lorentz torque, steady-state:   re=-0.4281287800126983   im=0
+-->   [16] Lorentz torque, 2x:   re=0   im=0
+-->   [17] Coenergy:   re=0.5668395192841911   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=-0.006242467378955422   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=-4.214179036858694   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=-0.003121233689477711   im=0
+-->   [21] Henrotte force, y/z, 2x:   re=-2.107089518429347   im=0
+-->   [22] Henrotte torque, steady-state:   re=-0.4282510082499861   im=0
+-->   [23] Henrotte torque, 2x:   re=-0.2141255041249931   im=0
+-->   [24] Moment-of-inertia-like integral:   re=2.135600198468483e-006   im=0
+--> ===================  PlanarLorentz-y (planar)  AC 60Hz   i1=16  ===================
+-->   [0] A.J:   re=4.024633263529269   im=-0.001039352930474909
+-->   [1] Integral of A over the block:   re=-1.340670296245542e-010   im=3.455105788323852e-013
+-->   [2] Stored energy:   re=0.2834194509026443   im=0
+-->   [3] Hysteresis & laminated eddy losses:   re=0.1959134118653332   im=0
+-->   [4] Resistive losses:   re=326.9087383927222   im=0
+-->   [5] Cross-section area:   re=0.001935480000000007   im=0
+-->   [6] Total losses:   re=327.1046518045875   im=0
+-->   [7] Total current:   re=2.798557913186173e-011   im=0
+-->   [8] Integral of Bx (or Br):   re=-1.318893082349792e-011   im=-1.641349338365906e-015
+-->   [9] Integral of By (or Bz):   re=8.555456926545168e-006   im=-4.127440546691396e-009
+-->   [10] Volume:   re=0.0001966447679999989   im=0
+-->   [11] Lorentz force, x/r, steady-state:   re=8.181527950526712e-005   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=-2.106969612772919   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=8.181527950325504e-005   im=-8.352435917818333e-008
+-->   [14] Lorentz force, y/z, 2x:   re=-2.106969612772919   im=-0.0001413776251408265
+-->   [15] Lorentz torque, steady-state:   re=-0.214064432854664   im=0
+-->   [16] Lorentz torque, 2x:   re=-0.214064432854664   im=-1.436721037750771e-005
+-->   [17] Coenergy:   re=0.2834194509026443   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=-0.003121221231728965   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=-2.107089586171218   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=-0.003121221123287791   im=-9.328714828283935e-007
+-->   [21] Henrotte force, y/z, 2x:   re=-2.10708961687893   im=8.364875154805554e-005
+-->   [22] Henrotte torque, steady-state:   re=-0.2141255105768689   im=0
+-->   [23] Henrotte torque, 2x:   re=-0.2141255136962568   im=8.484733262022358e-006
+--> ===================  PlanarLorentz-y (planar)  Incremental AC   bias i1=16; AC i1=1  ===================
+-->   [18] Henrotte force, x/r, steady-state:   re=-1.219227043644127e-005   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=-0.00823081869598132   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=-1.219227001284293e-005   im=-3.644029229798412e-009
+-->   [21] Henrotte force, y/z, 2x:   re=-0.008230818815933322   im=3.26752935734592e-007
+-->   [22] Henrotte torque, steady-state:   re=-0.0008364277756908941   im=0
+-->   [23] Henrotte torque, 2x:   re=-0.0008364277878760032   im=3.314348930477484e-008
+-->   [24] Moment-of-inertia-like integral:   re=2.135600198468483e-006   im=0
+-->   [25] Henrotte force, x/r, 1x (incremental):   re=-0.0007803068583730529   im=-1.166087883780924e-007
+-->   [26] Henrotte force, y/z, 1x (incremental):   re=-0.5267723899943047   im=1.045609049246742e-005
+-->   [27] Henrotte torque, 1x (incremental):   re=-0.05353137703269472   im=1.060591314362244e-006
+-->   [28] Lorentz force, x/r, 1x (incremental):   re=1.076700524204075e-005   im=-2.579650341682123e-010
+-->   [29] Lorentz force, y/z, 1x (incremental):   re=-0.2633711491089364   im=1.025843336502931e-016
+-->   [30] Lorentz torque, 1x (incremental):   re=-0.02675804965080725   im=1.009613237652345e-013
+--> ===================  PlanarLorentz-x (planar)  DC   i1=16  ===================
+-->   [0] A.J:   re=4.024646560989993   im=0
+-->   [1] Integral of A over the block:   re=1.615080454292606e-010   im=0
+-->   [2] Stored energy:   re=0.5668356679262514   im=0
+-->   [3] Hysteresis & laminated eddy losses:   re=0   im=0
+-->   [4] Resistive losses:   re=653.8182541520207   im=0
+-->   [5] Cross-section area:   re=0.001935480000000006   im=0
+-->   [6] Total losses:   re=653.8182541520207   im=0
+-->   [7] Total current:   re=1.017580360251902e-010   im=0
+-->   [8] Integral of Bx (or Br):   re=-8.555399921878212e-006   im=0
+-->   [9] Integral of By (or Bz):   re=-2.52315387729415e-013   im=0
+-->   [10] Volume:   re=0.0001966447680000002   im=0
+-->   [11] Lorentz force, x/r, steady-state:   re=4.214362656771037   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=-6.245216371023828e-005   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=0   im=0
+-->   [14] Lorentz force, y/z, 2x:   re=0   im=0
+-->   [15] Lorentz torque, steady-state:   re=-0.4281838708064482   im=0
+-->   [16] Lorentz torque, 2x:   re=0   im=0
+-->   [17] Coenergy:   re=0.5668356679262514   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=4.209340077955797   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=0.0003345370112395746   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=2.104670038977898   im=0
+-->   [21] Henrotte force, y/z, 2x:   re=0.0001672685056197873   im=0
+-->   [22] Henrotte torque, steady-state:   re=-0.4276632325189904   im=0
+-->   [23] Henrotte torque, 2x:   re=-0.2138316162594952   im=0
+-->   [24] Moment-of-inertia-like integral:   re=2.135600198468476e-006   im=0
+--> ===================  PlanarLorentz-x (planar)  AC 60Hz   i1=16  ===================
+-->   [0] A.J:   re=4.024645014133135   im=-0.001039345856587373
+-->   [1] Integral of A over the block:   re=1.612473747455775e-010   im=2.062431646009866e-013
+-->   [2] Stored energy:   re=0.2834175253010071   im=0
+-->   [3] Hysteresis & laminated eddy losses:   re=0.1959120785327768   im=0
+-->   [4] Resistive losses:   re=326.9087383927176   im=0
+-->   [5] Cross-section area:   re=0.001935480000000006   im=0
+-->   [6] Total losses:   re=327.1046504712504   im=0
+-->   [7] Total current:   re=1.031222780778496e-010   im=0
+-->   [8] Integral of Bx (or Br):   re=-8.555394876307066e-006   im=4.127404872670721e-009
+-->   [9] Integral of By (or Bz):   re=-2.565264714869299e-013   im=-2.985539853393205e-015
+-->   [10] Volume:   re=0.0001966447680000002   im=0
+-->   [11] Lorentz force, x/r, steady-state:   re=2.107181764662628   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=-3.126138484572834e-005   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=2.107181764662628   im=0.0001414161825213992
+-->   [14] Lorentz force, y/z, 2x:   re=-3.126138484528246e-005   im=2.171482831682229e-008
+-->   [15] Lorentz torque, steady-state:   re=-0.214091979248125   im=0
+-->   [16] Lorentz torque, 2x:   re=-0.214091979248125   im=-1.436762892366485e-005
+-->   [17] Coenergy:   re=0.2834175253010071   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=2.10467010021683   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=0.0001672738264901861   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=2.104670130743298   im=-8.321274337846699e-005
+-->   [21] Henrotte force, y/z, 2x:   re=0.0001672736552941435   im=3.40923211195301e-007
+-->   [22] Henrotte torque, steady-state:   re=-0.2138316223163351   im=0
+-->   [23] Henrotte torque, 2x:   re=-0.2138316254209215   im=8.45811969512377e-006
+--> ===================  PlanarLorentz-x (planar)  Incremental AC   bias i1=16; AC i1=1  ===================
+-->   [18] Henrotte force, x/r, steady-state:   re=0.008221367578971994   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=6.534133847272894e-007   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=0.008221367698216006   im=-3.250497788221367e-007
+-->   [21] Henrotte force, y/z, 2x:   re=6.534127159927481e-007   im=1.331731293731645e-009
+-->   [22] Henrotte torque, steady-state:   re=-0.000835279774673184   im=0
+-->   [23] Henrotte torque, 2x:   re=-0.0008352797868004747   im=3.303953005907723e-008
+-->   [24] Moment-of-inertia-like integral:   re=2.135600198468476e-006   im=0
+-->   [25] Henrotte force, x/r, 1x (incremental):   re=0.5261675193072448   im=-1.040158957947613e-005
+-->   [26] Henrotte force, y/z, 1x (incremental):   re=4.181778081407701e-005   im=4.261554303333652e-008
+-->   [27] Henrotte torque, 1x (incremental):   re=-0.05345790501601561   im=1.057264624307445e-006
+-->   [28] Lorentz force, x/r, 1x (incremental):   re=0.2633976660481993   im=-1.865962408467783e-016
+-->   [29] Lorentz force, y/z, 1x (incremental):   re=-3.36854805310238e-006   im=-2.5796280454192e-010
+-->   [30] Lorentz torque, 1x (incremental):   re=-0.02676149282558955   im=1.009700752142117e-013
+--> ===================  PMTest (planar)  DC   nonlinear magnets, group 1  ===================
+-->   [0] A.J:   re=0   im=0
+-->   [1] Integral of A over the block:   re=0.0002592905085539376   im=0
+-->   [2] Stored energy:   re=499.9028236022652   im=0
+-->   [3] Hysteresis & laminated eddy losses:   re=0   im=0
+-->   [4] Resistive losses:   re=0   im=0
+-->   [5] Cross-section area:   re=0.02   im=0
+-->   [6] Total losses:   re=0   im=0
+-->   [7] Total current:   re=0   im=0
+-->   [8] Integral of Bx (or Br):   re=-0.0003096613571092042   im=0
+-->   [9] Integral of By (or Bz):   re=3.559988111087156e-009   im=0
+-->   [10] Volume:   re=0.02   im=0
+-->   [11] Lorentz force, x/r, steady-state:   re=0   im=0
+-->   [12] Lorentz force, y/z, steady-state:   re=0   im=0
+-->   [13] Lorentz force, x/r, 2x:   re=0   im=0
+-->   [14] Lorentz force, y/z, 2x:   re=0   im=0
+-->   [15] Lorentz torque, steady-state:   re=0   im=0
+-->   [16] Lorentz torque, 2x:   re=0   im=0
+-->   [17] Coenergy:   re=172.3262409644976   im=0
+-->   [18] Henrotte force, x/r, steady-state:   re=0.01845585610134837   im=0
+-->   [19] Henrotte force, y/z, steady-state:   re=1294.271381876776   im=0
+-->   [20] Henrotte force, x/r, 2x:   re=0.009227928050674183   im=0
+-->   [21] Henrotte force, y/z, 2x:   re=647.1356909383882   im=0
+-->   [22] Henrotte torque, steady-state:   re=-0.002607989617964046   im=0
+-->   [23] Henrotte torque, 2x:   re=-0.001303994808982023   im=0
+-->   [24] Moment-of-inertia-like integral:   re=0.0006833333333333326   im=0
+--> 
+--> Done.

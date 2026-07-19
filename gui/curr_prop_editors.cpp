@@ -28,10 +28,10 @@ CurrMaterialEditorDialog::CurrMaterialEditorDialog(QWidget *parent) : QDialog(pa
     form->addRow(tr("Name:"), m_name);
 
     m_ox = new PyLineEdit; m_ox->setText("0");
-    form->addRow(tr("Conductivity, \u03c3x (MS/m):"), m_ox);
+    form->addRow(tr("Conductivity, \u03c3x (S/m):"), m_ox);
 
     m_oy = new PyLineEdit; m_oy->setText("0");
-    form->addRow(tr("Conductivity, \u03c3y (MS/m):"), m_oy);
+    form->addRow(tr("Conductivity, \u03c3y (S/m):"), m_oy);
 
     m_ex = new PyLineEdit; m_ex->setText("1");
     form->addRow(tr("Rel. Permittivity, \u03b5x:"), m_ex);
@@ -203,21 +203,23 @@ CurrConductorEditorDialog::CurrConductorEditorDialog(QWidget *parent) : QDialog(
     form->addRow(tr("Name:"), m_name);
 
     m_type = new QComboBox;
-    m_type->addItem(tr("Prescribed Voltage"));    // 0
-    m_type->addItem(tr("Prescribed Current"));    // 1
+    // Order must match the CircType stored in the .fec and used by csolv:
+    //   CircType 0 -> prescribed current (qc),  1 -> prescribed voltage (vc).
+    m_type->addItem(tr("Prescribed Current"));    // 0
+    m_type->addItem(tr("Prescribed Voltage"));    // 1
     form->addRow(tr("Type:"), m_type);
 
-    m_vcRe = new PyLineEdit; m_vcRe->setText("0");
-    form->addRow(tr("Voltage (Re):"), m_vcRe);
+    // Single complex-valued boxes (accept "re+im*I" / "re+imj"), matching OF's
+    // one-box-per-quantity layout instead of separate Re/Im fields.
+    m_vc = new PyLineEdit; m_vc->setText("0");
+    form->addRow(tr("Voltage (V):"), m_vc);
 
-    m_vcIm = new PyLineEdit; m_vcIm->setText("0");
-    form->addRow(tr("Voltage (Im):"), m_vcIm);
+    m_qc = new PyLineEdit; m_qc->setText("0");
+    form->addRow(tr("Current (A):"), m_qc);
 
-    m_qcRe = new PyLineEdit; m_qcRe->setText("0");
-    form->addRow(tr("Current (Re):"), m_qcRe);
-
-    m_qcIm = new PyLineEdit; m_qcIm->setText("0");
-    form->addRow(tr("Current (Im):"), m_qcIm);
+    connect(m_type, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &CurrConductorEditorDialog::onTypeChanged);
+    onTypeChanged(m_type->currentIndex());
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
@@ -228,24 +230,30 @@ CurrConductorEditorDialog::CurrConductorEditorDialog(QWidget *parent) : QDialog(
     layout->addWidget(buttons);
 }
 
+void CurrConductorEditorDialog::onTypeChanged(int idx)
+{
+    // CircType 0 = prescribed current (qc), 1 = prescribed voltage (vc): only
+    // the prescribed quantity's box is editable.
+    bool volt = (idx == 1);
+    m_vc->setEnabled(volt);
+    m_qc->setEnabled(!volt);
+}
+
 void CurrConductorEditorDialog::fromProp(const CurrCircuit &c)
 {
     m_name->setText(QString::fromStdString(c.CircName));
     m_type->setCurrentIndex(c.CircType);
-    m_vcRe->setText(QString::number(c.vc.re, 'g', 15));
-    m_vcIm->setText(QString::number(c.vc.im, 'g', 15));
-    m_qcRe->setText(QString::number(c.qc.re, 'g', 15));
-    m_qcIm->setText(QString::number(c.qc.im, 'g', 15));
+    onTypeChanged(m_type->currentIndex());
+    m_vc->setText(toQString(c.vc));
+    m_qc->setText(toQString(c.qc));
 }
 
 void CurrConductorEditorDialog::toProp(CurrCircuit &c) const
 {
     c.CircName = m_name->text().toStdString();
     c.CircType = m_type->currentIndex();
-    c.vc.re = m_vcRe->evaluateAsDouble(0);
-    c.vc.im = m_vcIm->evaluateAsDouble(0);
-    c.qc.re = m_qcRe->evaluateAsDouble(0);
-    c.qc.im = m_qcIm->evaluateAsDouble(0);
+    m_vc->evaluateAsComplex(c.vc.re, c.vc.im);
+    m_qc->evaluateAsComplex(c.qc.re, c.qc.im);
 }
 
 // ================================================================

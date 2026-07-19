@@ -47,6 +47,8 @@ public:
     HeatConductorEditorDialog(QWidget *parent = nullptr);
     void fromProp(const HCircuit &c);
     void toProp(HCircuit &c) const;
+private slots:
+    void onTypeChanged(int idx);
 private:
     PyLineEdit *m_name, *m_T, *m_q;
     QComboBox *m_type;
