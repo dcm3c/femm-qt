@@ -165,7 +165,7 @@ int LoadMeshFromTangle(CFemmeDocCore& Doc, const Mesh& tmesh)
         if (lbl < 0) lbl = defaultLabel;
         if (lbl < 0) {
             MsgBox("Material properties have not been defined for all regions.");
-            return FALSE;
+            return -2;   // sentinel: no material assigned (distinct from generic FALSE)
         }
         Doc.meshele[i].lbl = lbl;
         Doc.meshele[i].blk = Doc.labellist[lbl].BlockType;
@@ -245,7 +245,7 @@ int tangle_mesh_and_load(const std::string& inputBase, CFemmeDocCore& Doc)
     Mesh tmesh;
     // Full .fem name -> mesh the magnetics geometry (inputBase is the base, no
     // extension); fkn is the magnetics solver.
-    if (tangle_mesh_fem(inputBase + ".fem", tmesh) != 0)
-        return FALSE;
+    int trc = tangle_mesh_fem(inputBase + ".fem", tmesh);
+    if (trc != 0) return trc;   // propagate TangleStatus (2/3/4) so main can exit-code it
     return LoadMeshFromTangle(Doc, tmesh);
 }

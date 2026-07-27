@@ -32,6 +32,7 @@
 #include "mag_document.h"
 #include "elec_document.h"
 #include "results_doc.h"
+#include "postproc_select.h"
 #include "py_state.h"
 #include "py_mag_editor.h"
 #include "tcp_server.h"
@@ -56,6 +57,8 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QFormLayout>
+#include <QGroupBox>
+#include <QTimer>
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QSettings>
@@ -339,6 +342,27 @@ EditorWidget *MainWindow::addEditorTab(DocumentBase *doc, const QString &title)
     return editor;
 }
 
+// OF warns when a solved problem has regions claimed by more than one block
+// label, and opens the view in block-label mode with names showing so the
+// flagged regions are visible (FemmviewDoc.cpp / belaviewDoc.cpp + the
+// FirstDraw handling in FemmviewView.cpp / belaviewView.cpp).
+// Deferred by one event-loop turn. At the call site the view's paint events
+// have only been POSTED, not processed, so showing the dialog inline could put
+// it over a blank or half-drawn window. Returning to the event loop first
+// flushes those paints, so the warning lands over the drawn view with the
+// flagged regions already visible. The parent doubles as the context object,
+// so the lambda is dropped if the window goes away first.
+static void warnMultiplyDefinedLabels(QWidget *parent)
+{
+    QTimer::singleShot(0, parent, [parent]() {
+        QMessageBox::warning(parent, QObject::tr("Multiply Defined Regions"),
+            QObject::tr("Some regions in the problem have been defined\n"
+                        "by more than one block label.  These potentially\n"
+                        "problematic regions will appear as selected in\n"
+                        "the initial view."));
+    });
+}
+
 void MainWindow::openResultsFile(const QString &ansPath, void *scriptDoc)
 {
     QString tabName = QFileInfo(ansPath).fileName();
@@ -401,6 +425,7 @@ void MainWindow::openResultsFile(const QString &ansPath, void *scriptDoc)
         bool isCurr = ansPath.endsWith(".anc", Qt::CaseInsensitive);
         ScalarResultsWidget *sw = nullptr;
         size_t nodeCount = 0, elemCount = 0;
+        bool bMultiLabel = false;
 
         if (isHeat) {
             // Heat flow postprocessor
@@ -418,6 +443,7 @@ void MainWindow::openResultsFile(const QString &ansPath, void *scriptDoc)
             sw = new ScalarResultsWidget(doc);
             nodeCount = doc->meshnode.size();
             elemCount = doc->meshelem.size();
+            bMultiLabel = ppMarkMultiplyDefinedLabels(doc);
 
             // Apply heat postprocessor preferences
             doc->Smooth = settings.value("ho/smooth", true).toBool();
@@ -466,6 +492,7 @@ void MainWindow::openResultsFile(const QString &ansPath, void *scriptDoc)
             sw = new ScalarResultsWidget(doc);
             nodeCount = doc->meshnode.size();
             elemCount = doc->meshelem.size();
+            bMultiLabel = ppMarkMultiplyDefinedLabels(doc);
 
             doc->Smooth = settings.value("co/smooth", true).toBool();
             int cdt = settings.value("co/densityType", 1).toInt();
@@ -512,6 +539,7 @@ void MainWindow::openResultsFile(const QString &ansPath, void *scriptDoc)
             sw = new ScalarResultsWidget(doc);
             nodeCount = doc->meshnode.size();
             elemCount = doc->meshelem.size();
+            bMultiLabel = ppMarkMultiplyDefinedLabels(doc);
 
             doc->Smooth = settings.value("eo/smooth", true).toBool();
 
@@ -561,6 +589,13 @@ void MainWindow::openResultsFile(const QString &ansPath, void *scriptDoc)
             sw->setSnapToGrid(settings.value("eo/snap", false).toBool());
         }
 
+        // Multiply-defined regions override the stored view preferences, so the
+        // labels just flagged are actually visible. Set before the menu sync.
+        if (bMultiLabel) {
+            sw->setMode(2);
+            sw->m_showNames = true;
+        }
+
         auto *sub = m_mdiArea->addSubWindow(sw);
         sub->setWindowTitle(tabName);
         sub->setWindowIcon(QIcon(QString(":/icons/") + (isHeat ? "ho.ico" : isCurr ? "co.ico" : "eo.ico")));
@@ -573,6 +608,7 @@ void MainWindow::openResultsFile(const QString &ansPath, void *scriptDoc)
         updateStatus(QString("Loaded %1: %2 nodes, %3 elements")
             .arg(tabName)
             .arg(nodeCount).arg(elemCount));
+        if (bMultiLabel) warnMultiplyDefinedLabels(this);
         addToRecentFiles(ansPath);
     } else {
         // Vector potential postprocessor (magnetics)
@@ -590,7 +626,9 @@ void MainWindow::openResultsFile(const QString &ansPath, void *scriptDoc)
             }
         }
         auto *rw = new ResultsWidget(doc);
+        bool bMultiLabel = ppMarkMultiplyDefinedLabels(doc);
         int ppMode = settings.value("pp/editAction", 0).toInt();
+        if (bMultiLabel) ppMode = 2;   // block-label mode, so the flagged labels show
         rw->setMode(ppMode);
         if (ppMode == 1) m_ppActContour->setChecked(true);
         else if (ppMode == 2) m_ppActArea->setChecked(true);
@@ -615,6 +653,7 @@ void MainWindow::openResultsFile(const QString &ansPath, void *scriptDoc)
         rw->m_greyScale = settings.value("pp/greyscale", false).toBool();
         rw->m_showPoints = settings.value("pp/points", true).toBool();
         rw->m_showNames = settings.value("pp/names", false).toBool();
+        if (bMultiLabel) rw->m_showNames = true;
         rw->m_showMask = settings.value("pp/showMask", false).toBool();
         rw->m_vectorType = settings.value("pp/vectorType", 0).toInt();
         rw->setShowGrid(settings.value("pp/grid", false).toBool());
@@ -645,6 +684,7 @@ void MainWindow::openResultsFile(const QString &ansPath, void *scriptDoc)
         updateStatus(QString("Loaded %1: %2 nodes, %3 elements")
             .arg(tabName)
             .arg(doc->meshnode.size()).arg(doc->meshelem.size()));
+        if (bMultiLabel) warnMultiplyDefinedLabels(this);
         addToRecentFiles(ansPath);
     }
 }
@@ -1408,7 +1448,10 @@ void MainWindow::createCommonMenus()
     edit->addAction(tr("Mi&rror"), QKeySequence(), this, &MainWindow::onMirror);
     edit->addAction(tr("Create &Radius..."), QKeySequence(), this, &MainWindow::onCreateRadius);
     edit->addSeparator();
-    edit->addAction(tr("Copy as &Bitmap"), QKeySequence(Qt::CTRL | Qt::Key_C), [this]() {
+    // Deliberately no keyboard shortcut: Ctrl+C here would shadow the ordinary
+    // Ctrl+C copy in every child window (notably the Output dialog's selectable
+    // text), and OF bound no shortcut to this either.
+    edit->addAction(tr("Copy as &Bitmap"), QKeySequence(), [this]() {
         QWidget *target = nullptr;
         auto *e = activeEditor(); if (e) target = e;
         if (!target) { auto *r = activeResults(); if (r) target = r; }
@@ -2261,6 +2304,7 @@ void MainWindow::onMove()
     else
         e->document()->RotateMove(CComplex(dlg.aboutX(), dlg.aboutY()),
                                   dlg.angle(), e->editAction());
+    e->invalidateMeshDisplay();
     e->update();
 }
 
@@ -2282,13 +2326,23 @@ void MainWindow::onScale()
 {
     auto *e = activeEditor(); if (!e || !e->document()) return;
 
+    // Default the base point to the center of the bounding box of the SELECTED
+    // geometry, so scaling grows/shrinks about what is being scaled rather than
+    // about the origin. Matches OF (cdrawView.cpp OnEditScale).
+    double cx = 0, cy = 0;
+    double xmin, ymin, xmax, ymax;
+    if (e->document()->getBoundingBox(xmin, ymin, xmax, ymax, true)) {
+        cx = (xmin + xmax) / 2.0;
+        cy = (ymin + ymax) / 2.0;
+    }
+
     QDialog dlg(this);
     dlg.setWindowTitle(tr("Scale"));
     auto *lay = new QGridLayout(&dlg);
     lay->addWidget(new QLabel(tr("Base point, x:")), 0, 0);
-    auto *bx = new PyLineEdit; bx->setText("0"); lay->addWidget(bx, 0, 1);
+    auto *bx = new PyLineEdit; bx->setText(QString::number(cx, 'g', 10)); lay->addWidget(bx, 0, 1);
     lay->addWidget(new QLabel(tr("Base point, y:")), 1, 0);
-    auto *by = new PyLineEdit; by->setText("0"); lay->addWidget(by, 1, 1);
+    auto *by = new PyLineEdit; by->setText(QString::number(cy, 'g', 10)); lay->addWidget(by, 1, 1);
     lay->addWidget(new QLabel(tr("Scale factor:")), 2, 0);
     auto *sf = new PyLineEdit; sf->setText("1"); lay->addWidget(sf, 2, 1);
     auto *btns = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -2300,6 +2354,7 @@ void MainWindow::onScale()
     e->document()->pushUndo();
     e->document()->ScaleMove(bx->evaluateAsDouble(), by->evaluateAsDouble(),
                              sf->evaluateAsDouble(1.0), e->editAction());
+    e->invalidateMeshDisplay();
     e->update();
 }
 
@@ -2309,25 +2364,37 @@ void MainWindow::onMirror()
 
     QDialog dlg(this);
     dlg.setWindowTitle(tr("Mirror"));
-    auto *lay = new QGridLayout(&dlg);
-    lay->addWidget(new QLabel(tr("Point 1, x:")), 0, 0);
-    auto *ax = new PyLineEdit; ax->setText("0"); lay->addWidget(ax, 0, 1);
-    lay->addWidget(new QLabel(tr("Point 1, y:")), 1, 0);
-    auto *ay = new PyLineEdit; ay->setText("0"); lay->addWidget(ay, 1, 1);
-    lay->addWidget(new QLabel(tr("Point 2, x:")), 2, 0);
-    auto *bxe = new PyLineEdit; bxe->setText("0"); lay->addWidget(bxe, 2, 1);
-    lay->addWidget(new QLabel(tr("Point 2, y:")), 3, 0);
-    auto *bye = new PyLineEdit; bye->setText("0"); lay->addWidget(bye, 3, 1);
+
+    // Two points, each as a labelled group holding side-by-side x and y edits
+    // (matching OF's IDD_MIRRORDLG).
+    auto *ax = new PyLineEdit; ax->setText("0");
+    auto *ay = new PyLineEdit; ay->setText("0");
+    auto *bxe = new PyLineEdit; bxe->setText("0");
+    auto *bye = new PyLineEdit; bye->setText("0");
+
+    auto makePointGroup = [](const QString &title, PyLineEdit *xEdit, PyLineEdit *yEdit) {
+        auto *box = new QGroupBox(title);
+        auto *row = new QHBoxLayout(box);
+        row->addWidget(xEdit);
+        row->addWidget(yEdit);
+        return box;
+    };
+
     auto *btns = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(btns, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
     connect(btns, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
-    lay->addWidget(btns, 4, 0, 1, 2);
+
+    auto *lay = new QVBoxLayout(&dlg);
+    lay->addWidget(makePointGroup(tr("First point on line of symmetry"), ax, ay));
+    lay->addWidget(makePointGroup(tr("Second point on line of symmetry"), bxe, bye));
+    lay->addWidget(btns);
 
     if (dlg.exec() != QDialog::Accepted) return;
     e->document()->pushUndo();
     e->document()->MirrorSelected(ax->evaluateAsDouble(), ay->evaluateAsDouble(),
                                   bxe->evaluateAsDouble(), bye->evaluateAsDouble(),
                                   e->editAction());
+    e->invalidateMeshDisplay();
     e->update();
 }
 

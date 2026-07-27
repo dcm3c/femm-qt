@@ -108,18 +108,13 @@ void HeatFlowHandler::showXYPlotDialog(QWidget *parent)
     int npts = QSettings().value("ho/plotPoints", 1500).toInt();
     m_doc->GetLineValues(pts, plotType, npts);
     if (pts.empty()) { m_widget->emitStatus("No data for plot"); return; }
-    auto *pdlg = new QDialog(parent);
+    auto *pdlg = new PlotDialog(choice, parent);
     pdlg->setAttribute(Qt::WA_DeleteOnClose);
-    pdlg->setWindowTitle(choice);
-    pdlg->resize(600, 400);
-    auto *plot = new PlotWidget;
-    auto *lay = new QVBoxLayout(pdlg);
-    lay->addWidget(plot);
     PlotSeries series;
     series.label = choice;
     for (auto &pt : pts) { series.x.push_back(pt.x); series.y.push_back(pt.vals.empty() ? 0 : pt.vals[0]); }
-    plot->addSeries(series);
-    plot->setAxisLabels(tr("Position"), choice);
+    pdlg->plot()->addSeries(series);
+    pdlg->plot()->setAxisLabels(tr("Position"), choice);
     pdlg->show();
 }
 

@@ -89,6 +89,9 @@ void register_elec_postproc_py(ElecResultsDoc *doc) {
             throw std::runtime_error("Cannot integrate\nNo area has been selected");
         if (type >= 5) s_doc->MakeMask();
         CComplex z = s_doc->BlockIntegral(type);
+        if (s_doc->maskSelectionInvalid)
+            throw std::runtime_error("The selected region is invalid. A valid selection "
+                                     "cannot abut a region which is not free space.");
         return std::make_tuple(z.re, z.im);
     });
 

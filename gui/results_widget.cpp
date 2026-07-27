@@ -8,12 +8,14 @@
 #include "results_widget.h"
 #include "complex_format.h"
 #include "results_doc.h"
+#include "postproc_select.h"
 #include "py_state.h"
 #include "script_callbacks.h"
 #include "view_colors.h"
 #include "magnetics_handler.h"
 
 #include <QPainter>
+#include <QMessageBox>
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QKeyEvent>
@@ -1045,6 +1047,20 @@ void ResultsWidget::mousePressEvent(QMouseEvent *event)
 
 void ResultsWidget::mouseDoubleClickEvent(QMouseEvent *event)
 {
+    // Right double-click in point mode: report the closest input node, as the
+    // preprocessor does for the closest node/segment/label.
+    if (event->button() == Qt::RightButton && m_mode == 0 && m_doc) {
+        double xd, yd;
+        toDrawing(event->pos().x(), event->pos().y(), xd, yd);
+        int i = ppClosestNode(xd, yd, m_doc->nodelist);
+        if (i >= 0) {
+            auto &n = m_doc->nodelist[i];
+            QMessageBox::information(this, tr("Closest Input Node"),
+                QString("Closest input node:\n(%1,%2)").arg(n.x).arg(n.y));
+        }
+        return;
+    }
+
     if (event->button() != Qt::LeftButton || m_mode != 2 || !m_doc) return;
     double xd, yd;
     toDrawing(event->pos().x(), event->pos().y(), xd, yd);

@@ -228,6 +228,7 @@ void EditorWidget::paintEvent(QPaintEvent *)
     if (!m_doc) return;
 
     if (m_showGrid) drawGrid(p);
+    hideMeshIfGeometryChanged();
     if (m_showMesh) drawMesh(p);
     drawSegments(p);
     drawArcSegments(p);
@@ -392,12 +393,13 @@ void EditorWidget::drawBlockLabels(QPainter &p)
         // Label text
         if (m_showNames) {
             p.setPen(viewColors().name());
-            int yoff = 0;
-            if (!blk.BlockType.empty() && blk.BlockType != "<None>") {
-                p.drawText(QPointF(sp.x() + 5, sp.y() - 2),
-                           QString::fromStdString(blk.BlockType));
-                yoff = 12;
-            }
+            // Material name; a label with no material assigned shows "<None>"
+            // (matching OF) so it can't be mistaken for a bare node.
+            QString matText = (blk.BlockType.empty() || blk.BlockType == "<None>")
+                              ? QStringLiteral("<None>")
+                              : QString::fromStdString(blk.BlockType);
+            p.drawText(QPointF(sp.x() + 5, sp.y() - 2), matText);
+            int yoff = 12;
             // Circuit info: [CircuitName:Turns]
             if (!blk.InCircuit.empty() && blk.InCircuit != "<None>") {
                 QString circText = QString("[%1:%2]")
@@ -951,7 +953,34 @@ void EditorWidget::loadMeshFromData(int numNodes, const double *nx, const double
         }
     }
     m_showMesh = true;
+    if (m_doc) {
+        m_meshGeomNodes = m_doc->nodelist.size();
+        m_meshGeomLines = m_doc->linelist.size();
+        m_meshGeomArcs  = m_doc->arclist.size();
+    }
     update();
+}
+
+// Stop displaying the mesh once the geometry it was built against changes.
+// Checked at paint time so every mutation path is covered -- mouse, menu, undo
+// and script alike -- rather than sprinkling calls through a dozen handlers.
+//
+// The counts are re-baselined here, which makes this a ONE-SHOT hide rather
+// than a standing veto: the user can turn the mesh back on from Mesh > Show
+// Mesh and it stays on until the next add or delete. Mesh data is kept either
+// way; Purge Mesh is still the thing that discards it.
+void EditorWidget::hideMeshIfGeometryChanged()
+{
+    if (!m_doc) return;
+    size_t nn = m_doc->nodelist.size();
+    size_t nl = m_doc->linelist.size();
+    size_t na = m_doc->arclist.size();
+    if (nn == m_meshGeomNodes && nl == m_meshGeomLines && na == m_meshGeomArcs)
+        return;
+    m_meshGeomNodes = nn;
+    m_meshGeomLines = nl;
+    m_meshGeomArcs  = na;
+    m_showMesh = false;
 }
 
 void EditorWidget::clearMesh()

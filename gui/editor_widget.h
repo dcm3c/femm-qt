@@ -57,6 +57,12 @@ public:
     bool showNames() const { return m_showNames; }
     void setShowMesh(bool on) { m_showMesh = on; update(); }
     bool showMesh() const { return m_showMesh; }
+
+    // For operations that relocate existing geometry (Move/Scale/Mirror): the
+    // mesh no longer conforms, but the node/segment/arc COUNTS are unchanged,
+    // so the paint-time check cannot see it. Mesh data is kept -- Show Mesh
+    // turns it back on. Callers repaint themselves.
+    void invalidateMeshDisplay() { m_showMesh = false; }
     void loadMeshFromData(int numNodes, const double *nx, const double *ny,
                           int numTris, const int *triNodes, const int *triRegion);
     void clearMesh();
@@ -127,6 +133,13 @@ private:
     std::vector<MeshNode> m_meshNodes;
     std::vector<MeshEdge> m_meshLines;     // edges in defined regions (yellow)
     std::vector<MeshEdge> m_greyMeshLines; // edges in undefined regions (grey)
+
+    // Geometry the displayed mesh was built against. If a node, segment or arc
+    // is added or deleted the mesh no longer conforms, so it stops being shown
+    // (OF does the same). Block labels are deliberately not counted: they do
+    // not change the triangulation's shape.
+    void hideMeshIfGeometryChanged();
+    size_t m_meshGeomNodes = 0, m_meshGeomLines = 0, m_meshGeomArcs = 0;
 
     // Pan state (middle-button drag)
     bool m_panning = false;

@@ -17,6 +17,9 @@
 #include <QLabel>
 #include <QFileDialog>
 #include <QMouseEvent>
+#include <QShortcut>
+#include <QGuiApplication>
+#include <QClipboard>
 #include <cmath>
 #include <cstdio>
 #include <algorithm>
@@ -283,7 +286,8 @@ void PlotWidget::mouseMoveEvent(QMouseEvent *event)
     m_hasCursor = true;
 
     // Build info string
-    QString info = QString("x = %1").arg(dataX, 0, 'g', 6);
+    QString xName = m_xLabel.isEmpty() ? QStringLiteral("x") : m_xLabel;
+    QString info = QString("%1 = %2").arg(xName).arg(dataX, 0, 'g', 6);
     for (size_t si = 0; si < m_series.size(); si++) {
         double yVal = interpolateY(m_series[si], dataX);
         info += QString("   %1 = %2").arg(m_series[si].label).arg(yVal, 0, 'g', 6);
@@ -355,6 +359,14 @@ PlotDialog::PlotDialog(const QString &title, QWidget *parent)
 
     connect(m_plot, &PlotWidget::cursorInfo, [this](const QString &text) {
         m_cursorLabel->setText(text);
+    });
+
+    // Ctrl+C copies the currently displayed cursor coordinates to the clipboard
+    auto *copyShortcut = new QShortcut(QKeySequence::Copy, this);
+    connect(copyShortcut, &QShortcut::activated, [this]() {
+        const QString text = m_cursorLabel->text();
+        if (!text.isEmpty())
+            QGuiApplication::clipboard()->setText(text);
     });
 
     auto *layout = new QVBoxLayout(this);

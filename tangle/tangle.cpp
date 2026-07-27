@@ -8,8 +8,8 @@
 // Author: David Meeker
 // Generated with the assistance of Claude Code
 //
-// Version 0.4.14
-// 12 Jul 2026
+// Version 0.4.17
+// 26 Jul 2026
 //
 // Supports: -p -P -j -q -e -A -a -z -Q -I -Y options
 //
@@ -234,6 +234,9 @@ struct Segment {
     double lfs = -1.0;   // per-segment LFS constraint (-1 = none)
     int pbc_type = -1;    // 0=periodic, 1=anti-periodic (-1 = none)
     bool no_split = false; // true for AGE chord segments (must stay uniformly spaced)
+    int pbc_side = -1;   // which side of its (anti)periodic pair this segment
+                         // belongs to (0 or 1), assigned by the reader; -1 = n/a.
+                         // Sides are DECLARED, never inferred from connectivity.
 };
 
 struct Hole { double x, y; };
@@ -972,10 +975,10 @@ int enforceConstraints(Mesh& mesh, bool quiet){
                 std::sort(onSeg.begin(), onSeg.end());
                 int prev=su;
                 for(auto& [t,vi] : onSeg){
-                    newSegs.push_back({prev, vi, seg.marker, seg.lfs, seg.pbc_type, seg.no_split});
+                    newSegs.push_back({prev, vi, seg.marker, seg.lfs, seg.pbc_type, seg.no_split, seg.pbc_side});
                     prev=vi;
                 }
-                newSegs.push_back({prev, sv, seg.marker, seg.lfs, seg.pbc_type, seg.no_split});
+                newSegs.push_back({prev, sv, seg.marker, seg.lfs, seg.pbc_type, seg.no_split, seg.pbc_side});
             }
         }
         if(newSegs.size() != mesh.segments.size()){
@@ -2289,8 +2292,8 @@ void refineQuality(Mesh& mesh, const Options& opts, int nInputVerts){
         for(int& nb : segAdj[seg.v0]) if(nb==seg.v1) nb=midIdx;
         for(int& nb : segAdj[seg.v1]) if(nb==seg.v0) nb=midIdx;
         segAdj[midIdx]={seg.v0,seg.v1};
-        Segment s1{seg.v0,midIdx,seg.marker,seg.lfs,seg.pbc_type,seg.no_split};
-        Segment s2{midIdx,seg.v1,seg.marker,seg.lfs,seg.pbc_type,seg.no_split};
+        Segment s1{seg.v0,midIdx,seg.marker,seg.lfs,seg.pbc_type,seg.no_split,seg.pbc_side};
+        Segment s2{midIdx,seg.v1,seg.marker,seg.lfs,seg.pbc_type,seg.no_split,seg.pbc_side};
         mesh.segments[si]=s1;
         int newSi=(int)mesh.segments.size();
         mesh.segments.push_back(s2);
@@ -2833,40 +2836,37 @@ void buildPbcTwinFromCDT(Mesh& mesh){
 
     for(auto [marker, pbcType]:pbcBoundaries){
         if(crossMarkers.count(marker)) continue;
-        std::vector<int> allSegs;
-        for(int si=0;si<(int)mesh.segments.size();si++)
-            if(mesh.segments[si].marker==marker && mesh.segments[si].pbc_type==pbcType)
-                allSegs.push_back(si);
-
-        // BFS split into two connected chains
-        std::set<int> remaining(allSegs.begin(), allSegs.end());
-        auto extractChain=[&]() -> std::vector<int> {
-            if(remaining.empty()) return {};
-            std::vector<int> chain;
-            std::map<int,std::vector<int>> adj;
-            for(int si:remaining){
-                adj[mesh.segments[si].v0].push_back(si);
-                adj[mesh.segments[si].v1].push_back(si);
-            }
-            std::queue<int> q;
-            int first=*remaining.begin();
-            q.push(first); remaining.erase(first); chain.push_back(first);
-            while(!q.empty()){
-                int si=q.front(); q.pop();
-                for(int nd:{mesh.segments[si].v0, mesh.segments[si].v1})
-                    for(int ni:adj[nd])
-                        if(remaining.count(ni)){
-                            remaining.erase(ni); chain.push_back(ni); q.push(ni);
-                        }
-            }
-            return chain;
-        };
-        auto sl1=extractChain(), sl2=extractChain();
-        if(sl1.empty()||sl2.empty()) continue;
+        // Partition the group by its DECLARED side (reader-assigned pbc_side).
+        // Sides are never inferred from connectivity — connectivity cannot tell
+        // two adjoining sides apart (an anti-periodic line straight through the
+        // model center is one connected chain), which used to punt silently.
+        std::vector<int> sl1, sl2;
+        int untagged=0;
+        for(int si=0;si<(int)mesh.segments.size();si++){
+            auto& sg=mesh.segments[si];
+            if(sg.marker!=marker || sg.pbc_type!=pbcType) continue;
+            if(sg.pbc_side==0) sl1.push_back(si);
+            else if(sg.pbc_side==1) sl2.push_back(si);
+            else untagged++;
+        }
+        if(untagged){
+            std::cerr<<"Warning: PBC boundary (marker "<<marker<<") has "<<untagged
+                     <<" segment(s) without a declared side; pairing skipped.\n";
+            continue;
+        }
+        if(sl1.empty()||sl2.empty()){
+            std::cerr<<"Warning: PBC boundary (marker "<<marker<<") is missing one "
+                       "side; pairing skipped.\n";
+            continue;
+        }
 
         auto chain1=buildDirectedChain(sl1), chain2=buildDirectedChain(sl2);
-        if(chain1.empty()||chain2.empty()) continue;
-        if(chain1.size()!=chain2.size()) continue;
+        if(chain1.empty()||chain2.empty() || chain1.size()!=chain2.size()){
+            std::cerr<<"Warning: PBC boundary (marker "<<marker<<") sides have "
+                     <<chain1.size()<<" vs "<<chain2.size()
+                     <<" nodes; pairing skipped.\n";
+            continue;
+        }
 
         bdryPairs.push_back({chain1, chain2, pbcType});
     }
@@ -2955,7 +2955,11 @@ void buildPbcTwinFromCDT(Mesh& mesh){
 
             for(int i=0;i<(int)c1.size();i++){
                 int a=c1[i], b=c2[i];
-                if(a==b) continue;
+                // a==b happens when the two sides of a boundary adjoin: the
+                // shared node is its own twin. Record it — the refinement
+                // partner-split lookup needs the entry, and the pair reaches
+                // the .pbc output (anti-periodic: A = -A pins A = 0 there,
+                // matching original FEMM).
                 mesh.pbc_twin[a]=b; mesh.pbc_twin[b]=a;
                 mesh.pbc_node_type[a]=bp.pbcType;
                 mesh.pbc_node_type[b]=bp.pbcType;
@@ -3156,13 +3160,17 @@ bool readPolyFile(const std::string& filename, Mesh& mesh, int& nAttribs){
 
     // ---- tangle extensions: arcs and PBCs (optional, after regions) ----
 
-    // Arc segments
+    // Arc segments. polyArcs records each arc's chord-segment range so a
+    // same-marker PBC declaration can identify its two sides by SOURCE ARC.
+    std::vector<std::array<int,3>> polyArcs; // {firstSeg, nSegs, marker}
+    size_t nPlainSegs = segs.size();
     {
         s.skipComments();
         int nArcs=0, arcHasMarkers=0;
         if(s.nextInt(nArcs) && s.nextInt(arcHasMarkers)){
             for(int i=0;i<nArcs;i++){
                 s.skipComments();
+                size_t arcFirst = segs.size();
                 int idx=0, v0=0, v1=0;
                 double angle=0, maxSegAngle=0;
                 s.nextInt(idx); s.nextInt(v0); s.nextInt(v1);
@@ -3188,7 +3196,11 @@ bool readPolyFile(const std::string& filename, Mesh& mesh, int& nAttribs){
                 double ax=pts[v0].x, ay=pts[v0].y;
                 double bx=pts[v1].x, by=pts[v1].y;
                 double d=std::sqrt((bx-ax)*(bx-ax) + (by-ay)*(by-ay));
-                if(d<1e-30){ segs.push_back({v0, v1, marker, arcLfs}); continue; }
+                if(d<1e-30){
+                    segs.push_back({v0, v1, marker, arcLfs});
+                    polyArcs.push_back({(int)arcFirst, 1, marker});
+                    continue;
+                }
 
                 double tta=angle*M_PI/180.0;
                 double R=d/(2.0*std::sin(tta/2.0));
@@ -3221,6 +3233,7 @@ bool readPolyFile(const std::string& filename, Mesh& mesh, int& nAttribs){
                         }
                     }
                 }
+                polyArcs.push_back({(int)arcFirst, (int)(segs.size()-arcFirst), marker});
             }
         }
     }
@@ -3234,14 +3247,50 @@ bool readPolyFile(const std::string& filename, Mesh& mesh, int& nAttribs){
                 s.skipComments();
                 int idx=0, markerA=0, markerB=0, type=0;
                 s.nextInt(idx); s.nextInt(markerA); s.nextInt(markerB); s.nextInt(type);
-                // Mark all segments with markerA or markerB as PBC
-                for(auto& seg:segs){
-                    if(seg.marker==markerA || seg.marker==markerB){
-                        seg.pbc_type=type;
+                // Tag every segment of the pair with its type AND its side.
+                // Sides are DECLARED here, never inferred from connectivity
+                // later (connectivity cannot tell two adjoining sides apart).
+                if(markerA!=markerB){
+                    // Cross-marker form: the marker IS the side.
+                    for(auto& seg:segs){
+                        if(seg.marker==markerA){ seg.pbc_type=type; seg.pbc_side=0; }
+                        else if(seg.marker==markerB){ seg.pbc_type=type; seg.pbc_side=1; }
+                    }
+                } else {
+                    // Same-marker form (FEMM-style): the marker must identify
+                    // exactly two entities — two plain segments, or two arcs
+                    // (each arc's chord range is one side). Anything else is an
+                    // ambiguous declaration, mirroring original FEMM's
+                    // "assigned to more than two segments" hard error.
+                    std::vector<int> plain;
+                    for(size_t si=0;si<nPlainSegs;si++)
+                        if(segs[si].marker==markerA) plain.push_back((int)si);
+                    std::vector<int> arcIdx;
+                    for(size_t ai=0;ai<polyArcs.size();ai++)
+                        if(polyArcs[ai][2]==markerA) arcIdx.push_back((int)ai);
+                    if(plain.size()==2 && arcIdx.empty()){
+                        segs[plain[0]].pbc_type=type; segs[plain[0]].pbc_side=0;
+                        segs[plain[1]].pbc_type=type; segs[plain[1]].pbc_side=1;
+                    } else if(arcIdx.empty() ? false :
+                              (arcIdx.size()==2 && plain.empty() &&
+                               polyArcs[arcIdx[0]][1]==polyArcs[arcIdx[1]][1])){
+                        for(int side=0;side<2;side++){
+                            auto& a=polyArcs[arcIdx[side]];
+                            for(int k2=0;k2<a[1];k2++){
+                                segs[a[0]+k2].pbc_type=type;
+                                segs[a[0]+k2].pbc_side=side;
+                            }
+                        }
+                    } else {
+                        std::cerr<<"Error: PBC declaration "<<idx<<" (marker "<<markerA
+                                 <<", type "<<type<<") must name exactly two segments or two\n"
+                                   "equal-count arcs when both markers are the same; found "
+                                 <<plain.size()<<" segment(s) and "<<arcIdx.size()<<" arc(s).\n"
+                                   "Use two distinct markers, one per side, for chain boundaries.\n";
+                        return false;
                     }
                 }
-                // Record the declaration: buildPbcTwinFromCDT needs to know
-                // WHICH markers pair when the two chains carry different ones.
+                // Record the declaration for buildPbcTwinFromCDT.
                 mesh.pbc_defs.push_back({markerA, markerB, type});
             }
         }
@@ -3577,14 +3626,18 @@ bool readFemFile(const std::string& filename,
             continue;
         }
 
-        // Read block labels -> regions (skip <No Mesh> blocks, which become holes)
-        // blockType in .fem is 1-based material index; 0 = <No Mesh>.
-        // Region attributes use k+1 numbering that skips <No Mesh> blocks,
-        // matching writepoly.cpp so the solver indexes labellist[] correctly.
+        // Read block labels -> regions. Each block label seeds a region tagged
+        // r.attrib = k+1 (k = its position in this list), so the solver's
+        // region_attrib-1 indexes labellist[]. A label with no material assigned
+        // ("<None>", written to the .fem as index 0) is meshed like any other, so
+        // the mesh button fills the region instead of leaving a gap; the mesh
+        // display greys it via a block-label lookup, and the solver rejects <None>
+        // before solving. Real holes come only from the [NumHoles] section, never
+        // from a block label.
         if(iPrefix(trimmed,"[numblocklabels]")){
             std::istringstream ss(stripKey(trimmed));
             int n; ss>>n;
-            int k=0; // counter for non-<No Mesh> blocks
+            int k=0; // block-label counter -> k+1 region attributes
             for(int i=0;i<n;i++){
                 if(!std::getline(f,line)) break;
                 double v[9]; int got=parseNums(line,v,9);
@@ -3599,15 +3652,10 @@ bool readFemFile(const std::string& filename,
                 if(got>6) group=(int)v[6];
                 if(got>7) turns=(int)v[7];
                 if(got>8) isExt=(int)v[8];
-                (void)circIdx; (void)magDir; (void)turns; (void)group;
-                if(blockType==0){
-                    // <No Mesh> block → add as hole seed point
-                    holes.push_back({x,y});
-                    continue;
-                }
+                (void)blockType; (void)circIdx; (void)magDir; (void)turns; (void)group;
                 Region r;
                 r.x=x; r.y=y;
-                r.attrib=(double)(k+1); // k+1 encoding, skipping <No Mesh> blocks
+                r.attrib=(double)(k+1); // block label number; solver maps back via labellist[]
                 if(diam>0) r.max_area = M_PI*diam*diam/4.0;
                 else r.max_area = -1.0;
                 regions.push_back(r);
@@ -3900,10 +3948,11 @@ bool readFemFile(const std::string& filename,
             auto [s1,n1]=femSegRange[fi1];
             if(n0!=1||n1!=1) continue; // should be single segments
 
-            // Just tag with pbc_type — orientation and node pairing are
-            // determined from CDT by buildPbcTwinFromCDT after hole removal.
-            segs[s0].pbc_type=type;
-            segs[s1].pbc_type=type;
+            // Tag with pbc_type and DECLARED side — orientation and node
+            // pairing are determined from CDT by buildPbcTwinFromCDT after
+            // hole removal, but which segment is which side is fixed here.
+            segs[s0].pbc_type=type; segs[s0].pbc_side=0;
+            segs[s1].pbc_type=type; segs[s1].pbc_side=1;
         }
 
         // Pair arc-derived chord segments
@@ -3922,11 +3971,11 @@ bool readFemFile(const std::string& filename,
                          <<"' have different chord counts ("<<n0<<" vs "<<n1<<")\n";
                 continue;
             }
-            // Just tag all arc chord segments with pbc_type — orientation
-            // and node pairing are handled by buildPbcTwinFromCDT.
+            // Tag all arc chord segments with pbc_type and DECLARED side —
+            // orientation and node pairing are handled by buildPbcTwinFromCDT.
             for(int j=0;j<n0;j++){
-                segs[s0+j].pbc_type=type;
-                segs[s1+j].pbc_type=type;
+                segs[s0+j].pbc_type=type; segs[s0+j].pbc_side=0;
+                segs[s1+j].pbc_type=type; segs[s1+j].pbc_side=1;
             }
         }
     }
@@ -4757,9 +4806,9 @@ static int runMeshPipeline(Mesh& mesh, const Options& opts)
                     mesh.vertices.push_back({mx,my,midIdx,bm,{}});
                 }
                 int v0=seg.v0, v1=seg.v1, mk=seg.marker;
-                double slfs=seg.lfs; int spt=seg.pbc_type;
-                mesh.segments[si]={v0,midIdx,mk,slfs,spt};
-                mesh.segments.insert(mesh.segments.begin()+si+1,{midIdx,v1,mk,slfs,spt});
+                double slfs=seg.lfs; int spt=seg.pbc_type; int sps=seg.pbc_side;
+                mesh.segments[si]={v0,midIdx,mk,slfs,spt,false,sps};
+                mesh.segments.insert(mesh.segments.begin()+si+1,{midIdx,v1,mk,slfs,spt,false,sps});
                 segEdges.erase(edgeKey(v0,v1));
                 segEdges.insert(edgeKey(v0,midIdx));
                 segEdges.insert(edgeKey(midIdx,v1));
@@ -4829,7 +4878,9 @@ static int runMeshPipeline(Mesh& mesh, const Options& opts)
     {
         std::set<std::pair<int,int>> seen;
         for(auto& [a, b] : mesh.pbc_twin){
-            if(a==b) continue;
+            // Self-pairs (a==b) are kept: a node shared by both sides of an
+            // adjoining boundary is its own twin, and original FEMM emits the
+            // pair so the solver constrains it (anti-periodic -> A=0).
             auto key=std::make_pair(std::min(a,b), std::max(a,b));
             if(seen.insert(key).second){
                 int type=mesh.pbc_node_type.count(a)?mesh.pbc_node_type[a]:0;

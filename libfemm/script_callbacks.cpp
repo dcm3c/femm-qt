@@ -226,11 +226,23 @@ int createMeshForDocument(DocumentBase *doc, char *errmsg, int errmsg_size)
             nx[i] = tmesh.vertices[i].x;
             ny[i] = tmesh.vertices[i].y;
         }
+        // A region whose block label has no material ("<None>") should display as
+        // undefined (grey), like a region with no label at all. tangle numbers
+        // regions by block-label position over the file's block-label list, which
+        // omits "<No Mesh>" holes -- rebuild that order and pass 0 for a <None>
+        // region so the GUI's "region != 0" test greys it; material regions keep
+        // their positive attribute.
+        std::vector<bool> labelDefined;
+        for (const auto &b : doc->blocklist)
+            if (b.BlockType != "<No Mesh>")
+                labelDefined.push_back(b.BlockType != "<None>" && !b.BlockType.empty());
         for (int i = 0; i < nt; i++) {
             tn[i*3+0] = tmesh.triangles[i].v[0];
             tn[i*3+1] = tmesh.triangles[i].v[1];
             tn[i*3+2] = tmesh.triangles[i].v[2];
-            tr[i] = (int)tmesh.triangles[i].region_attrib;
+            int ra = (int)tmesh.triangles[i].region_attrib;
+            if (ra > 0 && ra <= (int)labelDefined.size() && !labelDefined[ra-1]) ra = 0;
+            tr[i] = ra;
         }
         MeshDisplayData mdd = { nv, nx.data(), ny.data(), nt, tn.data(), tr.data() };
         meshCb(&mdd);
@@ -311,44 +323,43 @@ int analyzeDocument(DocumentBase *doc, int hide, char *errmsg, int errmsg_size)
         return -1;
     }
 
-    // Reject a region with no material assigned before we mesh. A "<None>" block
-    // label is written to the solver file as material index 0, which the mesher
-    // reads as a hole -- silently voiding the region (and, if it's the only one,
-    // producing an empty mesh that crashes downstream). Catch it here while the
-    // literal "<None>" is still known (the saved file only keeps the flattened
-    // index), matching OF, which rejects this before meshing. A default block
-    // label covers unmaterialed regions, so it's only an error when none exists.
-    // (Standalone solver/tangle CLI use is hardened separately in the mesher.)
+    // Reject a region whose block label has no material ("<None>") before we mesh.
+    // It is written to the solver file as material index 0, which the mesher reads
+    // as a hole -- silently voiding the region (and, if it's the only one, an empty
+    // mesh that crashes downstream). Catch it here while the literal "<None>" is
+    // still known (the saved file only keeps the flattened index), matching OF. A
+    // default block label does NOT cover this: the default applies only to regions
+    // with no label at all, not to a label left without a material. (The standalone
+    // solver CLI, which bypasses this, guards the same case in each solver's main.)
     {
-        bool hasNone = false, hasDefault = false;
-        for (const auto &b : doc->blocklist) {
-            if (b.BlockType == "<None>") hasNone = true;
-            if (b.IsDefault) hasDefault = true;
-        }
-        if (hasNone && !hasDefault) {
+        bool hasNone = false;
+        for (const auto &b : doc->blocklist)
+            if (b.BlockType == "<None>") { hasNone = true; break; }
+        if (hasNone) {
             if (errmsg) snprintf(errmsg, errmsg_size,
                 "A block label has no material assigned. Assign a material to "
-                "every region (or add a default block label) before analyzing.");
+                "every region before analyzing.");
             return -1;
         }
     }
 
     // Axisymmetric problems live in r >= 0; geometry drawn to the left of the
     // r = 0 axis is invalid (it yields negative volumes/energies/forces, since
-    // every element carries a 2*pi*r weight). It otherwise meshes and "solves"
-    // silently, so reject it up front. Tolerance scales with the model size so
-    // nodes sitting on the axis (r ~ 0 with FP noise) don't trip it.
-    if (doc->ProblemType == 1 && !doc->nodelist.empty()) {
-        double minX = doc->nodelist[0].x, maxAbs = 0;
-        for (const auto &n : doc->nodelist) {
-            if (n.x < minX) minX = n.x;
-            if (std::fabs(n.x) > maxAbs) maxAbs = std::fabs(n.x);
-        }
-        if (minX < -1e-6 * (maxAbs > 0 ? maxAbs : 1.0)) {
-            if (errmsg) snprintf(errmsg, errmsg_size,
-                "Axisymmetric problems require r >= 0, but the geometry extends "
-                "to r = %g. Move it onto or to the right of the r = 0 axis.", minX);
-            return -1;
+    // every element carries a 2*pi*r weight) yet otherwise meshes and "solves"
+    // silently, so reject it up front. getBoundingBox samples arc segments at
+    // discretization level, so an arc that bulges below the axis between r >= 0
+    // endpoints is caught too. Tolerance scales with the model size so geometry
+    // on the axis (r ~ 0 with FP noise) doesn't trip it.
+    if (doc->ProblemType == 1) {
+        double xmin, ymin, xmax, ymax;
+        if (doc->getBoundingBox(xmin, ymin, xmax, ymax)) {
+            double xscale = std::max(std::fabs(xmin), std::fabs(xmax));
+            if (xmin < -1e-6 * (xscale > 0 ? xscale : 1.0)) {
+                if (errmsg) snprintf(errmsg, errmsg_size,
+                    "Axisymmetric problems require r >= 0, but the geometry extends "
+                    "to r = %g. Move it onto or to the right of the r = 0 axis.", xmin);
+                return -1;
+            }
         }
     }
 

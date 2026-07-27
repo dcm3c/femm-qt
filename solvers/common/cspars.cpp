@@ -538,6 +538,17 @@ int CBigComplexLinProb::PBCGSolve(int flag)
 	for(i=0;i<n;i++) R[i]=b[i]-R[i];
 	normb=nrm(b);
 
+	// A problem with no sources has a zero RHS, and its exact solution is zero.
+	// That is a converged answer, not an error, so return before normalizing by
+	// normb: er would be 0/0 = NaN, the do-loop below still runs its body once,
+	// and del = res/pAp = 0/0 would fill V with NaN. (The real-valued solvers in
+	// spars.cpp guard this already, via res_o == 0.)
+	if(normb==0){
+		#pragma omp parallel for schedule(static)
+		for(i=0;i<n;i++) V[i]=0;
+		return 1;
+	}
+
 	er=nrm(R)/normb;
 	prg1=(int)(20.*log10(er)/(log10(Precision)));
 	TheView->m_prog1.SetPos(5*prg1);
@@ -593,6 +604,15 @@ int CBigComplexLinProb::NewtonSolve(int flag)
 
 	if (flag == 0) for (i = 0; i < n; i++) V[i] = 0;
 	normb = nrm(b);
+
+	// No sources -> zero RHS -> zero solution; see PBCGSolve. Without this the
+	// er < Precision test below is NaN < x, which is false, so the Newton loop
+	// runs and spreads NaN through c = 0/0 into V.
+	if (normb == 0) {
+		for (i = 0; i < n; i++) V[i] = 0;
+		free(borig); free(v); free(r);
+		return 1;
+	}
 
 	for (i = 0; i < n; i++) { borig[i] = b[i]; v[i] = V[i]; }
 

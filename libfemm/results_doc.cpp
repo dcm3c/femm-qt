@@ -2535,11 +2535,21 @@ bool ResultsDoc::MakeMask()
         q[2] = meshnode[n[1]].x - meshnode[n[0]].x;
         a = (p[0] * q[1] - p[1] * q[0]) / 2.0;
 
-        // Validity check
-        if (!labellist[meshelem[i].lbl].IsSelected && lblflag[meshelem[i].lbl]) {
+        // Validity check: the selection must be surrounded by free space. Where a
+        // selected region abuts a non-air one, the shared boundary nodes resolve to
+        // 0 or 1 depending on which side's element is written last (mesh ordering),
+        // so check both sides. A non-air non-selected element pulled up to 1 means
+        // the selection bleeds into it; a selected element clamped to 0 means the
+        // mask transition is dragged into the selected body. Either way the stress
+        // tensor surface leaves free space -- and testing both makes detection
+        // independent of the ordering.
+        if (labellist[meshelem[i].lbl].IsSelected) {
+            for (j = 0; j < 3; j++)
+                if (L.V[n[j]] == 0) { maskSelectionInvalid = true; return false; }
+        } else if (lblflag[meshelem[i].lbl]) {
             int cnt = 0;
             for (j = 0; j < 3; j++) if (L.V[n[j]] == 0) cnt++;
-            if (cnt < 3) return false;  // invalid selection
+            if (cnt < 3) { maskSelectionInvalid = true; return false; }  // abuts non-air
         }
 
         // Weighting
@@ -2580,8 +2590,13 @@ bool ResultsDoc::MakeMask()
     // must not render its progress bar to the GUI/headless terminal; GUI
     // progress (if wanted) arrives via progressCallback instead.
     CFknDlg dummyView(true);
-    if (progressCallback)
+    if (progressCallback) {
+        // The selection is valid (checked during assembly, above): announce the
+        // solve so the GUI can raise its progress dialog immediately before the
+        // linear solver runs, and never for a rejected selection.
+        progressCallback(0);
         dummyView.m_prog1.onProgress = progressCallback;
+    }
     L.TheView = &dummyView;
     if (L.PCGSolve(0) == 0) return false;
 
@@ -3029,6 +3044,7 @@ double ResultsDoc::AxiDensityIntegral(int i, CComplex kk, CComplex Bz,
 
 CComplex ResultsDoc::BlockIntegral(int type)
 {
+    maskSelectionInvalid = false;
     // Handle recursive total losses case
     if (type == 6) return BlockIntegral(3) + BlockIntegral(4);
 

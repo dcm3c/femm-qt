@@ -111,6 +111,9 @@ void register_mag_postproc_py(ResultsDoc *doc) {
             if (lbl.IsSelected) { anySelected = true; break; }
         if (!anySelected) throw std::runtime_error("No area selected for integration");
         CComplex v = s_rdoc->BlockIntegral(type);
+        if (s_rdoc->maskSelectionInvalid)
+            throw std::runtime_error("The selected region is invalid. A valid selection "
+                                     "cannot abut a region which is not free space.");
         // Return a plain float for real-valued quantities (everything at DC; the
         // real types at AC), complex only for genuinely-complex phasor quantities.
         // Keyed on the type (not the runtime value), so the Python return type is

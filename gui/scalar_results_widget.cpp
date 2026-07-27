@@ -13,12 +13,14 @@
 #include "py_state.h"
 #include "script_callbacks.h"
 #include "curr_results_doc.h"
+#include "postproc_select.h"
 #include "view_colors.h"
 #include "electrostatics_handler.h"
 #include "heat_handler.h"
 #include "curr_handler.h"
 
 #include <QPainter>
+#include <QMessageBox>
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QKeyEvent>
@@ -1205,6 +1207,20 @@ void ScalarResultsWidget::mousePressEvent(QMouseEvent *event)
 
 void ScalarResultsWidget::mouseDoubleClickEvent(QMouseEvent *event)
 {
+    // Right double-click in point mode: report the closest input node, as the
+    // preprocessor does for the closest node/segment/label.
+    if (event->button() == Qt::RightButton && m_mode == 0 && m_view.nodelist) {
+        double xd, yd;
+        toDrawing(event->pos().x(), event->pos().y(), xd, yd);
+        int i = ppClosestNode(xd, yd, *m_view.nodelist);
+        if (i >= 0) {
+            auto &n = (*m_view.nodelist)[i];
+            QMessageBox::information(this, tr("Closest Input Node"),
+                QString("Closest input node:\n(%1,%2)").arg(n.x).arg(n.y));
+        }
+        return;
+    }
+
     if (event->button() != Qt::LeftButton || m_mode != 2 || !m_view.meshelem) return;
     double xd, yd;
     toDrawing(event->pos().x(), event->pos().y(), xd, yd);

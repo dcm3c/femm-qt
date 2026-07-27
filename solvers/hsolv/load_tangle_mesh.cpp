@@ -79,7 +79,7 @@ int LoadMeshFromTangle(Chsolvdoc& Doc, const Mesh& tmesh)
         if (lbl < 0) lbl = defaultLabel;
         if (lbl < 0) {
             MsgBox("Material properties have not been defined for all regions.");
-            return FALSE;
+            return -2;   // sentinel: no material assigned (distinct from generic FALSE)
         }
         Doc.meshele[i].lbl = lbl;
         Doc.meshele[i].blk = Doc.labellist[lbl].BlockType;

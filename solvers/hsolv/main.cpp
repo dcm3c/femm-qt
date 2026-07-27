@@ -25,26 +25,48 @@ int main(int argc, char* argv[]) {
     if ((int)args.size() < 2) { fprintf(stderr, "Usage: hsolv <filename>\n"); return 1; }
     snprintf(PathName, sizeof(PathName), "%s", args[1].c_str());
     Doc.PathName = PathName; Doc.TheView = &theView;
-    fprintf(stderr, "step1\n"); fflush(stderr);
-    if (Doc.OnOpenDocument() != TRUE) { fprintf(stderr, "FAIL open\n"); return 7; }
-    fprintf(stderr, "step2\n"); fflush(stderr);
+    if (Doc.OnOpenDocument() != TRUE) { fprintf(stderr, "Problem loading .feh file\n"); return 7; }
+    // "<None>" (unassigned material) -> file index 0 -> BlockType -1; the mesher reads
+    // it as a hole and voids the region (empty-mesh crash if it is the only one).
+    // Always reject: a default block label only covers wholly-unlabeled regions.
+    for (int i = 0; i < Doc.NumBlockLabels; i++)
+        if (Doc.labellist[i].BlockType < 0) { fprintf(stderr, "A block label has no material assigned.\n"); return 10; }
+    fprintf(stderr, "Meshing...\n");
     Mesh tmesh;
     // Full .feh name -> mesh the heat-flow geometry, not a same-named .fem.
-    if (tangle_mesh_fem(std::string(PathName) + ".feh", tmesh) != 0) { fprintf(stderr, "FAIL mesh\n"); return 8; }
-    fprintf(stderr, "step3\n"); fflush(stderr);
-    if (LoadMeshFromTangle(Doc, tmesh) != TRUE) { fprintf(stderr, "FAIL load\n"); return 2; }
-    fprintf(stderr, "step4\n"); fflush(stderr);
-    if (Doc.LoadPrev() != TRUE) { return 3; }
-    fprintf(stderr, "step5\n"); fflush(stderr);
+    { int trc = tangle_mesh_fem(std::string(PathName) + ".feh", tmesh);   // distinct code per tangle failure category
+      if (trc == TANGLE_ERR_NO_FILE) { fprintf(stderr, "Input file not found\n"); return 11; }
+      if (trc == TANGLE_ERR_PARSE)   { fprintf(stderr, "Could not parse input file\n"); return 12; }
+      if (trc != 0) { fprintf(stderr, "Meshing failed\n"); return 13; } }
+    { int meshret = LoadMeshFromTangle(Doc, tmesh);
+      if (meshret != TRUE) { if (meshret == -2) return 10; fprintf(stderr, "Problem loading mesh\n"); return 2; } }
+    // Axisymmetric geometry must lie at r >= 0; a region (or arc belly) left of the
+    // r = 0 axis otherwise "solves" silently with negative 2*pi*r element volumes.
+    // Tolerance matches the solver's on-axis test (c[LengthUnits]*1e-6). Guards the
+    // direct command-line path, which bypasses the GUI/headless front-end check.
+    if (Doc.ProblemType == 1) {
+        double c[] = {0.0254, 0.001, 0.01, 1., 2.54e-05, 1.e-06};
+        double tol = c[Doc.LengthUnits] * 1.e-6;
+        double minR = 0.0;
+        for (int i = 0; i < Doc.NumNodes; i++)
+            if (Doc.meshnode[i].x < minR) minR = Doc.meshnode[i].x;
+        if (minR < -tol) {
+            fprintf(stderr, "Axisymmetric geometry extends to r = %g; move it onto "
+                    "or to the right of the r = 0 axis.\n", minR / c[Doc.LengthUnits]);
+            return 9;
+        }
+    }
+    if (Doc.LoadPrev() != TRUE) { fprintf(stderr, "Problem loading previous solution\n"); return 3; }
+    char *p = PathName; for (int i=0;i<(int)strlen(PathName);i++) if(PathName[i]=='\\'||PathName[i]=='/') p=PathName+i+1;
+    fprintf(stderr, "%s - hsolve\n", p);
     // Cuthill-McKee renumbering is now done by tangle at mesh time.
-    fprintf(stderr, "step6\n"); fflush(stderr);
+    fprintf(stderr, "%i nodes, %i elements, Precision: %3.2e\n", Doc.NumNodes, Doc.NumEls, Doc.Precision);
     CBigLinProb L; L.TheView = &theView; L.Precision = Doc.Precision;
-    if (L.Create(Doc.NumNodes+Doc.NumCircProps, Doc.BandWidth) == FALSE) { return 5; }
-    fprintf(stderr, "step7\n"); fflush(stderr);
-    if (Doc.AnalyzeProblem(L) == FALSE) { fprintf(stderr, "FAIL solve\n"); return 6; }
+    if (L.Create(Doc.NumNodes+Doc.NumCircProps, Doc.BandWidth) == FALSE) { fprintf(stderr, "Alloc failed\n"); return 4; }
+    if (Doc.AnalyzeProblem(L) == FALSE) { fprintf(stderr, "Solve failed\n"); return 5; }
     theView.m_prog1.SetPos(100); theView.m_prog2.SetPos(100); theView.UpdateWindow();
     fprintf(stderr, "\nProblem solved\n");
-    if (Doc.WriteResults(L) == FALSE) { fprintf(stderr, "FAIL write\n"); return 7; }
-    fprintf(stderr, "Results written\n");
+    if (Doc.WriteResults(L) == FALSE) { fprintf(stderr, "Write failed\n"); return 6; }
+    fprintf(stderr, "Results written to disk\n");
     Doc.CleanUp(); return 0;
 }

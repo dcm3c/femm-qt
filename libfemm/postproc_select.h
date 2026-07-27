@@ -14,6 +14,43 @@
 #include <cmath>
 #include <string>
 
+// Flag regions defined by more than one block label, and select them so they
+// stand out in the initial view. Returns true if any were found.
+//
+// A label whose own position lands in a mesh element owned by a DIFFERENT label
+// means both labels sit in the same connected region, and only one of them got
+// to define it. Following OF, the label selected is the one that won the region
+// (meshelem[i].lbl), not the redundant one -- that is the region whose material
+// actually took effect, which is what the user needs to look at.
+template <class Doc>
+bool ppMarkMultiplyDefinedLabels(Doc *doc) {
+    bool found = false;
+    for (int k = 0; k < (int)doc->labellist.size(); k++) {
+        int i = doc->InTriangle(doc->labellist[k].x, doc->labellist[k].y);
+        if (i < 0) continue;
+        int owner = doc->meshelem[i].lbl;
+        if (owner == k) continue;
+        if (owner >= 0 && owner < (int)doc->labellist.size())
+            doc->labellist[owner].IsSelected = true;
+        found = true;
+    }
+    return found;
+}
+
+// Index of the input-geometry node closest to (x,y), or -1 when there are no
+// nodes. Mirrors DocumentBase::ClosestNode on the preprocessor side.
+template <class NodeList>
+int ppClosestNode(double x, double y, const NodeList &nodelist) {
+    if (nodelist.empty()) return -1;
+    int best = 0;
+    double bestd = nodelist[0].GetDistance(x, y);
+    for (int i = 1; i < (int)nodelist.size(); i++) {
+        double d = nodelist[i].GetDistance(x, y);
+        if (d < bestd) { bestd = d; best = i; }
+    }
+    return best;
+}
+
 // selectconductor("name") — toggle selection on the geometry entities and mesh
 // nodes belonging to the named conductor. Returns true if the name matched a
 // conductor (so an empty / "<None>" / unknown name is a no-op returning false).

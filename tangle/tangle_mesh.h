@@ -38,6 +38,7 @@ struct Segment {
     double lfs = -1.0;
     int pbc_type = -1;
     bool no_split = false;
+    int pbc_side = -1;   // 0/1: declared side of an (anti)periodic pair; -1 = n/a
 };
 
 struct Hole { double x, y; };

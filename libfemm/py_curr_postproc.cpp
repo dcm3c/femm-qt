@@ -80,6 +80,9 @@ void register_curr_postproc_py(CurrResultsDoc *doc) {
             throw std::runtime_error("Cannot integrate\nNo area has been selected");
         if (type >= 6) s_doc->MakeMask();
         CComplex v = s_doc->BlockIntegral(type);
+        if (s_doc->maskSelectionInvalid)
+            throw std::runtime_error("The selected region is invalid. A valid selection "
+                                     "cannot abut a region which is not free space.");
         // Real for real-valued quantities (everything at DC; the real types at
         // AC), complex only for genuinely-complex phasor quantities. Keyed on the
         // type, so the Python return type is stable. See co_blockintegral_cases.xlsx.

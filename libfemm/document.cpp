@@ -38,27 +38,49 @@ double DocumentBase::lengthScale() const
     }
 }
 
-bool DocumentBase::getBoundingBox(double &xmin, double &ymin, double &xmax, double &ymax) const
+bool DocumentBase::getBoundingBox(double &xmin, double &ymin, double &xmax, double &ymax,
+                                  bool selectedOnly) const
 {
-    if (nodelist.empty()) return false;
+    if (!selectedOnly && nodelist.empty()) return false;
 
-    xmin = xmax = nodelist[0].x;
-    ymin = ymax = nodelist[0].y;
+    bool any = false;
+    auto include = [&](double px, double py) {
+        if (!any) {
+            any = true;
+            xmin = xmax = px;
+            ymin = ymax = py;
+            return;
+        }
+        if (px < xmin) xmin = px;
+        if (px > xmax) xmax = px;
+        if (py < ymin) ymin = py;
+        if (py > ymax) ymax = py;
+    };
 
-    // Nodes
-    for (const auto &n : nodelist) {
-        if (n.x < xmin) xmin = n.x;
-        if (n.x > xmax) xmax = n.x;
-        if (n.y < ymin) ymin = n.y;
-        if (n.y > ymax) ymax = n.y;
+    // Nodes. Restricted to the selection, a node also counts when it is an
+    // endpoint of a selected segment — the segment's extent is defined by its
+    // endpoints even though those nodes carry no selection flag of their own.
+    // (Selected arcs contribute their endpoints via the sampling loop below.)
+    std::vector<bool> nodeWanted;
+    if (selectedOnly) {
+        nodeWanted.assign(nodelist.size(), false);
+        for (size_t i = 0; i < nodelist.size(); i++)
+            if (nodelist[i].IsSelected) nodeWanted[i] = true;
+        for (const auto &s : linelist) {
+            if (!s.IsSelected) continue;
+            if (s.n0 >= 0 && s.n0 < (int)nodelist.size()) nodeWanted[s.n0] = true;
+            if (s.n1 >= 0 && s.n1 < (int)nodelist.size()) nodeWanted[s.n1] = true;
+        }
+    }
+    for (size_t i = 0; i < nodelist.size(); i++) {
+        if (selectedOnly && !nodeWanted[i]) continue;
+        include(nodelist[i].x, nodelist[i].y);
     }
 
     // Block labels
     for (const auto &b : blocklist) {
-        if (b.x < xmin) xmin = b.x;
-        if (b.x > xmax) xmax = b.x;
-        if (b.y < ymin) ymin = b.y;
-        if (b.y > ymax) ymax = b.y;
+        if (selectedOnly && !b.IsSelected) continue;
+        include(b.x, b.y);
     }
 
     // Arc segments — traverse at discretization level to capture the full
@@ -75,6 +97,7 @@ bool DocumentBase::getBoundingBox(double &xmin, double &ymin, double &xmax, doub
     // rotation form needs no such sign and is robust at 180 deg. (cf.
     // docs/arc-180-degree-fix.md)
     for (const auto &arc : arclist) {
+        if (selectedOnly && !arc.IsSelected) continue;
         if (arc.n0 < 0 || arc.n0 >= (int)nodelist.size()) continue;
         if (arc.n1 < 0 || arc.n1 >= (int)nodelist.size()) continue;
 
@@ -92,15 +115,12 @@ bool DocumentBase::getBoundingBox(double &xmin, double &ymin, double &xmax, doub
         CComplex rot(cos(dt), sin(dt));
         CComplex pt = nodelist[arc.n0].CC();
         for (int k = 0; k <= nsteps; k++) {
-            if (pt.re < xmin) xmin = pt.re;
-            if (pt.re > xmax) xmax = pt.re;
-            if (pt.im < ymin) ymin = pt.im;
-            if (pt.im > ymax) ymax = pt.im;
+            include(pt.re, pt.im);
             pt = (pt - c) * rot + c;   // advance CCW by dt
         }
     }
 
-    return true;
+    return any;
 }
 
 // --- Add operations (PSLG-aware) ---
@@ -1174,6 +1194,11 @@ void DocumentBase::ScaleMove(double bx, double by, double sf, int EditAction)
         if ((EditAction == 2 || EditAction == 4) && b.IsSelected) {
             b.x = bx + sf * (b.x - bx);
             b.y = by + sf * (b.y - by);
+            // The user-facing mesh size is a LENGTH, but MaxArea stores it as
+            // an area (PI*meshsize^2/4), so it scales as sf^2. MaxArea==0
+            // (automesh) is unaffected and stays automesh. Matches OF
+            // cd_movecopy.cpp ScaleMove.
+            b.MaxArea *= sf * sf;
         }
     }
     EnforcePSLG();

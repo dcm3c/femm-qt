@@ -23,6 +23,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QProgressDialog>
+#include <memory>
 #include <QApplication>
 #include <QSettings>
 #include <cmath>
@@ -303,16 +304,22 @@ void MagneticsHandler::showIntegrateDialog(QWidget *parent, OutputDialog *out)
         CComplex z, z1, z2, z3, z4;
         QString text;
 
-        // Set up progress dialog for block integrals that may trigger MakeMask
-        QProgressDialog progDlg(tr("Masking..."),
-                                QString(), 0, 100, parent);
-        progDlg.setWindowModality(Qt::WindowModal);
-        progDlg.setMinimumDuration(500);
-        progDlg.setAutoReset(false);
-        progDlg.setAutoClose(false);
-        progDlg.setValue(0);
-        doc->progressCallback = [&progDlg](int pct) {
-            progDlg.setValue(pct);
+        // The mask (WST) integrals run a linear solve; MakeMask fires the first
+        // progress callback immediately before that solve, and only after it has
+        // accepted the selection. Create the progress dialog lazily on that first
+        // callback, so a selection rejected before the solve never pops a dialog.
+        std::unique_ptr<QProgressDialog> progDlg;
+        doc->progressCallback = [&progDlg, this, parent](int pct) {
+            if (!progDlg) {
+                progDlg = std::make_unique<QProgressDialog>(tr("Masking..."),
+                                                            QString(), 0, 100, parent);
+                progDlg->setWindowModality(Qt::WindowModal);
+                progDlg->setAutoReset(false);
+                progDlg->setAutoClose(false);
+                progDlg->setMinimumDuration(0);
+                progDlg->show();
+            }
+            progDlg->setValue(pct);
             QApplication::processEvents();
         };
 
@@ -399,6 +406,13 @@ void MagneticsHandler::showIntegrateDialog(QWidget *parent, OutputDialog *out)
         }
         }
         doc->progressCallback = nullptr;
+        progDlg.reset();
+        if (doc->maskSelectionInvalid) {
+            QMessageBox::warning(parent, tr("Invalid Selection"),
+                tr("The selected region is invalid. A valid selection cannot abut "
+                   "a region which is not free space."));
+            return;
+        }
         out->setOutput(text);
         out->show();
     }

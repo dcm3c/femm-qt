@@ -217,6 +217,11 @@ public:
     // Receives percentage 0-100.
     std::function<void(int)> progressCallback;
 
+    // Set true by MakeMask (cleared on each BlockIntegral) when the weighted
+    // stress tensor selection is invalid because it abuts a non-air region.
+    // Callers surface it: the script binding raises, the GUI shows a message box.
+    bool maskSelectionInvalid = false;
+
     bool MakeMask();
 
 private:

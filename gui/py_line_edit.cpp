@@ -77,6 +77,7 @@ QString PyLineEdit::roundedForDisplay(const QString &s) const
 void PyLineEdit::focusInEvent(QFocusEvent *event)
 {
     QLineEdit::focusInEvent(event);
+    if (event->reason() == Qt::PopupFocusReason) return;  // see focusOutEvent
     // Editing operates on the FULL value, so nothing is silently lost.
     if (!m_canonical.isEmpty() && m_canonical != text())
         setDisplayText(m_canonical);
@@ -85,6 +86,11 @@ void PyLineEdit::focusInEvent(QFocusEvent *event)
 void PyLineEdit::focusOutEvent(QFocusEvent *event)
 {
     QLineEdit::focusOutEvent(event);
+    // A popup taking focus -- our own context menu -- is not the user leaving
+    // the field. Reformatting here would call setText()/setCursorPosition(),
+    // which clear the selection the user right-clicked in order to Copy. Leave
+    // the field (and the selection) alone; the real focus-out still reformats.
+    if (event->reason() == Qt::PopupFocusReason) return;
     // If the user edited the field, their text is the new full value.
     if (isModified())
         m_canonical = text().trimmed();

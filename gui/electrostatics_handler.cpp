@@ -21,6 +21,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QProgressDialog>
+#include <memory>
 #include <QApplication>
 #include <QSettings>
 
@@ -96,16 +97,22 @@ void ElectrostaticsHandler::showIntegrateDialog(QWidget *parent, OutputDialog *o
             return;
         }
 
-        // Set up progress dialog for block integrals that may trigger MakeMask
-        QProgressDialog progDlg(tr("Masking..."),
-                                QString(), 0, 100, parent);
-        progDlg.setWindowModality(Qt::WindowModal);
-        progDlg.setMinimumDuration(500);
-        progDlg.setAutoReset(false);
-        progDlg.setAutoClose(false);
-        progDlg.setValue(0);
-        doc->progressCallback = [&progDlg](int pct) {
-            progDlg.setValue(pct);
+        // The mask (WST) integrals run a linear solve; MakeMask fires the first
+        // progress callback immediately before that solve, and only after it has
+        // accepted the selection. Create the progress dialog lazily on that first
+        // callback, so a selection rejected before the solve never pops a dialog.
+        std::unique_ptr<QProgressDialog> progDlg;
+        doc->progressCallback = [&progDlg, this, parent](int pct) {
+            if (!progDlg) {
+                progDlg = std::make_unique<QProgressDialog>(tr("Masking..."),
+                                                            QString(), 0, 100, parent);
+                progDlg->setWindowModality(Qt::WindowModal);
+                progDlg->setAutoReset(false);
+                progDlg->setAutoClose(false);
+                progDlg->setMinimumDuration(0);
+                progDlg->show();
+            }
+            progDlg->setValue(pct);
             QApplication::processEvents();
         };
 
@@ -127,6 +134,13 @@ void ElectrostaticsHandler::showIntegrateDialog(QWidget *parent, OutputDialog *o
             break;
         }
         doc->progressCallback = nullptr;
+        progDlg.reset();
+        if (doc->maskSelectionInvalid) {
+            QMessageBox::warning(parent, tr("Invalid Selection"),
+                tr("The selected region is invalid. A valid selection cannot abut "
+                   "a region which is not free space."));
+            return;
+        }
         out->setOutput(text);
         out->show();
     } else {
@@ -149,18 +163,13 @@ void ElectrostaticsHandler::showXYPlotDialog(QWidget *parent)
     int npts = QSettings().value("eo/plotPoints", 1500).toInt();
     doc->GetLineValues(pts, plotType, npts);
     if (pts.empty()) { m_widget->emitStatus("No data for plot"); return; }
-    auto *pdlg = new QDialog(parent);
+    auto *pdlg = new PlotDialog(choice, parent);
     pdlg->setAttribute(Qt::WA_DeleteOnClose);
-    pdlg->setWindowTitle(choice);
-    pdlg->resize(600, 400);
-    auto *plot = new PlotWidget;
-    auto *lay = new QVBoxLayout(pdlg);
-    lay->addWidget(plot);
     PlotSeries series;
     series.label = choice;
     for (auto &pt : pts) { series.x.push_back(pt.x); series.y.push_back(pt.vals.empty() ? 0 : pt.vals[0]); }
-    plot->addSeries(series);
-    plot->setAxisLabels(tr("Position"), choice);
+    pdlg->plot()->addSeries(series);
+    pdlg->plot()->setAxisLabels(tr("Position"), choice);
     pdlg->show();
 }
 

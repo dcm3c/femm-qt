@@ -1,3 +1,19 @@
+========================================================================
+Third-party license — complex eigen-decomposition
+========================================================================
+
+This MIT License applies to the general complex eigen-decomposition code
+in femm-qt's common/fullmatrix.cpp (CFullMatrix::Eig and its helpers),
+which was ported and translated to CComplex from:
+
+    melihaltun/complexEigenPairSolver
+    https://github.com/melihaltun/complexEigenPairSolver
+
+Only that eigen-solver derives from melihaltun's work; the rest of femm-qt
+is licensed separately (see LICENSE-MIT and LICENSE-GPL). The original,
+unmodified MIT license text follows.
+========================================================================
+
 MIT License
 
 Copyright (c) 2018 melihaltun

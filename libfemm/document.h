@@ -134,7 +134,13 @@ public:
 
     // Bounding box including nodes, block labels, and arc sample points.
     // Returns false if geometry is empty.
-    bool getBoundingBox(double &xmin, double &ymin, double &xmax, double &ymax) const;
+    //
+    // With selectedOnly, restricts the box to the current selection: selected
+    // nodes, block labels and arcs, plus the endpoints of selected segments and
+    // arcs (a segment's endpoints define its extent even when the nodes are not
+    // themselves selected). Returns false if nothing is selected.
+    bool getBoundingBox(double &xmin, double &ymin, double &xmax, double &ymax,
+                        bool selectedOnly = false) const;
 
     // --- Undo/Redo ---
     // Call pushUndo() at the start of every user-initiated operation

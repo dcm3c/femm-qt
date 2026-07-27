@@ -73,15 +73,7 @@ inline int ppContourType(const std::string &type) {
     return 0;  // "real" or default
 }
 
-inline int ppClosestNode(double x, double y, const std::vector<FNode> &nodelist) {
-    int best = 0;
-    double bestd = nodelist[0].GetDistance(x, y);
-    for (int i = 1; i < (int)nodelist.size(); i++) {
-        double d = nodelist[i].GetDistance(x, y);
-        if (d < bestd) { bestd = d; best = i; }
-    }
-    return best;
-}
+// ppClosestNode now lives in postproc_select.h so the GUI can share it.
 
 // selectpoint(x, y) - add a point to the contour, following segments/arcs.
 template<class Doc>
