@@ -30,6 +30,8 @@
 #include "heat_results_doc.h"
 #include "curr_results_doc.h"
 #include "utf8_io.h"      // femm_widen for a Unicode-safe chdir on Windows
+#include <filesystem>
+#include <system_error>
 
 #include <cstdio>
 #include <cstdlib>
@@ -167,15 +169,86 @@ void register_global_femm_funcs()
         std::string canonical = (dot != std::string::npos)
                                     ? spath.substr(0, dot) + ext : spath;
 
-        if (doc_registry_activate_input(canonical)) {
+        // If this path is already open AS THE FOCUSED DOCUMENT, re-read it from
+        // disk instead of handing back whatever is in memory: open() means
+        // "load this file", which is what *_loadsolution already does on the
+        // results side. Returning a stale document silently, and then having
+        // analyze() save it back, is a real trap -- a script rewrites temp.fem,
+        // reopens it, gets the previous run's model, and that model overwrites
+        // the file it just wrote.
+        //
+        // Limited to the focused document on purpose. saveas does not
+        // de-duplicate, so a path can match several open documents; re-reading
+        // one the caller is not looking at would mutate it off-screen. Every
+        // other case keeps the previous activate-only behaviour, below.
+        //
+        // Reload IN PLACE, so s_doc, the registry entry and the GUI window all
+        // keep pointing at the same object: nothing is allocated or freed, and
+        // there is no lifetime question when duplicates exist.
+        DocumentBase *existing = nullptr;
+        if (ext == ".fem")      existing = active_mag_document();
+        else if (ext == ".fee") existing = active_elec_document();
+        else if (ext == ".feh") existing = active_heat_document();
+        else if (ext == ".fec") existing = active_curr_document();
+
+        // Same FILE, not merely the same string. fixpath only unescapes and
+        // turns \ into /, so a plain compare misses a differing case (Windows
+        // and the macOS default APFS/HFS+ are case-insensitive), a relative
+        // path against a stored absolute one, "./", or a symlink. fs::equivalent
+        // asks the filesystem instead of guessing from the platform -- APFS can
+        // be formatted case-sensitive, so the platform is only a proxy for a
+        // volume property. Both files must exist; if either does not, ec is set
+        // and the string compare stands, which is the right fallback since a
+        // document whose file has been deleted should not match anything.
+        //
+        // femm_path(), never fs::path(std::string): the implicit conversion
+        // decodes as ANSI on Windows and would mangle an umlaut path.
+        bool sameFile = false;
+        if (existing) {
+            sameFile = (existing->filePath == canonical);
+            if (!sameFile) {
+                std::error_code ec;
+                sameFile = std::filesystem::equivalent(femm_path(existing->filePath),
+                                                       femm_path(spath), ec) && !ec;
+            }
+        }
+
+        if (sameFile) {
+            // OpenDocument() begins with NewDocument(), which clears filePath;
+            // restore it, including on failure, or the document is orphaned
+            // (the registry finds by filePath, and analyze rejects an empty one).
+            std::string saved = existing->filePath;
+            if (!existing->OpenDocument(spath)) {
+                existing->filePath = saved;
+                throw std::runtime_error("Failed to re-open " + spath);
+            }
+            existing->filePath = saved;
+            // Undo snapshots are geometry-only and describe the PREVIOUS
+            // contents; replaying one would graft old geometry onto the new
+            // materials and problem definition.
+            existing->clearUndoHistory();
+
             auto vcb = get_view_command_callback();
             if (vcb) {
-                std::string cmd = "setfocus:" + canonical;
                 double args[4] = {};
+                // Focus first -- purgemesh acts on the ACTIVE window.
+                std::string cmd = "setfocus:" + canonical;
                 vcb(cmd.c_str(), 0, args);
+                // The displayed mesh belongs to the previous contents. Purge
+                // rather than hide: it is a different model, not merely a
+                // non-conforming one.
+                vcb("purgemesh", 0, args);
             }
             return;
         }
+
+        // Anything else -- not open, or open but not focused -- falls through to
+        // a fresh document read from disk. open() does NOT activate an existing
+        // document: *_setfocus already does that, so each function means exactly
+        // one thing, and open() always yields the file's current contents.
+        // A same-named document left open is untouched rather than mutated
+        // off-screen; it stays reachable in the GUI and as the first match for
+        // a name lookup.
 
         auto docCb = get_doc_opened_callback();
         auto openOne = [&](auto *doc, auto registerFn) {

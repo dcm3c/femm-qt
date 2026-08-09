@@ -16,7 +16,10 @@
 #include "spars.h"
 #include "femmedoccore.h"
 #include "utf8_io.h"
+#include "fastio.h"
 #include <string.h>
+#include <vector>
+#include <algorithm>
 
 // The .ans stores an air-gap-element name quoted ("AGE") with a trailing newline.
 // Strip both so the name round-trips without accumulating quotes when a previous
@@ -63,6 +66,9 @@ CFemmeDocCore::CFemmeDocCore()
 	PathName = 0;
 	Aprev = 0;
 	PrevType = 0;
+	DeltaT = 0;
+	NumVoltageUnknowns = 0;
+	NumNodesPlus = 0;
 	extRo = extRi = extZo = 0;
 	agelist = 0;
 	fluxproplist = 0;
@@ -123,7 +129,11 @@ void CFemmeDocCore::CleanUp()
 	}
 	if (currentlist!=NULL) free(currentlist);
 	if (pbclist!=NULL)		 free(pbclist);
-	for (k=0;k<NumAGEs;k++) if (agelist[k].node!=NULL) free(agelist[k].node);
+	for (k=0;k<NumAGEs;k++){
+		if (agelist[k].node!=NULL)      free(agelist[k].node);
+		if (agelist[k].ringInner!=NULL) free(agelist[k].ringInner);
+		if (agelist[k].ringOuter!=NULL) free(agelist[k].ringOuter);
+	}
 	if (agelist!=NULL)		 free(agelist);
 	if (fluxproplist!=NULL)  free(fluxproplist);
 	if (Aprev!=NULL)		 free(Aprev);
@@ -248,7 +258,40 @@ char* CFemmeDocCore::ParseString(char *t, CString *s)
 	return (t+n2+1);
 }
 
-int CFemmeDocCore::LoadPrevA(CString myFile, double *V)
+// Capture the geometry sections of a .fem-format stream -- [NumPoints],
+// [NumSegments], [NumArcSegments], [NumHoles], [NumBlockLabels], each a
+// count line followed by that many records -- as one string. Works on both
+// a .fem and a .ans, since the .ans opens with a verbatim echo of its .fem.
+// Returns FALSE if the sections cannot be found.
+static int SlurpGeometry(FILE *fp, std::string &out)
+{
+	static const char *keys[]={"[numpoints]","[numsegments]",
+		"[numarcsegments]","[numholes]","[numblocklabels]"};
+	char s[1024];
+	out.clear();
+	for(int sec=0;sec<5;sec++){
+		int n=-1;
+		while (fgets(s,1024,fp)!=NULL){
+			if (_strnicmp(s,keys[sec],(int)strlen(keys[sec]))==0){
+				char *v=s; while(*v && *v!='=') v++;
+				if (*v=='=') sscanf(v+1,"%i",&n);
+				break;
+			}
+			// bail if we ran into the solution section without finding it
+			if (_strnicmp(s,"[solution]",10)==0) return FALSE;
+		}
+		if (n<0) return FALSE;
+		out+=keys[sec]; out+="="; 
+		char cnt[32]; snprintf(cnt,sizeof(cnt),"%i\n",n); out+=cnt;
+		for(int i=0;i<n;i++){
+			if (fgets(s,1024,fp)==NULL) return FALSE;
+			out+=s;
+		}
+	}
+	return TRUE;
+}
+
+int CFemmeDocCore::LoadPrevA(CString myFile, double *V, double *Ap)
 {
 	// _Just_ load Aprev. This is needed for the case where we are restarting
 	// from an old solution.  However, rotor angle might be slightly different
@@ -322,11 +365,23 @@ int CFemmeDocCore::LoadPrevA(CString myFile, double *V)
 	CNode node;
 	double c=PI*4.e-05;
 	for(i=0;i<NumNodes;i++){
-		fgets(s,1024,fp);
-		sscanf(s,"%lf	%lf	%lf	%i\n",&node.x,&node.y,&V[i],&node.bc);
+		// A truncated or misaligned node section must be a hard failure --
+		// under DeltaT>0 the caller treats FALSE as "cannot take this step",
+		// and silently accepting a short read here would put garbage in
+		// A_prev instead. Every node record has at least x y A bc.
+		const char *p=s;
+		if (fgets(s,1024,fp)==NULL ||
+		    !fio_double(p,node.x) || !fio_double(p,node.y) ||
+		    !fio_double(p,V[i])   || !fio_int(p,node.bc))
+		{
+			fclose(fp);
+			return FALSE;
+		}
+		if (Ap) Ap[i]=V[i];   // raw Wb/m, as LoadPrev() and the .ans writer use
 		V[i]/=c;
 	}
 
+	fclose(fp);
 	return TRUE;
 }
 
@@ -393,13 +448,21 @@ int CFemmeDocCore::LoadPrev()
 	meshnode=(CNode *)calloc(NumNodes,sizeof(CNode));
 	CNode node;
 	for(i=0;i<NumNodes;i++){
-		fgets(s,1024,fp);
-		sscanf(s,"%lf	%lf	%lf	%i\n",&node.x,&node.y,&Aprev[i],&node.bc);
+		// cursor parse (see fastio.h); a malformed record is a hard failure,
+		// same policy as LoadPrevA
+		const char *p=s;
+		if (fgets(s,1024,fp)==NULL ||
+		    !fio_double(p,node.x) || !fio_double(p,node.y) ||
+		    !fio_double(p,Aprev[i]) || !fio_int(p,node.bc))
+		{
+			fclose(fp);
+			return FALSE;
+		}
 
 		// convert all lengths to centimeters (better conditioning this way...)
 		node.x*=c[LengthUnits];
 		node.y*=c[LengthUnits];
-		
+
 		meshnode[i]=node;
 	}
 
@@ -410,8 +473,16 @@ int CFemmeDocCore::LoadPrev()
 	CElement elm;
 	for(i=0;i<NumEls;i++)
 	{
-		fgets(s,1024,fp);
-		sscanf(s,"%i	%i	%i	%i	%i	%i	%i	%lf\n",&elm.p[0],&elm.p[1],&elm.p[2],&elm.lbl,&elm.e[0],&elm.e[1],&elm.e[2],&elm.Jprev);
+		const char *p=s;
+		if (fgets(s,1024,fp)==NULL ||
+		    !fio_int(p,elm.p[0]) || !fio_int(p,elm.p[1]) ||
+		    !fio_int(p,elm.p[2]) || !fio_int(p,elm.lbl)  ||
+		    !fio_int(p,elm.e[0]) || !fio_int(p,elm.e[1]) ||
+		    !fio_int(p,elm.e[2]) || !fio_double(p,elm.Jprev))
+		{
+			fclose(fp);
+			return FALSE;
+		}
 		// look up block type out of the list of block labels
 		elm.blk=labellist[elm.lbl].BlockType;
 		meshele[i]=elm;
@@ -456,14 +527,95 @@ int CFemmeDocCore::LoadPrev()
 				&age.node[k].n2, &age.node[k].w2,
 				&age.node[k].n3, &age.node[k].w3);
 		}
+		age.ringInner=NULL;
+		age.ringOuter=NULL;
 		agelist[i]=age;
 	}
 
+	// Everything below restores ASSIGNMENTS from the previous solution --
+	// node bc markers, element edge boundary indices, element region labels
+	// -- while property VALUES always come from the current .fem. That is
+	// only valid if the two runs assign identically, so compare the geometry
+	// sections of the current .fem against the verbatim .fem echo the .ans
+	// opens with. A mismatch (e.g. an initial-condition file that clamps a
+	// different face than the transient does) falls back to remeshing, which
+	// handles any assignment correctly.
+	if (DeltaT>0)
+	{
+		std::string gnow, gprev;
+		FILE *ff;
+		snprintf(s,sizeof(s),"%s.fem",PathName);
+		if ((ff=femm_fopen(s,"rt"))==NULL){ fclose(fp); return FALSE; }
+		int okNow=SlurpGeometry(ff,gnow);
+		fclose(ff);
+		long here=ftell(fp);
+		rewind(fp);
+		int okPrev=SlurpGeometry(fp,gprev);
+		fseek(fp,here,SEEK_SET);
+		if (!okNow || !okPrev || gnow!=gprev){ fclose(fp); return FALSE; }
+	}
 
-
-
+	// ---- optional trailing [AgeRings] section ----
+	// The quad-point mapping just read is angle-BAKED: it was sorted at the
+	// previous step's rotor position. The raw ring node lists appended after
+	// the AGE block are angle-invariant, and are what lets a transient step
+	// reuse this mesh while re-pairing the gap at the CURRENT angle.
+	int bHaveRings=0;
+	if ((NumAGEs>0) && (fgets(s,1024,fp)!=NULL) &&
+	    (_strnicmp(s,"[AgeRings]",10)==0))
+	{
+		bHaveRings=1;
+		for(i=0;i<NumAGEs;i++){
+			int nn=0;
+			fgets(s,1024,fp);
+			sscanf(s,"%i",&nn);
+			if (nn!=agelist[i].totalArcElements){ bHaveRings=0; break; }
+			agelist[i].ringInner=(int *)calloc(nn,sizeof(int));
+			agelist[i].ringOuter=(int *)calloc(nn,sizeof(int));
+			for(k=0;k<nn;k++){
+				fgets(s,1024,fp);
+				sscanf(s,"%i %i",&agelist[i].ringInner[k],&agelist[i].ringOuter[k]);
+			}
+		}
+	}
 
 	fclose(fp);
+
+	// A transient step re-pairs every air gap at the rotor angle the CURRENT
+	// .fem specifies -- the whole point of expressing rotation through the
+	// AGE's InnerAngle is that the mesh never changes, only this pairing.
+	// Without the ring lists (an old .ans, or a mismatch) reuse is unsafe:
+	// return FALSE and the caller falls back to remeshing.
+	if ((DeltaT>0) && (NumAGEs>0))
+	{
+		if (!bHaveRings) return FALSE;
+
+		double cu=c[LengthUnits];
+		for(i=0;i<NumAGEs;i++){
+			// current angles come from the boundary property of the same name
+			int bp=-1;
+			for(k=0;k<NumLineProps;k++)
+				if (strcmp(lineproplist[k].BdryName,agelist[i].BdryName)==0) bp=k;
+			if (bp<0) return FALSE;
+			agelist[i].InnerAngle=lineproplist[bp].InnerAngle;
+			agelist[i].OuterAngle=lineproplist[bp].OuterAngle;
+
+			// meshnode is in cm here; the .ans param line's center is in
+			// problem units. Only differences enter the builder, but they
+			// must be taken in ONE unit system.
+			int nn=agelist[i].totalArcElements;
+			std::vector<double> ix(nn),iy(nn),ox(nn),oy(nn);
+			for(k=0;k<nn;k++){
+				ix[k]=meshnode[agelist[i].ringInner[k]].x;
+				iy[k]=meshnode[agelist[i].ringInner[k]].y;
+				ox[k]=meshnode[agelist[i].ringOuter[k]].x;
+				oy[k]=meshnode[agelist[i].ringOuter[k]].y;
+			}
+			BuildAgeRing(agelist[i],ix.data(),iy.data(),ox.data(),oy.data(),
+			             agelist[i].agc.re*cu,agelist[i].agc.im*cu);
+		}
+	}
+
 	return TRUE;
 }
 
@@ -497,8 +649,10 @@ int CFemmeDocCore::OnOpenDocument()
 	NumCircProps=0;
 	NumFluxConstraints=0;
 	NumCurrentConstraints=0;
+	NumVoltageUnknowns=0;
 	ACSolver=0;
 	Depth=1;
+	DeltaT=0;
 
 	// parse the file
 
@@ -684,6 +838,7 @@ int CFemmeDocCore::OnOpenDocument()
 		}
  		
 		if( _strnicmp(q,"<beginbdry>",11)==0){	
+			BProp.BdryName[0]=0;
 			BProp.BdryFormat=0;
 			BProp.A0=0.;
 			BProp.A1=0.;
@@ -761,6 +916,13 @@ int CFemmeDocCore::OnOpenDocument()
 		   sscanf(v,"%lf",&BProp.c1.im);
 		   q[0]=0;
 		}	
+
+		if( _strnicmp(q,"<bdryname>",10)==0){
+			CString bn;
+			ParseString(s,&bn);
+			snprintf(BProp.BdryName,sizeof(BProp.BdryName),"%s",(const char *)bn);
+			q[0]=0;
+		}
 
 		if( _strnicmp(q,"<innerangle>",12)==0){
 		   v=StripKey(s);
@@ -1087,11 +1249,14 @@ int CFemmeDocCore::OnOpenDocument()
 	fclose(fp);
 			
 
-	if (NumCircProps==0) return TRUE;
-
-	// !!!!
-	// Read auxiliary file that defines the configuration for 2D flux-constrained circuits
-	if ((ProblemType==0) && (Frequency==0))
+	// Read the auxiliary file that carries the driver's per-run parameters:
+	// the backward-Euler time step, and (planar only) the configuration for
+	// flux-constrained circuits.
+	//
+	// The "no circuits, nothing to do" shortcut that used to sit here has
+	// moved past this block: a solid conductor in NO circuit is a legitimate
+	// transient problem (pure diffusion), and it still needs [DeltaT].
+	if (Frequency==0)
 	{
 		snprintf(s, sizeof(s),"%s.tmp",PathName);
 		if ((fp=femm_fopen(s,"rt"))!=NULL) // may not have a tmp file. If we see one, read it it.
@@ -1100,7 +1265,21 @@ int CFemmeDocCore::OnOpenDocument()
 			{
 				sscanf(s,"%s",q);
 
-				if( _strnicmp(q,"[Circuits]",10)==0){	
+				// Applies to planar and axisymmetric alike.
+				if( _strnicmp(q,"[DeltaT]",8)==0){
+					v=StripKey(s);
+					sscanf(v,"%lf",&DeltaT);
+					if (DeltaT<0) DeltaT=0;
+					q[0]=0;
+				}
+
+				// The flux/current-constraint machinery below is assembled by
+				// prob1big only, so keep it planar-only as before -- otherwise
+				// an axisymmetric run would grow constraint rows that nothing
+				// ever fills in.
+				if ((ProblemType!=0) || (NumCircProps==0)) continue;
+
+				if( _strnicmp(q,"[Circuits]",10)==0){
 					v=StripKey(s);
 					sscanf(v,"%i",&NumFluxConstraints);
 					if (NumFluxConstraints>0) 
@@ -1165,15 +1344,19 @@ int CFemmeDocCore::OnOpenDocument()
 				if( _strnicmp(q,"[ConstraintMatrix]",18)==0){
 					q[0]=0;
 
+					// (the historical version of this block allocated
+					// ConstraintMatrix but stored the rows into
+					// CircuitMatrix -- clobbering the flux-constraint
+					// matrix -- and nothing ever consumed the data)
 					ConstraintMatrix=(double **)calloc(NumCurrentConstraints,sizeof(double*));
 					for(k=0;k<NumCurrentConstraints;k++)
-						CircuitMatrix[k]=(double *)calloc(NumFluxConstraints,sizeof(double));
+						ConstraintMatrix[k]=(double *)calloc(NumFluxConstraints,sizeof(double));
 					for(k=0;k<NumCurrentConstraints;k++)
 					{
 						fgets(s,1024,fp);
 						v=s;
 						for(int j=0;j<NumFluxConstraints;j++)
-							v=ParseDbl(v,&CircuitMatrix[k][j]);
+							v=ParseDbl(v,&ConstraintMatrix[k][j]);
 					}
 				}
 				
@@ -1194,6 +1377,10 @@ int CFemmeDocCore::OnOpenDocument()
 			fclose(fp);
 		}
 	}
+
+	// Moved down from above the .tmp block so that a circuit-free transient
+	// problem still picks up [DeltaT].
+	if (NumCircProps==0) return TRUE;
 
 	// Process circuits for series connections.
 	// The program deals with series "circuits" by making a separate
@@ -1249,6 +1436,106 @@ int CFemmeDocCore::OnOpenDocument()
 	return TRUE;
 }
 
+// Size the linear system: the nodal unknowns, plus the flux- and
+// current-constraint rows, plus -- in a transient analysis -- one row per
+// circuit carrying the axial voltage gradient of any solid conductor in it
+// (the static analogue of prob2big's "Case 2"). The voltage rows go LAST so
+// that the flux/current-constraint indexing already baked into prob1big is
+// untouched.
+//
+// Allocate one voltage row per circuit unconditionally: which circuits
+// actually need one is only decided inside Static2D, long after the matrix
+// has been Created, and the unused rows get a pinned diagonal there. Call
+// this only after the series-circuit expansion, which is what fixes
+// NumCircProps.
+void CFemmeDocCore::SetNumNodesPlus()
+{
+	NumVoltageUnknowns = (DeltaT>0) ? NumCircProps : 0;
+	NumNodesPlus = NumNodes + NumFluxConstraints + NumCurrentConstraints
+	                        + NumVoltageUnknowns;
+}
+
+// Build an air gap element's ring mapping from its raw ring node lists.
+//
+// Everything angle-dependent is derived here; everything persistent is
+// angle-invariant. Each of the n ring nodes is replicated once per
+// periodic copy of the meshed sector, rotated by the copy's offset plus
+// the ring's CURRENT angle (age.InnerAngle/OuterAngle), sorted by angular
+// position, and paired off into the quad points the assembly consumes.
+// Antiperiodic gaps alternate the sign carried per copy; the endpoint sign
+// flips in prob1big's AGE assembly are downstream of this and unchanged.
+//
+// The sort is stable with strictly-increasing keys in practice (distinct
+// ring positions), matching the original bubble sort's ordering exactly --
+// which matters, because the transient mesh-reuse path must reproduce the
+// fresh-mesh pairing bit for bit at equal angles.
+void CFemmeDocCore::BuildAgeRing(CAirGapElement &age,
+                                 const double *ix, const double *iy,
+                                 const double *ox, const double *oy,
+                                 double cx, double cy)
+{
+	int n = age.totalArcElements;
+	if (n < 1) return;
+
+	double dtta = age.totalArcLength / n;
+	int n0 = (int)(360.0 / dtta + 0.5);
+	int n1 = (int)(360.0 / age.totalArcLength + 0.5);
+
+	struct RingPt { int node; double w; double sign; };
+	std::vector<RingPt> innerRing(n0), outerRing(n0);
+	int kk = 0;
+	for (int jj = 0; jj < n1; jj++) {
+		double dL = 1.0;
+		if (age.BdryFormat == 1 && (jj % 2 != 0)) dL = -1.0;
+		double iRotRad = (jj * age.totalArcLength + age.InnerAngle) * PI / 180.0;
+		double oRotRad = (jj * age.totalArcLength + age.OuterAngle) * PI / 180.0;
+		double cosI = cos(iRotRad), sinI = sin(iRotRad);
+		double cosO = cos(oRotRad), sinO = sin(oRotRad);
+		for (int ii = 0; ii < n; ii++) {
+			double dx = ix[ii] - cx;
+			double dy = iy[ii] - cy;
+			double rx = cosI * dx - sinI * dy, ry = sinI * dx + cosI * dy;
+			double ang = atan2(ry, rx) * 180.0 / PI;
+			if (ang < 0) ang += 360.0;
+			innerRing[kk].node = age.ringInner[ii];
+			innerRing[kk].w = ang / dtta;
+			innerRing[kk].sign = dL;
+
+			dx = ox[ii] - cx;
+			dy = oy[ii] - cy;
+			rx = cosO * dx - sinO * dy; ry = sinO * dx + cosO * dy;
+			ang = atan2(ry, rx) * 180.0 / PI;
+			if (ang < 0) ang += 360.0;
+			outerRing[kk].node = age.ringOuter[ii];
+			outerRing[kk].w = ang / dtta;
+			outerRing[kk].sign = dL;
+			kk++;
+		}
+	}
+
+	auto byPos = [](const RingPt &a, const RingPt &b){ return a.w < b.w; };
+	std::stable_sort(innerRing.begin(), innerRing.end(), byPos);
+	std::stable_sort(outerRing.begin(), outerRing.end(), byPos);
+
+	age.InnerShift = innerRing[0].w;
+	age.OuterShift = outerRing[0].w;
+
+	if (age.node == NULL)
+		age.node = (CQuadPoint *)calloc(n + 1, sizeof(CQuadPoint));
+	for (int ii = 0; ii <= n; ii++) {
+		int p1 = ii; if (p1 >= n0) p1 = 0;
+		int p0 = p1 - 1; if (p0 < 0) p0 = n0 + p0;
+		age.node[ii].n0 = innerRing[p0].node;
+		age.node[ii].w0 = innerRing[p0].sign;
+		age.node[ii].n1 = innerRing[p1].node;
+		age.node[ii].w1 = innerRing[p1].sign;
+		age.node[ii].n2 = outerRing[p0].node;
+		age.node[ii].w2 = outerRing[p0].sign;
+		age.node[ii].n3 = outerRing[p1].node;
+		age.node[ii].w3 = outerRing[p1].sign;
+	}
+}
+
 int CFemmeDocCore::LoadMesh()
 {
 	int i,j,k,q,n0,n1;
@@ -1260,7 +1547,15 @@ int CFemmeDocCore::LoadMesh()
 	//if there's a "previous solution" specified, 
 	//and if this is an incremental or frozen permeability problem,
 	//slurp of the mesh out of that file.
-	if ((PrevSoln.GetLength()>0) && (PrevType>0))
+	//
+	// A transient step (DeltaT>0) takes this path too. The previous hazard --
+	// LoadPrev restoring the PREVIOUS step's air-gap pairing, coupling the
+	// rotor at the wrong angle -- is resolved: the .ans now carries each
+	// AGE's raw ring node lists in a trailing [AgeRings] section, and
+	// LoadPrev re-pairs every gap at the angles the CURRENT .fem specifies.
+	// If the lists are absent (an old .ans), LoadPrev returns FALSE and the
+	// caller remeshes, which is the previous behavior.
+	if ((PrevSoln.GetLength()>0) && ((PrevType>0)||(DeltaT>0)))
 	{
 		// clear out mesh files
 		snprintf(infile, sizeof(infile),"%s.ele",PathName);	DeleteFile(infile);
@@ -1271,7 +1566,7 @@ int CFemmeDocCore::LoadMesh()
 
 		if (LoadPrev()==TRUE)
 		{
-			NumNodesPlus = NumNodes + NumFluxConstraints + NumCurrentConstraints;
+			SetNumNodesPlus();
 			return TRUE;
 		}
 		else return FALSE;
@@ -1488,7 +1783,7 @@ MsgBox("Succefully read %s.ele",PathName);
 	snprintf(infile, sizeof(infile),"%s.pbc",PathName);	DeleteFile(infile);
 	snprintf(infile, sizeof(infile),"%s.poly",PathName);	DeleteFile(infile);
 
-	NumNodesPlus = NumNodes + NumFluxConstraints + NumCurrentConstraints;
+	SetNumNodesPlus();
 	return TRUE;
 }
 

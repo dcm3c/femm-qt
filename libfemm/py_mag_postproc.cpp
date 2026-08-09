@@ -441,11 +441,18 @@ void register_mag_postproc_py(ResultsDoc *doc) {
                                s_rdoc->LengthConv());
     });
 
+    // OF's 4th argument selected among three text layouts (multi-column with
+    // or without a legend, Mathematica-style) and, when omitted, meant "write
+    // an extended metafile instead of data". femm-qt writes one data format
+    // and has no metafile output, so the argument is accepted and ignored --
+    // dropping it would turn every ported call into a TypeError.
     m.def("mo_makeplot", [](int plotType, optional<int> numPoints,
-                            optional<std::string> filename) -> double {
+                            optional<std::string> filename,
+                            optional<int> /*fileFormat*/) -> double {
         check_doc(s_rdoc, MOERR);
         return ppMakePlot(s_rdoc, plotType, numPoints.value_or(150),
-                          filename ? fixpath(*filename) : std::string());
+                          filename ? fixpath(*filename) : std::string(),
+                          xyexport::magPlotNames());
     });
 
     // ---- Air gap element functions ----
@@ -675,7 +682,7 @@ void register_mag_postproc_py(ResultsDoc *doc) {
         double a[1] = {on};
         ppViewCmd("mo_gridsnap", 1, a);
     });
-    regv("mo_setgrid");
+    registerSetGrid(m, "mo", s_rdoc, MOERR);
     regv("mo_resize");
     regv("mo_minimize");
     regv("mo_maximize");
@@ -698,7 +705,9 @@ void register_mag_postproc_py(ResultsDoc *doc) {
             cb("mo_setfocus", 0, args);
     });
 
-    m.def("mo_savemetafile", []() {});  // deprecated no-op
+    m.def("mo_savemetafile", [](std::optional<std::string>) {});  // No metafile output in femm-qt;
+    // the filename is accepted and ignored so ported scripts do not raise.
+    // Use *_savebitmap to save a picture of the view.
 
     m.def("mo_seteditmode", [](const std::string &mode) {
         auto cb = get_view_command_callback();

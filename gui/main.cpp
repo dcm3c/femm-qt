@@ -350,14 +350,19 @@ static const char *onViewCommand(const char *cmd, int nargs, double *args)
         return nullptr;
     }
     if (c.endsWith("setgrid")) {
+        // args = {spacing, coords}, either slot negative when unspecified. The
+        // coordinate mode has already been written to the document by the
+        // binding (it is document state, and must also work headless); all that
+        // is left here is the spacing and a repaint.
         auto *ew = qobject_cast<EditorWidget*>(widget);
         auto *rw = qobject_cast<ResultsWidget*>(widget);
         auto *sw = qobject_cast<ScalarResultsWidget*>(widget);
-        if (nargs > 0) {
+        if (nargs > 0 && args[0] > 0) {
             if (ew) ew->setGridSize(args[0]);
             else if (rw) rw->setGridSize(args[0]);
             else if (sw) sw->setGridSize(args[0]);
         }
+        if (widget) widget->update();
         return nullptr;
     }
 
@@ -573,8 +578,8 @@ static int onRunSolver(const char *exePath, const char *basePath, int hide)
     if (hide) {
         // Silent mode (e.g. mi_analyze(1)) — no UI, just run and wait. Discard
         // the solver's output rather than forwarding it: the caller asked for a
-        // hidden solve, so its progress bar and status chatter ("OpenMP: N
-        // threads", "Meshing...", "Results written to disk") have no business on
+        // hidden solve, so its progress bar and status chatter ("Meshing...",
+        // "Problem Statistics", "Results written to disk") have no business on
         // the terminal that launched the GUI. ForwardedChannels used to dump all
         // of it there, once per solve. femm_headless likewise sends the spawned
         // solver's output to the null device. A failure still surfaces: the exit

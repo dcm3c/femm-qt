@@ -5,9 +5,6 @@
 // Replaces the MFC dialog-based launcher with a simple console program.
 
 #include "StdAfx.h"
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 #include "fkn.h"
 #include "fknDlg.h"
 #include "complex.h"
@@ -29,14 +26,6 @@ int tangle_mesh_and_load(const std::string& inputBase, CFemmeDocCore& Doc);
 int main(int argc, char* argv[])
 {
     std::vector<std::string> args = femm_utf8_args(argc, argv);
-#ifdef _OPENMP
-    // Cap threads at 4 by default — diminishing returns beyond that,
-    // and users may prefer spare cores for other solver instances.
-    // Respects OMP_NUM_THREADS if set lower.
-    int max_t = omp_get_max_threads();
-    if (max_t > 4) omp_set_num_threads(4);
-    fprintf(stderr, "OpenMP: %d threads\n", omp_get_max_threads());
-#endif
 
     CFknDlg theView;
     CFemmeDocCore Doc;
@@ -69,14 +58,32 @@ int main(int argc, char* argv[])
             return 10;
         }
 
-    // Mesh the geometry and load directly into solver arrays (no file I/O)
-    // For incremental permeability, fall back to LoadMesh() which reads the previous solution
-    if ((Doc.PrevSoln.GetLength() > 0) && (Doc.PrevType > 0)) {
-        if (Doc.LoadMesh() != TRUE) {
-            fprintf(stderr, "Problem loading mesh from previous solution\n");
-            return 2;
+    // Mesh the geometry and load directly into solver arrays (no file I/O).
+    // Incremental-permeability AND transient runs instead reuse the previous
+    // solution's mesh via LoadMesh()/LoadPrev(); for a transient this also
+    // re-pairs any air gap elements at the current rotor angle from the
+    // [AgeRings] lists in the .ans. A transient whose previous solution
+    // cannot be reused (an old .ans without ring lists, or any read failure)
+    // falls back to remeshing -- correct either way, since tangle is
+    // deterministic for identical geometry; only incremental hard-fails.
+    int bMeshed = FALSE;
+    if ((Doc.PrevSoln.GetLength() > 0) && (Doc.PrevType > 0 || Doc.DeltaT > 0)) {
+        bMeshed = Doc.LoadMesh();
+        if (bMeshed != TRUE) {
+            if (Doc.PrevType > 0) {
+                fprintf(stderr, "Problem loading mesh from previous solution\n");
+                return 2;
+            }
+            // Transient fallback: discard anything a partial LoadPrev left
+            // behind. Aprev is the dangerous one -- sized for the old node
+            // numbering -- and Static2D re-reads it against the fresh mesh,
+            // with LoadPrevA's node-count check as the guard.
+            if (Doc.Aprev) { free(Doc.Aprev); Doc.Aprev = NULL; }
+            if (Doc.meshnode) { free(Doc.meshnode); Doc.meshnode = NULL; }
+            if (Doc.meshele)  { free(Doc.meshele);  Doc.meshele  = NULL; }
         }
-    } else {
+    }
+    if (bMeshed != TRUE) {
         fprintf(stderr, "Meshing...\n");
         int meshret = tangle_mesh_and_load(PathName, Doc);
         if (meshret != TRUE) {

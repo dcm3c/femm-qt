@@ -7,6 +7,8 @@
 
 #include "results_doc.h"
 #include "utf8_io.h"
+#include "fastio.h"
+#include "band_interp.h"
 #include "fknDlg.h"   // CFknDlg (needed for MakeMask PCG solver progress)
 #include "spars.h"     // CBigLinProb (sparse matrix for MakeMask Laplace solve)
 #include <cstdio>
@@ -1226,6 +1228,41 @@ void ResultsDoc::ComputeAGEHarmonics()
             for (int kk = 0; kk < 10; kk++)
                 a[kk] = meshnode[nn[kk]].A * ww[kk];
 
+#ifdef QUINTIC
+            // Quintic (C2) band interpolation. MUST match the solver's
+            // element-matrix branch in prob1big.cpp: the reconstructed gap
+            // field has to be the one the solver's energy functional saw,
+            // or the DFT-based torque/force sums pick up scheme-mismatch
+            // noise larger than the artifact being removed.
+            {
+                double wi0 = ci*ci*ci*(ci*(5.0/2.0 - ci) - 3.0/2.0);
+                double wi1 = ci*(ci*(ci*(ci*(3*ci - 15.0/2.0) + 9.0/2.0) + 1.0/2.0) + 1.0/2.0);
+                double wi2 = ci*ci*(ci*(ci*(15.0/2.0 - 3*ci) - 9.0/2.0) - 1) + 1;
+                double wi3 = ci*(ci*(ci*(ci*(ci - 5.0/2.0) + 3.0/2.0) + 1.0/2.0) - 1.0/2.0);
+                double wo0 = co*co*co*(co*(5.0/2.0 - co) - 3.0/2.0);
+                double wo1 = co*(co*(co*(co*(3*co - 15.0/2.0) + 9.0/2.0) + 1.0/2.0) + 1.0/2.0);
+                double wo2 = co*co*(co*(co*(15.0/2.0 - 3*co) - 9.0/2.0) - 1) + 1;
+                double wo3 = co*(co*(co*(co*(co - 5.0/2.0) + 3.0/2.0) + 1.0/2.0) - 1.0/2.0);
+                CComplex Aa = wi0*a[0] + wi1*a[1] + wi2*a[2] + wi3*a[3];
+                CComplex Ab = wi0*a[1] + wi1*a[2] + wi2*a[3] + wi3*a[4];
+                CComplex Acc= wo0*a[5] + wo1*a[6] + wo2*a[7] + wo3*a[8];
+                CComplex Ad = wo0*a[6] + wo1*a[7] + wo2*a[8] + wo3*a[9];
+                if (age.BdryFormat == 0)
+                    age.aco = age.aco + ((Aa+Ab+Acc+Ad)/4.0) / (double)age.totalArcElements;
+                age.br[k] = (Ab - Aa + Ad - Acc)/(2*dt*R);
+                age.bt[k] = (Aa + Ab - Acc - Ad)/(2*dr);
+                if (bIncremental) {
+                    for (int kk = 0; kk < 10; kk++)
+                        a[kk] = CComplex(meshnode[nn[kk]].Aprev * ww[kk], 0);
+                    Aa = wi0*a[0] + wi1*a[1] + wi2*a[2] + wi3*a[3];
+                    Ab = wi0*a[1] + wi1*a[2] + wi2*a[3] + wi3*a[4];
+                    Acc= wo0*a[5] + wo1*a[6] + wo2*a[7] + wo3*a[8];
+                    Ad = wo0*a[6] + wo1*a[7] + wo2*a[8] + wo3*a[9];
+                    age.brPrev[k] = ((Ab - Aa + Ad - Acc)/(2*dt*R)).re;
+                    age.btPrev[k] = ((Aa + Ab - Acc - Ad)/(2*dr)).re;
+                }
+            }
+#else
             // A at center (periodic only)
             if (age.BdryFormat == 0) {
                 CComplex ac = (2*a[2]+2*a[3]+2*a[7]+2*a[8]+a[1]*ci+(a[2]-a[3]-a[4])*ci-(a[0]-3*a[1]+a[2]+3*a[3]-2*a[4])*ci*ci+(a[0]-2*a[1]+2*a[3]-a[4])*ci*ci*ci+(a[6]+a[7]-a[8]-a[9])*co-
@@ -1247,6 +1284,7 @@ void ResultsDoc::ComputeAGEHarmonics()
                 age.btPrev[k] = (ci*a[1]+2*a[2]+2*a[3]-ci*ci*(a[0]-3*a[1]+a[2]+3*a[3]-2*a[4])+ci*(a[2]-a[3]-a[4])+ci*ci*ci*(a[0]-2*a[1]+2*a[3]-a[4])-co*a[6]+
                     (-2+co)*(1+co)*a[7]-2*a[8]+co*(a[8]+co*(a[5]-3*a[6]+3*a[8]-2*a[9])+a[9]+co*co*(-a[5]+2*a[6]-2*a[8]+a[9]))).re/(4*dr);
             }
+#endif
         }
 
         // Fourier decomposition
@@ -1449,6 +1487,9 @@ bool ResultsDoc::OpenDocument(const std::string &pathname)
             }
             if (_strnicmp(q, "[depth]", 7) == 0) {
                 v = StripKey(s); sscanf(v, "%lf", &Depth);
+            }
+            if (_strnicmp(q, "[deltat]", 8) == 0) {
+                v = StripKey(s); sscanf(v, "%lf", &DeltaT);
             }
             if (_strnicmp(q, "[lengthunits]", 13) == 0) {
                 v = StripKey(s); sscanf(v, "%s", q);
@@ -1682,25 +1723,39 @@ bool ResultsDoc::OpenDocument(const std::string &pathname)
         sscanf(s, "%i", &numNodes);
         meshnode.resize(numNodes);
 
+        // A transient solution stores Aprev in the same slot the incremental
+        // path uses, so the record layout is the same; only the meaning of
+        // Aprev differs (previous time step vs linearization base point).
+        const bool bHasAprev = (bIncremental != 0) || (DeltaT > 0);
+
+        // Cursor parse (fastio.h) in place of per-record sscanf -- these two
+        // loops are most of the .ans load time at machine scale. Like sscanf,
+        // parsing stops quietly at the first missing field, so short records
+        // are tolerated identically.
         for (int i = 0; i < numNodes; i++) {
             fgets(s, 1024, fp);
             auto &nd = meshnode[i];
+            const char *p = s;
             if (Frequency != 0) {
-                if (!bIncremental)
-                    sscanf(s, "%lf %lf %lf %lf", &nd.x, &nd.y, &nd.A.re, &nd.A.im);
+                if (!bHasAprev)
+                    (void)(fio_double(p, nd.x) && fio_double(p, nd.y) &&
+                           fio_double(p, nd.A.re) && fio_double(p, nd.A.im));
                 else {
                     int bc;
-                    sscanf(s, "%lf %lf %lf %lf %i %lf",
-                        &nd.x, &nd.y, &nd.A.re, &nd.A.im, &bc, &nd.Aprev);
+                    (void)(fio_double(p, nd.x) && fio_double(p, nd.y) &&
+                           fio_double(p, nd.A.re) && fio_double(p, nd.A.im) &&
+                           fio_int(p, bc) && fio_double(p, nd.Aprev));
                 }
             }
             else {
-                if (!bIncremental)
-                    sscanf(s, "%lf %lf %lf", &nd.x, &nd.y, &nd.A.re);
+                if (!bHasAprev)
+                    (void)(fio_double(p, nd.x) && fio_double(p, nd.y) &&
+                           fio_double(p, nd.A.re));
                 else {
                     int bc;
-                    sscanf(s, "%lf %lf %lf %i %lf",
-                        &nd.x, &nd.y, &nd.A.re, &bc, &nd.Aprev);
+                    (void)(fio_double(p, nd.x) && fio_double(p, nd.y) &&
+                           fio_double(p, nd.A.re) &&
+                           fio_int(p, bc) && fio_double(p, nd.Aprev));
                 }
                 nd.A.im = 0;
             }
@@ -1715,10 +1770,25 @@ bool ResultsDoc::OpenDocument(const std::string &pathname)
         for (int i = 0; i < numElem; i++) {
             fgets(s, 1024, fp);
             auto &el = meshelem[i];
-            if (!bIncremental)
-                sscanf(s, "%i %i %i %i", &el.p[0], &el.p[1], &el.p[2], &el.lbl);
-            else
-                sscanf(s, "%i %i %i %i %lf", &el.p[0], &el.p[1], &el.p[2], &el.lbl, &el.Jp);
+            const char *p = s;
+            int e0, e1, e2;
+            (void)(fio_int(p, el.p[0]) && fio_int(p, el.p[1]) &&
+                   fio_int(p, el.p[2]) && fio_int(p, el.lbl) &&
+                   // The element record is "p0 p1 p2 lbl e0 e1 e2 Jprev": the
+                   // previous solution's current density is the EIGHTH field,
+                   // after the three edge-boundary indices. Reading it as the
+                   // fifth (as OF does, and as this reader used to) picks up
+                   // e0 instead -- a boundary index, -1 on every interior
+                   // element -- which silently corrupts the 1x incremental
+                   // Lorentz integrals (types 28/29/30), the only consumers.
+                   // The solver's own LoadPrev() has always read field 8.
+                   (!bIncremental ||
+                    (fio_int(p, e0) && fio_int(p, e1) && fio_int(p, e2) &&
+                     fio_double(p, el.Jp))));
+            // Stored in MA/m^2 (the solver's working unit); GetJA hands out
+            // A/m^2, and the two are added together in those integrals, so
+            // convert here -- the same 1e6 GetJA applies at its own exit.
+            el.Jp *= 1.e6;
             // Note: lbl is already 0-based in the .ans file (solver uses Triangle -z flag)
             if (el.lbl >= 0 && el.lbl < (int)labellist.size())
                 el.blk = labellist[el.lbl].BlockType;
@@ -1995,6 +2065,35 @@ bool ResultsDoc::GetPointValues(double x, double y, int k, PointVals &u)
     u.mu12 = CComplex(0, 0);
     u.ff = labellist[meshelem[k].lbl].FillFactor;
 
+    // Interpolate a per-node scalar to (x,y) exactly as A is interpolated
+    // below: linear for planar, the 6-node quadratic for axisymmetric. Used
+    // for A itself and, in a transient, for Aprev -- the eddy current needs
+    // both sampled the same way or the difference is meaningless.
+    auto interpNodal = [&](const double nv[3]) -> double {
+        if (ProblemType == 0) {
+            double acc = 0;
+            for (int i = 0; i < 3; i++)
+                acc += nv[i] * (a[i] + b[i] * x + c[i] * y) / da;
+            return acc;
+        }
+        double v[6], R[3];
+        for (int i = 0; i < 3; i++) R[i] = meshnode[n[i]].x;
+        v[0] = nv[0]; v[2] = nv[1]; v[4] = nv[2];
+        if (R[0] < 1e-6 && R[1] < 1e-6) v[1] = (v[0] + v[2]) / 2.0;
+        else v[1] = (R[1] * (3 * v[0] + v[2]) + R[0] * (v[0] + 3 * v[2])) / (4 * (R[0] + R[1]));
+        if (R[1] < 1e-6 && R[2] < 1e-6) v[3] = (v[2] + v[4]) / 2.0;
+        else v[3] = (R[2] * (3 * v[2] + v[4]) + R[1] * (v[2] + 3 * v[4])) / (4 * (R[1] + R[2]));
+        if (R[2] < 1e-6 && R[0] < 1e-6) v[5] = (v[4] + v[0]) / 2.0;
+        else v[5] = (R[0] * (3 * v[4] + v[0]) + R[2] * (v[4] + 3 * v[0])) / (4 * (R[2] + R[0]));
+        double p = (b[1] * x + c[1] * y + a[1]) / da;
+        double q = (b[2] * x + c[2] * y + a[2]) / da;
+        return v[0] - p * (3 * v[0] - 4 * v[1] + v[2]) +
+               2 * p * p * (v[0] - 2 * v[1] + v[2]) -
+               q * (3 * v[0] + v[4] - 4 * v[5]) +
+               2 * q * q * (v[0] + v[4] - 2 * v[5]) +
+               4 * p * q * (v[0] - v[1] + v[3] - v[5]);
+    };
+
     if (Frequency == 0) {
         // DC case — interpolate A
         u.A = CComplex(0, 0);
@@ -2033,7 +2132,9 @@ bool ResultsDoc::GetPointValues(double x, double y, int k, PointVals &u)
         u.H2.re = u.B2.re / (u.mu2.re * muo);
         u.H1.im = 0; u.H2.im = 0;
 
-        // Current density
+        // Current density. In a transient the induced part is -sigma*dA/dt
+        // with dA/dt the backward-Euler difference -- the same expression
+        // GetJA applies per corner, sampled here at the probe point.
         u.Je = CComplex(0, 0);
         u.Js = CComplex(blockproplist[meshelem[k].blk].Jsrc.re, 0);
         int lbl = meshelem[k].lbl;
@@ -2063,6 +2164,27 @@ bool ResultsDoc::GetPointValues(double x, double y, int k, PointVals &u)
 
         // Conductivity
         u.c = labellist[meshelem[k].lbl].o.re;
+
+        // Transient eddy current. Solid regions only: a stranded region
+        // (FillFactor >= 0) carries no bulk eddy current, and an in-plane
+        // laminated one accounts for its eddy currents through a
+        // frequency-dependent permeability instead. Both exclusions have to
+        // match GetJA's, or a block integral and a point probe of the same
+        // spot disagree -- the AC branch applies the same pair at :2197 and
+        // :2253, and the solver's EddyCduct is the third copy.
+        const bool bInPlaneLam =
+            (blockproplist[meshelem[k].blk].LamType == 0 &&
+             blockproplist[meshelem[k].blk].Lam_d != 0);
+        if (DeltaT > 0 && u.c != 0 && u.ff < 0 && !bInPlaneLam) {
+            double apn[3];
+            for (int i = 0; i < 3; i++) apn[i] = meshnode[n[i]].Aprev;
+            double aprev = interpNodal(apn);
+            u.Je = CComplex(-u.c * (u.A.re - aprev) / DeltaT, 0);
+            if (ProblemType != 0) {
+                if (fabs(x) > 1e-6) u.Je = u.Je / (2.0 * PI * x * LengthConv());
+                else u.Je = CComplex(0, 0);
+            }
+        }
 
         // Energy density — use proper BH-curve-based computation
         u.E = blockproplist[meshelem[k].blk].DoEnergy(u.B1.re, u.B2.re);
@@ -2099,7 +2221,15 @@ bool ResultsDoc::GetPointValues(double x, double y, int k, PointVals &u)
         }
 
         u.Ph = 0;
+        // Ohmic loss density. Zero for a plain magnetostatic solution, but a
+        // transient carries real current, so report it: instantaneous
+        // |J|^2/sigma, with no factor of 2 -- that halving is the AC
+        // phasor-to-RMS convention, and these are instantaneous values.
         u.Pe = 0;
+        if (DeltaT > 0 && u.c != 0) {
+            CComplex Jtot = u.Js + u.Je;
+            u.Pe = 1e6 * (Jtot.re * Jtot.re + Jtot.im * Jtot.im) / u.c;
+        }
     }
     else {
         // AC case — complex fields
@@ -2703,10 +2833,28 @@ void ResultsDoc::GetJA(int k, CComplex *J, CComplex *A)
     if (blockproplist[blk].Lam_d != 0 && blockproplist[blk].LamType == 0) c = 0;
     if (lbl >= 0 && lbl < (int)labellist.size() && labellist[lbl].FillFactor > 0) c = 0;
 
-    // Contribution from eddy currents
+    // Contribution from eddy currents.
+    //
+    // Harmonic: dA/dt is j*omega*A. Transient: backward Euler makes it
+    // (A - Aprev)/DeltaT, the same discrete derivative the solver assembled,
+    // evaluated on the same nodal data -- so this reproduces the solver's own
+    // current density rather than approximating it, and per corner, because A
+    // is linear over the element. That is why no current density is stored in
+    // the .ans: it is cheaper and more consistent to recompute it here.
     if (Frequency != 0)
         for (int i = 0; i < 3; i++)
             J[i] = J[i] - CComplex(0, 1) * Frequency * 2.0 * PI * c * A[i];
+    else if (DeltaT > 0)
+        for (int i = 0; i < 3; i++) {
+            // Aprev has to carry exactly the scaling applied to A above,
+            // including the axisymmetric 1/(2*pi*r) and its on-axis guard.
+            double ap = meshnode[n[i]].Aprev;
+            if (ProblemType != 0) {
+                double rn = meshnode[n[i]].x * lc;
+                ap = (fabs(meshnode[n[i]].x) < 1e-6) ? 0.0 : ap / (2.0 * PI * rn);
+            }
+            J[i] = J[i] - c * (A[i] - ap) / DeltaT;
+        }
 
     // Contribution from circuit currents
     if (lbl >= 0 && lbl < (int)labellist.size()) {
@@ -4242,6 +4390,15 @@ void ResultsDoc::GetLineValues(std::vector<XYPlotPoint> &pts, int plotType, int 
                 case 4: pts[i].vals[0] = sqrt(v.H1.re*v.H1.re + v.H2.re*v.H2.re); break;
                 case 5: pts[i].vals[0] = n.re*v.H1.re + n.im*v.H2.re; break;
                 case 6: pts[i].vals[0] = t.re*v.H1.re + t.im*v.H2.re; break;
+                // Current density, offered at DC as well as AC. Je is the
+                // induced part -- identically zero for a magnetostatic
+                // solution, and the transient eddy current otherwise -- and
+                // Js+Je the total. Previously these cases fell through the
+                // switch, leaving the zero-filled vals above, so a script
+                // asking for them on a DC problem got a flat zero curve that
+                // was an unhandled case rather than an answer.
+                case 7: pts[i].vals[0] = v.Je.re; break;
+                case 8: pts[i].vals[0] = v.Je.re + v.Js.re; break;
                 }
             }
             else {

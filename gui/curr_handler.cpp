@@ -3,6 +3,7 @@
 
 // curr_handler.cpp — Current flow postprocessor dialogs
 #include "curr_handler.h"
+#include "xy_plot.h"
 #include "complex_format.h"
 #include "scalar_results_widget.h"
 #include "curr_results_doc.h"
@@ -114,7 +115,9 @@ void CurrentFlowHandler::showIntegrateDialog(QWidget *parent, OutputDialog *out)
         // accepted the selection. Create the progress dialog lazily on that first
         // callback, so a selection rejected before the solve never pops a dialog.
         std::unique_ptr<QProgressDialog> progDlg;
-        m_doc->progressCallback = [&progDlg, this, parent](int pct) {
+        // No `this` capture: tr() is a static member, so the body needs nothing
+        // from the enclosing object (clang -Wunused-lambda-capture).
+        m_doc->progressCallback = [&progDlg, parent](int pct) {
             if (!progDlg) {
                 progDlg = std::make_unique<QProgressDialog>(tr("Masking..."),
                                                             QString(), 0, 100, parent);
@@ -163,56 +166,17 @@ void CurrentFlowHandler::showXYPlotDialog(QWidget *parent)
 {
     if (!m_doc) return;
     if (m_doc->contour.size() < 2) { m_widget->emitStatus("Define a contour path first (use Contour mode)"); return; }
-    QStringList types;
-    types << "V (voltage)" << "|J| (current density)" << "J.n" << "J.t"
-          << "|E| (electric field)" << "E.n" << "E.t"
-          << "|Jc| (conduction)" << "Jc.n" << "Jc.t"
-          << "|Jd| (displacement)" << "Jd.n" << "Jd.t";
+    // The list lives in libfemm so *_makeplot can label its exported
+    // columns with the same names.
+    const QStringList types = xyplot::quantityList(xyexport::currPlotNames());
 
-    QDialog dlg(parent);
-    dlg.setWindowTitle(tr("X-Y Plot"));
-    auto *form = new QFormLayout;
-    auto *typeCombo = new QComboBox;
-    for (auto &t : types) typeCombo->addItem(t);
-    typeCombo->setCurrentIndex(0);
-    form->addRow(tr("Quantity:"), typeCombo);
-    auto *nptsEdit = new PyLineEdit;
-    nptsEdit->setText(QSettings().value("co/plotPoints", "1500").toString());
-    form->addRow(tr("Number of points:"), nptsEdit);
-    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    QObject::connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
-    QObject::connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
-    auto *layout = new QVBoxLayout(&dlg);
-    layout->addLayout(form);
-    layout->addWidget(buttons);
-    if (dlg.exec() != QDialog::Accepted) return;
+    int plotType = 0, npts = 0;
+    if (!xyplot::prompt(parent, types, 0, "co/plotPoints", plotType, npts)) return;
 
-    int plotType = typeCombo->currentIndex();
-    int npts = (int)nptsEdit->evaluateAsDouble(1500);
-    if (npts < 10) npts = 10;
-    if (npts > 100000) npts = 100000;
     std::vector<CurrResultsDoc::XYPlotPoint> pts;
     m_doc->GetLineValues(pts, plotType, npts);
     if (pts.empty()) { m_widget->emitStatus("No data for plot"); return; }
-
-    QString shortName = types[plotType];
-    int paren = shortName.indexOf('(');
-    if (paren > 0) shortName = shortName.left(paren).trimmed();
-    int ncols = (int)pts[0].vals.size();
-    QStringList colNames;
-    if (ncols == 1) colNames << shortName;
-    else if (ncols == 3) colNames << "|" + shortName + "|" << "Re(" + shortName + ")" << "Im(" + shortName + ")";
-
-    auto *pdlg = new PlotDialog(shortName + " along contour", parent);
-    pdlg->setAttribute(Qt::WA_DeleteOnClose);
-    for (int c = 0; c < ncols; c++) {
-        PlotSeries series;
-        series.label = (c < colNames.size()) ? colNames[c] : shortName;
-        for (auto &pt : pts) { series.x.push_back(pt.x); series.y.push_back(c < (int)pt.vals.size() ? pt.vals[c] : 0); }
-        pdlg->plot()->addSeries(series);
-    }
-    pdlg->plot()->setAxisLabels(tr("Position"), shortName);
-    pdlg->show();
+    xyplot::showAlongContour(parent, types[plotType], pts);
 }
 
 void CurrentFlowHandler::showCircuitDialog(QWidget *parent)

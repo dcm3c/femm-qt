@@ -165,6 +165,12 @@ public:
     double extRo = 0, extRi = 0, extZo = 0;
     int PrevType = 0;      // 0=none, 1=incremental, 2=frozen
     int bIncremental = 0;  // 0=none, 1=incremental, 2=frozen
+    // Backward-Euler time step of a transient solution, seconds; 0 means the
+    // solution is not transient. Written into the .ans header by the solver.
+    // Independent of bIncremental: both cause Aprev to be stored per node, but
+    // for a transient it is the previous TIME STEP rather than a linearization
+    // base point, and it is what makes the eddy current dA/dt computable.
+    double DeltaT = 0;
 
     // Length conversion factor to meters
     double LengthConv() const;

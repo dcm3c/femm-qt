@@ -63,17 +63,13 @@ ninja
 # in MacOS/ and Frameworks/, then code-signs the result.  If the solvers and
 # .dat files are already present it chokes on them ("not an object file") and
 # leaves a broken signature.  So: deploy Qt first, then drop in the extras,
-# repoint the solvers at the bundled libomp, and re-sign.
+# and re-sign.
 
 APP="bin/femm_gui.app"
 APP_BIN="$APP/Contents/MacOS"
 APP_FRAMEWORKS="$APP/Contents/Frameworks"
 
 # ---- 1. Bundle Qt frameworks and dependent dylibs --------------------
-# macdeployqt also bundles libomp.dylib into Contents/Frameworks/ because the
-# GUI links it, and rewrites the GUI's reference to @executable_path/../
-# Frameworks/libomp.dylib.  No manual libomp copy is needed.
-#
 # macdeployqt is noisy: it prints a wall of "Cannot resolve rpath" and
 # "codesign verification error" lines for the Homebrew dylibs it copies, yet
 # still exits 0.  Those are harmless here — step 5 re-signs the bundle and we
@@ -103,7 +99,7 @@ fi
 # no-GUI front end that the language bindings (OctaveFEMM, pyFEMM, MathFEMM,
 # JuliaFEMM) start when asked for a headless session — they locate it via
 # $FEMM_DIR/femm_headless, so it must sit beside femm_gui in MacOS/.  Both rely
-# on the solvers, .dat files, and libomp being co-located here (exeDir()).
+# on the solvers and .dat files being co-located here (exeDir()).
 BUNDLE_EXES="fkn belasolv hsolv csolv femm_headless lua4"
 for exe in $BUNDLE_EXES; do
     if [ -f "bin/$exe" ]; then
@@ -111,24 +107,68 @@ for exe in $BUNDLE_EXES; do
     fi
 done
 
-# ---- 3. Repoint the bundled executables at the bundled libomp --------
-# Each links the OpenMP runtime via its absolute Homebrew path, which does not
-# exist on machines without Homebrew.  Redirect that reference to the
-# libomp.dylib that macdeployqt placed in Contents/Frameworks/.  (They live in
-# MacOS/, so @executable_path/../Frameworks is the right relative path.)
-if [ -f "$APP_FRAMEWORKS/libomp.dylib" ]; then
-    for exe in $BUNDLE_EXES; do
-        target="$APP_BIN/$exe"
-        [ -f "$target" ] || continue
-        omp_ref=$(otool -L "$target" | awk '/libomp\.dylib/ {print $1; exit}')
-        if [ -n "$omp_ref" ]; then
-            install_name_tool -change "$omp_ref" \
-                "@executable_path/../Frameworks/libomp.dylib" "$target"
-        fi
-    done
-fi
+# ---- 2b. Prune what macdeployqt bundled but nothing uses -------------
+# Runs AFTER the solvers are copied in, so the reference scan below covers every
+# executable the bundle will actually contain, not just femm_gui.
+# macdeployqt copies every plugin Qt ships and then the transitive closure of
+# their dependencies. That drags in QtVirtualKeyboard -- an on-screen keyboard
+# for embedded/kiosk systems with no OS input method -- which links the whole
+# QML stack, which in turn pulls QtNetwork and OpenSSL. femm-qt is a QtWidgets
+# application and uses none of it; macOS supplies its own Accessibility
+# Keyboard, and the Windows installer has never shipped an input-context plugin.
+#
+# Dropping OpenSSL matters beyond bundle size: shipping it means owning its CVE
+# stream for the life of the product.
+#
+# The framework list below was derived by removing the plugin and iterating to a
+# fixpoint over "what does nothing reference any more". Rather than trust it
+# forever, each entry is re-checked here against the bundle as it actually is,
+# and kept (with a warning) if anything still points at it -- so a future Qt
+# rearranging its dependencies degrades to a fatter bundle, never a broken one.
+PRUNE_PLUGINS="platforminputcontexts"
+PRUNE_FRAMEWORKS="QtQuick.framework QtOpenGL.framework QtQmlMeta.framework \
+QtQmlModels.framework QtQmlWorkerScript.framework QtQml.framework \
+QtNetwork.framework libbrotlidec.1.dylib libbrotlicommon.1.dylib \
+libssl.3.dylib libcrypto.3.dylib"
 
-# ---- 4. Material libraries (data files, not code) -------------------
+for p in $PRUNE_PLUGINS; do
+    rm -rf "$APP/Contents/PlugIns/$p"
+done
+
+# Collect every install-name referenced by what we are KEEPING. Files inside a
+# prune candidate are skipped, so the candidates cannot vouch for each other.
+# (A self-reference is harmless here: a pruned item is never in the keep set.)
+PRUNE_REFS=$(
+    for f in "$APP_BIN"/* "$APP"/Contents/PlugIns/*/*.dylib \
+             "$APP_FRAMEWORKS"/*.dylib "$APP_FRAMEWORKS"/*.framework/Versions/*/*; do
+        [ -f "$f" ] || continue
+        skip=0
+        for p in $PRUNE_FRAMEWORKS; do
+            # Plain string tests, not `case`: a `case` whose pattern ends in `)`
+            # placed inside this $(...) trips a parser bug in macOS's system bash
+            # 3.2 ("syntax error near unexpected token ;;"). The prefix test is
+            # true when $f lives inside the framework dir we are pruning.
+            if [ "$f" = "$APP_FRAMEWORKS/$p" ] || \
+               [ "${f#"$APP_FRAMEWORKS/$p"/}" != "$f" ]; then
+                skip=1; break
+            fi
+        done
+        [ "$skip" -eq 1 ] && continue
+        otool -L "$f" 2>/dev/null | tail -n +2 | awk '{print $1}'
+    done | sed -e 's#.*/Frameworks/##' -e 's#^@rpath/##' -e 's#^@loader_path/##' \
+         | awk -F/ '{print $1}' | sort -u
+)
+
+for fw in $PRUNE_FRAMEWORKS; do
+    [ -e "$APP_FRAMEWORKS/$fw" ] || continue
+    if printf '%s\n' "$PRUNE_REFS" | grep -qx "$fw"; then
+        echo "NOTE: $fw is still referenced — keeping it (Qt's dependency set has changed)"
+    else
+        rm -rf "$APP_FRAMEWORKS/$fw"
+    fi
+done
+
+# ---- 3. Material libraries (data files, not code) -------------------
 # Resolved via exeDir() -- from the directory of the running executable -- so
 # both binaries must reach them. femm_gui runs from the bundle; femm_headless
 # runs from bin/. The material-library editor WRITES these files, so a second
@@ -151,6 +191,42 @@ done
 # build scripts (linux_build.sh / freebsd_build.sh).
 cp ../luafemm/femm.lua ../luafemm/femm-lua.sh bin/
 chmod +x bin/femm-lua.sh
+
+# ---- 4. License and notice files -------------------------------------
+# A binary distribution has to carry the license text for everything it ships,
+# and the bundle previously carried none. Contents/Resources/ is the idiomatic
+# home for them, and the destination names match the Windows installer's
+# (packaging/femm-qt.iss) so both distributions present the same set.
+#
+# Placed AFTER macdeployqt, which inspects what it finds and chokes on
+# non-Mach-O files, and BEFORE the re-sign below, so the notices land inside the
+# signature instead of invalidating it.
+APP_RES="$APP/Contents/Resources"
+mkdir -p "$APP_RES"
+
+copy_license() {        # $1 = source path, $2 = name inside Resources/
+    if [ -f "$1" ]; then
+        cp "$1" "$APP_RES/$2"
+        chmod u+w "$APP_RES/$2"     # sources may be read-only
+    else
+        echo "WARNING: license file not found, NOT bundled: $1"
+    fi
+}
+
+copy_license ../LICENSE-MIT                      LICENSE-MIT
+copy_license ../LICENSE-GPL                      LICENSE-GPL
+copy_license ../NOTICE-Qt.txt                    NOTICE-Qt.txt
+copy_license ../LICENSE-melihaltun.txt           LICENSE-melihaltun.txt
+copy_license ../lua/liblua/COPYRIGHT             Lua-COPYRIGHT.txt
+copy_license ../lua/luasocket-1.0/COPYRIGHT      LuaSocket-COPYRIGHT.txt
+copy_license ../micropython/LICENSE.micropython  LICENSE-MicroPython.txt
+copy_license ../micropython/ulab/LICENSE         LICENSE-ulab.txt
+# macOS-only: macdeployqt copies Qt's transitive Homebrew dependencies into
+# Contents/Frameworks/, so the bundle redistributes them. Their notices are
+# aggregated into THIRD-PARTY-NOTICES.txt by
+# packaging/gen-third-party-notices.sh. Windows covers the equivalent set via
+# the Inno Setup list, which is why this file is macOS-only.
+copy_license ../THIRD-PARTY-NOTICES.txt          THIRD-PARTY-NOTICES.txt
 
 # ---- 5. Re-sign the whole bundle --------------------------------------
 # Two things broke the signature macdeployqt applied: adding/rewriting the

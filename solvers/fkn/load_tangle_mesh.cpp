@@ -72,78 +72,30 @@ int LoadMeshFromTangle(CFemmeDocCore& Doc, const Mesh& tmesh)
             Doc.agelist[i].agc.re = tage.cx;
             Doc.agelist[i].agc.im = tage.cy;
 
-            // Build quad-point ring data (same algorithm as writePbcFile)
+            // Keep the raw ring node lists (angle-invariant) and derive the
+            // angle-baked quad-point pairing through the shared builder --
+            // the same routine the transient mesh-reuse path uses, which is
+            // what guarantees the two paths pair the gap identically. The
+            // lists are persisted through the .ans ([AgeRings]) so a later
+            // step can re-pair at a new rotor angle without remeshing.
             int n = tage.n;
             if (n < 1) { Doc.agelist[i].totalArcElements = 0; continue; }
-            double dtta = tage.totalArcLength / n;
-            int n0 = (int)(360.0 / dtta + 0.5);
-            int n1 = (int)(360.0 / tage.totalArcLength + 0.5);
-
             Doc.agelist[i].totalArcElements = n;
-
-            struct RingPt { int node; double w; double sign; };
-            std::vector<RingPt> innerRing(n0), outerRing(n0);
-            int kk = 0;
-            for (int jj = 0; jj < n1; jj++) {
-                double dL = 1.0;
-                if (tage.format == 1 && (jj % 2 != 0)) dL = -1.0;
-                double iRotRad = (jj * tage.totalArcLength + tage.innerAngle) * PI / 180.0;
-                double oRotRad = (jj * tage.totalArcLength + tage.outerAngle) * PI / 180.0;
-                double cosI = cos(iRotRad), sinI = sin(iRotRad);
-                double cosO = cos(oRotRad), sinO = sin(oRotRad);
-                for (int ii = 0; ii < n; ii++) {
-                    double dx = tmesh.vertices[tage.innerNodes[ii]].x - tage.cx;
-                    double dy = tmesh.vertices[tage.innerNodes[ii]].y - tage.cy;
-                    double rx = cosI * dx - sinI * dy, ry = sinI * dx + cosI * dy;
-                    double ang = atan2(ry, rx) * 180.0 / PI;
-                    if (ang < 0) ang += 360.0;
-                    innerRing[kk].node = tage.innerNodes[ii];
-                    innerRing[kk].w = ang / dtta;
-                    innerRing[kk].sign = dL;
-
-                    dx = tmesh.vertices[tage.outerNodes[ii]].x - tage.cx;
-                    dy = tmesh.vertices[tage.outerNodes[ii]].y - tage.cy;
-                    rx = cosO * dx - sinO * dy; ry = sinO * dx + cosO * dy;
-                    ang = atan2(ry, rx) * 180.0 / PI;
-                    if (ang < 0) ang += 360.0;
-                    outerRing[kk].node = tage.outerNodes[ii];
-                    outerRing[kk].w = ang / dtta;
-                    outerRing[kk].sign = dL;
-                    kk++;
-                }
+            Doc.agelist[i].ringInner = (int*)calloc(n, sizeof(int));
+            Doc.agelist[i].ringOuter = (int*)calloc(n, sizeof(int));
+            std::vector<double> ix(n), iy(n), ox(n), oy(n);
+            for (int ii = 0; ii < n; ii++) {
+                Doc.agelist[i].ringInner[ii] = tage.innerNodes[ii];
+                Doc.agelist[i].ringOuter[ii] = tage.outerNodes[ii];
+                ix[ii] = tmesh.vertices[tage.innerNodes[ii]].x;
+                iy[ii] = tmesh.vertices[tage.innerNodes[ii]].y;
+                ox[ii] = tmesh.vertices[tage.outerNodes[ii]].x;
+                oy[ii] = tmesh.vertices[tage.outerNodes[ii]].y;
             }
-            // Bubble sort by angular position
-            for (int ii = 0; ii < n0; ii++) {
-                bool done = true;
-                for (int jj = 0; jj < n0 - 1; jj++) {
-                    if (innerRing[jj].w > innerRing[jj + 1].w) { std::swap(innerRing[jj], innerRing[jj + 1]); done = false; }
-                }
-                if (done) break;
-            }
-            for (int ii = 0; ii < n0; ii++) {
-                bool done = true;
-                for (int jj = 0; jj < n0 - 1; jj++) {
-                    if (outerRing[jj].w > outerRing[jj + 1].w) { std::swap(outerRing[jj], outerRing[jj + 1]); done = false; }
-                }
-                if (done) break;
-            }
-
-            Doc.agelist[i].InnerShift = innerRing[0].w;
-            Doc.agelist[i].OuterShift = outerRing[0].w;
-
-            Doc.agelist[i].node = (CQuadPoint*)calloc(n + 1, sizeof(CQuadPoint));
-            for (int ii = 0; ii <= n; ii++) {
-                int p1 = ii; if (p1 >= n0) p1 = 0;
-                int p0 = p1 - 1; if (p0 < 0) p0 = n0 + p0;
-                Doc.agelist[i].node[ii].n0 = innerRing[p0].node;
-                Doc.agelist[i].node[ii].w0 = innerRing[p0].sign;
-                Doc.agelist[i].node[ii].n1 = innerRing[p1].node;
-                Doc.agelist[i].node[ii].w1 = innerRing[p1].sign;
-                Doc.agelist[i].node[ii].n2 = outerRing[p0].node;
-                Doc.agelist[i].node[ii].w2 = outerRing[p0].sign;
-                Doc.agelist[i].node[ii].n3 = outerRing[p1].node;
-                Doc.agelist[i].node[ii].w3 = outerRing[p1].sign;
-            }
+            // tmesh coordinates and tage.cx/cy share the problem's units;
+            // only differences enter the builder.
+            Doc.BuildAgeRing(Doc.agelist[i], ix.data(), iy.data(),
+                             ox.data(), oy.data(), tage.cx, tage.cy);
         }
     }
 
@@ -235,7 +187,7 @@ int LoadMeshFromTangle(CFemmeDocCore& Doc, const Mesh& tmesh)
         free(nmbr);
     }
 
-    Doc.NumNodesPlus = Doc.NumNodes + Doc.NumFluxConstraints + Doc.NumCurrentConstraints;
+    Doc.SetNumNodesPlus();
     return TRUE;
 }
 

@@ -6,6 +6,7 @@
 // Color map and rendering approach ported from FemmviewView.cpp.
 
 #include "results_widget.h"
+#include "coord_display.h"
 #include "complex_format.h"
 #include "results_doc.h"
 #include "postproc_select.h"
@@ -1257,18 +1258,23 @@ void ResultsWidget::keyPressEvent(QKeyEvent *event)
 
     case Qt::Key_Tab:
         if (m_mode <= 1 && m_doc) {
-            // Enter point by coordinates — default to current mouse position
-            bool isAxi = (m_doc->ProblemType == 1);
+            // Enter point by coordinates — default to current mouse position,
+            // labelled and interpreted per the document's display mode.
+            const int coords = m_doc->Coords;
+            double c1, c2;
+            QString l1, l2;
+            coorddisp::toDisplay(coords, m_mx, m_my, c1, c2);
+            coorddisp::entryLabels(coords, m_doc->ProblemType, l1, l2);
             QDialog dlg(this);
             dlg.setWindowTitle(m_mode == 0 ? tr("Enter Point") : tr("Enter Contour Point"));
             auto *form = new QFormLayout;
             auto *xEdit = new PyLineEdit;
             auto *yEdit = new PyLineEdit;
-            xEdit->setText(QString::number(m_mx, 'g', 10));
-            yEdit->setText(QString::number(m_my, 'g', 10));
+            xEdit->setText(QString::number(c1, 'g', 10));
+            yEdit->setText(QString::number(c2, 'g', 10));
             xEdit->selectAll();
-            form->addRow(isAxi ? tr("R:") : tr("X:"), xEdit);
-            form->addRow(isAxi ? tr("Z:") : tr("Y:"), yEdit);
+            form->addRow(l1, xEdit);
+            form->addRow(l2, yEdit);
             auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
             QObject::connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
             QObject::connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
@@ -1277,8 +1283,9 @@ void ResultsWidget::keyPressEvent(QKeyEvent *event)
             layout->addWidget(buttons);
             xEdit->setFocus();
             if (dlg.exec() == QDialog::Accepted) {
-                double x = xEdit->evaluateAsDouble(m_mx);
-                double y = yEdit->evaluateAsDouble(m_my);
+                double x, y;
+                coorddisp::fromDisplay(coords, xEdit->evaluateAsDouble(c1),
+                                       yEdit->evaluateAsDouble(c2), x, y);
                 if (m_mode == 0)
                     showPointProperties(x, y);
                 else {

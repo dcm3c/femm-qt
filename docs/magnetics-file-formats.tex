@@ -334,22 +334,36 @@ Node indices are 0-based throughout the solution section.
 
 followed by \texttt{NumElements} lines:
 
-\paragraph{Non-incremental:}
 \begin{lstlisting}
-p0    p1    p2    labelIdx
-\end{lstlisting}
-
-\paragraph{Incremental:}
-\begin{lstlisting}
-p0    p1    p2    labelIdx    J_prev
+p0    p1    p2    labelIdx    e0    e1    e2    J_prev
 \end{lstlisting}
 
 \begin{itemize}[nosep]
   \item \texttt{p0}, \texttt{p1}, \texttt{p2}: vertex node indices (0-based)
   \item \texttt{labelIdx}: block label index (0-based, into the block label
         list from the \texttt{.fem} header)
-  \item \texttt{J\_prev}: current density from previous solution (A/m$^2$)
+  \item \texttt{e0}, \texttt{e1}, \texttt{e2}: boundary property index applied
+        to each of the element's three edges, or $-1$ where the edge carries
+        no boundary condition
+  \item \texttt{J\_prev}: current density carried over from the previous
+        solution, in \textbf{MA/m$^2$} --- the solver's working unit, not the
+        A/m$^2$ that the postprocessor reports.  Consumers must scale by
+        $10^6$ to combine it with current densities obtained from the
+        postprocessor.
 \end{itemize}
+
+The static solver always writes all eight fields.  The harmonic solver
+writes the first seven and appends \texttt{J\_prev} only for an incremental
+(frozen-permeability) run.
+
+\medskip\noindent
+\textbf{Note on \texttt{J\_prev}'s position.}  It is the \emph{eighth} field,
+after the three edge indices.  Original FEMM's postprocessor reads it as the
+fifth --- picking up \texttt{e0}, a boundary index that is $-1$ on every
+interior element --- which corrupts its 1$\times$ incremental Lorentz force
+and torque integrals (block integral types 28--30).  femm-qt reads the field
+the solver actually writes, so those three integrals differ from original
+FEMM by design; every other quantity is unaffected.
 
 Elements are written in Cuthill-McKee order (sorted by sum of node
 indices), which clusters spatially nearby elements at nearby indices for
@@ -442,6 +456,32 @@ n0  w0  n1  w1  n2  w2  n3  w3
   \item \texttt{n0}--\texttt{n3}: node indices for interpolation
   \item \texttt{w0}--\texttt{w3}: interpolation weights
 \end{itemize}
+
+% ----------------------------------------------------------------------
+\subsection{Air Gap Ring Node Lists (optional)}
+
+The quadrature-point mapping above is sorted at the rotor angle of the
+solution that wrote it.  When air gap elements are present, the solver
+appends a trailing section carrying each element's raw ring node lists,
+which are independent of the rotor angle:
+
+\begin{lstlisting}
+[AgeRings]
+\end{lstlisting}
+
+For each air gap element, a count line equal to \texttt{numArcElems},
+followed by that many lines:
+
+\begin{lstlisting}
+innerNodeIdx  outerNodeIdx
+\end{lstlisting}
+
+listing the mesh nodes (0-based) on the inner and outer gap rings of the
+meshed sector.  A transient analysis uses these to reuse the previous
+solution's mesh while rebuilding the quadrature-point pairing at the
+current step's rotor angle.  The section is strictly trailing so that
+readers which parse the air gap elements positionally and stop are
+unaffected; when it is absent, the solver falls back to remeshing.
 
 % ======================================================================
 \section{Index Conventions}

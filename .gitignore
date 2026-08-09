@@ -44,10 +44,14 @@ packaging/output/
 # Large result/data files
 *.res
 
-# Images, archives, documents — except the GUI icons
+# Images, archives, documents — except the GUI icons and the manual's figures
 *.pdf
 *.png
 !gui/icons/*.png
+# The manual's figures are sources, not build products: since the manual moved
+# from dvips to pdflatex they are PNG rather than PostScript, and the build
+# fails without them.
+!manual/*.png
 *.zip
 *.docx
 

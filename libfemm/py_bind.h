@@ -308,7 +308,11 @@ struct Module {
         static_assert(Traits::n <= FEMM_MAX_ARGS,
                       "bound function exceeds FEMM_MAX_ARGS; raise the cap");
 
-        FemmFn *obj = m_new_obj(FemmFn);
+        // with_finaliser: the object owns a new-ed std::function that the GC
+        // cannot free on its own. See femm_fn_del in py_bind.cpp. (Spelled out
+        // rather than via m_new_obj_with_finaliser -- the embed build's misc.h
+        // declares only the malloc form, which is what that macro expands to.)
+        FemmFn *obj = (FemmFn *)m_malloc_with_finaliser(sizeof(FemmFn));
         obj->base.type = &femm_fn_type;
         obj->raw_impl = nullptr;
         obj->min_n = Traits::min_n;
@@ -339,7 +343,8 @@ struct Module {
     // bounds-checked against [min_n, max_n]; the function validates structure.
     template<typename F>
     void def_raw(const char *name, size_t min_n, size_t max_n, F &&f) {
-        FemmFn *obj = m_new_obj(FemmFn);
+        // with_finaliser: see the note in def() above.
+        FemmFn *obj = (FemmFn *)m_malloc_with_finaliser(sizeof(FemmFn));
         obj->base.type = &femm_fn_type;
         obj->impl = nullptr;
         obj->min_n = min_n;

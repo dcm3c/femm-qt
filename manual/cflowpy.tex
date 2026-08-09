@@ -463,10 +463,9 @@ view to the file specified by \texttt{"filename"}, subject to the
 \texttt{printf}-type formatting explained previously for the
 \texttt{ci\_saveas} command.
 
-\item \texttt{ci\_savemetafile("filename")} saves a metafile screenshot of the current
-view to the file specified by \texttt{"filename"}, subject to the
-\texttt{printf}-type formatting explained previously for the
-\texttt{ci\_saveas} command.
+\item \texttt{ci\_savemetafile("filename")} is retained for script
+compatibility but does nothing: femm-qt has no metafile output. Use
+\texttt{ci\_savebitmap} to save a picture of the current view.
 
 \item \texttt{ci\_refreshview()} Redraws the current view.
 
@@ -510,9 +509,9 @@ is applied to any region that has not been explicitly labeled.
 attribute for the selected block labels.
 
 \item{\tt ci\_makeABC(n,R,x,y,bc)} creates a series of circular shells that emulate the
-impedance of an unbounded domain (i.e. an Inprovised Asymptotic Boundary
+impedance of an unbounded domain (i.e. an Improvised Asymptotic Boundary
 Condition).  The {\tt n} parameter contains the number of shells to be used
-(should be between 1 and 10), {\tt R} is the radius of the solution domain, and
+(should be between 1 and 12), {\tt R} is the radius of the solution domain, and
 {\tt (x,y)} denotes the center of the solution domain.  The {\tt bc} parameter should
 be specified as 0 for a Dirichlet outer edge or 1 for a Neumann outer edge.
 If the function is called without all the parameters, the function makes up
@@ -609,10 +608,12 @@ The return values, in order, are:
 to the X-Y plot routines. If only PlotType or only PlotType and NumPoints
 are specified, the command is interpreted as a request to plot the requested
 plot type to the screen. If, in addition, the Filename parameter is
-specified, the plot is instead written to disk to the specified file name as
-an extended metafile. If the FileFormat parameter is also, the command is
-instead interpreted as a command to write the data to disk to the specfied
-file name, rather than display it to make a graphical plot. Valid entries
+specified, the sampled values are written to that file instead of being
+plotted, in exactly the format the \texttt{Export...} button on the plot
+window produces: comma-separated values with a header row naming the columns,
+then one row per point holding the position along the contour followed by one
+column for each plotted quantity. A fourth FileFormat argument is accepted and
+ignored; there is only one data format, and no metafile output. Valid entries
 for PlotType are:
 
 \begin{tabular}{ll}
@@ -632,25 +633,13 @@ for PlotType are:
  12 & \texttt{Jd . t (Tangential displacement current density)} \\
 \end{tabular}
 
-\vspace*{8pt}
-Valid file formats are:
-
-\begin{tabular}{ll}
-\texttt{FileFormat} &  Definition  \\ \hline
- 0 & \texttt{Multi-column text with legend } \\
- 1 & \texttt{Multi-column text with no legend } \\
- 2 & \texttt{Mathematica-style formatting}
-\end{tabular}
 
 For example, if one wanted to plot $V $ to the screen with 200 points evaluated
 to make the graph, the command would be: \newline
 \texttt{co\_makeplot(0,200) } \newline
-If this plot were to be written to disk as a metafile, the command
-would be:\texttt{ } \newline
-\texttt{co\_makeplot(0,200,"c:temp.emf")} \newline
-To write data instead of a plot to disk, the command would be of
+To write the data to disk instead of plotting it, the command would be of
 the form:\texttt{ } \newline
-\texttt{co\_makeplot(0,200,"c:temp.txt",0)} \newline
+\texttt{co\_makeplot(0,200,"c:temp.txt")} \newline
 
 
 \item \texttt{co\_getprobleminfo() } 
@@ -868,10 +857,9 @@ enclose the file name in (extra) quotes by using a
 \texttt{co\_savebitmap("$\backslash $"c:$\backslash \backslash
 $temp$\backslash \backslash $screenshot.bmp$\backslash $"")}
 
-\item \texttt{co\_savemetafile("filename")} saves a metafile screenshot of the current
-view to the file specified by \texttt{"filename"}, subject to the
-printf-type formatting explained previously for the
-\texttt{savebitmap} command.
+\item \texttt{co\_savemetafile("filename")} is retained for script
+compatibility but does nothing: femm-qt has no metafile output. Use
+\texttt{co\_savebitmap} to save a picture of the current view.
 
 \item \texttt{co\_shownames(flag)} This function allow the user to display or hide the
 block label names on screen. To hide the block label names,

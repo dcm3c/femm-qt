@@ -11,11 +11,10 @@
 #  This is the Linux build script adapted for FreeBSD's base system:
 #    - the default C++ compiler is clang (cc/c++), not g++
 #    - base cp(1) has no GNU '-u' flag, so the data files are copied plain
-#    - Qt 6 / OpenMP live under LOCALBASE (/usr/local), not /usr
+#    - Qt 6 lives under LOCALBASE (/usr/local), not /usr
 #
 #  Prerequisites (as root):
 #    pkg install cmake ninja qt6
-#    pkg install openmp        # optional: multithreaded solvers
 #  bash itself comes from:  pkg install bash
 # ======================================================================
 set -euo pipefail
@@ -53,8 +52,8 @@ fi
 
 # ---- Configure -------------------------------------------------------
 # Qt 6 and its CMake config files install under LOCALBASE (/usr/local).
-# Point CMAKE_PREFIX_PATH there so find_package(Qt6)/find_package(OpenMP)
-# resolve without a hand-set Qt6_DIR.  Override LOCALBASE if your packages
+# Point CMAKE_PREFIX_PATH there so find_package(Qt6) resolves without a
+# hand-set Qt6_DIR.  Override LOCALBASE if your packages
 # live elsewhere.
 LOCALBASE="${LOCALBASE:-/usr/local}"
 

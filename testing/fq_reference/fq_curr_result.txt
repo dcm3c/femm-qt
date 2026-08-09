@@ -1,0 +1,62 @@
+
+===================  currentFlow1 (planar, DC)  ===================
+  [ 0] Real power               = 0.03635456725693468        W     (real)
+  [ 1] Reactive power           = 0.0                        VAr   (real)
+  [ 2] Apparent power           = 0.03635456725693468        VA    (real)
+  [ 3] Time-avg stored energy   = 0.0                        J     (real)
+  [ 4] Cross-section area       = 1.0712149738066622e-05     m^2   (real)
+  [ 5] Volume                   = 5.356074869033303e-09      m^3   (real)
+
+===================  currentFlow2 (axisymmetric, DC)  ===================
+  [ 0] Real power               = 0.42421527910479107        W     (real)
+  [ 1] Reactive power           = 0.0                        VAr   (real)
+  [ 2] Apparent power           = 0.42421527910479107        VA    (real)
+  [ 3] Time-avg stored energy   = 0.0                        J     (real)
+  [ 4] Cross-section area       = 5.109291600249403e-06      m^2   (real)
+  [ 5] Volume                   = 2.5897013585286334e-08     m^3   (real)
+
+===================  currentFlow3 (axisymmetric, force/torque)  ===================
+  [ 0] Real power               = -1.802790591666252e-16     W     (real)
+  [ 1] Reactive power           = 84.56525114915642          VAr   (real)
+  [ 2] Apparent power           = 84.56525114915642          VA    (real)
+  [ 3] Time-avg stored energy   = 0.11215814778496518        J     (real)
+  [ 4] Cross-section area       = 20399.681574379683         m^2   (real)
+  [ 5] Volume                   = 9342123.272895323          m^3   (real)
+  [ 6] WST force x/r (SS)       = 0.0                        N     (real)
+  [ 7] WST force y/z (SS)       = -0.0023733977837708917     N     (real)
+  [ 8] WST force x/r (2x)       = 0j                         N     (complex)
+  [ 9] WST force y/z (2x)       = (1.041195889872183e-18-0.002373397783770892j) N     (complex)
+  [10] WST torque (SS)          = 0.0                        N*m   (real)
+  [11] WST torque (2x)          = 0j                         N*m   (complex)
+
+===================  currentFlow4 (planar, force/torque)  ===================
+  [ 0] Real power               = -1.768003644776972e-16     W     (real)
+  [ 1] Reactive power           = 181.46340146097288         VAr   (real)
+  [ 2] Apparent power           = 181.46340146097288         VA    (real)
+  [ 3] Time-avg stored energy   = 0.24067331110652476        J     (real)
+  [ 4] Cross-section area       = 40799.38687582122          m^2   (real)
+  [ 5] Volume                   = 6119908.031373166          m^3   (real)
+  [ 6] WST force x/r (SS)       = 2.9328876227875e-07        N     (real)
+  [ 7] WST force y/z (SS)       = -0.011333313361216383      N     (real)
+  [ 8] WST force x/r (2x)       = (-1.4664438114343482e-07+2.5399551877512797e-07j) N     (complex)
+  [ 9] WST force y/z (2x)       = (0.005666656680608193-0.00981493727986299j) N     (complex)
+  [10] WST torque (SS)          = -1.700010359438183         N*m   (real)
+  [11] WST torque (2x)          = (0.8500051797190916-1.4722521579701822j) N*m   (complex)
+
+===================  currentFlow5 (axisymmetric, lossy dielectric)  ===================
+  [ 0] Real power               = 16.530730952005438         W     (real)
+  [ 1] Reactive power           = 0.009196459361403318       VAr   (real)
+  [ 2] Apparent power           = 16.530733510115496         VA    (real)
+  [ 3] Time-avg stored energy   = 7.318309831555371e-09      J     (real)
+  [ 4] Cross-section area       = 8.109291600249392e-06      m^2   (real)
+  [ 5] Volume                   = 3.846338419964547e-08      m^3   (real)
+
+===================  currentFlow6 (planar, lossy dielectric)  ===================
+  [ 0] Real power               = 30.899794485978052         W     (real)
+  [ 1] Reactive power           = 0.017190329035724594       VAr   (real)
+  [ 2] Apparent power           = 30.899799267682823         VA    (real)
+  [ 3] Time-avg stored energy   = 1.3679629197058556e-08     J     (real)
+  [ 4] Cross-section area       = 8.109291600249392e-06      m^2   (real)
+  [ 5] Volume                   = 8.10929160024943e-09       m^3   (real)
+
+Done.

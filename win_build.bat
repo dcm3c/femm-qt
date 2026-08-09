@@ -100,7 +100,6 @@ rem MinGW runtime DLLs
 for %%F in (libgcc_s_seh-1.dll libstdc++-6.dll libwinpthread-1.dll) do (
     copy /y "%QT_DIR%\bin\%%F" bin\ >nul 2>&1
 )
-copy /y "%MINGW_DIR%\bin\libgomp-1.dll" bin\ >nul 2>&1
 
 rem Qt plugins (platforms, styles, image formats, icon engines)
 if not exist bin\platforms mkdir bin\platforms

@@ -6,6 +6,7 @@
 // Renders using QPainter instead of Windows GDI CDC.
 
 #include "plot_widget.h"
+#include "xy_export.h"
 #include "utf8_io.h"
 
 #include <QPainter>
@@ -303,30 +304,21 @@ void PlotWidget::leaveEvent(QEvent *)
     update();
 }
 
-bool PlotWidget::exportToFile(const QString &path, int format) const
+bool PlotWidget::exportToFile(const QString &path, int /*format*/) const
 {
-    FILE *fp = femm_fopen(path.toStdString(), "wt");
-    if (!fp) return false;
+    // One format, and one writer: xyexport::writeCsv is also what *_makeplot
+    // calls, so a scripted export and this button produce the same file.
+    if (m_series.empty()) return false;
 
-    if (m_series.empty()) { fclose(fp); return false; }
-
-    // Use first series for x values
-    auto &s0 = m_series[0];
-    // Header row with column names
-    fprintf(fp, "%s", m_xLabel.toStdString().c_str());
-    for (size_t si = 0; si < m_series.size(); si++)
-        fprintf(fp, ", %s", m_series[si].label.toStdString().c_str());
-    fprintf(fp, "\n");
-    for (size_t i = 0; i < s0.x.size(); i++) {
-        fprintf(fp, "%.8e", s0.x[i]);
-        for (size_t si = 0; si < m_series.size(); si++) {
-            if (i < m_series[si].y.size())
-                fprintf(fp, ", %.8e", m_series[si].y[i]);
-        }
-        fprintf(fp, "\n");
+    std::vector<std::string> labels;
+    std::vector<std::vector<double>> cols;
+    for (const auto &s : m_series) {
+        labels.push_back(s.label.toStdString());
+        cols.push_back(s.y);
     }
-    fclose(fp);
-    return true;
+    // x is common to every curve; the first series carries it.
+    return xyexport::writeCsv(path.toStdString(), m_xLabel.toStdString(),
+                              labels, m_series[0].x, cols);
 }
 
 // ================================================================

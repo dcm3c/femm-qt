@@ -42,6 +42,23 @@ LENGTH = 0.03    # characteristic lever arm (m): a torque residual below
                  # force*LENGTH is treated as negligible
 FLOOR  = 1e-6    # below this scale, the whole quantity is ~0; skip
 
+# Integral types where Original FEMM is KNOWN WRONG, so comparing against it
+# would enforce the defect. Not a tolerance escape hatch -- each entry needs a
+# demonstrated cause and independent coverage elsewhere.
+#
+# 28/29/30 (1x incremental Lorentz force/torque) integrate B2p*J + B2*Jp. OF's
+# postprocessor reads Jp from the fifth field of the element record, but the
+# solver writes it eighth (after the three edge-boundary indices), so OF picks
+# up e0 -- a boundary index, -1 on every interior element. Its Jp term is
+# therefore garbage of negligible magnitude, leaving OF computing only the
+# j~ x B_bias half of the force and dropping the Jp x b~ half. Where the AC
+# perturbation is a scaled copy of the bias the two halves are equal, which is
+# why OF comes out a factor of 2 low on most of these fixtures.
+# femm-qt reads the field the solver writes and scales MA/m^2 -> A/m^2;
+# IncrementalLorentzTest.py covers these three types against a
+# finite-difference-of-DC-force oracle instead.
+OF_DEFECT = {28, 29, 30}
+
 
 def parse(path):
     """Return (section_titles, {(section, n): complex}); auto-detects the format."""
@@ -86,11 +103,14 @@ def compare(ref_path, test_path, tol=TOL, length=LENGTH, floor=FLOOR):
             return max(maxmag(s, TORQUE), maxmag(s, FORCE) * length)
         return abs(rv.get((s, n), 0.0))                          # scalar: relative to self
 
-    ok, flags = 0, []
+    ok, flags, excluded = 0, [], 0
     for k in sorted(rv):
         if k not in tv:
             continue
         s, n = k
+        if n in OF_DEFECT:
+            excluded += 1
+            continue
         sc = scale(s, n)
         ne = abs(tv[k] - rv[k]) / sc if sc > floor else 0.0
         if sc <= floor or ne <= tol:
@@ -98,8 +118,11 @@ def compare(ref_path, test_path, tol=TOL, length=LENGTH, floor=FLOOR):
         else:
             flags.append((k, rv[k], tv[k], ne))
 
-    print("compared %d integral values: %d agree (norm err <= %.1f%%), %d flagged"
-          % (ok + len(flags), ok, tol * 100, len(flags)))
+    print("compared %d integral values: %d agree (norm err <= %.1f%%), %d flagged%s"
+          % (ok + len(flags), ok, tol * 100, len(flags),
+             "" if not excluded else
+             "; %d excluded (types %s: OF Jp defect, see IncrementalLorentzTest)"
+             % (excluded, ",".join(str(n) for n in sorted(OF_DEFECT)))))
     if flags:
         print("\nFLAGGED (reference vs test):")
         for (s, n), a, b, ne in sorted(flags, key=lambda x: -x[3]):

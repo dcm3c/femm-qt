@@ -16,7 +16,7 @@ option brings up the Problem Definition dialog, shown in
 Figure~\ref{cfig5}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{cd1.ps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{cd1}}
 \caption{Problem Definition dialog.}
 \label{cfig5}
 \end{figure}
@@ -87,8 +87,8 @@ Conductors. When any one of these selections is chosen, the dialog
 pictured in Figure~\ref{cfig7} appears.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{hpropdef.ps}}
-\caption{Property Definition dialog box.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{hpropdef}}
+\caption{Materials dialog.}
 \label{cfig7}
 \end{figure}
 
@@ -112,7 +112,7 @@ If a new point property is added or an existing point property modified, the
 Figure~\ref{cfig8}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{cd2.ps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{cd2}}
 \caption{Nodal Property dialog.}
 \label{cfig8}
 \end{figure}
@@ -128,15 +128,15 @@ enabled edit box.
 
 \subsubsection{Boundary Properties}
 
-The \texttt{Boundary Property} dialog box is used to specify the
+The \texttt{Boundary Properties} dialog box is used to specify the
 properties of line segments or arc segments that are to be
 boundaries of the solution domain. When a new boundary property is
 added or an existing property modified, the \texttt{Boundary
 Property} dialog pictured in Figure~\ref{cfig9} appears.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{cd3.ps}}
-\caption{Boundary Property dialog.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{cd3}}
+\caption{Boundary Condition dialog.}
 \label{cfig9}
 \end{figure}
 
@@ -153,16 +153,16 @@ described in detail in Section~\ref{bcsection}.
 
 \subsubsection{Materials Properties}
 
-The \texttt{Block Property} dialog box is used to specify the
+The \texttt{Material Properties} dialog box is used to specify the
 properties to be associated with block labels. The properties
 specified in this dialog have to do with the material of which the
 block is composed. When a new material property is added or an
 existing property modified, the
-\texttt{Block Property} dialog pictured in Figure~\ref{cfig10} appears.
+\texttt{Material Properties} dialog pictured in Figure~\ref{cfig10} appears.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{cd4.ps}}
-\caption{Block Property dialog.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{cd4}}
+\caption{Material Properties dialog.}
 \label{cfig10}
 \end{figure}
 
@@ -246,8 +246,8 @@ The dialog for entering conductor properties is pictured in
 Figure~\ref{cfig12}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{cd5.ps}}
-\caption{Conductor Property dialog.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{cd5}}
+\caption{Conductor Properties dialog.}
 \label{cfig12}
 \end{figure}
 
@@ -258,7 +258,7 @@ most easily performed by the toolbar buttons pictured in
 Figure~\ref{cfig13}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman13.eps}}
+\centerline{\includegraphics{belaman13}}
 \caption{Toolbar buttons for starting analysis tasks.}
 \label{cfig13}
 \end{figure}
@@ -324,7 +324,7 @@ the Graph Mode section of the toolbar (see Figure~\ref{cfig17}). The
 Contour Plot icon is the icon with the black contours.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{hplotbar.ps}}
+\centerline{\includegraphics{hplotbar}}
 \caption{Graph Mode toolbar buttons.}
 \label{cfig17}
 \end{figure}
@@ -367,7 +367,7 @@ function'' icon in the Plot, Integration and Conductor Results group of toolbar
 buttons, shown in Figure~\ref{cfig18}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{cd8.ps}}
+\centerline{\includegraphics{cd8}}
 \caption{Line Plot, Integration, and Conductor Results toolbar buttons.}
 \label{cfig18}
 \end{figure}
@@ -375,10 +375,11 @@ buttons, shown in Figure~\ref{cfig18}.
 When this button is pressed, the \texttt{X-Y Plot} dialog (see
 Figure~\ref{cfig19}) appears with a drop list containing the types
 of line plots available. Choose the desired type of plot and press
-``OK.''
+``OK.''  The dialog also has an edit box for the number of
+points to be sampled along the contour.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{cd6.ps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{cd6}}
 \caption{X-Y Plot dialog.}
 \label{cfig19}
 \end{figure}
@@ -386,13 +387,13 @@ of line plots available. Choose the desired type of plot and press
 After ``OK'' is pressed, the program computes the desired values
 along the defined contour. When computation of the values is finished,
 a plot window will appear with a graph of the selected quantity.
-the plot.
 
-By default, the \texttt{Write data to text file} box is not
-checked. If the user selects this option, the file selection dialog
-will appear and prompt for a filename to which to write the data.
-The data is written in two-column text format. If \texttt{Write
-data to text file} is selected, a plot window will not appear.
+To save the plotted values, press the \texttt{Export...} button on the
+plot window. A file selection dialog appears and prompts for the name
+of a file to which the data is written. The data is written as
+comma-separated values (\texttt{.csv}), with a header row naming the
+columns: position along the contour, followed by one column for each
+curve on the plot.
 
 Currently, the type of line plots supported are: 
 \begin{itemize}
@@ -472,16 +473,16 @@ The block integrals currently supported are:
 
 If conductor properties are used to specify the excitation, a
 useful byproduct is ready access to the voltage of and current through the
-conductor. To view the conductor results, either press the ``Conductor Results''
+conductor. To view the conductor results, either press the ``Conductor Props''
 toolbar button pictured in Figure~\ref{cfig18} or select \texttt{View$\vert
-$Conductor Props} off of the postprocessor main menu. A dialog, as
+$Conductor Properties} off of the postprocessor main menu. A dialog, as
 pictured in Figure~\ref{cfig21} will appear. There is a drop list on the
 dialog, from which the user selects the conductor for which results
 are desired. When a conductor is selected, the voltage and current
 associated with that conductor are displayed.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{cd7.ps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{cd7}}
 \caption{Conductor results dialog.}
 \label{cfig21}
 \end{figure}

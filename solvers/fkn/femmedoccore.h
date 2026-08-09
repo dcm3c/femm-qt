@@ -30,6 +30,14 @@ public:
 	int		PrevType;
 	double	Depth;
 
+	// Backward-Euler time step, seconds; 0 means "not a transient analysis".
+	// Supplied by the driver in the .tmp sidecar and echoed into the .ans so
+	// the postprocessor can reconstruct J = sigma*(v - (A-Aprev)/DeltaT).
+	// Deliberately independent of PrevType, which continues to mean
+	// incremental/frozen permeability -- prob1big does bIncremental=PrevType,
+	// so overloading it would switch on that whole path by accident.
+	double	DeltaT;
+
 	// Vector containing previous solution for incremental permeability analysis
 	double *Aprev;
 
@@ -57,7 +65,28 @@ public:
 	int NumAGEs;
 	int NumFluxConstraints;
 	int NumCurrentConstraints;
+	// Extra matrix rows carrying the axial voltage gradient of solid
+	// conductors in a transient analysis (the static analogue of prob2big's
+	// "Case 2"). One per circuit, allocated after the series expansion.
+	int NumVoltageUnknowns;
 	int NumNodesPlus;
+	void SetNumNodesPlus();
+	// Conductivity participating in transient eddy currents (MS/m); see the
+	// definition in prob1big.cpp for why it must be the only such test.
+	double EddyCduct(int blk, int lbl);
+
+	// Build (or rebuild) an air gap element's ring mapping -- the sorted
+	// quad-point pairing node[], plus InnerShift/OuterShift -- from its raw
+	// ring node lists and the angles currently in the age struct. The
+	// coordinate arrays parallel ringInner/ringOuter; cx,cy must be in the
+	// same units as the coordinates (only differences enter). Shared by the
+	// fresh-mesh path (load_tangle_mesh) and the transient mesh-reuse path
+	// (LoadPrev), which is what keeps the two pairings identical by
+	// construction.
+	void BuildAgeRing(CAirGapElement &age,
+	                  const double *ix, const double *iy,
+	                  const double *ox, const double *oy,
+	                  double cx, double cy);
 
 	CMaterialProp	*blockproplist;
 	CBoundaryProp	*lineproplist;
@@ -80,7 +109,11 @@ public:
 public:
 
 	int LoadPrev();
-	int LoadPrevA(CString myFile, double *V);
+	// Ap, when supplied, additionally receives the raw nodal A in Wb/m --
+	// the unit LoadPrev() stores and WriteStatic2D() emits. V gets A/c as
+	// before. Used by transient analyses, where the previous solution is
+	// data (the backward-Euler A_prev), not merely a starting guess.
+	int LoadPrevA(CString myFile, double *V, double *Ap=NULL);
 	int LoadMesh();
 	int OnOpenDocument();
 	int Cuthill();

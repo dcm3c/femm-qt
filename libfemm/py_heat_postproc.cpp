@@ -202,7 +202,7 @@ void register_heat_postproc_py(HeatResultsDoc *doc) {
     regv("ho_showgrid");
     regv("ho_hidegrid");
     regv("ho_gridsnap");
-    regv("ho_setgrid");
+    registerSetGrid(m, "ho", s_doc, HOERR);
     regv("ho_resize");
     regv("ho_minimize");
     regv("ho_maximize");
@@ -223,7 +223,9 @@ void register_heat_postproc_py(HeatResultsDoc *doc) {
         else
             cb("ho_setfocus", 0, args);
     });
-    m.def("ho_savemetafile", []() {});  // deprecated no-op
+    m.def("ho_savemetafile", [](std::optional<std::string>) {});  // No metafile output in femm-qt;
+    // the filename is accepted and ignored so ported scripts do not raise.
+    // Use *_savebitmap to save a picture of the view.
 
     m.def("ho_seteditmode", [](const std::string &mode) {
         auto cb = get_view_command_callback();
@@ -245,11 +247,18 @@ void register_heat_postproc_py(HeatResultsDoc *doc) {
         cb(("ho_savebitmap:" + fp).c_str(), 0, args);
     });
 
+    // OF's 4th argument selected among three text layouts (multi-column with
+    // or without a legend, Mathematica-style) and, when omitted, meant "write
+    // an extended metafile instead of data". femm-qt writes one data format
+    // and has no metafile output, so the argument is accepted and ignored --
+    // dropping it would turn every ported call into a TypeError.
     m.def("ho_makeplot", [](int plotType, optional<int> numPoints,
-                            optional<std::string> filename) -> double {
+                            optional<std::string> filename,
+                            optional<int> /*fileFormat*/) -> double {
         check_doc(s_doc, HOERR);
         return ppMakePlot(s_doc, plotType, numPoints.value_or(150),
-                          filename ? fixpath(*filename) : std::string());
+                          filename ? fixpath(*filename) : std::string(),
+                          xyexport::heatPlotNames());
     });
 
     m.def("ho_gettitle", []() -> std::string {

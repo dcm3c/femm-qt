@@ -3,38 +3,36 @@
 
 // spars.cpp — Real-valued sparse symmetric matrix
 //
-// Assembly uses upper-triangle storage. Before solving, Finalize()
-// expands to full storage for parallel SpMV and partitions rows into
-// blocks for block-Jacobi parallel SSOR.
+// Assembly uses upper-triangle storage; Finalize() expands it to flat-CSR
+// full storage for SpMV. Preconditioning is the whole-matrix incomplete
+// LDL^T (FactorPC).
 //
-// OpenMP parallelism:
-//   MultA  — parallel over rows (full storage, no atomics, no races)
-//   MultPC — block-Jacobi SSOR (independent SSOR within each block, blocks in parallel)
-//   Dot    — parallel reduction
-//   AXPY   — parallel vector operations
+// Deliberately sequential throughout. OpenMP was removed after the ILDL
+// preconditioner landed: measured across 10k-156k node problems, 4 threads
+// bought -11% to +4% wall time -- the sequential factor dominates each
+// iteration and cut iteration counts ~10x, leaving too little vector work
+// to amortize the fork/join -- while sequential reductions make results
+// bit-deterministic run to run, which the regression tooling values more.
 
 #include "StdAfx.h"
 #include <math.h>
+#include <cmath>
 #include <stdio.h>
 #include <stdlib.h>
 #include "fknDlg.h"
 #include "complex.h"
 #include "spars.h"
 #include "utf8_io.h"
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 
 #define KLUDGE
 
 CBigLinProb::CBigLinProb()
 {
 	n=0;
-	V=P=R=U=DI=Z=b=NULL;
+	V=P=R=U=Z=b=NULL;
 	Q=NULL;
 	Precision=1.e-08;
 	finalized=false;
-	numBlocks=0;
 }
 
 CBigLinProb::~CBigLinProb()
@@ -42,7 +40,7 @@ CBigLinProb::~CBigLinProb()
 	if (n==0) return;
 	free(b); free(P); free(R);
 	free(V); free(U); free(Z);
-	free(DI); if(Q) free(Q);
+	if(Q) free(Q);
 }
 
 int CBigLinProb::Create(int d, int bw)
@@ -54,7 +52,6 @@ int CBigLinProb::Create(int d, int bw)
 	R=(double *)calloc(d,sizeof(double));
 	U=(double *)calloc(d,sizeof(double));
 	Z=(double *)calloc(d,sizeof(double));
-	DI=(double *)calloc(d,sizeof(double));
 	Q=(int *)calloc(d,sizeof(int));
 	n=d;
 	finalized=false;
@@ -77,6 +74,7 @@ SEntry* CBigLinProb::FindEntry(int p, int q)
 void CBigLinProb::Put(double v, int p, int q)
 {
 	if(q < p){ int t=p; p=q; q=t; }
+	icState = 0;
 	auto& row = M[p];
 	for(auto& e : row){
 		if(e.c == q){ e.x = v; return; }
@@ -86,6 +84,12 @@ void CBigLinProb::Put(double v, int p, int q)
 		[](const SEntry& a, const SEntry& b){ return a.c < b.c; });
 	row.insert(it, ne);
 	finalized = false;
+	// Maintain the column adjacency incrementally: entry (p,q) means row p
+	// now holds column q. Order within colAdj[q] does not matter --
+	// CoupledRows sorts its merged output -- so an append keeps it valid.
+	// Without this, every periodicity merge that inserts would force a full
+	// O(nnz) rebuild for the NEXT pair, once per pair.
+	if (colAdjValid && p != q) colAdj[q].push_back(p);
 }
 
 double CBigLinProb::Get(int p, int q)
@@ -100,6 +104,7 @@ double CBigLinProb::Get(int p, int q)
 void CBigLinProb::AddTo(double v, int p, int q)
 {
 	if(q < p){ int t=p; p=q; q=t; }
+	icState = 0;
 	auto& row = M[p];
 	for(auto& e : row){
 		if(e.c == q){ e.x += v; return; }
@@ -109,53 +114,62 @@ void CBigLinProb::AddTo(double v, int p, int q)
 		[](const SEntry& a, const SEntry& b){ return a.c < b.c; });
 	row.insert(it, ne);
 	finalized = false;
+	// Maintain the column adjacency incrementally: entry (p,q) means row p
+	// now holds column q. Order within colAdj[q] does not matter --
+	// CoupledRows sorts its merged output -- so an append keeps it valid.
+	// Without this, every periodicity merge that inserts would force a full
+	// O(nnz) rebuild for the NEXT pair, once per pair.
+	if (colAdjValid && p != q) colAdj[q].push_back(p);
 }
 
-// Expand to full storage and partition into blocks for parallel SSOR.
+// Expand the upper-triangle assembly storage to flat-CSR full storage.
 void CBigLinProb::Finalize()
 {
-	// --- Build full storage ---
-	Mfull.resize(n);
-	for(int i=0;i<n;i++) Mfull[i].clear();
-
-	for(int i=0;i<n;i++){
-		for(auto& e : M[i]){
-			Mfull[i].push_back({e.c, e.x});
-			if(e.c != i)
-				Mfull[e.c].push_back({i, e.x});
-		}
-	}
-
+	// --- Build full storage (flat CSR) ---
+	// Each row's columns come out ascending without a sort: the first fill
+	// pass sweeps upper-triangle rows j in ascending order, placing the
+	// mirrored entry (r, j), j < r, in each row r it strikes; the second
+	// appends each row's own upper-triangle entries (columns >= r, already
+	// ascending). Ascending columns keep the SpMV summation order identical
+	// to the sorted array-of-vectors this replaces.
+	mfPtr.assign(n+1, 0);
 	for(int i=0;i<n;i++)
-		std::sort(Mfull[i].begin(), Mfull[i].end(),
-			[](const SEntry& a, const SEntry& b){ return a.c < b.c; });
-
-	// --- Block partitioning ---
-#ifdef _OPENMP
-	numBlocks = omp_get_max_threads();
-#else
-	numBlocks = 1;
-#endif
-	if(numBlocks > n) numBlocks = n;
-	if(numBlocks < 1) numBlocks = 1;
-
-	blockStart.resize(numBlocks + 1);
-	for(int b=0;b<=numBlocks;b++)
-		blockStart[b] = (int)((long long)n * b / numBlocks);
+		for(auto& e : M[i]){
+			mfPtr[i+1]++;
+			if(e.c != i) mfPtr[e.c+1]++;
+		}
+	for(int i=0;i<n;i++) mfPtr[i+1]+=mfPtr[i];
+	mfCol.resize(mfPtr[n]);
+	mfVal.resize(mfPtr[n]);
+	{
+		std::vector<int> cur(mfPtr.begin(), mfPtr.end()-1);
+		for(int j=0;j<n;j++)
+			for(auto& e : M[j])
+				if(e.c != j){
+					mfCol[cur[e.c]]=j;
+					mfVal[cur[e.c]]=e.x;
+					cur[e.c]++;
+				}
+		for(int i=0;i<n;i++)
+			for(auto& e : M[i]){
+				mfCol[cur[i]]=e.c;
+				mfVal[cur[i]]=e.x;
+				cur[i]++;
+			}
+	}
 
 	finalized = true;
 }
 
-// Parallel SpMV using full storage — no atomics, no races.
+// SpMV over the full CSR storage.
 void CBigLinProb::MultA(double *X, double *Y)
 {
 	if(!finalized) Finalize();
 
-	#pragma omp parallel for schedule(static)
 	for(int i=0;i<n;i++){
 		double sum = 0;
-		for(auto& e : Mfull[i])
-			sum += e.x * X[e.c];
+		for(int idx=mfPtr[i];idx<mfPtr[i+1];idx++)
+			sum += mfVal[idx] * X[mfCol[idx]];
 		Y[i] = sum;
 	}
 }
@@ -163,82 +177,250 @@ void CBigLinProb::MultA(double *X, double *Y)
 double CBigLinProb::Dot(double *X, double *Y)
 {
 	double z=0;
-	#pragma omp parallel for reduction(+:z) schedule(static)
 	for(int i=0;i<n;i++) z += X[i]*Y[i];
 	return z;
 }
 
-void CBigLinProb::BuildDI()
+// Incomplete LDL^T factorization of M with threshold-based fill (Crout-
+// style ILDL), over the WHOLE matrix -- deliberately not block-Jacobi. See
+// the complex twin in CBigComplexLinProb::FactorPC for the measurements
+// behind both choices: zero-fill IC(0) only matched the SSOR sweep it
+// replaced (the classic equivalence), and per-block factors plateaued ~2x
+// short of their serial potential because the discarded inter-block
+// coupling became the binding constraint. Factored whole, the fill
+// collapses the iteration count enough to pay for the triangular solves
+// being sequential many times over.
+//
+// Column k keeps the ICFILL largest entries whose magnitude exceeds ICTOL
+// times the original column's largest entry. Setup runs once per assembly
+// (any value mutation resets icState) and is amortized over every PCG/QMR
+// iteration solved against it.
+//
+// Root-free LDL^T rather than LL^T so one kernel serves both the SPD case
+// and the symmetric-indefinite circuit-constraint case that QMRSolve
+// exists for -- D simply carries the sign, and no square roots are taken.
+// When M's diagonal is entirely positive (the SPD problems PCGSolve
+// serves) a nonpositive pivot is treated as breakdown and rescued with the
+// row's diagonal scale, so the factor stays SPD as PCG requires;
+// otherwise D is allowed to go negative -- QMR needs a symmetric
+// preconditioner, not a definite one, and LDL^T with signed D is exactly
+// that. Correctness is never at stake: the per-pivot rescue below keeps
+// the factor finite (degrading toward Jacobi as rescues accumulate), and
+// the Krylov loops measure the true residual against the true operator,
+// so a degraded factor costs iterations, never accuracy. There is no
+// fallback preconditioner -- an SSOR one existed until telemetry across
+// the whole regression corpus showed not a single pivot ever rescued.
+//
+// The Crout ordering computes one column of L at a time: column k is A's
+// lower column k (read from upper-triangle row k, by symmetry) minus
+// d_j * L(k,j) * L(:,j) over the previously kept entries L(k,j) of row k,
+// which is exactly the bookkeeping rowsOfL maintains as columns finalize.
+// The factor is stored per COLUMN (icPtr/icCol/icVal, row indices
+// ascending; L's unit diagonal implicit), which serves both triangular
+// sweeps: forward substitution pushes each finished y_k down its column,
+// and the transposed backward solve gathers along the same column.
+// Provenance: this is an independent implementation, written against this
+// codebase's own storage classes. No code is derived from any library. The
+// two published algorithms it implements are:
+//   Y. Saad, "ILUT: A dual threshold incomplete LU factorization,"
+//     Numerical Linear Algebra with Applications 1(4):387-402, 1994
+//     -- the dual dropping rule: discard entries below ICTOL times the
+//        column's largest, then keep at most ICFILL of the survivors.
+//   N. Li, Y. Saad and E. Chow, "Crout Versions of ILU for General Sparse
+//     Matrices," SIAM J. Sci. Comput. 25(2):716-728, 2003
+//     -- the Crout ordering: build column k from the previously kept
+//        entries of row k, which is what rowsOfL maintains.
+// Algorithms are not copyrightable and neither is under any license that
+// would reach an independent implementation; the citations are here because
+// attribution is owed to the authors, not because a license requires it.
+void CBigLinProb::FactorPC()
 {
 	if(!finalized) Finalize();
+	icState = 2;
 
-	for(int i=0;i<n;i++)
-	{
-		double diag = Get(i,i);
-		if(diag != 0){
-			DI[i] = diag;
-		} else {
-			DI[i] = 0;
-			for(auto& e : Mfull[i]) DI[i] += fabs(e.x);
+	// Tuning shared with the complex twin (see its FactorPC); the wall-
+	// clock optimum is flat within roughly a factor of 3 around these.
+	const double ICTOL = 1e-3;
+	const int ICFILL = 32;
+
+	icPtr.assign(n+1, 0);
+	icCol.clear();
+	icVal.clear();
+	icCol.reserve((size_t)n*8);
+	icVal.reserve((size_t)n*8);
+	icD.resize(n);
+
+	bool posDiag = true;
+	for(int i=0;i<n;i++) if(!(M[i][0].x>0)){ posDiag=false; break; }
+
+	// rowsOfL[i]: the columns k that kept an entry at row i, k ascending.
+	// Only the column index is stored: the value L(i,k) is recoverable as
+	// icVal[colStart[k]] at the moment row i is processed, because visits to
+	// a column are in 1:1 order with its own entries. Column k's entries are
+	// pushed with r ascending, and the outer loop reaches those r in the same
+	// ascending order, so the i-th visit to column j lands on its i-th entry.
+	// colStart[j] is that cursor: icCol[colStart[j]] == k on the visit at k,
+	// everything before it is spent, everything after it has r > k. That
+	// removes both the rescan of the dead prefix and the r<=k branch from the
+	// innermost loop.
+	std::vector<std::vector<int>> rowsOfL(n);
+	std::vector<int> colStart(n, 0);
+	// sparse column accumulator
+	std::vector<double> w(n);
+	std::vector<char> inw(n, 0);
+	std::vector<int> touch, keep;
+	touch.reserve(256); keep.reserve(256);
+
+	for(int k=0;k<n;k++){
+		double dk = M[k][0].x;
+		double cnorm = fabs(dk);
+
+		// load A's lower column k from upper-triangle row k
+		for(auto& e : M[k])
+			if(e.c>k){
+				w[e.c]=e.x; inw[e.c]=1; touch.push_back(e.c);
+				double a=fabs(e.x); if(a>cnorm) cnorm=a;
+			}
+
+		// subtract d_j L(k,j) L(:,j) for the kept entries of row k
+		for(int j : rowsOfL[k]){
+			const int p = colStart[j];        // icCol[p] == k
+			const double Lkj = icVal[p];
+			const double f = icD[j]*Lkj;
+			dk -= f*Lkj;
+			for(int idx=p+1;idx<icPtr[j+1];idx++){
+				const int r = icCol[idx];
+				if(!inw[r]){ w[r]=0; inw[r]=1; touch.push_back(r); }
+				w[r] -= f*icVal[idx];
+			}
+			colStart[j] = p+1;
 		}
-		if(DI[i] == 0) DI[i] = 1;
+		// row k is spent; release it rather than hold all n to the end
+		std::vector<int>().swap(rowsOfL[k]);
+
+		// pivot guard; negated comparisons so a NaN pivot is also rescued
+		double scale = fabs(M[k][0].x);
+		if(scale==0){
+			// zero diagonal (constraint row): fall back to the row's
+			// magnitude
+			for(int idx=mfPtr[k];idx<mfPtr[k+1];idx++) scale += fabs(mfVal[idx]);
+			if(scale==0) scale=1;
+		}
+		// Rescue with the ORIGINAL diagonal, not its magnitude: on the
+		// indefinite path a negative diagonal must stay negative, or the
+		// factor claims the wrong inertia at that pivot. Identical to the
+		// old dk=scale whenever posDiag holds, since then the diagonal is
+		// already positive; scale still covers the zero-diagonal
+		// constraint rows, where it is the row's 1-norm.
+		if(posDiag ? !(dk > 1e-8*scale) : !(fabs(dk) > 1e-8*scale))
+			dk = (M[k][0].x != 0) ? M[k][0].x : scale;
+		icD[k]=dk;
+
+		// drop small entries, cap the survivors at ICFILL largest
+		keep.clear();
+		const double drop = ICTOL*cnorm;
+		for(int r : touch){
+			if(fabs(w[r]) >= drop) keep.push_back(r);
+			inw[r]=0;
+		}
+		touch.clear();
+		if((int)keep.size() > ICFILL){
+			std::nth_element(keep.begin(), keep.begin()+ICFILL, keep.end(),
+				[&](int a, int b){ return fabs(w[a]) > fabs(w[b]); });
+			keep.resize(ICFILL);
+		}
+		std::sort(keep.begin(), keep.end());
+
+		for(int r : keep){
+			double lrk = w[r]/dk;
+			icCol.push_back(r);
+			icVal.push_back(lrk);
+			rowsOfL[r].push_back(k);
+		}
+		icPtr[k+1]=(int)icCol.size();
+		colStart[k]=icPtr[k];
+	}
+
+	icState = 1;
+}
+
+// Apply the incomplete LDL^T: with the factor stored by column, forward
+// substitution pushes each finished y_k down column k, the D solve is a
+// diagonal scale, and the transposed backward solve gathers along the same
+// columns in descending order. Sequential by nature -- the strong whole-
+// matrix factor makes the iteration count small enough that this wins over
+// any parallel-but-decoupled alternative (see FactorPC).
+void CBigLinProb::MultIC(double *X, double *Y)
+{
+	int i;
+	for(i=0;i<n;i++) Y[i]=X[i];
+	for(int k=0;k<n;k++){
+		const double yk = Y[k];
+		for(int idx=icPtr[k];idx<icPtr[k+1];idx++)
+			Y[icCol[idx]] -= icVal[idx]*yk;
+		// column k touches only rows > k, so Y[k] is final here: fold
+		// the D solve in rather than making a separate pass over Y
+		Y[k] = yk/icD[k];
+	}
+	for(int k=n-1;k>=0;k--){
+		double s = Y[k];
+		for(int idx=icPtr[k];idx<icPtr[k+1];idx++)
+			s -= icVal[idx]*Y[icCol[idx]];
+		Y[k]=s;
 	}
 }
 
-// Block-Jacobi parallel SSOR preconditioner.
-// Each block runs a full sequential SSOR sweep on its contiguous row range.
-// Off-block entries are treated as known (from input X). Blocks run in parallel.
-// Within each block, the sweep follows the natural Cuthill-McKee ordering,
-// preserving the quality of sequential SSOR.
+// Preconditioner: the incomplete LDL^T, factored lazily on first use after
+// any value mutation.
 void CBigLinProb::MultPC(double *X, double *Y)
 {
 	if(!finalized) Finalize();
+	if(icState!=1) FactorPC();
+	MultIC(X,Y);
+}
 
-	double c = LAMBDA*(2.-LAMBDA);
+void CBigLinProb::BuildColAdj()
+{
+	colAdj.assign(n, std::vector<int>());
+	for(int k=0;k<n;k++)
+		for(auto& e : M[k])
+			if (e.c != k) colAdj[e.c].push_back(k);
+	colAdjValid = true;
+}
 
-	#pragma omp parallel for schedule(static)
-	for(int i=0;i<n;i++) Y[i] = X[i]*c;
-
-	// Block-Jacobi: each block does independent SSOR using upper-triangle
-	// storage (M) with push-style updates, bounded to the block range.
-	#pragma omp parallel for schedule(static)
-	for(int blk=0;blk<numBlocks;blk++)
-	{
-		int lo = blockStart[blk];
-		int hi = blockStart[blk+1];
-
-		// Forward sweep: push to upper-triangle neighbors within block
-		for(int i=lo;i<hi;i++){
-			Y[i] /= DI[i];
-			for(auto& e : M[i]){
-				if(e.c > i && e.c < hi)
-					Y[e.c] -= e.x * Y[i] * LAMBDA;
-			}
-		}
-
-		// Diagonal scaling
-		for(int i=lo;i<hi;i++) Y[i] *= DI[i];
-
-		// Backward sweep: pull from upper-triangle neighbors within block
-		for(int i=hi-1;i>=lo;i--){
-			for(auto& e : M[i]){
-				if(e.c > i && e.c < hi)
-					Y[i] -= e.x * Y[e.c] * LAMBDA;
-			}
-			Y[i] /= DI[i];
-		}
+// Rows structurally coupled to column i or column j, ascending, excluding i
+// and j themselves. Pass j = i for a single column. Collected up front so the
+// caller's Puts (which may insert and so invalidate colAdj) iterate a stable
+// snapshot of plain indices.
+void CBigLinProb::CoupledRows(int i, int j, std::vector<int> &out)
+{
+	if (!colAdjValid) BuildColAdj();
+	out.clear();
+	for(int k : colAdj[i]) out.push_back(k);
+	for(auto& e : M[i]) out.push_back(e.c);
+	if (j != i){
+		for(int k : colAdj[j]) out.push_back(k);
+		for(auto& e : M[j]) out.push_back(e.c);
 	}
+	std::sort(out.begin(), out.end());
+	out.erase(std::unique(out.begin(), out.end()), out.end());
+	out.erase(std::remove(out.begin(), out.end(), i), out.end());
+	out.erase(std::remove(out.begin(), out.end(), j), out.end());
 }
 
 void CBigLinProb::SetValue(int i, double x)
 {
-	int k,fst,lst;
+	// Historically swept rows k = fst..lst looking for entries in column i,
+	// bounded by bdw -- which the tangle-ordered solvers never set, so the
+	// sweep had degraded to all n rows per fixed node. Enumerate exactly the
+	// coupled rows instead; semantics are unchanged (the z!=0 guard means the
+	// zeroing Puts never insert).
 	double z;
+	std::vector<int> rows;
+	CoupledRows(i, i, rows);
+	rows.push_back(i);   // the historical sweep visits the diagonal too
 
-	if(bdw==0){ fst=0; lst=n; }
-	else { fst=i-bdw; if(fst<0) fst=0; lst=i+bdw; if(lst>n) lst=n; }
-
-	for(k=fst;k<lst;k++){
+	for(int k : rows){
 		z=Get(k,i);
 		if(z!=0){
 			b[k]=b[k]-(z*x);
@@ -250,83 +432,89 @@ void CBigLinProb::SetValue(int i, double x)
 
 void CBigLinProb::Wipe()
 {
-	#pragma omp parallel for schedule(static)
 	for(int i=0;i<n;i++){
 		b[i]=0.;
 		for(auto& e : M[i])
 			e.x = 0;
 	}
 	finalized = false;
+	icState = 0;
+}
+
+void CBigLinProb::SaveBaseline()
+{
+	int i;
+	size_t tot=0;
+	for(i=0;i<n;i++) tot+=M[i].size();
+	baseM.clear();
+	baseM.reserve(tot);
+	for(i=0;i<n;i++) for(auto& e : M[i]) baseM.push_back(e.x);
+	baseB.assign(b, b+n);
+}
+
+int CBigLinProb::RestoreBaseline()
+{
+	int i;
+	size_t tot=0;
+	for(i=0;i<n;i++) tot+=M[i].size();
+	if (tot!=baseM.size() || baseB.size()!=(size_t)n) return 0;
+
+	size_t idx=0;
+	for(i=0;i<n;i++) for(auto& e : M[i]) e.x=baseM[idx++];
+	for(i=0;i<n;i++) b[i]=baseB[i];
+
+	finalized = false;
+	icState = 0;
+	return 1;
 }
 
 void CBigLinProb::AntiPeriodicity(int i, int j)
 {
-	int k,fst,lst;
+	int k;
 	double v1,v2,c;
-
-#ifdef KLUDGE
-	int tmpbdw=bdw;
-	bdw=0;
-#endif
 
 	if (j<i) {k=j;j=i;i=k;}
 
-	if(bdw==0){ fst=0; lst=n; }
-	else { fst=i-bdw; if(fst<0) fst=0; lst=j+bdw; if(lst>n) lst=n; }
+	// Only rows structurally coupled to node i or node j can satisfy the
+	// v1/v2 != 0 test, so enumerate those instead of sweeping all n rows
+	// (the bdw bound that once limited the sweep is never set).
+	std::vector<int> rows;
+	CoupledRows(i, j, rows);
 
-	for(k=fst;k<lst;k++){
-		if((k!=i) && (k!=j)){
-			v1=Get(k,i); v2=Get(k,j);
-			if ((v1!=0) || (v2!=0)){
-				c=(v1-v2)/2.;
-				Put(c,k,i); Put(-c,k,j);
-			}
+	for(int kk : rows){
+		v1=Get(kk,i); v2=Get(kk,j);
+		if ((v1!=0) || (v2!=0)){
+			c=(v1-v2)/2.;
+			Put(c,kk,i); Put(-c,kk,j);
 		}
-		if((k==i+bdw) && (k<j-bdw) && (bdw!=0)) k=j-bdw;
 	}
 	c=0.5*(Get(i,i)+Get(j,j));
 	Put(c,i,i); Put(c,j,j);
 	c=0.5*(b[i]-b[j]);
 	b[i]=c; b[j]=-c;
-
-#ifdef KLUDGE
-	bdw=tmpbdw;
-#endif
 }
 
 void CBigLinProb::Periodicity(int i, int j)
 {
-	int k,fst,lst;
+	int k;
 	double v1,v2,c;
-
-#ifdef KLUDGE
-	int tmpbdw=bdw;
-	bdw=0;
-#endif
 
 	if (j<i) {k=j;j=i;i=k;}
 
-	if(bdw==0){ fst=0; lst=n; }
-	else { fst=i-bdw; if(fst<0) fst=0; lst=j+bdw; if(lst>n) lst=n; }
+	std::vector<int> rows;
+	CoupledRows(i, j, rows);   // see AntiPeriodicity
 
-	for(k=fst;k<lst;k++){
-		if((k!=i) && (k!=j)){
-			v1=Get(k,i); v2=Get(k,j);
-			if ((v1!=0) || (v2!=0)){
-				c=(v1+v2)/2.;
-				Put(c,k,i); Put(c,k,j);
-			}
+	for(int kk : rows){
+		v1=Get(kk,i); v2=Get(kk,j);
+		if ((v1!=0) || (v2!=0)){
+			c=(v1+v2)/2.;
+			Put(c,kk,i); Put(c,kk,j);
 		}
-		if((k==i+bdw) && (k<j-bdw) && (bdw!=0)) k=j-bdw;
 	}
 	c=(Get(i,i)+Get(j,j))/2.;
 	Put(c,i,i); Put(c,j,j);
 	c=0.5*(b[i]+b[j]);
 	b[i]=c; b[j]=c;
-
-#ifdef KLUDGE
-	bdw=tmpbdw;
-#endif
 }
 
 void CBigLinProb::ComputeBandwidth()
@@ -355,8 +543,7 @@ int CBigLinProb::SaveMe(CString myFile)
 	return 1;
 }
 
-// Preconditioned Conjugate Gradient solver with parallel SpMV, dots,
-// and block-Jacobi SSOR preconditioning.
+// Preconditioned Conjugate Gradient solver.
 int CBigLinProb::PCGSolve(int flag)
 {
 	int i;
@@ -368,29 +555,47 @@ int CBigLinProb::PCGSolve(int flag)
 	int prg1 = 0, prg2;
 
 	if(!finalized) Finalize();
-	BuildDI();
 
 	// residual with V=0
 	MultPC(b, Z);
 	res_o = Dot(Z, b);
-	if (res_o == 0) return 1;
+	// A zero RHS has the exact solution V = 0, whatever V currently holds.
+	// The warm-start paths (flag != 0) arrive here with a previous iterate or
+	// an initial guess loaded from a previous solution, so returning without
+	// clearing V would hand that guess back as though it had been solved for.
+	// The complex twin (cspars.cpp PBCGSolve) already zeroes V here.
+	//
+	// Test the RHS directly rather than inferring emptiness from res_o: the
+	// two agree only while the preconditioner is definite, and QMRSolve's
+	// constraint rows give the incomplete factorization signed pivots. If
+	// res_o is zero for a NONZERO b, falling through is the right thing --
+	// the isfinite guard in the iteration below turns the resulting division
+	// into an honest failure instead of a false claim of convergence.
+	if (Dot(b, b) == 0) {
+		for (i = 0; i < n; i++) V[i] = 0;
+		return 1;
+	}
 
 	// if flag is false, initialize V with zeros
 	if (flag == 0) {
-		#pragma omp parallel for schedule(static)
 		for (i = 0; i < n; i++) V[i] = 0;
 	}
 
 	// form residual
 	MultA(V, R);
-	#pragma omp parallel for schedule(static)
 	for (i = 0; i < n; i++) R[i] = b[i] - R[i];
 
 	// form initial search direction
 	MultPC(R, Z);
-	#pragma omp parallel for schedule(static)
 	for (i = 0; i < n; i++) P[i] = Z[i];
 	res = Dot(Z, R);
+
+	// Breakdown/stall guard: a non-finite er makes the while() below false,
+	// which would return "converged" with garbage in V. The stall counter
+	// mirrors QMRSolve's bBail; PCG previously had no such protection.
+	double erBest=1e300;
+	int nStall=0;
+	const int stallLimit=(n/2>200)?(n/2):200;
 
 	// do iteration
 	do {
@@ -400,11 +605,9 @@ int CBigLinProb::PCGSolve(int flag)
 		del = res / pAp;
 
 		// step ii) update solution
-		#pragma omp parallel for schedule(static)
 		for (i = 0; i < n; i++) V[i] += (del * P[i]);
 
 		// step iii) update residual
-		#pragma omp parallel for schedule(static)
 		for (i = 0; i < n; i++) R[i] -= (del * U[i]);
 
 		// step iv) apply preconditioner and compute new search direction
@@ -414,11 +617,13 @@ int CBigLinProb::PCGSolve(int flag)
 		res = res_new;
 
 		// step v) update search direction
-		#pragma omp parallel for schedule(static)
 		for (i = 0; i < n; i++) P[i] = Z[i] + (rho * P[i]);
 
 		// have we converged yet?
 		er = sqrt(fabs(res / res_o));
+		if (!std::isfinite(er)) return 0;
+		if (er < erBest) { erBest = er; nStall = 0; }
+		else if (++nStall >= stallLimit) return 0;
 
 		prg2 = (int)(20. * log10(er) / (log10(Precision)));
 		if (prg2 > prg1) {
@@ -434,7 +639,7 @@ int CBigLinProb::PCGSolve(int flag)
 	return 1;
 }
 
-// QMR solver with parallel SpMV, dots, and block-Jacobi SSOR
+// QMR solver (symmetric-indefinite systems: circuit constraints).
 int CBigLinProb::QMRSolve(int flag)
 {
 	int i;
@@ -448,20 +653,32 @@ int CBigLinProb::QMRSolve(int flag)
 	int prg1 = 0, prg2;
 
 	if(!finalized) Finalize();
-	BuildDI();
 
 	MultPC(b, Z);
 	res_o = Dot(Z, b);
-	if (res_o == 0) return 1;
+	// A zero RHS has the exact solution V = 0, whatever V currently holds.
+	// The warm-start paths (flag != 0) arrive here with a previous iterate or
+	// an initial guess loaded from a previous solution, so returning without
+	// clearing V would hand that guess back as though it had been solved for.
+	// The complex twin (cspars.cpp PBCGSolve) already zeroes V here.
+	//
+	// Test the RHS directly rather than inferring emptiness from res_o: the
+	// two agree only while the preconditioner is definite, and QMRSolve's
+	// constraint rows give the incomplete factorization signed pivots. If
+	// res_o is zero for a NONZERO b, falling through is the right thing --
+	// the isfinite guard in the iteration below turns the resulting division
+	// into an honest failure instead of a false claim of convergence.
+	if (Dot(b, b) == 0) {
+		for (i = 0; i < n; i++) V[i] = 0;
+		return 1;
+	}
 
 	if (flag == 0) {
-		#pragma omp parallel for schedule(static)
 		for (i = 0; i < n; i++) V[i] = 0;
 	}
 
 	MultA(V, R);
 
-	#pragma omp parallel for schedule(static)
 	for (i = 0; i < n; i++) {
 		R[i] = b[i] - R[i];
 		U[i] = 0;
@@ -477,7 +694,6 @@ int CBigLinProb::QMRSolve(int flag)
 		pAp = Dot(P, Z);
 		del = res / pAp;
 
-		#pragma omp parallel for schedule(static)
 		for (i = 0; i < n; i++) R[i] -= (del * Z[i]);
 
 		MultPC(R, Z);
@@ -488,7 +704,6 @@ int CBigLinProb::QMRSolve(int flag)
 		cn = 1. / sqrt(1. + tta_new * tta_new);
 		tau *= (tta_new * cn);
 
-		#pragma omp parallel for schedule(static)
 		for (i = 0; i < n; i++) {
 			U[i] = cn * cn * (tta * tta * U[i] + del * P[i]);
 			V[i] += U[i];
@@ -497,6 +712,7 @@ int CBigLinProb::QMRSolve(int flag)
 		tta=tta_new;
 
 		er = sqrt(fabs(res / res_o));
+		if (!std::isfinite(er)) return 0;
 
 		if (erLast==0) erLast=er;
 		if (er<erLast) { erLast=er; bBail=0; }

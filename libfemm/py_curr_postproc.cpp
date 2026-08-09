@@ -246,7 +246,7 @@ void register_curr_postproc_py(CurrResultsDoc *doc) {
     regv("co_showgrid");
     regv("co_hidegrid");
     regv("co_gridsnap");
-    regv("co_setgrid");
+    registerSetGrid(m, "co", s_doc, COERR);
     regv("co_resize");
     regv("co_minimize");
     regv("co_maximize");
@@ -267,13 +267,22 @@ void register_curr_postproc_py(CurrResultsDoc *doc) {
         else
             cb("co_setfocus", 0, args);
     });
-    m.def("co_savemetafile", []() {});  // deprecated no-op
+    m.def("co_savemetafile", [](std::optional<std::string>) {});  // No metafile output in femm-qt;
+    // the filename is accepted and ignored so ported scripts do not raise.
+    // Use *_savebitmap to save a picture of the view.
 
+    // OF's 4th argument selected among three text layouts (multi-column with
+    // or without a legend, Mathematica-style) and, when omitted, meant "write
+    // an extended metafile instead of data". femm-qt writes one data format
+    // and has no metafile output, so the argument is accepted and ignored --
+    // dropping it would turn every ported call into a TypeError.
     m.def("co_makeplot", [](int plotType, optional<int> numPoints,
-                            optional<std::string> filename) -> double {
+                            optional<std::string> filename,
+                            optional<int> /*fileFormat*/) -> double {
         check_doc(s_doc, COERR);
         return ppMakePlot(s_doc, plotType, numPoints.value_or(150),
-                          filename ? fixpath(*filename) : std::string());
+                          filename ? fixpath(*filename) : std::string(),
+                          xyexport::currPlotNames());
     });
 
     m.def("co_seteditmode", [](const std::string &mode) {

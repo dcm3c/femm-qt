@@ -7,6 +7,7 @@
 #include "mainwindow.h"
 #include "py_console.h"
 #include "pre_prefs_dialog.h"
+#include "coord_display.h"
 #include "editor_widget.h"
 #include "results_widget.h"
 #include "scalar_results_widget.h"
@@ -923,6 +924,18 @@ void MainWindow::syncPostprocessorMenus(QWidget *active)
     auto modeActs = m_ppModeGroup->actions();
     if (mode >= 0 && mode < modeActs.size())
         modeActs[mode]->setChecked(true);
+
+    // "Circuit" only in magnetics; the scalar physics call the same thing a
+    // conductor, which is what their dialog title and the rest of their UI say.
+    const bool isMag = (qobject_cast<ResultsWidget *>(active) != nullptr);
+    if (m_ppActCircProps)
+        m_ppActCircProps->setText(isMag ? tr("Circuit &Properties...")
+                                        : tr("Conductor &Properties..."));
+    if (m_ppCircPropsTB) {
+        m_ppCircPropsTB->setText(isMag ? tr("Circuit Props") : tr("Conductor Props"));
+        m_ppCircPropsTB->setToolTip(isMag ? tr("View circuit properties")
+                                          : tr("View conductor properties"));
+    }
 }
 
 void MainWindow::syncPreprocessorMenus(EditorWidget *editor)
@@ -1297,6 +1310,18 @@ void MainWindow::onPPToggleMesh()
 // Status bar
 // ================================================================
 
+int *MainWindow::activeCoords() const
+{
+    if (auto *e = activeEditor())        { if (e->document()) return &e->document()->Coords; }
+    if (auto *r = activeResults())       { if (r->document()) return &r->document()->Coords; }
+    if (auto *s = activeScalarResults()) {
+        if (s->document())     return &s->document()->Coords;
+        if (s->heatDocument()) return &s->heatDocument()->Coords;
+        if (s->currDocument()) return &s->currDocument()->Coords;
+    }
+    return nullptr;
+}
+
 void MainWindow::updateCoordinates(double x, double y)
 {
     // Check editor and results for problem type
@@ -1308,10 +1333,49 @@ void MainWindow::updateCoordinates(double x, double y)
     if (r && r->document()) pt = r->document()->ProblemType;
     if (s && s->document()) pt = s->document()->ProblemType;
 
-    if (pt == 1)
-        m_coordLabel->setText(QString("(r=%1, z=%2)").arg(x, 0, 'f', 4).arg(y, 0, 'f', 4));
-    else
-        m_coordLabel->setText(QString("(x=%1, y=%2)").arg(x, 0, 'f', 4).arg(y, 0, 'f', 4));
+    const int *coords = activeCoords();
+    m_coordLabel->setText(coorddisp::statusText(coords ? *coords : 0, pt, x, y));
+}
+
+void MainWindow::showGridPropertiesDialog()
+{
+    auto *e = activeEditor();
+    auto *r = activeResults();
+    auto *s = activeScalarResults();
+    if (!e && !r && !s) return;
+    const double curSize = e ? e->gridSize() : (r ? r->gridSize() : s->gridSize());
+    int *coords = activeCoords();
+
+    QDialog gdlg(this);
+    gdlg.setWindowTitle(tr("Grid Properties"));
+    auto *form = new QFormLayout;
+    auto *gEdit = new PyLineEdit;
+    gEdit->setText(QString::number(curSize));
+    form->addRow(tr("Grid Size"), gEdit);
+
+    // Coordinates is document state, so it only appears when a document is in
+    // focus. Grid size is view state and is always editable.
+    QComboBox *cbox = nullptr;
+    if (coords) {
+        cbox = new QComboBox;
+        cbox->addItem(tr("Cartesian"));
+        cbox->addItem(tr("Polar"));
+        cbox->setCurrentIndex(*coords == 1 ? 1 : 0);
+        form->addRow(tr("Coordinates"), cbox);
+    }
+
+    auto *gbtns = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    connect(gbtns, &QDialogButtonBox::accepted, &gdlg, &QDialog::accept);
+    connect(gbtns, &QDialogButtonBox::rejected, &gdlg, &QDialog::reject);
+    auto *glay = new QVBoxLayout(&gdlg);
+    glay->addLayout(form);
+    glay->addWidget(gbtns);
+
+    if (gdlg.exec() != QDialog::Accepted) return;
+    const double size = gEdit->evaluateAsDouble(curSize);
+    if (e) e->setGridSize(size); else if (r) r->setGridSize(size); else s->setGridSize(size);
+    QSettings().setValue("editor/gridSize", size);
+    if (coords && cbox) *coords = cbox->currentIndex();
 }
 
 void MainWindow::updateStatus(const QString &msg)
@@ -1609,25 +1673,10 @@ void MainWindow::createPreprocessorUI()
             m_snapGridTB->blockSignals(false);
         }
     });
-    m_preMenuGrid->addAction(tr("Set Grid &Size..."), QKeySequence(), [this]() {
-        auto *e = activeEditor(); if (!e) return;
-        QDialog gdlg(this);
-        gdlg.setWindowTitle(tr("Grid Size"));
-        auto *glay = new QHBoxLayout(&gdlg);
-        glay->addWidget(new QLabel(tr("Grid spacing:")));
-        auto *gEdit = new PyLineEdit;
-        gEdit->setText(QString::number(e->gridSize()));
-        glay->addWidget(gEdit);
-        auto *gbtns = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-        connect(gbtns, &QDialogButtonBox::accepted, &gdlg, &QDialog::accept);
-        connect(gbtns, &QDialogButtonBox::rejected, &gdlg, &QDialog::reject);
-        glay->addWidget(gbtns);
-        if (gdlg.exec() == QDialog::Accepted) {
-            double size = gEdit->evaluateAsDouble(e->gridSize());
-            e->setGridSize(size);
-            QSettings().setValue("editor/gridSize", size);
-        }
-    });
+    // Mnemonic is Z, not S: "&Show Grid" already claims S in this menu, and a
+    // duplicate accelerator only cycles the highlight instead of activating.
+    m_preMenuGrid->addAction(tr("Set Grid Si&ze..."), QKeySequence(),
+                             [this]() { showGridPropertiesDialog(); });
 
     m_preMenuOperation = menuBar()->addMenu(tr("&Operation"));
     // Mode items added after toolbar creation (need m_actNode etc.)
@@ -1944,7 +1993,10 @@ void MainWindow::createPostprocessorUI()
     connect(m_ppActMesh, &QAction::toggled, this, &MainWindow::onPPToggleMesh);
 
     m_ppMenuView->addSeparator();
-    m_ppMenuView->addAction(tr("Circuit &Properties..."), QKeySequence(), [this]() {
+    // Labelled per physics in syncPostprocessorMenus: magnetics has circuits,
+    // the scalar physics have conductors, and the dialog this opens is titled
+    // accordingly. The preprocessor already made the same distinction.
+    m_ppActCircProps = m_ppMenuView->addAction(tr("Circuit &Properties..."), QKeySequence(), [this]() {
         auto *r = activeResults(); if (r) { r->showCircuitDialog(this); return; }
         auto *s = activeScalarResults(); if (s) { s->showCircuitDialog(this); return; }
     });
@@ -2020,10 +2072,10 @@ void MainWindow::createPostprocessorUI()
         auto *s = activeScalarResults(); if (s) { s->showIntegrateDialog(this, outputDialog()); return; }
         auto *r = activeResults(); if (r) { r->showIntegrateDialog(this, outputDialog()); return; }
     })->setToolTip(tr("Line or block integral"));
-    m_ppTopBar->addAction(icon("pp_circprops"), tr("Circuit Props"), [this]() {
+    m_ppCircPropsTB = m_ppTopBar->addAction(icon("pp_circprops"), tr("Circuit Props"), [this]() {
         auto *s = activeScalarResults(); if (s) { s->showCircuitDialog(this); return; }
         auto *r = activeResults(); if (r) { r->showCircuitDialog(this); return; }
-    })->setToolTip(tr("View circuit properties"));
+    });
 
     m_ppTopBar->addSeparator();
     m_ppMeshTB = m_ppTopBar->addAction(icon("pp_showmesh"), tr("Show Mesh"));
@@ -2160,27 +2212,8 @@ void MainWindow::createLeftToolbars()
             m_snapGridMenu->blockSignals(false);
         }
     });
-    m_leftNav->addAction(icon("gridsize"), tr("Grid Size"), [this]() {
-        auto *e = activeEditor(); auto *r = activeResults(); auto *s = activeScalarResults();
-        double curSize = e ? e->gridSize() : (r ? r->gridSize() : (s ? s->gridSize() : 1.0));
-        if (!e && !r && !s) return;
-        QDialog gdlg(this);
-        gdlg.setWindowTitle(tr("Grid Size"));
-        auto *glay = new QHBoxLayout(&gdlg);
-        glay->addWidget(new QLabel(tr("Grid spacing:")));
-        auto *gEdit = new PyLineEdit;
-        gEdit->setText(QString::number(curSize));
-        glay->addWidget(gEdit);
-        auto *gbtns = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-        connect(gbtns, &QDialogButtonBox::accepted, &gdlg, &QDialog::accept);
-        connect(gbtns, &QDialogButtonBox::rejected, &gdlg, &QDialog::reject);
-        glay->addWidget(gbtns);
-        if (gdlg.exec() == QDialog::Accepted) {
-            double size = gEdit->evaluateAsDouble(curSize);
-            if (e) e->setGridSize(size); else if (r) r->setGridSize(size); else if (s) s->setGridSize(size);
-            QSettings().setValue("editor/gridSize", size);
-        }
-    });
+    m_leftNav->addAction(icon("gridsize"), tr("Grid Size"),
+                         [this]() { showGridPropertiesDialog(); });
 
     // Add Window and Help menus
     m_windowMenu = menuBar()->addMenu(tr("&Window"));

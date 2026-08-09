@@ -107,28 +107,12 @@ target_compile_options(femm_common PRIVATE -Wall
 )
 target_compile_definitions(femm_common PRIVATE "I=CComplex(0,1)")
 
-# --- OpenMP (for multithreaded solvers) ---
-# macOS: Apple Clang doesn't ship OpenMP; help find_package locate Homebrew's libomp
-if(APPLE AND NOT OpenMP_CXX_FLAGS)
-    execute_process(COMMAND brew --prefix libomp
-        OUTPUT_VARIABLE HOMEBREW_LIBOMP_PREFIX
-        OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET RESULT_VARIABLE BREW_OMP_RES)
-    if(BREW_OMP_RES EQUAL 0 AND EXISTS "${HOMEBREW_LIBOMP_PREFIX}")
-        set(OpenMP_C_FLAGS "-Xpreprocessor -fopenmp -I${HOMEBREW_LIBOMP_PREFIX}/include" CACHE STRING "")
-        set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -I${HOMEBREW_LIBOMP_PREFIX}/include" CACHE STRING "")
-        set(OpenMP_C_LIB_NAMES "omp" CACHE STRING "")
-        set(OpenMP_CXX_LIB_NAMES "omp" CACHE STRING "")
-        set(OpenMP_omp_LIBRARY "${HOMEBREW_LIBOMP_PREFIX}/lib/libomp.dylib" CACHE FILEPATH "")
-    endif()
-endif()
-find_package(OpenMP)
-if(NOT OpenMP_CXX_FOUND)
-    message(STATUS "OpenMP not found — solvers will run single-threaded")
-endif()
-# femm_common's spars.cpp has #pragma omp directives, so it needs both the
-# compile flag (-fopenmp) and link flag from OpenMP.
+# (OpenMP was removed 2026-08: with the whole-matrix ILDL preconditioner the
+# solvers are dominated by inherently sequential work, and measured speedup
+# across 10k-156k node problems was -11% to +4% -- while sequential
+# reductions make results bit-deterministic and macOS packaging loses the
+# Homebrew libomp dependency.)
 target_link_libraries(femm_common PUBLIC
-    $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
     # utf8_io.cpp's femm_utf8_args() calls CommandLineToArgvW (shell32) on Windows.
     $<$<BOOL:${WIN32}>:shell32>)
 
@@ -189,8 +173,7 @@ function(add_solver NAME SOLVER_DIR)
     target_include_directories(${NAME} PRIVATE
         "${SOLVER_DIR}" "${SOLVER_COMMON_DIR}")
     target_link_libraries(${NAME} PRIVATE
-        tangle_lib femm_common
-        $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>)
+        tangle_lib femm_common)
     target_compile_options(${NAME} PRIVATE ${SOLVER_WARNINGS})
     # Solvers use I as imaginary unit shorthand (removed from complex.h
     # because it clashes with Qt, but solvers never see Qt headers)

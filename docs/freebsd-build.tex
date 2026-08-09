@@ -84,16 +84,6 @@ To verify the installation:
 qmake6 --version
 \end{lstlisting}
 
-\subsection{OpenMP}
-
-No action needed.  FreeBSD's base clang ships the OpenMP runtime
-(\texttt{libomp.so}, in \texttt{/usr/lib}) along with \texttt{omp.h}, so the
-multithreaded solvers build with no extra package --- CMake locates OpenMP
-automatically and reports the found version during configuration.  (Should you
-ever build on a stripped system where it is missing, CMake reports ``OpenMP
-not found'' and the solvers fall back to single-threaded; the build still
-succeeds.)
-
 \section{Getting the Source}
 
 If you have a source zip, unzip it:
@@ -116,9 +106,8 @@ From the \texttt{femm-qt} directory, run the build script:
 \end{lstlisting}
 
 This checks that the build tools are present, configures the project with
-CMake (pointing it at \texttt{/usr/local} so Qt~6 is found; OpenMP comes from
-the base system), and builds it with Ninja.  All executables are placed in
-\texttt{build/bin/}.
+CMake (pointing it at \texttt{/usr/local} so Qt~6 is found), and builds it
+with Ninja.  All executables are placed in \texttt{build/bin/}.
 
 To wipe the build directory and rebuild from scratch, pass \texttt{clean}:
 \begin{lstlisting}
@@ -252,8 +241,7 @@ cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release \
 ninja
 \end{lstlisting}
 The \texttt{CMAKE\_PREFIX\_PATH=/usr/local} hint lets find\_package locate the
-Qt~6 packages installed by \texttt{pkg}.  OpenMP needs no hint --- its runtime
-lives in the base system under \texttt{/usr/lib}.
+Qt~6 packages installed by \texttt{pkg}.
 
 \subsection{``env: bash: No such file or directory''}
 

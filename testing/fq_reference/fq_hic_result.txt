@@ -1,0 +1,6 @@
+===  heatFlow1 (axi)  ===
+  Bdry           = 288.3519929 0 | 100 0
+===  heatFlow2 (planar)  ===
+  Bdry           = 286.6815824 0 | 100 0
+
+Done.

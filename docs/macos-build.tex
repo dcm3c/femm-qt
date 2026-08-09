@@ -80,18 +80,6 @@ To find your Qt prefix:
 brew --prefix qt@6
 \end{lstlisting}
 
-\subsection{OpenMP (Optional)}
-
-macOS's system Clang does not ship with OpenMP support.  Without OpenMP,
-the solvers build and run correctly but are single-threaded.  To enable
-multithreaded solving:
-\begin{lstlisting}
-brew install libomp
-\end{lstlisting}
-CMake will automatically detect Homebrew's \texttt{libomp} and configure
-the necessary flags.  If it is not found, CMake prints a notice and
-proceeds without it.
-
 \section{Getting the Source}
 
 If you have a source zip, unzip it:
@@ -117,9 +105,9 @@ This checks that the build tools are present, locates Qt~6 via
 Homebrew, configures the project with CMake, and builds it with Ninja.
 The GUI is produced as a macOS application bundle
 (\texttt{build/bin/femm\_gui.app}).  The build script copies the solver
-executables, material libraries, and the OpenMP runtime into the bundle
-so the app is self-contained, and runs \texttt{macdeployqt} to bundle
-the Qt frameworks.
+executables and material libraries into the bundle so the app is
+self-contained, and runs \texttt{macdeployqt} to bundle the Qt
+frameworks.
 
 To wipe the build directory and rebuild from scratch, pass
 \texttt{clean}:
@@ -221,21 +209,14 @@ cmake .. -G Ninja \
 ninja
 APP=bin/femm_gui.app/Contents/MacOS
 # 1. Bundle Qt frameworks FIRST, while the bundle holds only femm_gui.
-#    This also copies libomp.dylib into Contents/Frameworks/.
 $(brew --prefix qt@6)/bin/macdeployqt bin/femm_gui.app
 # 2. Copy the solvers and the headless engine in afterward:
 for s in fkn belasolv hsolv csolv femm_headless; do
     cp bin/$s "$APP/"
 done
-# 3. Repoint each at the bundled libomp (so they need no Homebrew libomp):
-for s in fkn belasolv hsolv csolv femm_headless; do
-    install_name_tool -change \
-        "$(otool -L "$APP/$s" | awk '/libomp/{print $1; exit}')" \
-        @executable_path/../Frameworks/libomp.dylib "$APP/$s"
-done
-# 4. Copy the material libraries (data, not code):
+# 3. Copy the material libraries (data, not code):
 cp ../matlibs/*.dat "$APP/"
-# 5. Re-seal the bundle with a deep ad-hoc signature:
+# 4. Re-seal the bundle with a deep ad-hoc signature:
 codesign --force --deep --sign - bin/femm_gui.app
 \end{lstlisting}
 The \texttt{macos\_build.sh} script is the authoritative, commented version
@@ -248,13 +229,6 @@ If CMake reports that it cannot find Qt6, verify the prefix path:
 brew --prefix qt@6
 \end{lstlisting}
 Pass the result to \texttt{-DCMAKE\_PREFIX\_PATH}.
-
-\subsection{OpenMP not found}
-
-If CMake prints ``OpenMP not found,'' the solvers will still build and
-run but will be single-threaded.  To enable OpenMP, install
-\texttt{libomp} via Homebrew (\texttt{brew install libomp}) and
-re-run the CMake configure step.
 
 \subsection{Permission denied on first run}
 

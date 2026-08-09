@@ -10,6 +10,8 @@
 #include "py_bind.h"
 #include "utf8_io.h"
 #include "script_callbacks.h"
+#include "coord_mode.h"
+#include "xy_export.h"
 #include "mag_types.h"
 #include "postproc_select.h"
 
@@ -31,6 +33,29 @@ inline std::string ppViewCmd(const std::string &cmd, int nargs, double *args) {
     if (!cb) return {};
     const char *result = cb(cmd.c_str(), nargs, args);
     return result ? std::string(result) : std::string();
+}
+
+// Register *o_setgrid(density, "cart"|"polar") for a postprocessor prefix.
+// Grid spacing is view state and is forwarded; the coordinate mode is document
+// state and is set here, so it works with or without a GUI. Both slots are
+// optional and a negative value in the forwarded pair means "not specified" --
+// spacing is positive by construction and Coords is 0 or 1.
+template<typename DocType>
+void registerSetGrid(femm_py::Module &m, const std::string &pfx,
+                     DocType *&s_doc, const char *errmsg) {
+    std::string cmd = pfx + "_setgrid";
+    m.def(cmd, [&s_doc, errmsg, cmd](std::optional<double> density,
+                                     std::optional<std::string> ptype) {
+        int coords = -1;
+        if (ptype) {
+            coords = parseCoordMode(*ptype);
+            if (coords < 0) throw std::runtime_error(COORD_MODE_ERR);
+            if (!s_doc) throw std::runtime_error(errmsg);
+            s_doc->Coords = coords;
+        }
+        double a[2] = {density.value_or(-1.0), (double)coords};
+        ppViewCmd(cmd, 2, a);
+    });
 }
 
 // Register the shared display view commands for a postprocessor prefix.
@@ -162,8 +187,14 @@ void ppSelectPoint(double mx, double my, Doc *doc) {
 // makeplot(plotType, numPoints, filename) - sample field values along the
 // contour, optionally write to a file, return number of points. File I/O is
 // C++ (fopen), independent of MicroPython's VFS.
+//
+// The file is written by xyexport::writeCsv, the same call the postprocessor's
+// Export... button makes, so a scripted export and a hand export of the same
+// plot produce the same file. `names` is the physics' plot-quantity table
+// (xyexport::magPlotNames() and friends); it supplies the column headings.
 template<class Doc>
-double ppMakePlot(Doc *doc, int plotType, int numPoints, const std::string &filename) {
+double ppMakePlot(Doc *doc, int plotType, int numPoints, const std::string &filename,
+                  const std::vector<std::string> &names) {
     if (doc->contour.size() < 2)
         throw std::runtime_error("No contour defined for makeplot");
     if (numPoints < 2) numPoints = 2;
@@ -171,17 +202,24 @@ double ppMakePlot(Doc *doc, int plotType, int numPoints, const std::string &file
     std::vector<typename Doc::XYPlotPoint> pts;
     doc->GetLineValues(pts, plotType, numPoints);
 
-    if (!filename.empty()) {
-        FILE *fp = femm_fopen(filename, "wt");
-        if (!fp)
-            throw std::runtime_error("Could not open output file: " + filename);
+    if (!filename.empty() && !pts.empty()) {
+        const std::string name =
+            (plotType >= 0 && plotType < (int)names.size())
+                ? xyexport::shortName(names[plotType])
+                : std::string("Value");
+        const int ncols = (int)pts[0].vals.size();
+
+        std::vector<double> x;
+        std::vector<std::vector<double>> cols((size_t)ncols);
+        x.reserve(pts.size());
         for (auto &p : pts) {
-            fprintf(fp, "%.17g", p.x);
-            for (auto v : p.vals)
-                fprintf(fp, "\t%.17g", v);
-            fprintf(fp, "\n");
+            x.push_back(p.x);
+            for (int c = 0; c < ncols; c++)
+                cols[c].push_back(c < (int)p.vals.size() ? p.vals[c] : 0.0);
         }
-        fclose(fp);
+        if (!xyexport::writeCsv(filename, xyexport::contourAxisLabel(),
+                                xyexport::columnLabels(name, ncols), x, cols))
+            throw std::runtime_error("Could not open output file: " + filename);
     }
 
     return (double)pts.size();

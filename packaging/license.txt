@@ -47,7 +47,7 @@ installed alongside the program in the bin\ directory:
     (MIT, Copyright (c) 2018 melihaltun)                  -- LICENSE-melihaltun.txt
 
 This program is built with the MinGW-w64 GCC toolchain and redistributes its
-runtime libraries: libgcc, libstdc++ and libgomp (GNU GPL v3 with the GCC
+runtime libraries: libgcc and libstdc++ (GNU GPL v3 with the GCC
 Runtime Library Exception, which permits this distribution; source available at
 gcc.gnu.org) and libwinpthread (part of the MinGW-w64 runtime, under permissive
 terms; see mingw-w64.org). No part of the FEMM source is covered by these

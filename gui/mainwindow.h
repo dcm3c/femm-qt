@@ -125,6 +125,14 @@ private:
     ResultsWidget *activeResults() const;
     ScalarResultsWidget *activeScalarResults() const;
 
+    // Pointer to the active document's cartesian/polar display flag, or null
+    // when nothing is in focus. Every document type spells it Coords but they
+    // share no common base, so the lookup goes by widget type.
+    int *activeCoords() const;
+    // Grid size + coordinate mode. Shared by the Grid menu item and the
+    // toolbar button, which used to carry separate copies of the dialog.
+    void showGridPropertiesDialog();
+
     // Recent files
     void updateRecentFilesMenu();
     QMenu *m_recentFilesMenu = nullptr;
@@ -177,6 +185,8 @@ private:
     QAction *m_ppActDensity = nullptr;
     QAction *m_ppActContours = nullptr;
     QAction *m_ppActMesh = nullptr;
+    QAction *m_ppActCircProps = nullptr;   // retitled per physics
+    QAction *m_ppCircPropsTB = nullptr;
     QAction *m_ppMeshTB = nullptr;
     QAction *m_ppActPoints = nullptr;   // View | Show Points
     QAction *m_ppActNames = nullptr;    // View | Show Block Names

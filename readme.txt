@@ -6,7 +6,8 @@ dmeeker@ieee.org
   about any platform
 * FEMM now uses tangle, compiled as an internal library, for meshing
   instead of Triangle
-* Updated all solvers to leverage OpenMP to speed up solutions.
+* Solvers rewritten around a whole-matrix ILDL preconditioner: 2-3x faster
+  than the previous block-SSOR scheme, and bit-deterministic run to run
 * External bindings use cross-platform capable TCP IPC instead of Windows-
   only ActiveX
 * MicroPython now used as an embedded scripting language rather than Lua 4

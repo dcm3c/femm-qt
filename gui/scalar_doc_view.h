@@ -42,6 +42,7 @@ struct ScalarDocView {
 
     // Problem parameters
     int *ProblemType = nullptr;
+    int *Coords = nullptr;          // 0 = cartesian, 1 = polar (display only)
     double *Depth = nullptr;
     std::string *filePath = nullptr;
 

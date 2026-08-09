@@ -29,6 +29,7 @@ ScalarDocView ScalarDocView::fromElec(ElecResultsDoc *doc)
     v.Smooth = &doc->Smooth;
     v.bHasMask = &doc->bHasMask;
     v.ProblemType = &doc->ProblemType;
+    v.Coords = &doc->Coords;
     v.Depth = &doc->Depth;
     v.filePath = &doc->filePath;
     v.contour = &doc->contour;
@@ -56,6 +57,7 @@ ScalarDocView ScalarDocView::fromHeat(HeatResultsDoc *doc)
     v.Smooth = &doc->Smooth;
     v.bHasMask = &doc->bHasMask;
     v.ProblemType = &doc->ProblemType;
+    v.Coords = &doc->Coords;
     v.Depth = &doc->Depth;
     v.filePath = &doc->filePath;
     v.contour = &doc->contour;
@@ -83,6 +85,7 @@ ScalarDocView ScalarDocView::fromCurrentFlow(CurrResultsDoc *doc)
     v.Smooth = &doc->Smooth;
     v.bHasMask = &doc->bHasMask;
     v.ProblemType = &doc->ProblemType;
+    v.Coords = &doc->Coords;
     v.Depth = &doc->Depth;
     v.filePath = &doc->filePath;
     v.contour = &doc->contour;

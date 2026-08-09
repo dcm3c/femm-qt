@@ -2,9 +2,6 @@
 // Copyright (C) 2026 David Meeker
 
 #include "StdAfx.h"
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 #include "fkn.h"
 #include "fknDlg.h"
 #include "complex.h"
@@ -16,11 +13,6 @@
 extern int LoadMeshFromTangle(CFemmeDocCore& Doc, const Mesh& tmesh);
 int main(int argc, char* argv[]) {
     std::vector<std::string> args = femm_utf8_args(argc, argv);
-#ifdef _OPENMP
-    int max_t = omp_get_max_threads();
-    if (max_t > 4) omp_set_num_threads(4);
-    fprintf(stderr, "OpenMP: %d threads\n", omp_get_max_threads());
-#endif
     CFknDlg theView; CFemmeDocCore Doc; char PathName[4096];
     if ((int)args.size() < 2) { fprintf(stderr, "Usage: csolv <filename>\n"); return 1; }
     snprintf(PathName, sizeof(PathName), "%s", args[1].c_str());

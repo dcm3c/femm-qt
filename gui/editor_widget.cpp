@@ -10,6 +10,7 @@
 //   - Wheel: zoom toward cursor
 
 #include "editor_widget.h"
+#include "coord_display.h"
 #include "document.h"
 #include "mag_document.h"
 #include "elec_document.h"
@@ -861,17 +862,24 @@ void EditorWidget::keyPressEvent(QKeyEvent *event)
 
     case Qt::Key_Tab:
         if (m_doc && (m_editAction == 0 || m_editAction == 2)) {
-            // Enter point by coordinates — single dialog with X and Y fields
+            // Enter point by coordinates. The pair is labelled and interpreted
+            // per the document's display mode: (x,y), (r,z) axisymmetric, or
+            // radius/degrees in polar.
+            const int coords = m_doc->Coords;
+            double c1, c2;
+            QString l1, l2;
+            coorddisp::toDisplay(coords, m_mx, m_my, c1, c2);
+            coorddisp::entryLabels(coords, m_doc->ProblemType, l1, l2);
             QDialog dlg(this);
             dlg.setWindowTitle(m_editAction == 0 ? tr("Enter Node Point") : tr("Enter Block Label Point"));
             auto *form = new QFormLayout;
             auto *xEdit = new PyLineEdit;
             auto *yEdit = new PyLineEdit;
-            xEdit->setText(QString::number(m_mx, 'g', 10));
-            yEdit->setText(QString::number(m_my, 'g', 10));
+            xEdit->setText(QString::number(c1, 'g', 10));
+            yEdit->setText(QString::number(c2, 'g', 10));
             xEdit->selectAll();
-            form->addRow(tr("X:"), xEdit);
-            form->addRow(tr("Y:"), yEdit);
+            form->addRow(l1, xEdit);
+            form->addRow(l2, yEdit);
             auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
             QObject::connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
             QObject::connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
@@ -880,8 +888,9 @@ void EditorWidget::keyPressEvent(QKeyEvent *event)
             layout->addWidget(buttons);
             xEdit->setFocus();
             if (dlg.exec() == QDialog::Accepted) {
-                double x = xEdit->evaluateAsDouble(m_mx);
-                double y = yEdit->evaluateAsDouble(m_my);
+                double x, y;
+                coorddisp::fromDisplay(coords, xEdit->evaluateAsDouble(c1),
+                                       yEdit->evaluateAsDouble(c2), x, y);
                 m_doc->pushUndo();
                 if (m_editAction == 0)
                     m_doc->AddNode(x, y, 1.0 / m_mag);

@@ -235,11 +235,18 @@ void register_elec_postproc_py(ElecResultsDoc *doc) {
         return std::make_tuple((double)s_doc->ProblemType, s_doc->Depth, s_doc->LengthConv());
     });
 
+    // OF's 4th argument selected among three text layouts (multi-column with
+    // or without a legend, Mathematica-style) and, when omitted, meant "write
+    // an extended metafile instead of data". femm-qt writes one data format
+    // and has no metafile output, so the argument is accepted and ignored --
+    // dropping it would turn every ported call into a TypeError.
     m.def("eo_makeplot", [](int plotType, optional<int> numPoints,
-                            optional<std::string> filename) -> double {
+                            optional<std::string> filename,
+                            optional<int> /*fileFormat*/) -> double {
         check_doc(s_doc, EOERR);
         return ppMakePlot(s_doc, plotType, numPoints.value_or(150),
-                          filename ? fixpath(*filename) : std::string());
+                          filename ? fixpath(*filename) : std::string(),
+                          xyexport::elecPlotNames());
     });
 
     m.def("eo_gettitle", []() -> std::string {
@@ -267,7 +274,7 @@ void register_elec_postproc_py(ElecResultsDoc *doc) {
     regv("eo_showgrid");
     regv("eo_hidegrid");
     regv("eo_gridsnap");
-    regv("eo_setgrid");
+    registerSetGrid(m, "eo", s_doc, EOERR);
     regv("eo_resize");
     regv("eo_minimize");
     regv("eo_maximize");
@@ -288,7 +295,9 @@ void register_elec_postproc_py(ElecResultsDoc *doc) {
         else
             cb("eo_setfocus", 0, args);
     });
-    m.def("eo_savemetafile", []() {});  // deprecated no-op
+    m.def("eo_savemetafile", [](std::optional<std::string>) {});  // No metafile output in femm-qt;
+    // the filename is accepted and ignored so ported scripts do not raise.
+    // Use *_savebitmap to save a picture of the view.
 
     m.def("eo_seteditmode", [](const std::string &mode) {
         auto cb = get_view_command_callback();

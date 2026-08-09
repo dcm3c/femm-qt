@@ -10,6 +10,7 @@
 #include "mesh.h"
 #include "spars.h"
 #include "femmedoccore.h"
+#include "band_interp.h"
 #include "utf8_io.h"
 
 // #define NEWTON
@@ -245,6 +246,7 @@ do{
 
 		// build the element matrix for each quad element in the annulus (same for each element)
 		// matrix for quad element derived from serendipity element
+		#ifndef QUINTIC
 		MG[0][0] = (5*Power (-1 + ci,2)*Power (ci,4)*(K + Ki))/48.;
 		MG[0][1] = -((-1 + ci)*Power (ci,3)*(5*(-1 + ci*(-5 + 4*ci))*K + (-5 + ci*(-19 + 14*ci))*Ki))/48.;
 		MG[0][2] = ((-1 + ci)*Power (ci,2)*(5*(2 + ci*(-1 - 9*ci + 6*Power (ci,2)))*K + (10 + ci*(1 + 3*ci*(-7 + 4*ci)))*Ki))/48.;
@@ -300,6 +302,63 @@ do{
 		MG[8][8] = (Power (-1 + co,2)*(5*Power (2 + (3 - 4*co)*co,2)*K + (20 + co*(36 + co*(-35 - 60*co + 44*Power (co,2))))*Ki))/48.;
 		MG[8][9] = -(Power (-1 + co,3)*co*(5*(-2 + co*(-3 + 4*co))*K + (-10 + co*(-9 + 14*co))*Ki))/48.;
 		MG[9][9] = (5*Power (-1 + co,4)*Power (co,2)*(K + Ki))/48.;
+#else
+        MG[0][0] = (5*Power(ci,6)*Power(3 - 5*ci + 2*Power(ci,2),2)*(K + Ki))/48.;
+        MG[0][1] = -((-1 + ci)*Power(ci,4)*(-3 + 2*ci)*(5*(1 + ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci)))*K + (5 + ci*(5 + 14*(-1 + ci)*ci*(-3 + 2*ci)))*Ki))/48.;
+        MG[0][2] = ((-1 + ci)*Power(ci,3)*(-3 + 2*ci)*(5*(-2 + ci*(1 + 3*ci*(1 + 2*(-1 + ci)*ci*(-3 + 2*ci))))*K + (-10 + ci*(-1 + 3*ci*(3 + 4*(-1 + ci)*ci*(-3 + 2*ci))))*Ki))/48.;
+        MG[0][3] = -(Power(-1 + ci,2)*Power(ci,3)*(-3 + 2*ci)*(5*(2 + 3*ci - 12*Power(ci,3) + 8*Power(ci,4))*K + (-2 + 3*ci - 6*Power(ci,3) + 4*Power(ci,4))*Ki))/48.;
+        MG[0][4] = (Power(-1 + ci,4)*Power(ci,4)*(-3 + 2*ci)*(1 + 2*ci)*(5*K - Ki))/48.;
+        MG[0][5] = ((-1 + ci)*Power(ci,3)*(-3 + 2*ci)*(-1 + co)*Power(co,3)*(-3 + 2*co)*(K - 5*Ki))/48.;
+        MG[0][6] = -((-1 + ci)*Power(ci,3)*(-3 + 2*ci)*co*((1 + co*(1 + 4*(-1 + co)*co*(-3 + 2*co)))*K - (5 + co*(5 + 14*(-1 + co)*co*(-3 + 2*co)))*Ki))/48.;
+        MG[0][7] = ((-1 + ci)*Power(ci,3)*(-3 + 2*ci)*((-2 + co*(1 + 3*co*(1 + 2*(-1 + co)*co*(-3 + 2*co))))*K + 10*Ki + co*(1 - 3*co*(3 + 4*(-1 + co)*co*(-3 + 2*co)))*Ki))/48.;
+        MG[0][8] = -((-1 + ci)*Power(ci,3)*(-3 + 2*ci)*(-1 + co)*((2 + 3*co - 12*Power(co,3) + 8*Power(co,4))*K + (2 - 3*co + 6*Power(co,3) - 4*Power(co,4))*Ki))/48.;
+        MG[0][9] = ((-1 + ci)*Power(ci,3)*(-3 + 2*ci)*Power(-1 + co,3)*co*(1 + 2*co)*(K + Ki))/48.;
+        MG[1][1] = (Power(ci,2)*(5*Power(1 + ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci)),2)*K + (5 + ci*(10 + ci*(89 + 4*ci*(-14 + ci*(-3 + 2*ci)*(-26 + 11*ci*(8 + ci*(-7 + 2*ci)))))))*Ki))/48.;
+        MG[1][2] = (-5*ci*(-1 + 2*ci)*(1 + ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci)))*(2 + 3*ci*(1 + ci*(1 + 2*(-2 + ci)*ci)))*K + ci*(10 + ci*(11 + ci*(76 - ci*(191 + 2*Power(ci,2)*(125 + 6*ci*(-113 + 4*ci*(37 + 4*(-5 + ci)*ci)))))))*Ki)/48.;
+        MG[1][3] = ((-1 + ci)*ci*(5*(2 + 3*ci - 12*Power(ci,3) + 8*Power(ci,4))*(1 + ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci)))*K + (-2 + (-1 + ci)*ci*(-1 + 4*(-1 + ci)*ci*(4 + 5*ci*(3 + ci*(1 + 4*(-2 + ci)*ci)))))*Ki))/48.;
+        MG[1][4] = -(Power(-1 + ci,3)*Power(ci,2)*(1 + 2*ci)*(5*(1 + ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci)))*K + (1 + 2*(-1 + ci)*ci)*(-1 + ci*(-3 + 2*ci))*Ki))/48.;
+        MG[1][5] = -(ci*(-1 + co)*Power(co,3)*(-3 + 2*co)*((1 + ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci)))*K - (5 + ci*(5 + 14*(-1 + ci)*ci*(-3 + 2*ci)))*Ki))/48.;
+        MG[1][6] = (ci*co*((1 + ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci)))*(1 + co*(1 + 4*(-1 + co)*co*(-3 + 2*co)))*K - (5 + co*(5 + 14*(-1 + co)*co*(-3 + 2*co)) + ci*(5 + co*(5 + 14*(-1 + co)*co*(-3 + 2*co))) + 6*Power(ci,2)*(7 + co*(7 + 22*(-1 + co)*co*(-3 + 2*co))) - 10*Power(ci,3)*(7 + co*(7 + 22*(-1 + co)*co*(-3 + 2*co))) + 4*Power(ci,4)*(7 + co*(7 + 22*(-1 + co)*co*(-3 + 2*co))))*Ki))/48.;
+        MG[1][7] = -(ci*((1 + ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci)))*(-2 + co*(1 + 3*co*(1 + 2*(-1 + co)*co*(-3 + 2*co))))*K + (10 + 2*ci*(5 + 14*(-1 + ci)*ci*(-3 + 2*ci)) + co + ci*(1 - 2*(-1 + ci)*ci*(-3 + 2*ci))*co - 3*(3 + ci*(3 + 10*(-1 + ci)*ci*(-3 + 2*ci)))*Power(co,2) - 36*(1 + ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci)))*Power(co,3) + 60*(1 + ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci)))*Power(co,4) - 24*(1 + ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci)))*Power(co,5))*Ki))/48.;
+        MG[1][8] = (ci*(-1 + co)*((1 + ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci)))*(2 + 3*co - 12*Power(co,3) + 8*Power(co,4))*K - (-2 + 2*ci*(-1 + 2*ci)*(1 + 2*(-2 + ci)*ci) + 3*co + 3*ci*(1 + 6*(-1 + ci)*ci*(-3 + 2*ci))*co - 6*(1 + ci*(1 + 10*(-1 + ci)*ci*(-3 + 2*ci)))*Power(co,3) + 4*(1 + ci*(1 + 10*(-1 + ci)*ci*(-3 + 2*ci)))*Power(co,4))*Ki))/48.;
+        MG[1][9] = -(ci*Power(-1 + co,3)*co*(1 + 2*co)*((1 + ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci)))*K + Ki + ci*(1 - 2*(-1 + ci)*ci*(-3 + 2*ci))*Ki))/48.;
+        MG[2][2] = (5*Power(-2 + ci*(1 + 3*ci*(1 + 2*(-1 + ci)*ci*(-3 + 2*ci))),2)*K + (20 + ci*(4 + ci*(-31 + 3*ci*(-46 + ci*(111 + 8*Power(ci,2)*(14 + 3*ci*(-28 + ci*(37 + 4*(-5 + ci)*ci))))))))*Ki)/48.;
+        MG[2][3] = ((-1 + ci)*(-5*(-1 + 2*ci)*(2 + 3*ci - 12*Power(ci,3) + 8*Power(ci,4))*(2 + 3*ci*(1 + ci*(1 + 2*(-2 + ci)*ci)))*K - (4 + ci*(4 + ci*(15 + ci*(99 + 2*ci*(-31 + ci*(-79 + 6*ci*(-27 + 4*ci*(21 + 4*(-4 + ci)*ci))))))))*Ki))/48.;
+        MG[2][4] = (Power(-1 + ci,3)*ci*(1 + 2*ci)*(5*(-2 + ci*(1 + 3*ci*(1 + 2*(-1 + ci)*ci*(-3 + 2*ci))))*K + (2 + ci*(5 + 3*ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci))))*Ki))/48.;
+        MG[2][5] = ((-1 + co)*Power(co,3)*(-3 + 2*co)*((-2 + ci*(1 + 3*ci*(1 + 2*(-1 + ci)*ci*(-3 + 2*ci))))*K + 10*Ki + ci*(1 - 3*ci*(3 + 4*(-1 + ci)*ci*(-3 + 2*ci)))*Ki))/48.;
+        MG[2][6] = -(co*((-2 + ci*(1 + 3*ci*(1 + 2*(-1 + ci)*ci*(-3 + 2*ci))))*(1 + co*(1 + 4*(-1 + co)*co*(-3 + 2*co)))*K + (ci*(1 + co - 6*Power(co,2) + 10*Power(co,3) - 4*Power(co,4)) - 36*Power(ci,3)*(1 + co*(1 + 4*(-1 + co)*co*(-3 + 2*co))) + 60*Power(ci,4)*(1 + co*(1 + 4*(-1 + co)*co*(-3 + 2*co))) - 24*Power(ci,5)*(1 + co*(1 + 4*(-1 + co)*co*(-3 + 2*co))) - 3*Power(ci,2)*(3 + co*(3 + 10*(-1 + co)*co*(-3 + 2*co))) + 2*(5 + co*(5 + 14*(-1 + co)*co*(-3 + 2*co))))*Ki))/48.;
+        MG[2][7] = ((-2 + ci*(1 + 3*ci*(1 + 2*(-1 + ci)*ci*(-3 + 2*ci))))*(-2 + co*(1 + 3*co*(1 + 2*(-1 + co)*co*(-3 + 2*co))))*K - (2*(10 + co) - 6*Power(co,2)*(3 + 4*(-1 + co)*co*(-3 + 2*co)) + 36*Power(ci,3)*(-2 + co*(1 + 3*co*(1 + 2*(-1 + co)*co*(-3 + 2*co)))) - 60*Power(ci,4)*(-2 + co*(1 + 3*co*(1 + 2*(-1 + co)*co*(-3 + 2*co)))) + 24*Power(ci,5)*(-2 + co*(1 + 3*co*(1 + 2*(-1 + co)*co*(-3 + 2*co)))) + ci*(2 + co*(5 + 3*co*(1 + 4*(-1 + co)*co*(-3 + 2*co)))) + 3*Power(ci,2)*(-6 + co*(1 + co*(7 + 12*(-1 + co)*co*(-3 + 2*co)))))*Ki)/48.;
+        MG[2][8] = -((-1 + co)*((-2 + ci*(1 + 3*ci*(1 + 2*(-1 + ci)*ci*(-3 + 2*ci))))*(2 + 3*co - 12*Power(co,3) + 8*Power(co,4))*K - (4 + 2*ci*(5 + 3*ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci))) - 6*co + 3*ci*(3 + ci*(5 + 12*(-1 + ci)*ci*(-3 + 2*ci)))*co - 6*(-2 + ci*(7 + 3*ci*(3 + 8*(-1 + ci)*ci*(-3 + 2*ci))))*Power(co,3) + 4*(-2 + ci*(7 + 3*ci*(3 + 8*(-1 + ci)*ci*(-3 + 2*ci))))*Power(co,4))*Ki))/48.;
+        MG[2][9] = (Power(-1 + co,3)*co*(1 + 2*co)*((-2 + ci*(1 + 3*ci*(1 + 2*(-1 + ci)*ci*(-3 + 2*ci))))*K - (2 + ci*(5 + 3*ci*(1 + 4*(-1 + ci)*ci*(-3 + 2*ci))))*Ki))/48.;
+        MG[3][3] = (Power(-1 + ci,2)*(5*Power(2 + 3*ci - 12*Power(ci,3) + 8*Power(ci,4),2)*K + (20 + ci*(36 + ci*(21 + 4*ci*(-3 + 2*ci)*(14 + 15*ci - 33*Power(ci,3) + 22*Power(ci,4)))))*Ki))/48.;
+        MG[3][4] = -(Power(-1 + ci,4)*ci*(1 + 2*ci)*(5*(2 + 3*ci - 12*Power(ci,3) + 8*Power(ci,4))*K + (10 + 9*ci - 42*Power(ci,3) + 28*Power(ci,4))*Ki))/48.;
+        MG[3][5] = -((-1 + ci)*(-1 + co)*Power(co,3)*(-3 + 2*co)*((2 + 3*ci - 12*Power(ci,3) + 8*Power(ci,4))*K + (2 - 3*ci + 6*Power(ci,3) - 4*Power(ci,4))*Ki))/48.;
+        MG[3][6] = ((-1 + ci)*co*((2 + 3*ci - 12*Power(ci,3) + 8*Power(ci,4))*(1 + co*(1 + 4*(-1 + co)*co*(-3 + 2*co)))*K - (-2*(1 + co) + 4*(-1 + co)*Power(co,2)*(-3 + 2*co) + 3*ci*(1 + co*(1 + 6*(-1 + co)*co*(-3 + 2*co))) - 6*Power(ci,3)*(1 + co*(1 + 10*(-1 + co)*co*(-3 + 2*co))) + 4*Power(ci,4)*(1 + co*(1 + 10*(-1 + co)*co*(-3 + 2*co))))*Ki))/48.;
+        MG[3][7] = -((-1 + ci)*((2 + 3*ci - 12*Power(ci,3) + 8*Power(ci,4))*(-2 + co*(1 + 3*co*(1 + 2*(-1 + co)*co*(-3 + 2*co))))*K - (4 + 10*co + 6*Power(co,2)*(1 + 4*(-1 + co)*co*(-3 + 2*co)) - 6*Power(ci,3)*(-2 + co*(7 + 3*co*(3 + 8*(-1 + co)*co*(-3 + 2*co)))) + 4*Power(ci,4)*(-2 + co*(7 + 3*co*(3 + 8*(-1 + co)*co*(-3 + 2*co)))) + 3*ci*(-2 + co*(3 + co*(5 + 12*(-1 + co)*co*(-3 + 2*co)))))*Ki))/48.;
+        MG[3][8] = ((-1 + ci)*(-1 + co)*((2 + 3*ci - 12*Power(ci,3) + 8*Power(ci,4))*(2 + 3*co - 12*Power(co,3) + 8*Power(co,4))*K - (20 + 18*co + 28*Power(co,3)*(-3 + 2*co) + 3*ci*(6 + 7*co - 30*Power(co,3) + 20*Power(co,4)) - 6*Power(ci,3)*(14 + 15*co - 66*Power(co,3) + 44*Power(co,4)) + 4*Power(ci,4)*(14 + 15*co - 66*Power(co,3) + 44*Power(co,4)))*Ki))/48.;
+        MG[3][9] = -((-1 + ci)*Power(-1 + co,3)*co*(1 + 2*co)*((2 + 3*ci - 12*Power(ci,3) + 8*Power(ci,4))*K - (10 + 9*ci - 42*Power(ci,3) + 28*Power(ci,4))*Ki))/48.;
+        MG[4][4] = (5*Power(-1 + ci,6)*Power(ci,2)*Power(1 + 2*ci,2)*(K + Ki))/48.;
+        MG[4][5] = (Power(-1 + ci,3)*ci*(1 + 2*ci)*(-1 + co)*Power(co,3)*(-3 + 2*co)*(K + Ki))/48.;
+        MG[4][6] = -(Power(-1 + ci,3)*ci*(1 + 2*ci)*co*((1 + co*(1 + 4*(-1 + co)*co*(-3 + 2*co)))*K + Ki + co*(1 - 2*(-1 + co)*co*(-3 + 2*co))*Ki))/48.;
+        MG[4][7] = (Power(-1 + ci,3)*ci*(1 + 2*ci)*((-2 + co*(1 + 3*co*(1 + 2*(-1 + co)*co*(-3 + 2*co))))*K - (2 + co*(5 + 3*co*(1 + 4*(-1 + co)*co*(-3 + 2*co))))*Ki))/48.;
+        MG[4][8] = -(Power(-1 + ci,3)*ci*(1 + 2*ci)*(-1 + co)*((2 + 3*co - 12*Power(co,3) + 8*Power(co,4))*K - (10 + 9*co - 42*Power(co,3) + 28*Power(co,4))*Ki))/48.;
+        MG[4][9] = (Power(-1 + ci,3)*ci*(1 + 2*ci)*Power(-1 + co,3)*co*(1 + 2*co)*(K - 5*Ki))/48.;
+        MG[5][5] = (5*Power(co,6)*Power(3 - 5*co + 2*Power(co,2),2)*(K + Ki))/48.;
+        MG[5][6] = -((-1 + co)*Power(co,4)*(-3 + 2*co)*(5*(1 + co*(1 + 4*(-1 + co)*co*(-3 + 2*co)))*K + (5 + co*(5 + 14*(-1 + co)*co*(-3 + 2*co)))*Ki))/48.;
+        MG[5][7] = ((-1 + co)*Power(co,3)*(-3 + 2*co)*(5*(-2 + co*(1 + 3*co*(1 + 2*(-1 + co)*co*(-3 + 2*co))))*K + (-10 + co*(-1 + 3*co*(3 + 4*(-1 + co)*co*(-3 + 2*co))))*Ki))/48.;
+        MG[5][8] = -(Power(-1 + co,2)*Power(co,3)*(-3 + 2*co)*(5*(2 + 3*co - 12*Power(co,3) + 8*Power(co,4))*K + (-2 + 3*co - 6*Power(co,3) + 4*Power(co,4))*Ki))/48.;
+        MG[5][9] = (Power(-1 + co,4)*Power(co,4)*(-3 + 2*co)*(1 + 2*co)*(5*K - Ki))/48.;
+        MG[6][6] = (Power(co,2)*(5*Power(1 + co*(1 + 4*(-1 + co)*co*(-3 + 2*co)),2)*K + (5 + co*(10 + co*(89 + 4*co*(-14 + co*(-3 + 2*co)*(-26 + 11*co*(8 + co*(-7 + 2*co)))))))*Ki))/48.;
+        MG[6][7] = (-5*co*(-1 + 2*co)*(1 + co*(1 + 4*(-1 + co)*co*(-3 + 2*co)))*(2 + 3*co*(1 + co*(1 + 2*(-2 + co)*co)))*K + co*(10 + co*(11 + co*(76 - co*(191 + 2*Power(co,2)*(125 + 6*co*(-113 + 4*co*(37 + 4*(-5 + co)*co)))))))*Ki)/48.;
+        MG[6][8] = ((-1 + co)*co*(5*(2 + 3*co - 12*Power(co,3) + 8*Power(co,4))*(1 + co*(1 + 4*(-1 + co)*co*(-3 + 2*co)))*K + (-2 + (-1 + co)*co*(-1 + 4*(-1 + co)*co*(4 + 5*co*(3 + co*(1 + 4*(-2 + co)*co)))))*Ki))/48.;
+        MG[6][9] = -(Power(-1 + co,3)*Power(co,2)*(1 + 2*co)*(5*(1 + co*(1 + 4*(-1 + co)*co*(-3 + 2*co)))*K + (1 + 2*(-1 + co)*co)*(-1 + co*(-3 + 2*co))*Ki))/48.;
+        MG[7][7] = (5*Power(-2 + co*(1 + 3*co*(1 + 2*(-1 + co)*co*(-3 + 2*co))),2)*K + (20 + co*(4 + co*(-31 + 3*co*(-46 + co*(111 + 8*Power(co,2)*(14 + 3*co*(-28 + co*(37 + 4*(-5 + co)*co))))))))*Ki)/48.;
+        MG[7][8] = ((-1 + co)*(-5*(-1 + 2*co)*(2 + 3*co - 12*Power(co,3) + 8*Power(co,4))*(2 + 3*co*(1 + co*(1 + 2*(-2 + co)*co)))*K - (4 + co*(4 + co*(15 + co*(99 + 2*co*(-31 + co*(-79 + 6*co*(-27 + 4*co*(21 + 4*(-4 + co)*co))))))))*Ki))/48.;
+        MG[7][9] = (Power(-1 + co,3)*co*(1 + 2*co)*(5*(-2 + co*(1 + 3*co*(1 + 2*(-1 + co)*co*(-3 + 2*co))))*K + (2 + co*(5 + 3*co*(1 + 4*(-1 + co)*co*(-3 + 2*co))))*Ki))/48.;
+        MG[8][8] = (Power(-1 + co,2)*(5*Power(2 + 3*co - 12*Power(co,3) + 8*Power(co,4),2)*K + (20 + co*(36 + co*(21 + 4*co*(-3 + 2*co)*(14 + 15*co - 33*Power(co,3) + 22*Power(co,4)))))*Ki))/48.;
+        MG[8][9] = -(Power(-1 + co,4)*co*(1 + 2*co)*(5*(2 + 3*co - 12*Power(co,3) + 8*Power(co,4))*K + (10 + 9*co - 42*Power(co,3) + 28*Power(co,4))*Ki))/48.;
+        MG[9][9] = (5*Power(-1 + co,6)*Power(co,2)*Power(1 + 2*co,2)*(K + Ki))/48.;
+#endif
 
 		// Add each annulus element to the global stiffness matrix
 		for(k=0;k<agelist[i].totalArcElements;k++)
@@ -834,7 +893,14 @@ do{
 	// nonlinear iteration has to have a looser tolerance
 	// than the linear solver--otherwise, things can't ever
 	// converge.  Arbitrarily choose 100*tolerance.
-	if((res<100.*Precision) && Iter>0) LinearFlag=TRUE;
+	// Accept convergence only off a pass whose inner solve ran at the full-
+	// Precision floor, as the static solvers now do (b8d9c76): the adaptive
+	// tolerance above is set from the PREVIOUS pass's res, so a quadratic
+	// Newton jump could otherwise terminate on a loosened solve. Successive
+	// Approximation never adapts L.Precision, so it is untouched by
+	// construction.
+	if((res<100.*Precision) && Iter>0 && (!L.bNewton || L.Precision<=Precision))
+		LinearFlag=TRUE;
 
 	Iter++;
   	

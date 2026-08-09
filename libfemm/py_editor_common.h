@@ -16,6 +16,7 @@
 
 #include "py_bind.h"
 #include "script_callbacks.h"
+#include "coord_mode.h"
 #include "document.h"
 #include "dxf_io.h"
 
@@ -347,9 +348,26 @@ void register_common_editor(femm_py::Module &m, const std::string &P,
                               std::optional<double> a2, std::optional<double> a3) {
         viewcmd_fwd(P + "_gridsnap", a0, a1, a2, a3);
     });
-    m.def(P + "_setgrid", [P](std::optional<double> a0, std::optional<double> a1,
-                             std::optional<double> a2, std::optional<double> a3) {
-        viewcmd_fwd(P + "_setgrid", a0, a1, a2, a3);
+    // *_setgrid(density, "cart"|"polar"). The coordinate mode is document state
+    // -- it is written to the .fem/.fee/.feh/.fec header and the solver reads it
+    // back for Prescribed A -- so it is set on the document here rather than
+    // being forwarded to the view. That is what makes it work headless, where
+    // there is no view at all. The grid spacing is the opposite: pure view
+    // state, forwarded as before.
+    m.def(P + "_setgrid", [&s_doc, errmsg, P](std::optional<double> density,
+                                              std::optional<std::string> ptype) {
+        int coords = -1;
+        if (ptype) {
+            coords = parseCoordMode(*ptype);
+            if (coords < 0) throw std::runtime_error(COORD_MODE_ERR);
+            CHK();
+            s_doc->Coords = coords;
+        }
+        // Always two args; a negative slot means "not specified". Grid spacing
+        // is positive by construction and Coords is 0 or 1, so -1 is unambiguous
+        // and a bare mode change still reaches the view to trigger a repaint.
+        double a[2] = {density.value_or(-1.0), (double)coords};
+        viewcmd(P + "_setgrid", 2, a);
     });
     m.def(P + "_showmesh",  [P]() { viewcmd(P + "_showmesh"); });
     m.def(P + "_purgemesh", [P]() { viewcmd(P + "_purgemesh"); });
@@ -360,7 +378,9 @@ void register_common_editor(femm_py::Module &m, const std::string &P,
     m.def(P + "_minimize", [P]() { viewcmd(P + "_minimize"); });
     m.def(P + "_maximize", [P]() { viewcmd(P + "_maximize"); });
     m.def(P + "_restore",  [P]() { viewcmd(P + "_restore"); });
-    m.def(P + "_savemetafile", []() {});  // deprecated no-op
+    m.def(P + "_savemetafile", [](std::optional<std::string>) {});  // No metafile output in femm-qt;
+    // the filename is accepted and ignored so ported scripts do not raise.
+    // Use *_savebitmap to save a picture of the view.
 
     m.def(P + "_close", [&s_doc, P]() {
         auto cb = get_view_command_callback();

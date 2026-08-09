@@ -3,6 +3,7 @@
 
 // magnetics_handler.cpp — Magnetics-specific postprocessor dialogs
 #include "magnetics_handler.h"
+#include "xy_plot.h"
 #include "complex_format.h"
 #include "results_widget.h"
 #include "results_doc.h"
@@ -309,7 +310,9 @@ void MagneticsHandler::showIntegrateDialog(QWidget *parent, OutputDialog *out)
         // accepted the selection. Create the progress dialog lazily on that first
         // callback, so a selection rejected before the solve never pops a dialog.
         std::unique_ptr<QProgressDialog> progDlg;
-        doc->progressCallback = [&progDlg, this, parent](int pct) {
+        // No `this` capture: tr() is a static member, so the body needs nothing
+        // from the enclosing object (clang -Wunused-lambda-capture).
+        doc->progressCallback = [&progDlg, parent](int pct) {
             if (!progDlg) {
                 progDlg = std::make_unique<QProgressDialog>(tr("Masking..."),
                                                             QString(), 0, 100, parent);
@@ -439,11 +442,7 @@ void MagneticsHandler::showXYPlotDialog(QWidget *parent)
         for (auto &age : doc->agelist)
             ageCombo->addItem(QString::fromStdString(age.BdryName));
         form->addRow(tr("Air Gap Element:"), ageCombo);
-        QStringList ageTypes;
-        ageTypes << "Potential" << "|B|      (Magnitude of flux density)"
-                 << "B . n   (Normal flux density)" << "B . t   (Tangential flux density)"
-                 << "|H|      (Magnitude of field intensity)"
-                 << "H . n   (Normal field intensity)" << "H . t   (Tangential field intensity)";
+        const QStringList ageTypes = xyplot::quantityList(xyexport::magGapPlotNames());
         auto *typeCombo = new QComboBox;
         for (auto &t : ageTypes) typeCombo->addItem(t);
         typeCombo->setCurrentIndex(1);
@@ -467,77 +466,26 @@ void MagneticsHandler::showXYPlotDialog(QWidget *parent)
         std::vector<ResultsDoc::XYPlotPoint> pts;
         doc->GetGapValues(pts, plotType, npts, ageIdx);
         if (pts.empty()) { m_widget->emitStatus("No plot data"); return; }
-        QString shortName = ageTypes[plotType];
-        int paren = shortName.indexOf('(');
-        if (paren > 0) shortName = shortName.left(paren).trimmed();
-        int ncols = (int)pts[0].vals.size();
-        QStringList colNames;
-        if (ncols == 1) colNames << shortName;
-        else if (ncols == 3) colNames << "|" + shortName + "|" << "Re(" + shortName + ")" << "Im(" + shortName + ")";
-        auto *pdlg = new PlotDialog(shortName + " - " + ageCombo->currentText(), parent);
-        pdlg->setAttribute(Qt::WA_DeleteOnClose);
-        for (int c = 0; c < ncols; c++) {
-            PlotSeries series;
-            series.label = (c < colNames.size()) ? colNames[c] : shortName;
-            for (auto &pt : pts) { series.x.push_back(pt.x); series.y.push_back(c < (int)pt.vals.size() ? pt.vals[c] : 0); }
-            pdlg->plot()->addSeries(series);
-        }
-        pdlg->plot()->setAxisLabels(tr("Angle, Degrees"), shortName);
-        pdlg->show();
+        xyplot::showPlot(parent, ageTypes[plotType], pts,
+                         " - " + ageCombo->currentText(),
+                         QString::fromLatin1(xyexport::gapAxisLabel()));
         return;
     }
 
-    // Contour X-Y plot
-    QStringList types;
-    types << "Potential" << "|B|      (Magnitude of flux density)"
-          << "B . n   (Normal flux density)" << "B . t   (Tangential flux density)"
-          << "|H|      (Magnitude of field intensity)"
-          << "H . n   (Normal field intensity)" << "H . t   (Tangential field intensity)";
-    if (doc->Frequency != 0)
-        types << "J_eddy     (Eddy current density)" << "Js+J_eddy  (Total current density)";
+    // Contour X-Y plot. The list lives in libfemm so that mo_makeplot can label
+    // its exported columns with the same names. The two current-density entries
+    // are offered for every problem type: at DC J_eddy is identically zero,
+    // which is the correct answer rather than a missing one, and Js+J_eddy is
+    // the source current density -- useful in its own right.
+    const QStringList types = xyplot::quantityList(xyexport::magPlotNames());
 
-    QDialog dlg(parent);
-    dlg.setWindowTitle(tr("X-Y Plot"));
-    auto *form = new QFormLayout;
-    auto *typeCombo = new QComboBox;
-    for (auto &t : types) typeCombo->addItem(t);
-    typeCombo->setCurrentIndex(1);
-    form->addRow(tr("Quantity:"), typeCombo);
-    auto *nptsEdit = new PyLineEdit;
-    nptsEdit->setText(QSettings().value("pp/plotPoints", "1500").toString());
-    form->addRow(tr("Number of points:"), nptsEdit);
-    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    QObject::connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
-    QObject::connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
-    auto *layout = new QVBoxLayout(&dlg);
-    layout->addLayout(form);
-    layout->addWidget(buttons);
-    if (dlg.exec() != QDialog::Accepted) return;
+    int plotType = 0, npts = 0;
+    if (!xyplot::prompt(parent, types, 1, "pp/plotPoints", plotType, npts)) return;
 
-    int plotType = typeCombo->currentIndex();
-    int npts = (int)nptsEdit->evaluateAsDouble(150);
-    if (npts < 10) npts = 10;
-    if (npts > 100000) npts = 100000;
     std::vector<ResultsDoc::XYPlotPoint> pts;
     doc->GetLineValues(pts, plotType, npts);
     if (pts.empty()) { m_widget->emitStatus("No plot data"); return; }
-    QString shortName = types[plotType];
-    int paren = shortName.indexOf('(');
-    if (paren > 0) shortName = shortName.left(paren).trimmed();
-    int ncols = (int)pts[0].vals.size();
-    QStringList colNames;
-    if (ncols == 1) colNames << shortName;
-    else if (ncols == 3) colNames << "|" + shortName + "|" << "Re(" + shortName + ")" << "Im(" + shortName + ")";
-    auto *pdlg = new PlotDialog(shortName + " along contour", parent);
-    pdlg->setAttribute(Qt::WA_DeleteOnClose);
-    for (int c = 0; c < ncols; c++) {
-        PlotSeries series;
-        series.label = (c < colNames.size()) ? colNames[c] : shortName;
-        for (auto &pt : pts) { series.x.push_back(pt.x); series.y.push_back(c < (int)pt.vals.size() ? pt.vals[c] : 0); }
-        pdlg->plot()->addSeries(series);
-    }
-    pdlg->plot()->setAxisLabels(tr("Position"), shortName);
-    pdlg->show();
+    xyplot::showAlongContour(parent, types[plotType], pts);
 }
 
 void MagneticsHandler::showCircuitDialog(QWidget *parent)

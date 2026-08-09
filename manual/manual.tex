@@ -1,4 +1,4 @@
-% !TEX program = latex
+% !TEX program = pdflatex
 % !TEX spellcheck = en_US
 
 % ------------------------------------------------------------------------
@@ -34,14 +34,27 @@
 \setcounter{dbltopnumber}{9}
 
 % ------------------------------------------------------------------------
-% Packages to use for a dvips document:
+% Packages to use for a pdflatex document:
 % ------------------------------------------------------------------------
 \usepackage[T1]{fontenc}
 \usepackage{pslatex}
-\usepackage[dvips]{graphicx}
-\usepackage[dvips]{hyperref}
+\usepackage{graphicx}
+% Figures are extension-less so a regenerated .png supersedes the
+% legacy .ps without touching the text; .ps is kept last as a fallback
+% for any figure not yet converted.
+\DeclareGraphicsExtensions{.png,.pdf,.jpg,.eps,.ps}
+\usepackage[export]{adjustbox}   % max width= key for \includegraphics
+\usepackage{hyperref}
 
 \UseRawInputEncoding
+
+%% Every dialog screenshot prints at this one scale, so the dialog font is
+%% the same size in every figure. Captures are 96 dpi and a PNG prints
+%% 1 px = 1 pt, so a 9pt dialog font lands at 12*\dlgscale pt on paper:
+%% 0.9 gives 10.8pt against the 12pt body text. The handful of dialogs
+%% too wide for the text block at this scale are capped by the
+%% max width=\textwidth on each \includegraphics.
+\newcommand{\dlgscale}{0.9}
 
 \begin{document}
 
@@ -640,7 +653,7 @@ simple geometry ({\em e.g.} triangles).  For example,
 Figure~{\ref{mass}} shows a map of the Massachusetts broken down
 into triangles.
 \begin{figure}
-\centerline{\includegraphics{mass.ps}}
+\centerline{\includegraphics[width=\textwidth]{mass}}
 \caption{Triangulation of Massachusetts}
 \label{mass}
 \end{figure}
@@ -765,7 +778,7 @@ One can switch between drawing modes by clicking the appropriate
 button on the Drawing Mode potion of the toolbar. This section of
 the toolbar is pictured in Figure~\ref{modebuttons}.
 \begin{figure}[ht]
-\centerline{\includegraphics{modebtn.ps}}
+\centerline{\includegraphics{modebtn}}
 \caption{Drawing Mode toolbar buttons.}
 \label{modebuttons}
 \end{figure}
@@ -888,7 +901,7 @@ Manipulation Keys' listed in Table~\ref{hotkeys}.  The View
 Manipulation toolbar buttons are pictured in
 Figure~\ref{viewbuttons}.
 \begin{figure}[ht]
-\centerline{\includegraphics{belaman3.ps}}
+\centerline{\includegraphics{belaman3}}
 \caption{View Manipulation toolbar buttons.}
 \label{viewbuttons}
 \end{figure}
@@ -896,12 +909,13 @@ The meaning of the View Manipulation toobar buttons are:
 \begin{itemize}
 \item The arrows on the toolbar correspond to moving the view in the direction of
 the arrow approximately $1/2$ of the current screen width.
-\item The ``blank page'' button scales the screen to the smallest
-possible view that displays the entire problem geometry.
+\item The button showing a magnifying glass over a page scales the
+screen to the smallest possible view that displays the entire problem
+geometry.
 \item The ``+'' and ``-'' buttons zoom the current view in and
 out, respectively.
-\item The ``page with magnifying glass'' button allows the view to
-be zoomed in on a user-specified part of the screen.  To use this
+\item The button showing a magnifying glass over a dashed rectangle
+allows the view to be zoomed in on a user-specified part of the screen.  To use this
 tool, first push the toolbar button.  Then, move the mouse pointer
 to one of the desired corners of the ``new'' view.  Press and hold
 the left mouse button.  Drag the mouse pointer to the opposite
@@ -956,27 +970,27 @@ The easiest way to manipulate the grid is through the used of the
 Grid Manipulation toolbar buttons.  These buttons are pictured in
 Figure~\ref{gridbuttons}.
 \begin{figure}[ht]
-\centerline{\includegraphics{gridbtn.ps}}
+\centerline{\includegraphics{gridbtn}}
 \caption{Grid Manipulation toolbar buttons.}
 \label{gridbuttons}
 \end{figure}
-The left-most button in Figure~\ref{gridbuttons} shows and hides
+The top button in Figure~\ref{gridbuttons} shows and hides
 the grid.  The default is that the button is pushed in, showing the
 current grid.  The second button, with an icon of an arrow pointing
 to a grid point, is the ``snap to grid'' button.  When this button
 is pushed in, the location of the mouse pointer is rounded to the
 nearest grid point location.  By default, the ``snap to grid''
-button is not pressed.  The right-most button brings up the Grid
+button is not pressed.  The bottom button brings up the Grid
 Properties dialog. This dialog is shown in Figure~\ref{griddialog}.
 \begin{figure}[ht]
-\centerline{\includegraphics{griddlg.ps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{griddlg}}
 \caption{Grid Properties dialog.}
 \label{griddialog}
 \end{figure}
 
 The Grid Properties dialog has an edit box for the user to enter
 the desired grid sizing.  When the box appears, the number in this
-edit box is the current grid size.  The edit box also contains a
+edit box is the current grid size.  The dialog also contains a
 drop list that allows the user to select between Cartesian and
 Polar coordinates.  If Cartesian is selected, points are specified
 by their (x,y) coordinates for a planar problem, or by their (r,z)
@@ -1017,7 +1031,7 @@ Problem} selection off of the main menu.  Selecting this option
 brings up the Problem Definition dialog, shown in
 Figure~\ref{problemdefinition}
 \begin{figure}[ht]
-\centerline{\includegraphics{probdef.ps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{probdef}}
 \caption{Problem Definition dialog.}
 \label{problemdefinition}
 \end{figure}
@@ -1087,8 +1101,8 @@ that has selections for Materials, Boundary, Point, and Circuits.
 When any one of these selections is chosen, the dialog pictured in
 Figure~\ref{propertydef} appears.
 \begin{figure}[ht]
-\centerline{\includegraphics{propdef.ps}}
-\caption{Property Definition dialog box}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{propdef}}
+\caption{Materials dialog}
 \label{propertydef}
 \end{figure}
 This dialog is the manager for a particular type of properties. All
@@ -1129,7 +1143,7 @@ If a new point property is added or an existing point property
 modified, the {\tt Nodal Property} dialog box appears.  This dialog
 box is pictured in Figure~\ref{nodalprop}
 \begin{figure}[ht]
-\centerline{\includegraphics{nodeprop.ps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{nodeprop}}
 \caption{Nodal Property dialog.}
 \label{nodalprop}
 \end{figure}
@@ -1159,14 +1173,14 @@ in Amperes.  The value of $J$ can be defined as complex, if desired.
 
 \subsubsection{Boundary Properties}
 
-The {\tt Boundary Property} dialog box is used to specify the
+The {\tt Boundary Condition} dialog box is used to specify the
 properties of line segments or arc segments that are to be
 boundaries of the solution domain.  When a new boundary property is
-added or an existing property modified, the {\tt Boundary Property}
+added or an existing property modified, the {\tt Boundary Condition}
 dialog pictured in Figure~\ref{boundaryprop} appears.
 \begin{figure}[ht]
-\centerline{\includegraphics{bdryprop.ps}}
-\caption{Boundary Property dialog.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{bdryprop}}
+\caption{Boundary Condition dialog.}
 \label{boundaryprop}
 \end{figure}
 
@@ -1271,16 +1285,16 @@ for the purposes of a finite element analysis with just one pole.
 \end{itemize}
 
 \subsubsection{Materials Properties}
-The {\tt Block Property} dialog box is used to specify the
+The {\tt Material Properties} dialog box is used to specify the
 properties to be associated with block labels.  The properties
 specified in this dialog have to do with the material that the
 block is composed of, as well as some attributes about how the
 material is put together (laminated). When a new material property
-is added or an existing property modified, the {\tt Block Property}
+is added or an existing property modified, the {\tt Material Properties}
 dialog pictured in Figure~\ref{blockpropdlg} appears.
 \begin{figure}
-\centerline{\includegraphics{blockprop.ps}}
-\caption{Block Property dialog.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{blockprop}}
+\caption{Material Properties dialog.}
 \label{blockpropdlg}
 \end{figure}
 
@@ -1323,7 +1337,7 @@ enter in points on your B-H curve, hit the {\tt Edit B-H Curve} button.  When
 the button is pushed a dialog appears that allows you to enter in
 B-H data (see Figure~\ref{bhdatadlg}.
 \begin{figure}[ht]
-\centerline{\includegraphics{bhdata.ps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{bhdata}}
 \caption{B-H data entry dialog.}
 \label{bhdatadlg}
 \end{figure}
@@ -1341,7 +1355,7 @@ button or the {\tt Log Plot B-H Curve} button on the B-H data dialog.
 You should see a B-H curve that
 looks something like the curve pictured in Figure~\ref{bhcurveplt}.
 \begin{figure}[ht]
-\centerline{\includegraphics{bhcurve.ps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{bhcurve}}
 \caption{Sample B-H curve plot.}
 \label{bhcurveplt}
 \end{figure} The boxes in the plot represent the locations of the entered
@@ -1410,7 +1424,7 @@ list specifies the sort of wire from which the coil is constructed.
 The various selections in this list are illustrated
 in Figure~\ref{lamdir}
 \begin{figure}[ht]
-\centerline{\includegraphics{lamscheme.ps}}
+\centerline{\includegraphics{lamscheme}}
 \caption{Different lamination orientation options.}
 \label{lamdir}
 \end{figure}
@@ -1458,17 +1472,17 @@ the fill factor is taken into account, and AC proximity and skin effect losses a
 taken into account via effective complex permeability and conductivity that are
 automatically computed for the wound region.
 
-\subsubsection{Materials Library}
+\subsubsection{Material Library}
 
 Since one kind of material might be needed in several different
-models, FEMM has a built-in library of Block Property definitions.
+models, FEMM has a built-in library of Material Properties definitions.
 The user can access and maintain this library through the {\tt
-Properties | Materials Library} selection off of the main menu.
-When this option is selected, the {\tt Materials Library} dialog
+Properties | Material Library} selection off of the main menu.
+When this option is selected, the {\tt Material Library} dialog
 pictured in Figure~\ref{matlibdlg} appears.
 \begin{figure}[ht]
-\centerline{\includegraphics{fe_matlib.ps}}
-\caption{Materials Library dialog.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{fe_matlib}}
+\caption{Material Library dialog.}
 \label{matlibdlg}
 \end{figure}
 This dialog allow the user to exchange Block
@@ -1536,8 +1550,8 @@ conserved inside the part of interest.
 The dialog for entering circuit properties is pictured in
 Figure~\ref{circprop}.
 \begin{figure}[ht]
-\centerline{\includegraphics{circprop.ps}}
-\caption{Circuit Property dialog}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{circprop}}
+\caption{Circuit Properties dialog}
 \label{circprop}
 \end{figure}
 
@@ -1586,7 +1600,7 @@ Meshing the model, analyzing the model, and viewing the results are
 most easily performed by the toolbar buttons pictured in
 Figure~\ref{runnybutts}
 \begin{figure}[ht]
-\centerline{\includegraphics{spawnbtn.ps}}
+\centerline{\includegraphics{spawnbtn}}
 \caption{Toolbar buttons for starting analysis tasks.}
 \label{runnybutts}
 \end{figure}
@@ -1675,7 +1689,7 @@ various kinds of losses, total current in the block, and so on.
 The current postprocessor mode is controlled via the Analysis Mode
 toolbar buttons, shown in Figure~\ref{anal_mode}.
 \begin{figure}[ht]
-\centerline{\includegraphics{analmode.ps}}
+\centerline{\includegraphics{analmode}}
 \caption{Analysis Mode toolbar buttons}
 \label{anal_mode}
 \end{figure}
@@ -1690,13 +1704,13 @@ The aspects of the current view and of the current grid are
 regulated via the use of toolbar buttons.  The view is manipulated
 by the following toolbar buttons:
 \begin{figure}[ht]
-\centerline{\includegraphics{belaman3.ps}}
+\centerline{\includegraphics{belaman3}}
 \caption{View Manipulation toolbar buttons.}
 \end{figure}
 and the grid settings are manipulated by these grid manipulation
 toolbar buttons:
 \begin{figure}[ht]
-\centerline{\includegraphics{gridbtn.ps}}
+\centerline{\includegraphics{gridbtn}}
 \caption{Grid Manipulation toolbar buttons.}
 \end{figure}
 The grid and view manipulation work in exactly the same fashion as
@@ -1812,7 +1826,7 @@ lines to be plotted can be altered using the Contours Plot icon in
 the Graph Mode section of the toolbar (see Figure~\ref{graph_mode}.
 The Contour Plot icon is the icon with the black contours.
 \begin{figure}
-\centerline{\includegraphics{hplotbar.ps}}
+\centerline{\includegraphics{hplotbar}}
 \caption{Graph Mode toolbar buttons.}
 \label{graph_mode}
 \end{figure}
@@ -1857,30 +1871,31 @@ field value defined contour is performed by pressing the ``graphed
 function'' icon in the Plot, Integration, and Circuit Results group of toolbar
 buttons, shown in Figure~\ref{choadbar}.
 \begin{figure}
-\centerline{\includegraphics{intplot.ps}}
+\centerline{\includegraphics{intplot}}
 \caption{Line Plot, Integration, and Circuit Results toolbar buttons}
 \label{choadbar}
 \end{figure}
 When this button is pressed, the {\tt X-Y Plot} dialog (see
 Figure~\ref{plot_dlg}) appears with a drop list containing the
 types of line plots available. Choose the desired type of plot and
-press ``OK.''
+press ``OK.''  The dialog also has an edit box for the number of
+points to be sampled along the contour.
 \begin{figure}[ht]
-\centerline{\includegraphics{pltdlg.ps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{pltdlg}}
 \caption{X-Y Plot dialog.}
 \label{plot_dlg}
 \end{figure}
 
 After ``OK'' is pressed, the program computes the desired values
-along the defined contour.  These values are then plotted using the
-{\tt femmplot} program, which is called automatically to display
-the plot.
+along the defined contour.  These values are then displayed
+automatically in a plot window.
 
-By default, the {\tt Write data to text file} box is not checked.
-If the user selects this option, the file selection dialog will
-appear and prompt for a filename to which to write the data. The
-data is written in two-column text format.  If {\tt Write data to
-text file} is selected, a femmplot window will not appear.
+To save the plotted values, press the {\tt Export...} button on the
+plot window.  A file selection dialog appears and prompts for the name
+of a file to which the data is written.  The data is written as
+comma-separated values ({\tt .csv}), with a header row naming the
+columns: position along the contour, followed by one column for each
+curve on the plot.
 
 Currently, the type of line plots supported are:
 \begin{itemize}
@@ -1891,13 +1906,15 @@ Currently, the type of line plots supported are:
 \item Magnitude of the field intensity along the contour;
 \item Component of field intensity normal to the contour;
 \item Component of field intensity tangential to the contour;
+\item Eddy current density along the contour;
+\item Total current density along the contour.
 \end{itemize}
 
 In all of these plots, the direction of the normal is understood to
 be as shown in Figure~\ref{this_side}.  The tangential direction is
 understood to be the direction in which the contour was defined.
 \begin{figure}[ht]
-\centerline{\includegraphics{thisside.ps}}
+\centerline{\includegraphics{thisside}}
 \caption{When in doubt plots and integrals taken on this side of a contour.}
 \label{this_side}
 \end{figure}
@@ -2211,15 +2228,22 @@ boundaries.
 As an example of a properly defined contour, consider
 Figure~\ref{mcont1}.
 \begin{figure}
-\centerline{\includegraphics{mcontour1.ps}}
+\centerline{\includegraphics[width=\textwidth]{mcontour1}}
 \caption{Properly defined contour for integration of Maxwell's
 Stress Tensor}
 \label{mcont1}
 \end{figure}
 This figure represents a horseshoe magnet acting on a block of
-iron.  The objective is to obtain the magnetic forces acting upon
-the iron block.  The red line in the figure represents the contour
-defined for the integration.  The contour was defined running
+steel.  The magnet is the assembly at the bottom: a steel yoke with a
+permanent-magnet leg standing at each end, the two legs magnetized in
+opposite senses so that one presents a north pole and the other a
+south pole across the gap.  The block is the single rectangle above
+them.  The objective is to obtain the magnetic forces acting upon
+the block.  The concentric arcs around the outside of the model are a
+layered open-boundary approximation, not part of the device.
+
+The red line in the figure represents the contour defined for the
+integration.  The contour was defined running
 clockwise around the block, so that the normal to the contour
 points outward.  Always define your contour in a clockwise
 direction to get the correct sign.  Note that the contour is well
@@ -2257,15 +2281,15 @@ boundaries and interfaces, and use a dense mesh).
 If ``circuit'' properties are used to specify the excitation, a
 number of useful properties relative to the circuit are automatically
 available.
-To view the circuit results, either press the "Circuit Results"
+To view the circuit results, either press the "Circuit Props"
 button on the toolbar pictured in Figure~\ref{choadbar}
-or select \verb+View|Circuit+ Props off
+or select \verb+View|Circuit Properties+ off
 of the postprocessor main menu. A dialog, as pictured in
 Figure~\ref{circuitresults} will appear. There is a drop list on
 the dialog, from which the user selects the circuit for which
 results are desired.
 \begin{figure}
-\centerline{\includegraphics{circuitrslt.ps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{circuitrslt}}
 \caption{Circuit results dialog.}
 \label{circuitresults}
 \end{figure}
@@ -2290,7 +2314,7 @@ option brings up the Problem Definition dialog, shown in
 Figure~\ref{fig6}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman6.eps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{belaman6}}
 \caption{Problem Definition dialog.}
 \label{fig6}
 \end{figure}
@@ -2366,8 +2390,8 @@ Conductors. When any one of these selections is chosen, the dialog
 pictured in Figure~\ref{fig7} appears.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman7.eps}}
-\caption{Property Definition dialog box.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{belaman7}}
+\caption{Materials dialog.}
 \label{fig7}
 \end{figure}
 
@@ -2394,7 +2418,7 @@ If a new point property is added or an existing point property modified, the
 Figure~\ref{fig8}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman8.eps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{belaman8}}
 \caption{Nodal Property dialog.}
 \label{fig8}
 \end{figure}
@@ -2421,15 +2445,15 @@ enabled edit box.
 
 
 
-The \texttt{Boundary Property} dialog box is used to specify the
+The \texttt{Boundary Properties} dialog box is used to specify the
 properties of line segments or arc segments that are to be
 boundaries of the solution domain. When a new boundary property is
 added or an existing property modified, the \texttt{Boundary
 Property} dialog pictured in Figure~\ref{fig9} appears.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman9.eps}}
-\caption{Boundary Property dialog.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{belaman9}}
+\caption{Boundary Condition dialog.}
 \label{fig9}
 \end{figure}
 
@@ -2490,16 +2514,16 @@ just one pole.
 
 \subsubsection{Materials Properties}
 
-The \texttt{Block Property} dialog box is used to specify the
+The \texttt{Material Properties} dialog box is used to specify the
 properties to be associated with block labels. The properties
 specified in this dialog have to do with the material of which the
 block is composed. When a new material property is added or an
 existing property modified, the
-\texttt{Block Property} dialog pictured in Figure~\ref{fig10} appears.
+\texttt{Material Properties} dialog pictured in Figure~\ref{fig10} appears.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman10.eps}}
-\caption{Block Property dialog.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{belaman10}}
+\caption{Material Properties dialog.}
 \label{fig10}
 \end{figure}
 
@@ -2516,18 +2540,18 @@ A volume charge density (\textit{$\rho $}) can also be prescribed by filling in 
 appropriate box in the material properties dialog.
 
 
-\subsubsection{Materials Library}
+\subsubsection{Material Library}
 
 Since one kind of material might be needed in several different
-models, FEMM has a built-in library of electrostatic Block Property definitions.
+models, FEMM has a built-in library of electrostatic Material Properties definitions.
 The user can access and maintain this library through the
-\texttt{Properties $\vert $ Materials Library} selection off of the
+\texttt{Properties $\vert $ Material Library} selection off of the
 main menu. When this option is selected, the
-\texttt{Materials Library} dialog pictured in Figure~\ref{fig11} appears.
+\texttt{Material Library} dialog pictured in Figure~\ref{fig11} appears.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{bd_matlib.ps}}
-\caption{Materials Library dialog}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{bd_matlib}}
+\caption{Electrostatics Material Library dialog}
 \label{fig11}
 \end{figure}
 
@@ -2574,8 +2598,8 @@ The dialog for entering conductor properties is pictured in
 Figure~\ref{fig12}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman12.eps}}
-\caption{Conductor Property dialog.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{belaman12}}
+\caption{Conductor Properties dialog.}
 \label{fig12}
 \end{figure}
 
@@ -2586,7 +2610,7 @@ most easily performed by the toolbar buttons pictured in
 Figure~\ref{fig13}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman13.eps}}
+\centerline{\includegraphics{belaman13}}
 \caption{Toolbar buttons for starting analysis tasks.}
 \label{fig13}
 \end{figure}
@@ -2655,7 +2679,7 @@ the Graph Mode section of the toolbar (see Figure~\ref{fig17}). The
 Contour Plot icon is the icon with the black contours.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{hplotbar.ps}}
+\centerline{\includegraphics{hplotbar}}
 \caption{Graph Mode toolbar buttons.}
 \label{fig17}
 \end{figure}
@@ -2709,7 +2733,7 @@ function'' icon in the Plot, Integration and Conductor Results group of toolbar
 buttons, shown in Figure~\ref{fig18}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman18.eps}}
+\centerline{\includegraphics{belaman18}}
 \caption{Line Plot, Integration, and Conductor Results toolbar buttons.}
 \label{fig18}
 \end{figure}
@@ -2718,10 +2742,11 @@ buttons, shown in Figure~\ref{fig18}.
 When this button is pressed, the \texttt{X-Y Plot} dialog (see
 Figure~\ref{fig19}) appears with a drop list containing the types
 of line plots available. Choose the desired type of plot and press
-``OK.''
+``OK.''  The dialog also has an edit box for the number of
+points to be sampled along the contour.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman19.eps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{belaman19}}
 \caption{X-Y Plot dialog.}
 \label{fig19}
 \end{figure}
@@ -2730,19 +2755,15 @@ of line plots available. Choose the desired type of plot and press
 
 
 After ``OK'' is pressed, the program computes the desired values
-along the defined contour. These values are then plotted using the
-\texttt{femmplot} program, which is called automatically to display
-the plot.
+along the defined contour. These values are then displayed
+automatically in a plot window.
 
-
-
-
-
-By default, the \texttt{Write data to text file} box is not
-checked. If the user selects this option, the file selection dialog
-will appear and prompt for a filename to which to write the data.
-The data is written in two-column text format. If \texttt{Write
-data to text file} is selected, a femmplot window will not appear.
+To save the plotted values, press the \texttt{Export...} button on the
+plot window. A file selection dialog appears and prompts for the name
+of a file to which the data is written. The data is written as
+comma-separated values (\texttt{.csv}), with a header row naming the
+columns: position along the contour, followed by one column for each
+curve on the plot.
 
 
 
@@ -2764,7 +2785,7 @@ be as shown in Figure~\ref{fig20}. The tangential direction is
 understood to be the direction in which the contour was defined.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman20.eps}}
+\centerline{\includegraphics{belaman20}}
 \caption{When in doubt plots and integrals taken on this side of a contour.}
 \label{fig20}
 \end{figure}
@@ -2970,16 +2991,16 @@ use a dense mesh).
 
 If conductor properties are used to specify the excitation, a
 useful byproduct is ready access to the voltage and charge on the
-conductor. To view the conductor results, either press the ``Conductor Results''
+conductor. To view the conductor results, either press the ``Conductor Props''
 toolbar button pictured in Figure~\ref{fig18} or select \texttt{View$\vert
-$Conductor Props} off of the postprocessor main menu. A dialog, as
+$Conductor Properties} off of the postprocessor main menu. A dialog, as
 pictured in Figure~\ref{fig21} will appear. There is a drop list on the
 dialog, from which the user selects the conductor for which results
 are desired. When a conductor is selected, the voltage and charge
 associated with that conductor are displayed.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman21.eps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{belaman21}}
 \caption{Conductor results dialog.}
 \label{fig21}
 \end{figure}
@@ -3088,73 +3109,96 @@ similar to Henrotte for axisymmetric magnetic problems.
 
 \section{Linear Solvers}
 
-For all problems, variations of the iterative Conjugate Gradient
-solver are used.  This technique is appropriate for the sort of
-problem that FEMM solves, because the matrices are symmetric and
-very sparse.  A row-based storage scheme is used in which only the
-nonzero elements of the diagonal and upper triangular part of the
-matrix are solved.
+For all problems, Krylov subspace methods are used.  These techniques
+are appropriate for the sort of problem that FEMM solves, because the
+matrices are symmetric and very sparse.  During assembly, only the
+diagonal and the upper triangle are stored, as an array of sparse rows,
+so that late structural edits---circuit equations, periodic boundary
+merges---stay cheap.  Before the first solve, that is flattened into a
+compressed-sparse-row copy of the full matrix, and it is the flat copy
+that the matrix-vector product reads.
 
-For magnetostatic and electrostatic problems, the preconditioned
-conjugate gradient (PCG) code is based on the discussion in
-\cite{silv}. Minor modifications are made to this algorithm to
-avoid computing certain quantities more than once per iteration.
-Although Silvester promotes the use of the Incomplete Cholesky
-preconditioner, it is not used in FEMM, because it nearly doubles
-the storage requirements--for each element of the matrix stored, a
-corresponding element of the preconditioner must also be stored.
-Instead, the Symmetric Successive Over-Relaxation (SSOR)
-preconditioner, as described in \cite{fletcher}, is used. The
-advantage of this preconditioner is that it is built on the fly in
-a simple way using only the matrix elements that are already in
-storage. In general, the speed of PCG using SSOR is said to be
-comparable to the speed of PCG with Incomplete Cholesky.
+For magnetostatic, electrostatic, heat flow and current flow problems,
+the preconditioned conjugate gradient (PCG) algorithm is used, based on
+the discussion in \cite{silv}.  Minor modifications are made to this
+algorithm to avoid computing certain quantities more than once per
+iteration.  Circuit constraints are the exception: a prescribed flux
+linkage or a prescribed total current adds a Lagrange multiplier row,
+which leaves the matrix symmetric but no longer positive definite.  In
+that case the quasi-minimum residual (QMR) algorithm is used in place of
+PCG.
 
-For harmonic problems, the regular PCG algorithm cannot be used;
-the matrix that arises in the formulation of harmonic problems is
-Complex Symmetric ({\em i.e.} $A=A^T$), rather than Hermitian ({\em
-i.e.} $A=A^*$). Curiously, there is not much literature available
-on iterative solvers for complex symmetric problems, given the
-number of diverse applications in which these problems arise.
-However, there is a very good paper on the solution of linear
-problems with complex symmetric matrices via various flavors of
-Conjugate Gradient by Freund \cite{freund}. The techniques
-discussed by Freund allow one to operate directly on the complex
-symmetric matrix and take advantage of the symmetric structure to
-minimize the number of computations that must be performed per
-iteration. Although Freund supports Quasi-Minimum Residual
-approach, FEMM uses the complex symmetric version of biconjugate
-gradient also described in \cite{freund}. After coding and
-comparing the the speed of both BCG and QMR, it was found that BCG
-is somewhat faster due to a relatively smaller number of
-computations that must be performed per iteration (even though QMR
-has better convergence properties than BCG).
+Earlier versions of FEMM preconditioned with Symmetric Successive
+Over-Relaxation (SSOR), as described in \cite{fletcher}, chosen because
+it can be built on the fly from matrix elements that are already in
+storage.  The alternative that Silvester promotes, an incomplete
+Cholesky factorization, was avoided because a factorization with the
+same sparsity pattern as the matrix nearly doubles the storage
+requirement.
 
-However, using the algorithms as described by \cite{freund},
-solution times were unacceptably long.  To decrease solution times,
-the complex symmetric BCG algorithm was modified to include the
-SSOR preconditioner (built in exactly the same way as for
-magnetostatic problems).  Including the SSOR preconditioner in
-complex symmetric BCG problems usually yields an order of magnitude
-improvement in speed over no preconditioner.
+FEMM now uses an incomplete $LDL^T$ factorization with threshold-based
+fill.  Each column of the factor keeps only those entries larger than a
+fixed fraction of the largest entry in the corresponding column of the
+original matrix, subject to a cap on how many are kept, so the storage
+is bounded and modest rather than a duplicate of the matrix.  The
+factorization is root-free---$L$ has a unit diagonal and $D$ carries the
+sign---so one implementation serves both the positive definite case and
+the indefinite circuit-constrained case, and no square roots are taken.
+It is built once per assembly and reused by every iteration solved
+against it.
 
-In all problems, a node renumbering scheme is used.  Although the
-conjugate gradient schemes work well without renumbering, the
-renumbering seems to roughly halve the solution time.  There is an
-overall advantage to using the renumbering, because the of time
-required to perform the renumbering is small compared to the time
-required to run CG or BCG.  Although there are many possible
-approaches to renumbering, FEMM uses the Cuthill-McKee method as
-described in \cite{Hoole}. Although there are newer schemes that
-yield a tighter profile, Cuthill-McKee does a relatively good job
-and requires very little to execute. The renumbering code is a
-hold-over from an early version of FEMM that employed a banded
-Gauss Elimination solver in which a good node numbering is
-essential to good performance.  The renumbering speeds up CG and
-BCG by reducing the error between the SSOR approximation of
-$A^{-1}$ and the exact $A^{-1}$.  An interesting paper on the
-effect of the ordering of the unknowns on convergence in conjugate
-gradient methods is \cite{Daze}.
+That the fill is what matters, rather than the incomplete factorization
+in itself, is worth stating plainly: a zero-fill incomplete
+factorization was measured to perform about as well as the SSOR sweep it
+would have replaced, which is the classically expected result, since the
+two are closely related.  Allowing a bounded amount of fill is what pays
+for itself, cutting the iteration count by roughly an order of magnitude
+--- far more than enough to cover the cost of the triangular solves.
+
+For harmonic problems, the regular PCG algorithm cannot be used; the
+matrix that arises in the formulation of harmonic problems is Complex
+Symmetric ({\em i.e.} $A=A^T$), rather than Hermitian ({\em i.e.}
+$A=A^*$).  Curiously, there is not much literature available on
+iterative solvers for complex symmetric problems, given the number of
+diverse applications in which these problems arise.  However, there is a
+very good paper on the solution of linear problems with complex
+symmetric matrices via various flavors of Conjugate Gradient by Freund
+\cite{freund}.  The techniques discussed by Freund allow one to operate
+directly on the complex symmetric matrix and take advantage of the
+symmetric structure to minimize the number of computations that must be
+performed per iteration.  Although Freund supports the Quasi-Minimum
+Residual approach, FEMM uses the complex symmetric version of
+biconjugate gradient also described in \cite{freund}.  After coding and
+comparing the speed of both BCG and QMR, it was found that BCG is
+somewhat faster due to a relatively smaller number of computations that
+must be performed per iteration (even though QMR has better convergence
+properties than BCG).  The complex symmetric BCG is preconditioned with
+the same incomplete $LDL^T$ factorization used for the real-valued
+problems, built in exactly the same way.  Nonlinear harmonic problems
+add a Newton iteration on top of this solver.
+
+In all problems, the unknowns are numbered so that the nonzero entries
+cluster near the diagonal.  A good ordering reduces the difference
+between the incomplete factorization and the exact inverse, and so
+speeds convergence.  FEMM uses the reverse Cuthill-McKee ordering
+described in \cite{Hoole}.  Unlike earlier versions, which renumbered
+inside the solver as a hold-over from a banded Gauss elimination solver,
+the ordering is now produced by the mesh generator: the solver receives
+a mesh that is already numbered and does no renumbering of its own.  An
+interesting paper on the effect of the ordering of the unknowns on
+convergence in conjugate gradient methods is \cite{Daze}.
+
+The solvers run on a single thread by design.  Multi-threading was
+implemented and then removed once the incomplete factorization was
+adopted: measured across problems ranging from ten thousand to about a
+hundred and fifty thousand nodes, four threads changed run time by
+between $-11$\% and $+4$\%.  The factorization and the triangular solves
+are inherently sequential, and the better preconditioner had already cut
+the iteration count by about a factor of ten, which left too little
+vector work to amortize the cost of starting and synchronizing threads.
+Running sequentially has the additional benefit that results are
+bit-for-bit reproducible from one run to the next, which is worth a good
+deal when regression testing.
 
 \section{Field Smoothing}
 
@@ -3256,6 +3300,13 @@ Numerical Methods in Engineering, 33:1331-1364, 1992.
 open boundary techniques for static and quasistatic electromagnetic
 field problems,'' {\em IEEE Transactions on Magnetics},
 33(1):663-676, January 1997.
+\bibitem{iabcmag} D. Meeker, ``Improvised open boundary conditions for
+magnetic finite elements,'' {\em IEEE Transactions on Magnetics},
+49(10):5243-5247, October 2013.  DOI 10.1109/TMAG.2013.2260348.
+\bibitem{iabcelec} D. Meeker, ``Improvised asymptotic boundary
+conditions for electrostatic finite elements,'' {\em IEEE Transactions
+on Magnetics}, 50(6), article 7400609, June 2014.
+DOI 10.1109/TMAG.2014.2300196.
 \bibitem{LowFree} E. M. Freeman and D. A. Lowther, ``A novel
 mapping technique for open boundary finite element solutions to
 Poissons equation,'' {\em IEEE Transactions on Magnetics},
@@ -3291,12 +3342,12 @@ The manufacturer provides information about their material in the
 form of a demagnetization curve.  A sample curve for Alnico 5 is
 pictured in Figure~\ref{al5}.
 \begin{figure}
-\centerline{\includegraphics{manf.ps}}
+\centerline{\includegraphics{manf}}
 \caption{Sample demagnetization curve for Alnico 5}
 \label{al5}
 \end{figure}
 The task is to get the appropriate information out of the curve put
-in a FEMM Block Property model.
+in a FEMM Material Properties model.
 
 Magnets can be modeled from several different, but equally valid,
 points of view.  From the perspective finite element analysis, the
@@ -3304,7 +3355,7 @@ most useful model is to think of the magnet as a volume of
 ferromagnetic material surrounded by a thin sheet of current, as
 shown in Figure~\ref{currentsheet}.
 \begin{figure}
-\centerline{\includegraphics{eqmag.ps}}
+\centerline{\includegraphics{eqmag}}
 \caption{Magnet as an equivalent current sheet.}
 \label{currentsheet}
 \end{figure}
@@ -3321,7 +3372,7 @@ Using these insights, the permanent magnet can be modeled.  The
 {\em coercivity} (denoted $H_c$) of the magnet is the absolute
 value of the MMF that it takes to bring the the field in the magnet
 to zero.  This value (in units of Amps/Meter) is entered in the
-\verb+H_c+ box in the Block Property dialog (see
+\verb+H_c+ box in the Material Properties dialog (see
 Figure~\ref{blockpropdlg}). If the magnet material is nonlinear,
 the appropriate values to enter in the B-H data dialog can be
 obtained by shifting the curve to the right by exactly $H_c$, so
@@ -3329,7 +3380,7 @@ that the $B=0$ point lines up with the origin.  For example, the
 shifted demagnetization curve corresponding to Alnico 5 is pictured
 in Figure~\ref{magshift}.
 \begin{figure}
-\centerline{\includegraphics{manfshft.ps}}
+\centerline{\includegraphics{manfshft}}
 \caption{Shifting the B-H curve of a permanent magnet}
 \label{magshift}
 \end{figure}
@@ -3359,7 +3410,7 @@ the flux level does not recover to the previous magnitude when the
 opposing MMF is removed.  This hysteresis is illustrated in
 Figure~\ref{recoiling}.
 \begin{figure}
-\centerline{\includegraphics{recoil.ps}}
+\centerline{\includegraphics{recoil}}
 \caption{Recoil in partially demagnetized Alnico 5.}
 \label{recoiling}
 \end{figure}
@@ -3408,7 +3459,7 @@ Armed with this assumption, a circuit model can be produced for
 each direction of flux travel.  For the easy direction, the circuit
 model is pictured in Figure~\ref{easydirection}.
 \begin{figure}
-\centerline{\includegraphics{ezlam.ps}}
+\centerline{\includegraphics{ezlam}}
 \caption{Equivalent circuit for flux in the ``easy'' direction}
 \label{easydirection}
 \end{figure}
@@ -3437,7 +3488,7 @@ about 0.01\%.
 For the hard direction, a different equivalent circuit, pictured in
 Figure~\ref{harddirection} can be drawn.
 \begin{figure}
-\centerline{\includegraphics{hardlam.ps}}
+\centerline{\includegraphics{hardlam}}
 \caption{Equivalent circuit for flux in the ``hard'' direction.}
 \label{harddirection}
 \end{figure}
@@ -3512,138 +3563,47 @@ and space is still required to solve for a region in which one has
 little interest.
 
 \subsection{Asymptotic Boundary Conditions}
-A thorough review of open boundary techniques is contained in
-\cite{chen}.  Perhaps the simple way to approximate an ``open''
-boundary (other than truncation) described in \cite{chen} is to use
-asymptotic boundary conditions.  The result is that by carefully
-specifying the parameters for the ``mixed'' boundary condition, and
-then applying this boundary condition to a circular outer boundary,
-the unbounded solution can be closely approximated.  An example
-that employs an asymptotic boundary condition to obtain an
-unbounded field solution is the {\tt axi1.fem} example included in
-the distribution.
 
-Consider a 2-D planar problem in polar coordinates.  The domain is
-a circular shell of radius $r_o$ in an unbounded region.  As $r
-\rightarrow
-\infty$, vector potential $A$ goes to zero.  On the surface of the
-circle, the vector is a prescribed function of $\theta$.  This
-problem has an analytical solution, which is:
-\be \label{open_soln} A(r,\theta)=\sum_{m=1}^\infty \frac{a_m}{r^m} \cos (m \theta +
-\alpha_m) \ee
-where the $a_m$ and $\alpha_m$ parameters are chosen so that the
-solution matches the prescribed potential on the surface of the
-circle.
+Pressing the {\tt Open Boundary} button on the preprocessor toolbar 
+builds a structure that has the impedance of an unbounded region, allowing
+an unbounded problem to be modeled with a finite domain.  It surrounds the 
+model with a set of nested annular shells whose material properties are 
+chosen so that, seen from the inside, the outermost boundary behaves like 
+a boundary at infinity---an {\em Improvised Asymptotic Boundary Condition},
+or IABC.  The theory is developed in \cite{iabcmag} for magnetic problems
+and in \cite{iabcelec} for electrostatic problems.
 
-One could think of this solution as describing the solution
-exterior to a finite element problem with a circular outer
-boundary.  The solution is described inside the circle via a finite
-element solution.  The trick is to knit together the analytical
-solution outside the circle to the finite element solution inside
-the circle.
+Pressing the button brings up a dialog asking for the number of shells
+(1 to 12, and 7 is a sensible default), the radius and center of the
+solution domain, and whether the outer edge should be Dirichlet or
+Neumann.  Reasonable values for the radius and center are proposed from
+the bounding box of the geometry already drawn, so in most cases it is
+enough to accept what is offered.  The same operation is available to
+scripts as {\tt mi\_makeABC}, {\tt ei\_makeABC}, {\tt hi\_makeABC} and
+{\tt ci\_makeABC}, which take the same parameters and invent sensible
+ones for any that are omitted.
 
-From inspecting (\ref{open_soln}), one can see that the
-higher-numbered harmonic, the faster the magnitude of the harmonic
-decays with respect to increasing $r$.  After only a short
-distance, the higher-numbered harmonics decay to the extent that
-almost all of the open-space solution is described by only the
-leading harmonic.  If $n$ is the number of the leading harmonic,
-the open-field solution for large, but not infinite, $r$ is closely
-described by:
-\be \label{oaf} A(r,\theta) \approx \frac{a_n}{r^n} \cos (n \theta + \alpha_n) \ee
-Differentiating with respect to $r$ yields:
-\be \label{doaf} \frac{\partial A}{\partial r} = - \frac{n
-a_n}{r^{n+1}} \cos (n \theta + \alpha_n) \ee
- If (\ref{doaf}) is solved for $a_n$ and substituted into
-(\ref{oaf}), the result is:
-\be \label{open_bc}  \frac{\partial A}{\partial r} +
-\left(\frac{n}{r} \right) A = 0 \ee
+Two worked examples ship with the program: 2D planar magnetic problem 
+{\tt IABC.fem} and axisymmetric magnetic problem {\tt tutorial.fem}.
 
-Now, (\ref{open_bc}) is a very useful result.  This is the same
-form as the ``mixed'' boundary condition supported by FEMM.  If the
-outer edge of the solution domain is circular, and the outer finite
-element boundary is somewhat removed from the area of primary
-interest, the open domain solution can be closely approximated by
-applying (\ref{open_bc}) the circular boundary.
-
-To apply the Asymptotic Boundary Condition, define a new,
-mixed-type boundary condition.  Then, pick the parameters so that:
-\begin{eqnarray} c_0 & = & \frac{n}{\mu_o r_o} \label{moomoo} \\
-                 c_1 & = & 0
-\end{eqnarray}
-where $r_o$ is the outer radius of the region in meters (regardless
-of the working length units), and $\mu_o = 4 \pi (10^{-7})$.
-
-Although the above derivation was specifically for 2-D problems, it
-turns out that when the same derivation is done for the
-axisymmetric case, the definition of the mixed boundary condition
-coefficients are exactly the same as (\ref{moomoo}).
-
-
-To apply the Asymptotic Boundary Condition to electrostatics
-problems, pick the parameters so that:
-
-\begin{equation} \label{eqn14}
-c_0 = \frac{\epsilon_o n}{r_o}
-\end{equation}
-\begin{displaymath}
-c_1 = 0
-\end{displaymath}
-
-\noindent where r$_{o}$ is the outer radius of the region in meters
-(regardless of the working length units), and $\varepsilon _{o}$ =
-8.85418781762e-012. Note that $\varepsilon _{o}$ is defined in the
-Python implementation in both the pre- and post-processors as the
-global variable \texttt{eo}, which can be used in any script or
-edit box in the program.
-
-Just like magnetics problems, it turns out that 2-D problems are
-also described by (\ref{eqn14}). One subtle difference, however, is
-that $n = $1 in the axisymmetric case corresponds to the case in
-which there is a net charge with (i.e. the geometry looks like a
-point charge when viewed from a distance), whereas the $n =$ 1 case
-corresponds to a dipole charge distribution in 2D planar problems.
-If charge is conserved in the geometry of interest in the
-axisymmetric case, one needs to use $n
-= $2 in Eq. (\ref{eqn14}). It should be noted that this is a departure from
-the magnetostatic case with the vector potential formulation in
-which $n = 1$ corresponds to a dipole arrangement in the
-axisymmetric case.
-
-Some care must be used in applying this boundary condition.  Most
-of the time, it is sufficient to take $n=1$ ({\em i.e} the objects
-in the solution region look like a dipole when viewed from a large
-distance). However, there are other cases ({\em e.g.} a 4-pole
-halbach permanent magnet array) in which the leading harmonic is
-something other than $n=1$. You need to use your insight into your
-specific problem to pick the appropriate $n$ for the leading
-harmonic.  You also must put the objects of interest roughly in the
-center of the circular finite element domain to minimize the
-magnitude higher-order field components at the outer boundary.
-
-Although the application of this boundary condition requires some
-thought on the part of the user, the results can be quite good.
-Figure~\ref{ax1_fig}, corresponding to the {\tt axi1} example,
-represents the field produced by an air-cored coil in free space.
 \begin{figure}
-\centerline{\includegraphics{ax1.ps}}
-\caption{Air-cored coil with ``open'' boundary condition}
-\label{ax1_fig}
-\end{figure}
-The asymptotic boundary condition has been applied to the circular
-outer boundary.  Inspecting the solution, flux lines appear to
-cross the circular boundary as if the solution domain were truly
-unbounded.
+\centerline{\includegraphics[width=6in]{IABCScreenshot}}
+\caption{2D Planar IABC.}
+\label{iabcScreenshot}
 
-A quick note on computational efficiency: applying the absorbing
-boundary condition imposes no additional computing cost on the
-problem.  The ABC is computationally no more time-consuming to
-apply than enforcing $A=0$ at the outer boundary.  Solution times
-for the PCG solver are equivalent in either case.  It can also
-readily be derived that the ABC works exactly the same for
-harmonics problems. (To see this, just assume that the $a_m$ in
-(\ref{open_soln}) can be complex valued, and follow the same
-derivation).
+\end{figure}
+\begin{figure}
+\centerline{\includegraphics[width=6in]{tutorialScreenshot}}
+\caption{Axisymmetric IABC.}
+\label{tutScreenshot}
+\end{figure}
+
+The shells are ordinary regions with ordinary material properties, so
+nothing about the solver or the postprocessor treats them specially.
+They will, however, appear in the field plot, and any block integral
+taken over the whole model would include them---so select the regions of
+interest explicitly when integrating.
+
 
 \subsection{Kelvin Transformation} \label{KelvinBC}
 
@@ -3756,7 +3716,7 @@ relative permeability of 2500.  The coil carries a bulk current
 density of 2 MA/m$^2$.  The input geometry is picture in
 Figure~\ref{ex1prob}.
 \begin{figure}
-\centerline{\includegraphics[width=6in]{open1.ps}}
+\centerline{\includegraphics[width=6in]{open1}}
 \caption{Example input geometry.}
 \label{ex1prob}
 \end{figure}
@@ -3794,7 +3754,7 @@ boundary.  The flux lines reappear in the domain representing the
 exterior region, completing their flux paths through the exterior
 region.
 \begin{figure}
-\centerline{\includegraphics[width=6in]{open1b.ps}}
+\centerline{\includegraphics[width=6in]{open1b}}
 \caption{Solved problem.}
 \label{ex1soln}
 \end{figure}

@@ -16,7 +16,7 @@ option brings up the Problem Definition dialog, shown in
 Figure~\ref{hfig5}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman6.eps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{belaman6}}
 \caption{Problem Definition dialog.}
 \label{hfig5}
 \end{figure}
@@ -92,8 +92,8 @@ Conductors. When any one of these selections is chosen, the dialog
 pictured in Figure~\ref{hfig7} appears.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{hpropdef.ps}}
-\caption{Property Definition dialog box.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{hpropdef}}
+\caption{Materials dialog.}
 \label{hfig7}
 \end{figure}
 
@@ -120,7 +120,7 @@ If a new point property is added or an existing point property modified, the
 Figure~\ref{hfig8}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{hnodeprop.ps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{hnodeprop}}
 \caption{Nodal Property dialog.}
 \label{hfig8}
 \end{figure}
@@ -136,15 +136,15 @@ enabled edit box.
 
 \subsubsection{Boundary Properties}
 
-The \texttt{Boundary Property} dialog box is used to specify the
+The \texttt{Boundary Properties} dialog box is used to specify the
 properties of line segments or arc segments that are to be
 boundaries of the solution domain. When a new boundary property is
 added or an existing property modified, the \texttt{Boundary
 Property} dialog pictured in Figure~\ref{hfig9} appears.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{hbdryprop.ps}}
-\caption{Boundary Property dialog.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{hbdryprop}}
+\caption{Boundary Condition dialog.}
 \label{hfig9}
 \end{figure}
 
@@ -161,16 +161,16 @@ described in detail in Section~\ref{bcsection}.
 
 \subsubsection{Materials Properties}
 
-The \texttt{Block Property} dialog box is used to specify the
+The \texttt{Material Properties} dialog box is used to specify the
 properties to be associated with block labels. The properties
 specified in this dialog have to do with the material of which the
 block is composed. When a new material property is added or an
 existing property modified, the
-\texttt{Block Property} dialog pictured in Figure~\ref{hfig10} appears.
+\texttt{Material Properties} dialog pictured in Figure~\ref{hfig10} appears.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{hblockprop.ps}}
-\caption{Block Property dialog.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{hblockprop}}
+\caption{Material Properties dialog.}
 \label{hfig10}
 \end{figure}
 
@@ -193,18 +193,18 @@ conductivity takes the value of the nearest defined T-k point.
 A volume heat generation can also be prescribed by filling in the
 appropriate box in the material properties dialog.
 
-\subsubsection{Materials Library}
+\subsubsection{Material Library}
 
 Since one kind of material might be needed in several different
-models, FEMM has a built-in library of thermal Block Property definitions.
+models, FEMM has a built-in library of thermal Material Properties definitions.
 The user can access and maintain this library through the
-\texttt{Properties $\vert $ Materials Library} selection off of the
+\texttt{Properties $\vert $ Material Library} selection off of the
 main menu. When this option is selected, the
-\texttt{Materials Library} dialog pictured in Figure~\ref{hfig11} appears.
+\texttt{Material Library} dialog pictured in Figure~\ref{hfig11} appears.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{hmatlib.ps}}
-\caption{Materials Library dialog}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{hmatlib}}
+\caption{Electrostatics Material Library dialog}
 \label{hfig11}
 \end{figure}
 
@@ -243,8 +243,8 @@ The dialog for entering conductor properties is pictured in
 Figure~\ref{hfig12}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{hcircprop.ps}}
-\caption{Conductor Property dialog.}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{hcircprop}}
+\caption{Conductor Properties dialog.}
 \label{hfig12}
 \end{figure}
 
@@ -255,7 +255,7 @@ most easily performed by the toolbar buttons pictured in
 Figure~\ref{hfig13}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman13.eps}}
+\centerline{\includegraphics{belaman13}}
 \caption{Toolbar buttons for starting analysis tasks.}
 \label{hfig13}
 \end{figure}
@@ -321,7 +321,7 @@ the Graph Mode section of the toolbar (see Figure~\ref{hfig17}). The
 Contour Plot icon is the icon with the black contours.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{hplotbar.ps}}
+\centerline{\includegraphics{hplotbar}}
 \caption{Graph Mode toolbar buttons.}
 \label{hfig17}
 \end{figure}
@@ -364,7 +364,7 @@ function'' icon in the Plot, Integration and Conductor Results group of toolbar
 buttons, shown in Figure~\ref{hfig18}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{hresbar.ps}}
+\centerline{\includegraphics{hresbar}}
 \caption{Line Plot, Integration, and Conductor Results toolbar buttons.}
 \label{hfig18}
 \end{figure}
@@ -372,10 +372,11 @@ buttons, shown in Figure~\ref{hfig18}.
 When this button is pressed, the \texttt{X-Y Plot} dialog (see
 Figure~\ref{hfig19}) appears with a drop list containing the types
 of line plots available. Choose the desired type of plot and press
-``OK.''
+``OK.''  The dialog also has an edit box for the number of
+points to be sampled along the contour.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{hpltdlg.ps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{hpltdlg}}
 \caption{X-Y Plot dialog.}
 \label{hfig19}
 \end{figure}
@@ -384,11 +385,12 @@ After ``OK'' is pressed, the program computes the desired values
 along the defined contour. When the computation is finished, a window
 will appear with a plot of the selected quantity.
 
-By default, the \texttt{Write data to text file} box is not
-checked. If the user selects this option, the file selection dialog
-will appear and prompt for a filename to which to write the data.
-The data is written in two-column text format. If \texttt{Write
-data to text file} is selected, a plot window will not appear.
+To save the plotted values, press the \texttt{Export...} button on the
+plot window. A file selection dialog appears and prompts for the name
+of a file to which the data is written. The data is written as
+comma-separated values (\texttt{.csv}), with a header row naming the
+columns: position along the contour, followed by one column for each
+curve on the plot.
 
 Currently, the type of line plots supported are: Temperature along the
 contour; Magnitude of the heat flux density along the contour; Component of heat flux
@@ -402,7 +404,7 @@ be as shown in Figure~\ref{hfig20}. The tangential direction is
 understood to be the direction in which the contour was defined.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{belaman20.eps}}
+\centerline{\includegraphics{belaman20}}
 \caption{When in doubt plots and integrals taken on this side of a contour.}
 \label{hfig20}
 \end{figure}
@@ -494,16 +496,16 @@ The block integrals currently supported are:
 
 If conductor properties are used to specify the excitation, a
 useful byproduct is ready access to the temperature of and heat flux through the
-conductor. To view the conductor results, either press the ``Conductor Results''
+conductor. To view the conductor results, either press the ``Conductor Props''
 toolbar button pictured in Figure~\ref{hfig18} or select \texttt{View$\vert
-$Conductor Props} off of the postprocessor main menu. A dialog, as
+$Conductor Properties} off of the postprocessor main menu. A dialog, as
 pictured in Figure~\ref{hfig21} will appear. There is a drop list on the
 dialog, from which the user selects the conductor for which results
 are desired. When a conductor is selected, the temperature and heat flux
 associated with that conductor are displayed.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics{hcircres.ps}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{hcircres}}
 \caption{Conductor results dialog.}
 \label{hfig21}
 \end{figure}

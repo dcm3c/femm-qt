@@ -7,6 +7,7 @@
 
 #include "curr_results_doc.h"
 #include "utf8_io.h"
+#include "fastio.h"
 #include "fknDlg.h"
 #include "spars.h"
 #include <cstdio>
@@ -320,15 +321,16 @@ bool CurrResultsDoc::OpenDocument(const std::string &pathname)
     }
 
     // Read mesh nodes with complex voltage: x y Re(V) Im(V) Q
+    // -- cursor parse (fastio.h), the .ans load hot loop
     fscanf(fp, "%i\n", &k);
     cmeshnode.resize(k);
     meshnode.resize(k);
     for (i = 0; i < k; i++) {
         fgets(s, 1024, fp);
-        sscanf(s, "%lf\t%lf\t%lf\t%lf\t%i",
-               &cmeshnode[i].x, &cmeshnode[i].y,
-               &cmeshnode[i].V.re, &cmeshnode[i].V.im,
-               &cmeshnode[i].Q);
+        const char *p = s;
+        (void)(fio_double(p, cmeshnode[i].x) && fio_double(p, cmeshnode[i].y) &&
+               fio_double(p, cmeshnode[i].V.re) && fio_double(p, cmeshnode[i].V.im) &&
+               fio_int(p, cmeshnode[i].Q));
         // Copy to display projection
         meshnode[i].x = cmeshnode[i].x;
         meshnode[i].y = cmeshnode[i].y;
@@ -341,9 +343,9 @@ bool CurrResultsDoc::OpenDocument(const std::string &pathname)
     meshelem.resize(k);
     for (i = 0; i < k; i++) {
         fgets(s, 1024, fp);
-        sscanf(s, "%i\t%i\t%i\t%i",
-               &cmeshelem[i].p[0], &cmeshelem[i].p[1], &cmeshelem[i].p[2],
-               &cmeshelem[i].lbl);
+        const char *p = s;
+        (void)(fio_int(p, cmeshelem[i].p[0]) && fio_int(p, cmeshelem[i].p[1]) &&
+               fio_int(p, cmeshelem[i].p[2]) && fio_int(p, cmeshelem[i].lbl));
         if (cmeshelem[i].lbl >= 0 && cmeshelem[i].lbl < (int)labellist.size())
             cmeshelem[i].blk = labellist[cmeshelem[i].lbl].BlockType;
         // Copy topology to display element

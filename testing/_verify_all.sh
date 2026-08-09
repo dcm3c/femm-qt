@@ -22,4 +22,9 @@ run MOBHCurveTest.py         MOBHCurveCompare.py         OF_bh_result.txt    fq_
 run EOPointValueTest.py      ScalarPointValueCompare.py  OF_eopv_result.txt  fq_eopv_result.txt
 run COPointValueTest.py      ScalarPointValueCompare.py  OF_copv_result.txt  fq_copv_result.txt
 run HOPointValueTest.py      ScalarPointValueCompare.py  OF_hopv_result.txt  fq_hopv_result.txt
+
+printf "%-26s " "FluxConstraint:"; python3 FluxConstraintTest.py "$B" | tail -1
+printf "%-26s " "Transient:"; python3 TransientTest.py "${B%femm_headless.exe}fkn.exe" "$B" | tail -1
+printf "%-26s " "IncrementalLorentz:"; python3 IncrementalLorentzTest.py "$B" | tail -1
+printf "%-26s " "FQReference:"; python3 FQReferenceCompare.py | tail -1
 echo "ALL DONE"

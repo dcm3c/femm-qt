@@ -15,6 +15,23 @@ namespace femm_py {
 Module femm_module;
 }  // namespace femm_py
 
+// GC finaliser. FemmFn's impl/raw_impl are plain `new`-ed std::functions on the
+// C++ heap; the collector reclaims the FemmFn itself (and its m_malloc'd name)
+// but knows nothing about those, so without this they leak. Re-registering a
+// binding -- which every open()/newdocument()/loadsolution() does, ~89 names per
+// editor and ~50 per postprocessor -- supersedes the old object and would
+// otherwise strand one allocation per name.
+//
+// Nulled after deletion so a double finalise is harmless.
+extern "C" mp_obj_t femm_fn_del(mp_obj_t self_in) {
+    femm_py::FemmFn *self = (femm_py::FemmFn *)MP_OBJ_TO_PTR(self_in);
+    delete self->impl;
+    self->impl = nullptr;
+    delete self->raw_impl;
+    self->raw_impl = nullptr;
+    return mp_const_none;
+}
+
 extern "C" mp_obj_t femm_fn_call(mp_obj_t self_in, size_t n_args, size_t n_kw,
                                  const mp_obj_t *args) {
     femm_py::FemmFn *self = (femm_py::FemmFn *)MP_OBJ_TO_PTR(self_in);

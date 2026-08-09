@@ -7,6 +7,7 @@
 
 #include "elec_results_doc.h"
 #include "utf8_io.h"
+#include "fastio.h"
 #include "fknDlg.h"   // CFknDlg (needed for MakeMask PCG solver progress)
 #include "spars.h"     // CBigLinProb (sparse matrix for MakeMask Laplace solve)
 #include <cstdio>
@@ -407,13 +408,14 @@ bool ElecResultsDoc::OpenDocument(const std::string &pathname)
         }
     }
 
-    // Read mesh nodes
+    // Read mesh nodes -- cursor parse (fastio.h), the .ans load hot loop
     fscanf(fp, "%i\n", &k);
     meshnode.resize(k);
     for (i = 0; i < k; i++) {
         fgets(s, 1024, fp);
-        sscanf(s, "%lf\t%lf\t%lf\t%i", &meshnode[i].x, &meshnode[i].y,
-               &meshnode[i].V, &meshnode[i].Q);
+        const char *p = s;
+        (void)(fio_double(p, meshnode[i].x) && fio_double(p, meshnode[i].y) &&
+               fio_double(p, meshnode[i].V) && fio_int(p, meshnode[i].Q));
     }
 
     // Read mesh elements
@@ -421,9 +423,9 @@ bool ElecResultsDoc::OpenDocument(const std::string &pathname)
     meshelem.resize(k);
     for (i = 0; i < k; i++) {
         fgets(s, 1024, fp);
-        sscanf(s, "%i\t%i\t%i\t%i",
-               &meshelem[i].p[0], &meshelem[i].p[1], &meshelem[i].p[2],
-               &meshelem[i].lbl);
+        const char *p = s;
+        (void)(fio_int(p, meshelem[i].p[0]) && fio_int(p, meshelem[i].p[1]) &&
+               fio_int(p, meshelem[i].p[2]) && fio_int(p, meshelem[i].lbl));
         if (meshelem[i].lbl >= 0 && meshelem[i].lbl < (int)labellist.size())
             meshelem[i].blk = labellist[meshelem[i].lbl].BlockType;
     }

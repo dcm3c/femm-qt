@@ -1,0 +1,16 @@
+
+===================  heatFlow1 (axisymmetric)  ===================
+  [0] Average temperature       :   re=274.3616459678424   im=0
+  [1] Cross-section area        :   re=10.766987276080659   im=0
+  [2] Volume                    :   re=114.75205957816742   im=0
+  [3] Average F (heat flux)     :   re=0.9117128600435426   im=2.007166094930905e-15
+  [4] Average G (temp gradient) :   re=1.8234257200870851   im=4.01433218986181e-15
+
+===================  heatFlow2 (planar)  ===================
+  [0] Average temperature       :   re=276.1010070740236   im=0
+  [1] Cross-section area        :   re=10.766987276080659   im=0
+  [2] Volume                    :   re=41.022221521867415   im=0
+  [3] Average F (heat flux)     :   re=1.4196198735928924   im=-2.0914824096430905e-16
+  [4] Average G (temp gradient) :   re=2.839239747185785   im=-4.182964819286181e-16
+
+Done.

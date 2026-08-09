@@ -3,6 +3,7 @@
 
 // heat_handler.cpp — Heat flow postprocessor dialogs
 #include "heat_handler.h"
+#include "xy_plot.h"
 #include "scalar_results_widget.h"
 #include "heat_results_doc.h"
 #include "scalar_prefs_dialog.h"
@@ -97,25 +98,16 @@ void HeatFlowHandler::showXYPlotDialog(QWidget *parent)
 {
     if (!m_doc) return;
     if (m_doc->contour.size() < 2) { m_widget->emitStatus("Define a contour path first (use Contour mode)"); return; }
-    QStringList types;
-    types << "Temperature" << "|F| (flux magnitude)" << "F.n" << "F.t"
-          << "|G| (gradient)" << "G.n" << "G.t";
-    bool ok;
-    QString choice = QInputDialog::getItem(parent, tr("X-Y Plot"), tr("Plot type:"), types, 0, false, &ok);
-    if (!ok) return;
-    int plotType = types.indexOf(choice);
+    // The list lives in libfemm so *_makeplot can label its exported
+    // columns with the same names.
+    const QStringList types = xyplot::quantityList(xyexport::heatPlotNames());
+    int plotType = 0, npts = 0;
+    if (!xyplot::prompt(parent, types, 0, "ho/plotPoints", plotType, npts)) return;
+
     std::vector<HeatResultsDoc::XYPlotPoint> pts;
-    int npts = QSettings().value("ho/plotPoints", 1500).toInt();
     m_doc->GetLineValues(pts, plotType, npts);
     if (pts.empty()) { m_widget->emitStatus("No data for plot"); return; }
-    auto *pdlg = new PlotDialog(choice, parent);
-    pdlg->setAttribute(Qt::WA_DeleteOnClose);
-    PlotSeries series;
-    series.label = choice;
-    for (auto &pt : pts) { series.x.push_back(pt.x); series.y.push_back(pt.vals.empty() ? 0 : pt.vals[0]); }
-    pdlg->plot()->addSeries(series);
-    pdlg->plot()->setAxisLabels(tr("Position"), choice);
-    pdlg->show();
+    xyplot::showAlongContour(parent, types[plotType], pts);
 }
 
 void HeatFlowHandler::showCircuitDialog(QWidget *parent)

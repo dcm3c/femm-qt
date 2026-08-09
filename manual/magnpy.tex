@@ -51,6 +51,42 @@ and SciPy, ships with FEMM and is available to scripts as
 \verb+import numpy as np+ (and \verb+import scipy+).  It implements much, but
 not all, of the NumPy API.
 
+\section{Predefined Constants and Units}
+
+A number of constants are predefined and can be used in any script.
+Because every edit box in the user interface is evaluated by Python, they
+can equally well be typed into an edit box in place of a number.
+
+\begin{itemize}
+\item{\tt pi}, {\tt Pi}, {\tt PI} --- $\pi$.
+\item{\tt uo}, {\tt muo} --- the magnetic permeability of free space,
+$4 \pi \times 10^{-7}$.
+\item{\tt eo} --- the electrical permittivity of free space,
+$8.8541878188 \times 10^{-12}$.
+\end{itemize}
+
+A set of unit names is predefined as well.  Each is equal to the value of
+one of that unit in the SI unit that FEMM expects for the quantity, so
+multiplying by one converts a number written in convenient units into the
+units the program wants.  Entering {\tt 1000*Oersted} in a field
+intensity box, for example, is the same as entering {\tt 79577.47}.
+
+\begin{itemize}
+\item{\bf Length}, in meters: {\tt meter}, {\tt inch}, {\tt cm},
+{\tt mm}, {\tt um} ({\tt micron}), and {\tt mil}.
+\item{\bf Flux density}, in Tesla: {\tt Tesla}, {\tt mTesla},
+{\tt Gauss}, {\tt kGauss}.
+\item{\bf Field intensity}, in Amp/Meter: {\tt AmpMeter},
+{\tt kAmpMeter}, {\tt Oersted}, {\tt kOersted}.
+\end{itemize}
+
+Plural and capitalized spellings are accepted throughout, so
+{\tt inch}, {\tt inches}, {\tt Inch} and {\tt Inches} all mean the same
+thing.
+
+Finally, {\tt AWG(n)} returns the diameter in millimeters of American
+Wire Gauge size {\tt n}.
+
 \section{Common Scripting Command Set}
 
 A number of FEMM-specific scripting commands exist that are not
@@ -562,10 +598,9 @@ The various properties that can be modified are listed below:
 view to the file specified by {\tt "filename"}, subject to the {\tt
 printf}-type formatting explained previously for the {\tt
 savefemmfile} command.
-\item{\tt mi\_savemetafile("filename")} saves a metafile screenshot of the current
-view to the file specified by {\tt "filename"}, subject to the {\tt
-printf}-type formatting explained previously for the {\tt
-savefemmfile} command.
+\item{\tt mi\_savemetafile("filename")} is retained for script
+compatibility but does nothing: femm-qt has no metafile output.  Use {\tt
+mi\_savebitmap} to save a picture of the current view.
 \item{\tt mi\_refreshview()} Redraws the current view.
 \item{\tt mi\_close()} Closes current magnetics preprocessor
 document and destroys magnetics preprocessor window.
@@ -600,9 +635,9 @@ is applied to any region that has not been explicitly labeled.
 attribute for the selected block labels.
 
 \item{\tt mi\_makeABC(n,R,x,y,bc)} creates a series of circular shells that emulate the
-impedance of an unbounded domain (i.e. an Inprovised Asymptotic Boundary
+impedance of an unbounded domain (i.e. an Improvised Asymptotic Boundary
 Condition).  The {\tt n} parameter contains the number of shells to be used
-(should be between 1 and 10), {\tt R} is the radius of the solution domain, and
+(should be between 1 and 12), {\tt R} is the radius of the solution domain, and
 {\tt (x,y)} denotes the center of the solution domain.  The {\tt bc} parameter should
 be specified as 0 for a Dirichlet outer edge or 1 for a Neumann outer edge.
 If the function is called without all the parameters, the function makes up
@@ -728,10 +763,12 @@ For magnetostatic problems, all imaginary quantities are zero.
 Allows scripted access to the X-Y plot routines.  If only {\tt PlotType} or only {\tt PlotType}
 and {\tt NumPoints} are specified, the command is interpreted as a request to plot the
 requested plot type to the screen.  If, in addition, the {\tt Filename} parameter is specified,
-the plot is instead written to disk to the specified file name as an extended metafile.
-If the {\tt FileFormat} parameter is also, the command is instead interpreted as a command to
-write the data to disk to the specfied file name, rather than display it to make a
-graphical plot.
+the sampled values are written to that file instead of being plotted, in exactly the
+format the {\tt Export...} button on the plot window produces: comma-separated values
+with a header row naming the columns, then one row per point holding the position along
+the contour followed by one column for each plotted quantity.  A fourth
+{\tt FileFormat} argument is accepted and ignored; there is only one data format, and
+no metafile output.
 Valid entries for {\tt PlotType} are:
 \begin{center}
 \begin{tabular}{ll} \hline
@@ -748,29 +785,15 @@ Valid entries for {\tt PlotType} are:
 \hline
 \end{tabular}
 \end{center}
-Valid file formats are
-\begin{center}
-\begin{tabular}{ll} \hline
-{\tt FileFormat} & Definition \\ \hline
-0 & Multi-column text with legend \\
-1 & Multi-column text with no legend \\
-2 & Mathematica-style formatting \\
-\hline
-\end{tabular}
-\end{center}
 For example, if one wanted to plot $B \cdot n$ to the screen with 200 points evaluated to
 make the graph, the command would be:
 
 \begin{tabular}{l} {\tt mo\_makeplot(2,200)} \end{tabular}
 
-If this plot were to be written to disk as a metafile, the command would be:
-
-\begin{tabular}{l} \verb+mo_makeplot(2,200,"c:\\temp\myfile.emf")+ \end{tabular}
-
-To write data instead of a plot to disk, the command would
+To write the data to disk instead of plotting it, the command would
 be of the form:
 
-\begin{tabular}{l} \verb+mo_makeplot(2,200,"c:\\temp\myfile.txt",0)+ \end{tabular}
+\begin{tabular}{l} \verb+mo_makeplot(2,200,"c:\\temp\myfile.txt")+ \end{tabular}
 
 \item \verb+mo_getprobleminfo()+
 Returns info on problem description.  Returns four values:
@@ -972,10 +995,9 @@ use a path you must use two backslashes ({\em e.g.}
 enclose the file name in (extra) quotes by using a
 \verb+\"+ sequence. For example:\\
  \verb+mo_save_bitmap("\"c:\\temp\\screenshot.bmp\"")+
-\item{\tt mo\_savemetafile("filename")} saves a metafile screenshot of the current
-view to the file specified by {\tt "filename"}, subject to the {\tt
-printf}-type formatting explained previously for the {\tt
-savebitmap} command.
+\item{\tt mo\_savemetafile("filename")} is retained for script
+compatibility but does nothing: femm-qt has no metafile output.  Use {\tt
+mo\_savebitmap} to save a picture of the current view.
 \item{\tt mo\_shownames(flag)} This function allow the user to display or hide the block label
 names on screen.  To hide the block label names, {\tt flag} should be 0.  To display the
 names, the parameter should be set to 1.

@@ -239,10 +239,32 @@ do{
 		TheView->m_prog1.SetPos(0);
 		pctr=0;
 
-   if (Iter>0) L.Wipe();
+	// Split assembly. Linear elements' contributions do not depend on the
+	// previous iterate, so pass 1 assembles them once and snapshots the matrix
+	// (the STRUCTURE is complete after pass 0, and Wipe keeps it); later
+	// passes restore the snapshot and reassemble only the nonlinear elements.
+	// sweepSel: 0 = all elements, 1 = linear only, 2 = nonlinear only.
+	int baselineOK=1;
+	if (Iter==1) L.Wipe();
+	else if (Iter>1){
+		if (L.RestoreBaseline()==0){ L.Wipe(); baselineOK=0; }
+	}
+	int sweepA, sweepB;
+	if (Iter==0 || !baselineOK){ sweepA=0; sweepB=0; }
+	else if (Iter==1){ sweepA=1; sweepB=2; }
+	else { sweepA=2; sweepB=2; }
+
+	for (int sweepSel=sweepA; sweepSel<=sweepB; sweepSel++){
+	if (sweepSel==2 && Iter==1) L.SaveBaseline();
 
 	// build element matrices using the matrices derived in Allaire's book.
 	for(i=0;i<NumEls;i++){
+
+		if (sweepSel!=0){
+			int isNL = (blockproplist[meshele[i].blk].BHpoints>0);
+			if (sweepSel==1 && isNL)  continue;
+			if (sweepSel==2 && !isNL) continue;
+		}
 
 		// update ``building matrix'' progress bar...
 		j=(i*20)/NumEls+1;
@@ -633,6 +655,7 @@ do{
 ///////////////////////////////////////////////////
 
 	}
+	}  // end sweepSel (split assembly)
 
 	// add in contribution from point currents;
 	for(i=0;i<NumNodes;i++)
@@ -784,7 +807,14 @@ do{
 	// nonlinear iteration has to have a looser tolerance
 	// than the linear solver--otherwise, things can't ever
 	// converge.  Arbitrarily choose 100*tolerance.
-	if((res<100.*Precision) && Iter>0) LinearFlag=TRUE;
+	// Accept convergence only off a pass whose inner solve ran at the full-
+	// Precision floor, as the static solvers now do (b8d9c76): the adaptive
+	// tolerance above is set from the PREVIOUS pass's res, so a quadratic
+	// Newton jump could otherwise terminate on a loosened solve. Successive
+	// Approximation never adapts L.Precision, so it is untouched by
+	// construction.
+	if((res<100.*Precision) && Iter>0 && (!L.bNewton || L.Precision<=Precision))
+		LinearFlag=TRUE;
 
 	Iter++;
 

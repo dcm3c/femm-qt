@@ -1,0 +1,20 @@
+
+===================  electrostatic1 (axisymmetric)  ===================
+  [0] Stored energy       :   re=0.22384807559312894   im=0
+  [1] Cross-section area  :   re=20399.68157437976   im=0
+  [2] Volume              :   re=9342123.272895388   im=0
+  [3] Average D           :   re=2.5957134493325496e-10   im=-1.5046559665914731e-10
+  [4] Average E           :   re=28.323218499477008   im=-0.5685298061851033
+  [5] WST force           :   re=0   im=-0.004729844571573117
+  [6] WST torque          :   re=0   im=0
+
+===================  electrostatic2 (planar)  ===================
+  [0] Stored energy       :   re=0.48134662246439786   im=0
+  [1] Cross-section area  :   re=40799.38687582122   im=0
+  [2] Volume              :   re=6119908.031373166   im=0
+  [3] Average D           :   re=-8.715265678758449e-17   im=-3.8526855541378834e-10
+  [4] Average E           :   re=-2.0863991173268584e-07   im=-5.970141483870592
+  [5] WST force           :   re=5.865924114412704e-07   im=-0.022666626978289948
+  [6] WST torque          :   re=-3.4000207560985842   im=0
+
+Done.

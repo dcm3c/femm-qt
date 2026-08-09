@@ -32,3 +32,8 @@ fq_bh_result.txt
 fq_eopv_result.txt
 fq_hopv_result.txt
 fq_copv_result.txt
+
+# The committed femm-qt self-consistency reference IS tracked (the bare
+# fq_*.txt patterns above would otherwise ignore it at any depth).
+!fq_reference/
+!fq_reference/*

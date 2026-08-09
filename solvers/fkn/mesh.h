@@ -133,7 +133,12 @@ class CBoundaryProp
 
 		double InnerAngle;		// parameters needed to build air gap element
 		double OuterAngle;
-		
+
+		// Name, kept so an air gap element read back from a previous
+		// solution can be matched to its boundary property -- the source of
+		// the CURRENT step's rotor angle in a transient analysis.
+		char BdryName[80];
+
 		// TO DO:  ``flux pipe?'' and ''line currents''
 		// Line currents might be redundant, since we already have magnetization.
 
@@ -195,6 +200,15 @@ class CAirGapElement
 		CComplex agc;			// center of the air gap element
 
 		CQuadPoint *node;  // mapping of mesh nodes onto an annular ring
+
+		// The raw gap-ring node lists tangle identified (totalArcElements
+		// entries each), persisted through the .ans so a transient step can
+		// reuse the previous mesh and rebuild node[] at the CURRENT rotor
+		// angle -- the pairing above is angle-baked, these are not. NULL when
+		// unavailable (old .ans, or the OF-style file pipeline), in which
+		// case mesh reuse falls back to remeshing.
+		int *ringInner;
+		int *ringOuter;
 
 	private:
 };

@@ -1,0 +1,6 @@
+===  electrostatic1 (axi)  ===
+  +10000V        = 10000 0 | 4.476961604e-05 0
+===  electrostatic2 (planar)  ===
+  +10000V        = 10000 0 | 9.626932713e-05 0
+
+Done.

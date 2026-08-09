@@ -23,7 +23,7 @@ int CFemmeDocCore::StaticAxisymmetric(CBigLinProb &L)
 	double a,K,r,t=0,x,y,B,mu,R,rn[3],a_hat,R_hat,Cduct;
 	double c=PI*4.e-05;
 	double units[]={2.54,0.1,1.,100.,0.00254,1.e-04};
-	double *V_old,*CircInt1=0,*CircInt2=0,*CircInt3=0;
+	double *V_old,*CircInt1=0,*CircInt2=0,*CircInt3=0,*CircInt2t=0;
 	int flag,Iter=0,pctr;
 	int LinearFlag=TRUE;
 	int bIncremental = FALSE;
@@ -33,8 +33,18 @@ int CFemmeDocCore::StaticAxisymmetric(CBigLinProb &L)
 	if (PrevSoln.GetLength() > 0) bIncremental = PrevType;
 	res=0;
 
+	// Transient (backward-Euler) analysis; see prob1big for the rationale
+	// behind keeping this independent of PrevType.
+	const int bTransient = (DeltaT>0);
+	const int VoltRowBase = NumNodes + NumFluxConstraints + NumCurrentConstraints;
+
 	CElement *El;
-	V_old=(double *) calloc(NumNodes,sizeof(double));
+	V_old=(double *) calloc(NumNodesPlus,sizeof(double));
+
+	const int bAprevLoaded = (bTransient && Aprev!=NULL);
+
+	if ((bTransient) && (Aprev==NULL))
+		Aprev=(double *) calloc(NumNodes,sizeof(double));
 
 	for(i=0;i<NumBlockLabels;i++) GetFillFactor(i);
 
@@ -48,6 +58,9 @@ int CFemmeDocCore::StaticAxisymmetric(CBigLinProb &L)
 		CircInt1=(double *)calloc(NumCircProps,sizeof(double));
 		CircInt2=(double *)calloc(NumCircProps,sizeof(double));
 		CircInt3=(double *)calloc(NumCircProps,sizeof(double));
+		// Conductivity integral for the transient classification -- see the
+		// planar twin for why it cannot reuse CircInt2.
+		CircInt2t=(double *)calloc(NumCircProps,sizeof(double));
 		for(i=0;i<NumEls;i++){
 			if(meshele[i].lbl>=0)
 			if(labellist[meshele[i].lbl].InCircuit!=-1){
@@ -74,6 +87,8 @@ int CFemmeDocCore::StaticAxisymmetric(CBigLinProb &L)
 
 				CircInt2[labellist[El->lbl].InCircuit]+=
 					100.*a*Cduct/r;
+				CircInt2t[labellist[El->lbl].InCircuit]+=
+					100.*a*EddyCduct(El->blk,El->lbl)/r;
 				
 				CircInt3[labellist[El->lbl].InCircuit]+=
 					blockproplist[El->blk].Jr*a*100.;
@@ -82,7 +97,13 @@ int CFemmeDocCore::StaticAxisymmetric(CBigLinProb &L)
 
 		for(i=0;i<NumCircProps;i++)
 		{
-			if (circproplist[i].CircType==0)
+			// Transient solid conductor in a current-driven circuit: the
+			// voltage gradient becomes a matrix unknown (prob4big Case 2).
+			if (bTransient && (circproplist[i].CircType==0) && (CircInt2t[i]!=0))
+			{
+				circproplist[i].Case=2;
+			}
+			else if (circproplist[i].CircType==0)
 			{
 				if(CircInt2[i]==0){
 					circproplist[i].Case=1;
@@ -116,7 +137,12 @@ do{
 	TheView->m_prog1.SetPos(0);
 	pctr=0;
 
-	if(Iter>0) L.Wipe();
+	// Split assembly -- see prob1big/prob4big.
+	int baselineOK=1;
+	if (Iter==1) L.Wipe();
+	else if (Iter>1){
+		if (L.RestoreBaseline()==0){ L.Wipe(); baselineOK=0; }
+	}
 	else{
 		if (bIncremental==1)
 		{
@@ -129,16 +155,125 @@ do{
 		else if ((bIncremental==0) && (PrevSoln.GetLength()>0))
 		{
 			// load initial guess from the explicitly specified previous solution
-			bRestart = LoadPrevA(PrevSoln,L.V);
+			// mesh reuse: the previous solution is already in memory (raw,
+			// as stored); the guess and Aprev rescales below handle units.
+			if (bAprevLoaded){
+				for(i=0;i<NumNodes;i++) L.V[i]=Aprev[i]/c;
+				bRestart=1;
+			}
+			else
+			bRestart = LoadPrevA(PrevSoln,L.V,Aprev);
+
+			if ((bTransient) && (bRestart==0))
+			{
+				MsgBox("Transient step: could not read the previous solution\n"
+				       "\"%s\".\nIt must be a DC solution on the same mesh.",
+				       (const char *)PrevSoln);
+				return FALSE;
+			}
 		}
 
 		if (bRestart>0)
 		{
 			for(i=0;i<NumNodes;i++) if (meshnode[i].x > 1.e-06)	L.V[i]/=(meshnode[i].x*0.01*2*PI);
 		}
+
+		// The axisymmetric .ans stores 2*pi*r*A rather than A, so A_prev
+		// needs the same rescale the initial guess just got, plus the /c
+		// LoadPrevA applies to V but not to the raw copy. On-axis nodes
+		// carry no flux, hence no eddy current -- leave them zero.
+		if (bTransient && Aprev!=NULL)
+		{
+			for(i=0;i<NumNodes;i++)
+				Aprev[i] = (meshnode[i].x > 1.e-06)
+				         ? (Aprev[i]/(meshnode[i].x*0.01*2*PI)) : 0.0;
+		}
 	}
 
+	int sweepA, sweepB;
+	if (Iter==0 || !baselineOK){ sweepA=0; sweepB=0; }
+	else if (Iter==1){ sweepA=1; sweepB=2; }
+	else { sweepA=2; sweepB=2; }
+
+	for (int sweepSel=sweepA; sweepSel<=sweepB; sweepSel++){
+	if (sweepSel==2 && Iter==1) L.SaveBaseline();
+
+	// ---- Transient (backward-Euler) eddy currents, axisymmetric ----------
+	//
+	// prob4big.cpp:412-430 and :488-497 with j*omega -> 1/DeltaT and real
+	// arithmetic, plus the A_prev forcing backward Euler adds. Two things
+	// differ from the planar case beyond the radius weighting:
+	//
+	//  - the mass matrix is LUMPED, not consistent: prob4big interpolates
+	//    the induced current as constant over the element, giving an
+	//    all-equal 3x3 block (K*4/3 in every entry) rather than the
+	//    (2,1,1) pattern. The A_prev forcing inherits that, so every node
+	//    of an element gets the same value, proportional to sum(Vprev).
+	//  - the Case-2 voltage row's diagonal is K/R where the node coupling
+	//    is K/3 -- a real asymmetry, from the 1/r in the axisymmetric
+	//    voltage gradient, not a transcription slip.
+	//
+	// Baseline sweep only: both terms are V-independent within a step, so
+	// this keeps them out of the per-pass reassembly and out of the
+	// double-add hazard (see prob1big).
+	if (bTransient && (sweepSel<=1))
+	for(i=0;i<NumEls;i++)
+	{
+		El=&meshele[i];
+		Cduct=EddyCduct(El->blk,El->lbl);
+		if (Cduct==0) continue;
+
+		for(k=0;k<3;k++) n[k]=El->p[k];
+		p[0]=meshnode[n[1]].y-meshnode[n[2]].y;
+		p[1]=meshnode[n[2]].y-meshnode[n[0]].y;
+		p[2]=meshnode[n[0]].y-meshnode[n[1]].y;
+		q[0]=meshnode[n[2]].x-meshnode[n[1]].x;
+		q[1]=meshnode[n[0]].x-meshnode[n[2]].x;
+		q[2]=meshnode[n[1]].x-meshnode[n[0]].x;
+		a=(p[0]*q[1]-p[1]*q[0])/2.;
+		R=(meshnode[n[0]].x+meshnode[n[1]].x+meshnode[n[2]].x)/3.;
+		if (R<1.e-06) continue;   // degenerate on-axis sliver
+
+		double Km=R*a*Cduct*c/(6.*DeltaT);
+		double Vps=0;
+		for(j=0;j<3;j++) Vps += (Aprev!=NULL)?(Aprev[n[j]]/c):0.0;
+
+		for(j=0;j<3;j++){
+			for(k=j;k<3;k++) L.AddTo(Km*4./3., n[j], n[k]);
+			L.b[n[j]] += Km*4./3.*Vps;
+		}
+
+		int ic=labellist[El->lbl].InCircuit;
+		if ((ic>=0) && (circproplist[ic].Case==2)){
+			int col=VoltRowBase+ic;
+			double Kc=2.*a*Cduct*c/DeltaT;
+			for(j=0;j<3;j++) L.AddTo(Kc/3., n[j], col);
+			L.AddTo(Kc/R, col, col);
+			L.b[col] += (Kc/3.)*Vps;
+			L.b[col] += 2.*R*blockproplist[El->blk].Jr*a/3.;
+		}
+	}
+
+	// Total-current right-hand side, once per Case-2 circuit. prob4big:672
+	// carries an extra factor of 2 relative to the planar form.
+	if (bTransient && (sweepSel<=1))
+	for(i=0;i<NumCircProps;i++)
+		if (circproplist[i].Case==2)
+			L.b[VoltRowBase+i] -= 2.*0.01*circproplist[i].Amps_re;
+
+	// Pin the diagonal of voltage rows no conductor claimed (see prob1big).
+	if (bTransient && (sweepSel<=1))
+	for(j=0;j<NumVoltageUnknowns;j++)
+		if (L.Get(VoltRowBase+j,VoltRowBase+j)==0)
+			L.Put(1.0,VoltRowBase+j,VoltRowBase+j);
+
 	for(i=0;i<NumEls;i++){
+
+		if (sweepSel!=0){
+			int isNL = (blockproplist[meshele[i].blk].BHpoints != 0);
+			if (sweepSel==1 && isNL)  continue;
+			if (sweepSel==2 && !isNL) continue;
+		}
 
 		// update ``building matrix'' progress bar...
 		j=(i*20)/NumEls+1;
@@ -298,6 +433,10 @@ do{
 		// contribution to be from current density in the block
 		for(j=0,El->Jprev=0;j<3;j++)
 		{
+			// see the matching comment in prob1big: clear t FIRST, or a case
+			// the branches below do not assign inherits the previous element's
+			// value.
+			t=0;
 			if(labellist[El->lbl].InCircuit>=0)
 			{
 				k=labellist[El->lbl].InCircuit;
@@ -305,7 +444,6 @@ do{
 				if(circproplist[k].Case==0)
 					t=-100.*circproplist[k].dV.Re()*blockproplist[El->blk].Cduct/R;
 			}
-			else t=0;
 			K=-2.*R*(blockproplist[El->blk].Jr+t)*a/3.;
 			be[j]+=K;
 
@@ -529,6 +667,7 @@ do{
 			L.b[n[j]]-=be[j];
 		}
 	}
+	}  // end sweepSel (split assembly)
 
 	// add in contribution from point currents;
 	for(i=0;i<NumNodes;i++)
@@ -619,6 +758,12 @@ do{
 
 	// solve the problem;
 	for(j=0;j<NumNodes;j++) V_old[j]=L.V[j];
+	if (bTransient) for(j=VoltRowBase;j<NumNodesPlus;j++) V_old[j]=L.V[j];
+
+	// Inexact inner solves for the nonlinear iteration -- see prob1big.
+	L.Precision=std::min(1.e-4,1.e-4*res);
+	if (L.Precision<Precision) L.Precision=Precision;
+
 	if (L.PCGSolve(Iter + bRestart)==FALSE) return FALSE;
 
 	if (LinearFlag==FALSE){
@@ -642,6 +787,9 @@ do{
             else Relax+= 0.1 * (1. - Relax);
        
             for(j=0;j<NumNodes;j++) L.V[j]=Relax*L.V[j]+(1.0-Relax)*V_old[j];
+            if (bTransient)
+                for(j=VoltRowBase;j<NumNodesPlus;j++)
+                    L.V[j]=Relax*L.V[j]+(1.0-Relax)*V_old[j];
         }
 
        
@@ -657,7 +805,9 @@ do{
 	// nonlinear iteration has to have a looser tolerance
 	// than the linear solver--otherwise, things can't ever
 	// converge.  Arbitrarily choose 100*tolerance.
-	if((res<100.*Precision) && Iter>0) LinearFlag=TRUE;
+	// Accept convergence only off a pass whose inner solve met the file's
+	// full Precision -- see prob1big.
+	if((res<100.*Precision) && Iter>0 && (L.Precision<=Precision)) LinearFlag=TRUE;
 
 	Iter++;
 	
@@ -668,12 +818,20 @@ do{
 		L.b[i]=L.V[i]*c;
 		L.b[i]*=(meshnode[i].x*0.01*2*PI);
 	}
+	for (i=NumNodes;i<NumNodesPlus;i++) L.b[i]=L.V[i];
+	// Convert the voltage unknown to the dV the postprocessor expects.
+	// prob4big:827 carries an extra 0.01 relative to the planar form.
+	if (bTransient)
+		for (i=0;i<NumCircProps;i++)
+			if (circproplist[i].Case==2)
+				L.b[VoltRowBase+i]=c*0.01*L.V[VoltRowBase+i]/DeltaT;
 
 	free(V_old);
 	if(NumCircProps>0){
 		free(CircInt1);
 		free(CircInt2);
 		free(CircInt3);
+		free(CircInt2t);
 	}
 
 	return TRUE;
