@@ -54,6 +54,9 @@ void HeatFlowHandler::showIntegrateDialog(QWidget *parent, OutputDialog *out)
         if (!ok) return;
         int intType = types.indexOf(choice);
         double z[4] = {};
+        // Sampling density comes from the user's preference, read here rather
+        // than at load time so a change takes effect on the next integral.
+        m_doc->d_LineIntegralPoints = QSettings().value("ho/liPoints", 400).toInt();
         m_doc->LineIntegral(intType, z);
         QString text;
         switch (intType) {

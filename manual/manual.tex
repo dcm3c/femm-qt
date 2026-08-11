@@ -42,7 +42,11 @@
 % Figures are extension-less so a regenerated .png supersedes the
 % legacy .ps without touching the text; .ps is kept last as a fallback
 % for any figure not yet converted.
-\DeclareGraphicsExtensions{.png,.pdf,.jpg,.eps,.ps}
+% No .eps/.ps fallback on purpose. While the PostScript originals were still
+% here, a figure with no .png silently fell back to its 2004 PostScript and
+% the build stayed clean, so a missed capture was invisible. Now a missing
+% figure is an error, which is what it should have been all along.
+\DeclareGraphicsExtensions{.png,.pdf,.jpg}
 \usepackage[export]{adjustbox}   % max width= key for \includegraphics
 \usepackage{hyperref}
 
@@ -95,13 +99,13 @@ FEMM is a suite of programs for solving low frequency
 electromagnetic problems on two-dimensional planar and axisymmetric
 domains.  The program currently addresses linear/nonlinear
 magnetostatic problems, linear/nonlinear time harmonic magnetic
-problems, linear electrostatic problems, steady-state heat
-flow problems, and current flow problems
+problems, linear electrostatic problems, steady-state and transient
+heat flow problems, and current flow problems.
 
 FEMM is divided into three parts:
 
 \begin{itemize}
-\item Interactive shell ({\tt femm\_gui.exe}).  This program is a Multiple
+\item Interactive shell ({\tt femm\_gui}).  This program is a Multiple
 Document Interface pre-processor and a post-processor for the
 various types of problems solved by FEMM. It contains a CAD-like
 interface for laying out the geometry of the problem to be solved
@@ -113,23 +117,34 @@ inspect the field at arbitrary points, as well as evaluate a number
 of different integrals and plot various quantities of interest
 along user-defined contours.
 
-\item Headless shell ({\tt femm\_headless.exe}).  This program is a headless
+\item Headless shell ({\tt femm\_headless}).  This program is a headless
 version of the preprocessor and postprocessor, meant primarily
 for use with external scripting interfaces where a GUI is not needed.
 It can also be run interactively from a terminal, where it presents a
 Python read-eval-print loop (REPL) for entering commands directly.
 
-\item Solvers ({\tt fkn} for magnetics; {\tt belasolv} for
-electrostatics); {\tt hsolv} for heat flow problems; and
-{\tt csolv} for current flow problems. Each solver takes a set of 
-data files that describe problem and solves
+On Windows, a second copy of the same program is built as
+{\tt femm\_headlessw.exe}.  It is identical except that it is linked as a
+GUI-subsystem application, so it never opens a console window.  That is
+the copy the language bindings ({\tt pyfemm}, {\tt octavefemm},
+{\tt mathfemm}, {\tt juliafemm}, and the Lua client) launch, so that
+driving FEMM from another program does not make a console flash up.  Use
+{\tt femm\_headless} yourself, from a terminal or a batch script,
+where you want to see its output and be able to interrupt it with
+Ctrl+C --- neither of which the windowless copy can offer.  On Linux and
+macOS there is no such distinction and only {\tt femm\_headless} is
+built.
+
+\item Solvers ({\tt fkn} for magnetics, {\tt belasolv} for
+electrostatics, {\tt hsolv} for heat flow, and
+{\tt csolv} for current flow). Each solver takes a set of
+data files that describe the problem and solves
 the relevant partial differential equations to obtain values for
 the desired field throughout the solution domain.  The {\tt tangle}
 mesher is directly integrated into each solver.
 \end{itemize}
 
-The Python scripting language is integrated into the interactive
-shell. Python can both build and analyze a geometry and
+The Python scripting language is integrated into both shells. Python can both build and analyze a geometry and
 evaluate the post-processing results, simplifying the creation of
 various sorts of ``batch'' runs.
 
@@ -233,7 +248,7 @@ Computer-aided analysis and design of electromagnetic devices}
 \cite{Hoole}.  For an advanced treatment, the reader has no
 recourse but to refer to Jackson's {\em Classical electrodynamics}
 \cite{Jackson}.  For thermal problems, the author has found
-White's {\em Heat and mass tranfer} \cite{FrankWhite} and 
+White's {\em Heat and mass transfer} \cite{FrankWhite} and 
 Haberman's {\em Elementary applied partial differential equations}
 \cite{Haberman} to be useful in understanding the derivation and solution of
 steady-state temperature problems.  
@@ -241,13 +256,13 @@ steady-state temperature problems.
 \section{Relevant Partial Differential Equations}
 
 FEMM addresses some limiting cases of Maxwell's equations.  The
-magnetics problems addressed are those that can be consided as
-``low frequency problems,'' in which displacment currents can be
+magnetics problems addressed are those that can be considered as
+``low frequency problems,'' in which displacement currents can be
 ignored. Displacement currents are typically relevant to magnetics
 problems only at radio frequencies.  In a similar vein, the
 electrostatics solver considers the converse case in which only the
 electric field is considered and the magnetic field is neglected.
-FEMM also solves 2D/axysymmetric steady-state heat conduction problems.
+FEMM also solves 2D/axisymmetric heat conduction problems.
 This heat conduction problem is mathematically very similar to the
 solution of electrostatic problems.
 
@@ -315,7 +330,7 @@ and the constitutive relationship, (\ref{oE}) employed to yield:
 Substituting into~(\ref{static_nl_PDE}) yields the partial
 differential equation:
 \be \label{eddy_PDE} \nabla \times \left( \frac{1}{\mu(B)} \nabla \times A \right) =  - \sigma \dot{A} + J_{src} - \sigma \nabla V \ee
-where $J_{src}$ represents the applied currents sources.  The
+where $J_{src}$ represents the applied current sources.  The
 $\nabla V$ term is an additional voltage gradient that, in 2-D
 problems, is constant over a conducting body.  FEMM uses this
 voltage gradient in some harmonic problems to enforce constraints
@@ -325,8 +340,8 @@ FEMM considers (\ref{eddy_PDE}) for the case in which the field is
 oscillating at one fixed frequency.  For this case, a {\em phasor
 transformation} \cite{Hoole} yields a steady-state equation that is
 solved for the amplitude and phase of $A$.  This transformation is:
-\be \label{phasor_transformation} A= \mbox{Re}\left[a (\cos \omega t + j \sin \omega t) = \right]
-= \mbox{Re} \left[ a e^{j w t} \right] \ee
+\be \label{phasor_transformation} A= \mbox{Re}\left[a \left( \cos \omega t + j \sin \omega t \right) \right]
+= \mbox{Re} \left[ a e^{j \omega t} \right] \ee
 in which $a$ is a complex number.  Substituting into
 (\ref{eddy_PDE}) and dividing out the complex exponential term
 yields the equation that FEMM actually solves for harmonic magnetic
@@ -367,7 +382,7 @@ the charge contained within the volume:
 
 \noindent
 where \textit{$\rho $} represents charge density. The second is the
-differential form of Ampere's loop law:
+static form of Faraday's law of induction:
 
 \begin{equation}
 \label{eq2}
@@ -413,8 +428,9 @@ domain with user-defined sources and boundary conditions.
 
 \subsection{Heat Flow Problems}
 
-The heat flow problems address by FEMM are essentially steady-state
-heat conduction problems. These probelms are represented by a
+The heat flow problems addressed by FEMM are heat conduction
+problems, either steady-state or stepped forward in time from a
+previous solution. These problems are represented by a
 temperature gradient, $G$(analogous to the field intensity, $E$ for
 electrostatic problems), and heat flux density, $F$(analogous to
 electric flux density, $D$, for electrostatic problems).
@@ -540,7 +556,7 @@ At zero frequency, the term associated with electrical permittivity vanishes, le
 \label{quasielectrostatic7}
 - \sigma \nabla^2 V = 0
 \end{equation}
-By simply specifing a zero frequency, this formulation solves DC current flow problems
+By simply specifying a zero frequency, this formulation solves DC current flow problems
 in a consistent fashion.
 
 
@@ -576,7 +592,7 @@ example of this boundary condition is:
 \begin{displaymath}
 \frac{\partial A}{\partial n} + c A = 0
 \end{displaymath}
-This boundary condition is most often in FEMM to define ``impedance
+This boundary condition is most often used in FEMM to define ``impedance
 boundary conditions'' that allow a bounded domain to mimic the
 behavior of an unbounded region.  In the context of heat flow problems,
 this boundary condition can be interpreted as a convection boundary condition.
@@ -584,11 +600,11 @@ In heat flow problems, radiation boundary conditions are linearized about
 the solution from the last iteration. The linearized form of the radiation
 boundary condition is also a Robin boundary condition.
 \item {\em Periodic}
-A periodic boundary conditions joins two boundaries together.  In this
+A periodic boundary condition joins two boundaries together.  In this
 type of boundary condition, the boundary values on 
 corresponding points of the two boundaries are set equal to one another.
 \item {\em Antiperiodic}
-The antiperiodic boundary condition also joins to gether two boundaries.
+The antiperiodic boundary condition also joins together two boundaries.
 However, the boundary values are made to be of equal magnitude but
 opposite sign.
 \end{itemize}
@@ -624,22 +640,22 @@ cooling fluid temperature.
 \item {\em Radiation}
 Heat flux via radiation can be described mathematically as:
 \be k \frac{\partial T}{\partial n} + \beta k_{sb} \left( T^4 - T_o^4 \right) = 0 \ee
-where $beta$ is the emissivity of the surface (a dimensionless value between 0 and 1)
+where $\beta$ is the emissivity of the surface (a dimensionless value between 0 and 1)
 and $k_{sb}$ is the Stefan-Boltzmann constant.
 \item {\em Periodic}
-A periodic boundary conditions joins two boundaries together.  In this
+A periodic boundary condition joins two boundaries together.  In this
 type of boundary condition, the boundary values on 
 corresponding points of the two boundaries are set equal to one another.
 \item {\em Antiperiodic}
-The antiperiodic boundary condition also joins to gether two boundaries.
+The antiperiodic boundary condition also joins together two boundaries.
 However, the boundary values are made to be of equal magnitude but
 opposite sign.
 \end{itemize}
 
 If no boundary conditions are explicitly defined, each boundary
-defaults an insulated condition ({\em i.e.} no heat flux across the boundary).
+defaults to an insulated condition ({\em i.e.} no heat flux across the boundary).
 However, a non-derivative boundary condition must be defined somewhere (or the
-potential must be defined at one reference point in the domain) so
+temperature must be defined at one reference point in the domain) so
 that the problem has a unique solution.
 
 \section{Finite Element Analysis}
@@ -648,9 +664,9 @@ Although the differential equations of interest appear relatively
 compact, it is typically very difficult to get closed-form
 solutions for all but the simplest geometries.  This is where
 finite element analysis comes in.  The idea of finite elements is
-to break the problem down into a large number regions, each with a
+to break the problem down into a large number of regions, each with a
 simple geometry ({\em e.g.} triangles).  For example,
-Figure~{\ref{mass}} shows a map of the Massachusetts broken down
+Figure~{\ref{mass}} shows a map of Massachusetts broken down
 into triangles.
 \begin{figure}
 \centerline{\includegraphics[width=\textwidth]{mass}}
@@ -665,7 +681,7 @@ the exact solution.
 The advantage of breaking the domain down into a number of small
 elements is that the problem becomes transformed from a small but
 difficult to solve problem into a big but relatively easy to solve
-problem.  Through the process of discretizaton, a linear algebra
+problem.  Through the process of discretization, a linear algebra
 problem is formed with perhaps tens of thousands of unknowns.
 However, algorithms exist that allow the resulting linear algebra
 problem to be solved, usually in a short amount of time.
@@ -833,6 +849,14 @@ associated functions is contained in Table~\ref{hotkeys}.
 
 \vspace*{12pt}
 \begin{tabular}{|l|l|} \hline \hline
+\multicolumn{2}{|c|}{Mesh Sizing Keys (any mode)} \\ \hline \hline
+ Key    & Function \\ \hline \hline
+ F3     & Halve the mesh size on every block label \\ \hline
+ F4     & Double the mesh size on every block label \\ \hline \hline
+\end{tabular}
+
+\vspace*{12pt}
+\begin{tabular}{|l|l|} \hline \hline
 \multicolumn{2}{|c|}{View Manipulation Keys} \\ \hline \hline
  Key    & Function \\ \hline \hline
  Left Arrow  & Pan left \\ \hline
@@ -859,17 +883,26 @@ button click actions.
 \multicolumn{2}{|c|}{Point Mode} \\ \hline \hline
  Action    & Function \\ \hline \hline
  Left Button Click     & Create a new point at the current mouse pointer location \\ \hline
- Right Button Click    & Select the nearest point \\ \hline
- Right Button DblClick & Display coordinates of the nearest point \\ \hline \hline
+ Right Button Click    & Select or unselect the nearest point \\ \hline
+ Right Button DblClick & Report the nearest point's coordinates, nodal property and group \\ \hline \hline
 \end{tabular}
 
 \vspace*{12pt}
 \begin{tabular}{|l|l|} \hline \hline
-\multicolumn{2}{|c|}{Line/Arc Segment Mode} \\ \hline \hline
+\multicolumn{2}{|c|}{Segment Mode} \\ \hline \hline
  Action    & Function \\ \hline \hline
- Left Button Click     & Select a start/end point for a new segment \\ \hline
- Right Button Click    & Select the nearest line/arc segment \\ \hline
- Right Button DblClick & Display length of the nearest arc/line segment \\ \hline \hline
+ Left Button Click     & Pick the nearest point; a second click completes the segment \\ \hline
+ Right Button Click    & Select or unselect the nearest segment \\ \hline
+ Right Button DblClick & Report the nearest segment's length and properties \\ \hline \hline
+\end{tabular}
+
+\vspace*{12pt}
+\begin{tabular}{|l|l|} \hline \hline
+\multicolumn{2}{|c|}{Arc Segment Mode} \\ \hline \hline
+ Action    & Function \\ \hline \hline
+ Left Button Click     & As Segment mode; the second click opens the arc's dialog \\ \hline
+ Right Button Click    & Select or unselect the nearest arc \\ \hline
+ Right Button DblClick & Report the nearest arc's angle, radius, center and properties \\ \hline \hline
 \end{tabular}
 
 \vspace*{12pt}
@@ -877,19 +910,31 @@ button click actions.
 \multicolumn{2}{|c|}{Block Label Mode} \\ \hline \hline
  Action    & Function \\ \hline \hline
  Left Button Click     & Create a new block label at the current mouse pointer location \\ \hline
- Right Button Click    & Select the nearest block label \\ \hline
- Right Button DblClick & Display coordinates of the nearest block label \\ \hline \hline
+ Right Button Click    & Select or unselect the nearest block label \\ \hline
+ Right Button DblClick & Report the nearest label's material, circuit, mesh size and group \\ \hline \hline
 \end{tabular}
 
 \vspace*{12pt}
 \begin{tabular}{|l|l|} \hline \hline
 \multicolumn{2}{|c|}{Group Mode} \\ \hline \hline
  Action    & Function \\ \hline \hline
- Right Button Click    & Select the group associated with the nearest object \\ \hline \hline
+ Right Button Click    & Select or unselect the group of the nearest object \\ \hline \hline
 \end{tabular}
 \caption{Magnetics Preprocessor Mouse button actions}
 \label{mouseclicks}
 \end{table}
+
+Selection is a toggle throughout: right-clicking an object that is
+already selected unselects it, and a right double-click selects or
+unselects the object it reports on as well as describing it.  A right
+click also abandons a segment or arc that is part-way drawn.  In Group
+mode, objects that have been left in group 0 are not selected by a
+right click, since group 0 means ``no group'' rather than a group of
+its own.
+
+Two mouse actions work the same way in every mode and are not listed
+in the table: dragging with the middle button pans the view, and the
+wheel zooms in and out about the mouse pointer.
 
 \subsection{View Manipulation} \label{view_manipulation}
 
@@ -1036,58 +1081,83 @@ Figure~\ref{problemdefinition}
 \label{problemdefinition}
 \end{figure}
 
-The first selection is the {\tt Problem Type} drop list.  This
-drop box allows the user to choose from a 2-D planar problem (the
-{\tt Planar} selection), or an axisymmetric problem (the {\tt
-Axisymmetric} selection).
+The dialog's entries, in the order they appear:
 
-Next is the {\tt Length Units} drop list.  This box identifies what
-unit is associated with the dimensions prescribed in the model's
-geometry.  Currently, the program supports inches, millimeters,
-centimeters, meters, mils, and $\mu$meters.
+\begin{itemize}
 
-The first edit box in the dialog is {\tt Frequency (Hz)}.  For a
-magnetostatic problem, the user should choose a frequency of zero.
-If the frequency is non-zero, the program will perform a harmonic
-analysis, in which all field quantities are oscillating at this
-prescribed frequency.  The default frequency is zero.
+\item{\tt Frequency (Hz)}.  For a magnetostatic problem, the user should
+choose a frequency of zero.  If the frequency is non-zero, the program
+will perform a harmonic analysis, in which all field quantities are
+oscillating at this prescribed frequency.  The default frequency is zero.
 
-The second edit box is the {\tt Depth} specification.  If a Planar
-problem is selected, this edit box becomes enabled.  This value is
-the length of the geometry in the ``into the page'' direction.
-This value is used for scaling integral results in the post
-processor ({\em e.g.} force, inductance, etc.) to the appropriate
-length.  The units of the Depth selection are the same as the
-selected length units.  For files imported from version 3.2, the
-Depth is chosen so that the depth equals 1 meter, since in version
-3.2, all results from planar problems are reported per meter.
+\item{\tt Length Units}.  This box identifies what unit is associated with
+the dimensions prescribed in the model's geometry.  Currently, the program
+supports inches, millimeters, centimeters, meters, mils, and $\mu$meters.
 
-The third edit box is the {\tt Solver Precision} edit box. The number in this edit box
-specifies the stopping criteria for the linear solver.  The linear algebra
-problem could be represented by:
+\item{\tt Problem Type}.  This drop list allows the user to choose from a
+2-D planar problem (the {\tt Planar} selection), or an axisymmetric problem
+(the {\tt Axisymmetric} selection).
+
+\item{\tt Precision}.  The number in this edit box specifies the stopping
+criteria for the linear solver.  The linear algebra problem could be
+represented by:
 \begin{displaymath}
 M x=b
-\end{displaymath} where $M$ is a square matrix, $b$ is a vector, and $x$ is
-a vector of unknowns to be determined.  The solver precision value
-determines the maximum allowable value for $||b-M x||/||b||$.  The
-default value is $10^{-8}$.
+\end{displaymath}
+where $M$ is a square matrix, $b$ is a vector, and $x$ is a vector of
+unknowns to be determined.  The solver precision value determines the
+maximum allowable value for $||b-M x||/||b||$.  The default value is
+$10^{-8}$.
 
-The fourth edit box is labeled {\tt Min Angle}.  The entry in this box is used as a
-constraint to the mesh generator, {\tt tangle}.  The mesh generator adds points to the mesh to
-ensure that no angles smaller than the specified angle occur. The edit box will accept
-values between 1 and 33.8 degrees.
+\item{\tt Depth}.  If a Planar problem is selected, this edit box becomes
+enabled.  This value is the length of the geometry in the ``into the page''
+direction.  This value is used for scaling integral results in the post
+processor ({\em e.g.} force, inductance, etc.) to the appropriate length.
+The units of the Depth selection are the same as the selected length units.
+For files imported from version 3.2, the Depth is chosen so that the depth
+equals 1 meter, since in version 3.2, all results from planar problems are
+reported per meter.
 
+\item{\tt Min Angle (deg)}.  The entry in this box is used as a constraint
+to the mesh generator, {\tt tangle}.  The mesh generator adds points to the
+mesh to ensure that no angles smaller than the specified angle occur.  The
+edit box will accept values between 1 and 33.8 degrees.
 
-Lastly, there is an optional {\tt Comment} edit box.  The
-user can enter in a few lines of text that give a brief description
-of the problem that is being solved.  This is useful if the user is
-running several small variations on a given geometry.  The comment
-can then be used to identify the relevant features for a particular
-geometry.
+\item{\tt AC Solver}.  Selects the iteration used for a {\em nonlinear
+harmonic} problem: {\tt Successive Approximation} or {\tt Newton}.  Newton
+generally converges in fewer passes on strongly saturated problems, at more
+work per pass.  The selection has no effect on linear or magnetostatic
+problems.
 
+\item{\tt Smart Mesh}.  When {\tt On}, the mesh generator derives a
+characteristic element size from the average length of the model's line
+segments and applies it at the ends of those segments, refining the mesh
+toward corners.  Endpoints belonging only to arcs are left alone, so a
+smooth surface such as a rotor bore is not refined merely for being curved.
+When {\tt Off}, element sizes come only from the mesh size specified on each
+block label, together with any per-segment maximum side length.
 
+\item{\tt Prev. Solution}.  The name of a previously computed solution
+({\tt .ans}) file, used together with {\tt Prev. Type} below.  The button to
+the right of the box opens a file selection dialog.  If the box is left
+empty, {\tt Prev. Type} is forced to {\tt None}.
 
+\item{\tt Prev. Type}.  What the previous solution is used for.  {\tt None}
+ignores it and solves the problem from scratch.  {\tt Incremental} treats
+the previous solution as an operating point and solves a small-signal
+problem about it, using the incremental permeability at that point -- the
+way to obtain, for example, an incremental inductance, or the response to a
+small AC excitation superimposed on a DC bias.  {\tt Frozen} holds the
+permeability at the values the previous solution reached, rather than
+re-evaluating it from the present field.
 
+\item{\tt Comment}.  Optionally, the user can enter in a few lines of text
+that give a brief description of the problem that is being solved.  This is
+useful if the user is running several small variations on a given geometry.
+The comment can then be used to identify the relevant features for a
+particular geometry.
+
+\end{itemize}
 
 \subsection{Definition of Properties}
 
@@ -1105,18 +1175,16 @@ Figure~\ref{propertydef} appears.
 \caption{Materials dialog}
 \label{propertydef}
 \end{figure}
-This dialog is the manager for a particular type of properties. All
-currently defined properties are displayed in the {\tt Property
-Name} drop list at the top of the dialog.  At the beginning of a
-new model definition, the box will be blank, since no properties
-have yet been defined.  Pushing the {\tt Add Property} button
-allows the user to define a new property type. The {\tt Delete
-Property} button removes the definition of the property currently
-in view in the {\tt Property Name} box.  The {\tt Modify Property}
-button allows the user to view and edit the property currently
-selected in the {\tt Property Name} box. Specifics for defining
-the various property types are addressed in the following
-subsections.
+This dialog is the manager for a particular type of property, and its
+title changes to match the type chosen from the menu. All currently
+defined properties of that type are listed in the box on the left. At the
+beginning of a new model definition, the list will be empty, since no
+properties have yet been defined. Pushing the {\tt Add} button allows the
+user to define a new property. The {\tt Delete} button removes the
+property currently selected in the list, and {\tt Modify} opens the
+selected property for viewing and editing --- as does double-clicking the
+property itself. {\tt Close} dismisses the dialog. Specifics for defining
+the various property types are addressed in the following subsections.
 
 In general, a number of these edit boxes prompt the user for both
 real and imaginary components for entered values.  If the problem
@@ -1152,24 +1220,22 @@ The first selection is the {\tt Name} edit box.  The default name
 is ``New Point Property,'' but this name should be changed to
 something that describes the property that you are defining.
 
-Next are edit boxes for defining the vector potential, $A$, at a
-given point, or prescribing a point current, $J$, at a given point.
-The two definitions are mutually exclusive.  Therefore, if there
-is a nonzero value the $J$ box, the program assumes
-that a point current is being defined.  Otherwise, it is assumed
-that a point vector potential is being defined.
+The two radio buttons below the name choose what sort of point property
+is being defined: a specified vector potential, $A$, at a given point, or
+a prescribed point current, $J$, at a given point.  The two definitions
+are mutually exclusive.  Selecting one enables its group of boxes and
+zeroes and disables the other, so a point property carries either a
+potential or a current, never both.
 
-There is an edit box for vector point vector potential, $A$.  A
-can be defined as a complex value, if desired. The units of
-$A$ are Weber/Meter.  Typically, $A$ needs to be
-defined as some particular values (usually zero) at some point in
+The {\tt Specified Vector Potential, Wb/m} box holds $A$, which
+can be defined as a complex value, if desired.  Typically, $A$ needs to be
+defined as some particular value (usually zero) at some point in
 the solution domain for problems with derivative boundary
 conditions on all sides.  This is the typical use of defining a
 point vector potential.
 
-Lastly, there is an edit box for the definition of a point
-current, $J$.  The units for the point current are
-in Amperes.  The value of $J$ can be defined as complex, if desired.
+The {\tt Point Current, Amps} box holds $J$.  The value of $J$ can be
+defined as complex, if desired.
 
 \subsubsection{Boundary Properties}
 
@@ -1189,8 +1255,10 @@ property.  The default name is ``New Boundary,'' but you should
 change this name to something more descriptive of the boundary that
 is being defined.
 
-The next selection is the {\tt BC Type} drop list.  This specifies
-the boundary condition type.  Currently, FEMM supports the
+The next selection is the {\tt Type} drop list.  This specifies
+the boundary condition type.  The boxes below the drop list hold the
+parameters belonging to the selected type; the rows for the other types
+stay empty.  Currently, FEMM supports the
 following types of boundaries:
 \begin{itemize}
 \item {\tt Prescribed A}
@@ -1200,7 +1268,7 @@ used to prescribe the flux passing normal to a boundary, since the
 normal flux is equal to the tangential derivative of $A$ along the
 boundary.  The form for $A$ along the boundary is specified via the
 parameters $A_0$, $A_1$, $A_2$ and $\phi$ in the
-{\tt Prescribed A parameters} box.  If the problem is planar, the
+{\tt Prescribed A} row.  If the problem is planar, the
 parameters correspond to the formula:
 \be A=(A_0 + A_1 x + A_2 y) e^{j \phi} \ee
 If the problem type is axisymmetric, the parameters correspond to:
@@ -1220,7 +1288,7 @@ frequency of interest.  The skin depth, $\delta$ is defined as:
 where $\mu_r$ and $\sigma$ are the relative permeability and
 conductivity of the thin skin depth eddy current material.  These
 parameters are defined by specifying $\mu$ and $\sigma$ in
-the {\tt Small skin depth parameters} box in the dialog.  At zero
+the {\tt Skin Depth} row of the dialog.  At zero
 frequency, this boundary condition degenerates to $\partial
 A/\partial n=0$ (because skin depth goes to infinity).
 \item {\tt Mixed}
@@ -1228,7 +1296,7 @@ This denotes a boundary condition of the form:
 \be \left( \frac{1}{\mu_r \mu_o} \right) \frac{\partial A}{\partial n}
  + c_o A + c_1 = 0 \ee
 The parameters for this class of boundary condition are specified
-in the {\tt Mixed} {\tt BC} {\tt parameters} box in the dialog. By the choice
+in the {\tt Mixed BC} row of the dialog. By the choice
 of coefficients, this boundary condition can either be a Robin or a
 Neumann boundary condition. There are two main uses of this
 boundary condition:
@@ -1282,6 +1350,20 @@ boundaries to be the negative of one another.  This type of
 boundary is also typically used to reduce the domain which must be
 modeled, {\em e.g.} so that an electric machine might be modeled
 for the purposes of a finite element analysis with just one pole.
+\item{\tt Periodic Air Gap} and {\tt Anti-Periodic Air Gap}
+These define an {\em air gap element}, applied to a pair of concentric
+arcs bounding an annulus of air --- typically the air gap of a rotating
+machine.  Instead of meshing the annulus, the program couples the field
+on the inner arc directly to the field on the outer arc, which means the
+two sides can be rotated with respect to each other without the mesh
+changing at all.  The {\tt Inner} and {\tt Outer} boxes in the
+{\tt Air Gap} row give the angles, in degrees, through which the inner
+and outer boundaries are rotated, so stepping a machine through a series
+of rotor positions is a matter of changing {\tt Inner} between runs.
+Choose {\tt Periodic Air Gap} when the modeled sector repeats identically
+around the circle and {\tt Anti-Periodic Air Gap} when it repeats with
+alternating sign, on the same basis as the ordinary {\tt Periodic} and
+{\tt Antiperiodic} conditions above.
 \end{itemize}
 
 \subsubsection{Materials Properties}
@@ -1302,17 +1384,19 @@ As with Point and Boundary properties, the first step is to choose
 a descriptive name for the material that is being described.  Enter
 it in the {\tt Name} edit box in lieu of ``New Material.''
 
-Next decide whether the material will have a linear or nonlinear B-H curve
-by selecting the appropriate entry in the {\tt B-H Curve} drop list.
+Next decide whether the material will have a linear or nonlinear B-H
+curve, using the {\tt Nonlinear B-H curve} check box near the bottom of
+the dialog.  This choice governs which of the boxes above it are enabled:
+a linear material is described by its permeability, a nonlinear one by a
+B-H curve, and the dialog disables whichever set does not apply.
 
-If {\tt Linear B-H Relationship} was selected from the drop list,
-the next group of {\tt Linear Material Properties} parameters will
-become enabled. FEMM allows you to specify different relative
-permeabilities in the vertical and horizontal directions ($\mu_x$
-for the x- or horizontal direction, and $\mu_y$ for the y- or
-vertical direction).
+With {\tt Nonlinear B-H curve} left unchecked, the {\tt Relative $\mu$}
+boxes are enabled. FEMM allows you to specify different relative
+permeabilities in the vertical and horizontal directions ($\mu_x$ in the
+{\tt x} box for the horizontal direction, and $\mu_y$ in the {\tt y} box
+for the vertical direction).
 
-There are also boxes for $\phi_{hx}$ and $\phi_{hy}$, which denote
+Below them is the {\tt $\phi_h$ x/y} pair, $\phi_{hx}$ and $\phi_{hy}$, which denote
 the hysteresis lag angle corresponding to each direction, to be
 used in cases in which linear material properties have been
 specified. A simple, but surprisingly effective, model for
@@ -1331,11 +1415,12 @@ a very good discussion of the derivation and application of the
 fixed phase lag model of hysteresis.
 
 
-If {\tt Nonlinear} {\tt B-H} {\tt Curve} was selected from the drop list,
-the {\tt Nonlinear} {\tt Material} {\tt Properties} parameter group becomes enabled.  To
-enter in points on your B-H curve, hit the {\tt Edit B-H Curve} button.  When
+If {\tt Nonlinear B-H curve} is checked instead, the {\tt Relative $\mu$}
+and {\tt $\phi_h$ x/y} boxes are disabled and the
+{\tt Edit B-H Curve...} button becomes enabled.  To
+enter in points on your B-H curve, hit that button.  When
 the button is pushed a dialog appears that allows you to enter in
-B-H data (see Figure~\ref{bhdatadlg}.
+B-H data (see Figure~\ref{bhdatadlg}).
 \begin{figure}[ht]
 \centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{bhdata}}
 \caption{B-H data entry dialog.}
@@ -1347,11 +1432,21 @@ reasons, you must enter the same number of points in the ``B''
 (flux density) column as in the ``H'' (field intensity) column.  To
 define a nonlinear material, you must enter {\em at least} three
 points, and you should enter ten or fifteen to get a good fit.
+The points must be in order of increasing B; a point that does not
+advance B is discarded, so a curve that appears to have lost points is
+usually one with a repeated or out-of-order B value.
+
+Rather than typing the points in, the {\tt Import from file...} button
+reads them from a text file with two numbers per line, B first, separated
+by spaces, tabs or commas.  Lines beginning with \verb+#+ or \verb+%+ are
+ignored, so a file's header does not have to be stripped out first.
 
 After you are done entering in your B-H data points, it is a good
 idea to view the B-H curve to see that it looks like it is
 ``supposed'' to.  This is done by pressing the {\tt Plot B-H Curve}
 button or the {\tt Log Plot B-H Curve} button on the B-H data dialog.
+The first point of a B-H curve is usually at $H=0$, which has no place
+on a logarithmic axis, so the log plot leaves it out.
 You should see a B-H curve that
 looks something like the curve pictured in Figure~\ref{bhcurveplt}.
 \begin{figure}[ht]
@@ -1382,7 +1477,8 @@ an accurate solution in highly saturated structures so that the
 program is interpolating between your entered data points, rather
 than extrapolating.
 
-Also in the nonlinear parameters box is a parameter, $\phi_{hmax}$.  For
+The {\tt $\phi_h$ (deg)} box, which is enabled only when
+{\tt Nonlinear B-H curve} is checked, holds a parameter $\phi_{hmax}$.  For
 nonlinear problems, the hysteresis lag is assumed to be proportional to the
 effective permeability.  At the highest effective permeability, the
 hysteresis angle is assumed to reach its maximal value of $\phi_{hmax}$.
@@ -1390,20 +1486,23 @@ This idea can be represented by the formula:
 \be \phi_h(B)= \left( \frac{\mu_{eff}(B) }{\mu_{eff,max}} \right) \phi_{hmax} \ee
 
 
-The next entry in the dialog is $H_c$.  If the material is a permanent
-magnet, you should enter the magnet's coercivity here in units of Amperes
-per meter.  There are some subtleties involved in defining
+The {\tt Hc (A/m)} edit box holds the coercivity $H_c$.  If the material is
+a permanent magnet, you should enter the magnet's coercivity here in units of
+Amperes per meter.  The box is disabled, and forced to zero, for the laminated
+and wire material types, which are soft-magnetic by construction.
+There are some subtleties involved in defining
 permanent magnet properties (especially nonlinear permanent magnets).
 Please refer to the Appendix~\ref{app_pm} for a more thorough discussion of
 the modeling of permanent magnets in FEMM.
 
-The next entry represents $J$, the source current density in the block. The "source current density"
+The {\tt J (MA/m$^2$)} edit box represents $J$, the source current density in
+the block, in megamperes per square meter. The "source current density"
 denotes the current in the block at DC.  At frequencies other than DC in a region with non-zero conductivity,
 eddy currents will be induced which will change the total current density so that it is no longer equal to the
 source current density.  Use "circuit properties" to impose a value for the total current carried in a region
 with eddy currents. Source current density can be complex valued, if desired.
 
-The $\sigma$ edit box denotes the electrical conductivity of the
+The {\tt $\sigma$ (MS/m)} edit box denotes the electrical conductivity of the
 material in the block. This value is generally only used in
 time-harmonic (eddy current) problems. The units for conductivity
 are $10^6$ Seymens/Meter (equivalent to $10^6
@@ -1415,14 +1514,23 @@ should note that conductivity generally has a strong dependence
 upon temperature, so you should choose your values of conductivity
 keeping this caveat in mind.
 
-The last set of properties is the {\tt Lamination and Wire Type} section.
-If the material is laminated, the drop list in this section is used to
-denote the  direction in which the material is laminated.
+The {\tt Material Type} drop list describes how the material is put together.
+If the material is laminated, this list is used to
+denote the direction in which the material is laminated
+({\tt Laminated in-plane}, {\tt Laminated x-direction} or
+{\tt Laminated y-direction}).
 If the material is meant to represent a bulk wound coil, this drop
-list specifies the sort of wire from which the coil is constructed.
+list specifies the sort of wire from which the coil is constructed
+({\tt Magnet wire}, {\tt Plain stranded wire}, {\tt Litz wire} or
+{\tt Square wire}).  The default entry, {\tt Not laminated}, denotes a
+solid material.  Selecting a wire type resets the material's magnetic and
+source properties -- $\mu$, $H_c$, $J$, and any B-H curve -- since those
+are implied by the wire's geometry and fill rather than specified directly.
 
-The various selections in this list are illustrated
-in Figure~\ref{lamdir}
+The laminated selections in this list are illustrated
+in Figure~\ref{lamdir}, which labels them by the axis the laminations run
+parallel to: {\tt Laminated x-direction} is the ``parallel to X'' case, and
+{\tt Laminated y-direction} the ``parallel to Y'' case.
 \begin{figure}[ht]
 \centerline{\includegraphics{lamscheme}}
 \caption{Different lamination orientation options.}
@@ -1432,7 +1540,7 @@ Currently, the laminations are constrained to run along a
 particular axis.
 
 If some sort of laminated construction is selected in the drop list,
-the lamination thickness and fill factor edit boxes become enabled.
+the {\tt Lam.\ thickness (mm)} and {\tt Fill factor} edit boxes become enabled.
 The lamination thickness, fill factor, and lamination orientation
 parameters are used to implement a bulk model of laminated
 material.  The result of this model is that one can account for
@@ -1442,14 +1550,14 @@ nonlinear laminations without the necessity of modeling the
 individual laminations separately. This bulk lamination model is
 discussed in more detail in the Appendix (Section~\ref{app_lam}).
 
-The $d_{lam}$ edit box represents the thickness of the
-laminations used for this type of material.  If the material is not
-laminated, enter 0 in this edit box.  Otherwise, enter the
+The {\tt Lam.\ thickness (mm)} edit box represents the thickness of the
+laminations used for this type of material.  Enter the
 thickness of {\em just the iron part} (not the iron plus the
-insulation) in this edit box in units of millimeters.
+insulation), in millimeters.  The box is disabled for the material types
+that are not laminated.
 
-Associated with the lamination thickness edit box is the {\tt Lam
-fill factor} edit box.  This is the fraction of the core that is
+Associated with the lamination thickness edit box is the
+{\tt Fill factor} edit box.  This is the fraction of the core that is
 filled with iron.  For example, if you had a lamination in which
 the iron was 12.8 mils thick, and the insulation bewteen
 laminations was 1.2 mils thick, the fill factor would be:
@@ -1457,12 +1565,13 @@ laminations was 1.2 mils thick, the fill factor would be:
 \mbox{Fill Factor} = \frac{12.8}{1.2+12.8} = 0.914
 \end{displaymath}
 
-If a wire type is selected, the {\tt Strand dia.} and/or {Number of strands}
-edit boxes become enabled.  If the {\tt Magnet wire} or {\tt Square wire} types
-are selected, it is understood that there is can only be one strand, and the
-{\tt Number of strands} edit box is disabled.  The wire's diameter (or width)
-is then entered in the {\tt Strand dia.} edit box.  For stranded and Litz wire,
-one enters the number of strands and the strand diameter.  Currently, only builds
+If a wire type is selected, the {\tt Wire} row's {\tt Strands} and
+{\tt Dia (mm)} edit boxes become enabled.  If the {\tt Magnet wire} or
+{\tt Square wire} types are selected, it is understood that there can only be
+one strand, so the {\tt Strands} box is set to 1 and disabled.  The wire's
+diameter (or width) is then entered in the {\tt Dia (mm)} edit box.  For
+stranded and Litz wire, one enters the number of strands and the strand
+diameter.  Currently, only builds
 with a single strand gauge are supported.
 
 If a wire type is specified, the material property can be applied to a ``bulk''
@@ -1498,7 +1607,7 @@ Material from other material libraries or models can be imported by selecting th
 is over the root-level folder of either the Library or Model materials lists.
 
 The materials library should be located in the same directory as
-the FEMM executable files, under the filename \verb+mlibrary.dat+.
+the FEMM executable files, under the filename \verb+matlib.dat+.
 If you move the materials library, femm will not be able to find
 it.
 
@@ -1555,7 +1664,16 @@ Figure~\ref{circprop}.
 \label{circprop}
 \end{figure}
 
-%\subsubsection{Circuit Properties}
+The {\tt Name} box names the circuit, so that block labels can be assigned
+to it and so that the postprocessor can report results for it.
+{\tt Current (A)} is the current carried by the circuit, and can be entered
+as a complex value for harmonic problems.
+
+The {\tt Type} radio buttons make the series or parallel choice described
+above.  Because a number of turns is meaningful only for a series
+connection, the {\tt Turns} entry in the block label's own dialog is
+disabled whenever the label belongs to a parallel circuit.
+
 
 \subsection{Exterior Region}
 
@@ -1611,8 +1729,7 @@ generator to make sure that the mesh is up to date, so you never
 {\em have} to call the mesher from within femm.  However, it is
 almost always important to get a look at the mesh and see that it
 ``looks right.''  When the mesh generation button is pressed, the
-mesher is called.  While the mesher is running, an entry labeled
-``triangle'' will appear on the Windows taskbar.
+mesher is called.
 After the geometry is triangulated, the finite element mesh is
 loaded into memory and displayed underneath the defined nodes,
 segments, and block labels as a set of yellow lines.
@@ -1625,10 +1742,11 @@ menu.  When this option is selected, the mesh is removed from
 memory, and the memory that it occupied is freed for other uses.
 
 The second button, with the ``hand-crank'' icon, executes the
-solver, {\tt fkn.exe}. When fkn runs, it opens up a console window to display
-status information to the user. However, fkn requires no user
-interaction while it is running. When fkn is finished analyzing
-your problem, the console window will disappear. The time that
+solver, {\tt fkn}. While fkn runs, a {\tt Solver} window displays
+status information to the user. fkn requires no user
+interaction while it is running, although the window's {\tt Abort}
+button will stop it. When fkn is finished analyzing
+your problem, the window closes. The time that
 fkn requires is highly dependent on the problem being solved.
 Solution times can range from less than a second to several minutes,
 depending upon the size and complexity of the problem. Generally,
@@ -1657,13 +1775,13 @@ Section~\ref{ppsec}.
 %--------------------------------------------------------------------------------------------------
 \section{Magnetics Postprocessor} \label{ppsec}
 
-The the magnetics postprocessing functionality of femm is used to
+The magnetics postprocessing functionality of FEMM is used to
 view solutions generated by the {\tt fkern} solver.  A magnetics
 postprocessor window can be opened either by loading some
 previously run analyses via {\tt File|Open} on the main menu, or by
 pressing the ``big magnifying glass'' icon from within a
 preprocessor window to view a newly generated solution. Magnetics
-postprocessor data files stored on disk have the {\tt .ans} prefix.
+postprocessor data files stored on disk have the {\tt .ans} extension.
 
 \subsection{Postprocessor modes} \label{tape}
 
@@ -1761,7 +1879,7 @@ added to the contour.  A contour appears as a red line on the
 screen.
 
 Blocks are defined in Block mode in a fashion very similar to the
-way in which contours are defined.  A block is defined by by
+way in which contours are defined.  A block is defined by
 drawing a contour around the region of interest.  The contour
 appears as a green line on the postprocessor screen.  When the ends
 of the contour meet, the block is defined.  All elements enclosed
@@ -1777,9 +1895,14 @@ function.
 
 \subsection{Miscellaneous Useful View Commands} \label{scissors}
 
-There are some additional entries on the postprocessor {\tt View}
-menu that might be useful to you from time to time.  These are:
+The postprocessor's {\tt View} menu collects the display options.
+{\tt Density Plot}, {\tt Contour Plot} and {\tt Vector Plot} are described in
+the sections that follow.  The first two are check items that switch their
+plot on and off directly; the toolbar buttons of the same name open the
+dialogs that configure them.  The remaining entries are:
 \begin{itemize}
+\item {\tt Show Mesh} Draws the finite element mesh over the solution.  It is
+off when a solution is first loaded.
 \item {\tt Smoothing} By default, a smoothing algorithm is applied
 to the flux density solution.  Because first-order triangles are
 used as trial functions for vector potential, the resulting flux
@@ -1788,20 +1911,28 @@ in each element.  The smoothing algorithm uses a nearest neighbor
 interpolation to obtain linear $B$ and $H$ distributions over each
 element.  The smoothed solution generally looks better on the
 screen, and somewhat increases the accuracy of $B$ and $H$ near the
-vertices of each element.  However, if you want to toggle
-smoothing, this can be done by selecting the {\tt Smoothing}
-option.
+vertices of each element.  This item toggles smoothing for the solution in
+the active window.  The {\tt Edit|Preferences} dialog sets the value that
+newly opened solutions start with, and the {\tt mo\_smooth} scripting command
+does the same job from a script.
 \item {\tt Show Points}  Especially when making graphics for
 reports, presentations, etc, it may be desirable to hide the small
 boxes on the screen that denote input node points.  The {\tt Show
 Points} option allows the user to toggle whether or not the input
-points are shown.
-\item {\tt ToolBar} Use this toggle to hide and show the floating
-toolbar.
-\item {\tt Point Props} Use this toggle to hide and show the
-floating dialog box used to display point property information.
+points are shown.  As with smoothing, {\tt Edit|Preferences} sets the
+starting value.
+\item {\tt Show Block Names} Toggles the display of the block labels' names.
+It is off when a solution is first loaded.
+\item {\tt Circuit Properties} Opens the circuit results dialog described in
+the {\em Circuit Results} section below.  In the scalar physics the entry is
+titled {\tt Conductor Properties} instead.
+\item {\tt Problem Info} Reports the problem type, frequency, depth and
+length units of the solution, along with the number of nodes and elements in
+its mesh.
+\item {\tt Plot B-H Curves} Draws the B-H curve of every nonlinear material
+used in the model, which is a quick way to check that a material's curve is
+the one you meant to assign.
 \end{itemize}
-
 
 \subsection{Contour Plot}
 
@@ -1831,8 +1962,9 @@ The Contour Plot icon is the icon with the black contours.
 \label{graph_mode}
 \end{figure}
 When this button is pressed, a dialog pops up, allowing the choice
-of the number of contours (between 4 and 100 are allowed), and
-which contours to plot (either real, imaginary, or none).
+of the number of contours and which contours to plot (either real,
+imaginary, or none).  The default of 19 is itself a preference, set
+under {\tt Edit|Preferences}.
 
 In the contour plot dialog, a check box is also present titled
 ``Show stress tensor mask''. If this box is checked, the contour
@@ -1937,10 +2069,12 @@ on each side of a boundary can be obtained.
 \subsection{Line Integrals}
 
 Once a contour has been specified in Contours mode, Line Integrals
-can be performed along the specified contour.  These integrals are
-performed by evaluating a large number of points at evenly spaced
-along the contour and integrating using a simple trapezoidal-type
-integration scheme.
+can be performed along the specified contour.  How the integral is
+evaluated depends on which one is chosen.  {\tt B.n} and {\tt H.t} follow
+from the vector potential at the contour's endpoints, and
+{\tt Contour Length} is a sum of segment lengths, so all three are exact.
+The stress tensor integrals and \verb+(B.n)^2+ instead sample the field at
+400 points along each segment of the contour and sum by the midpoint rule.
 
 To perform an integration, press the ``integral'' icon on the
 toolbar (as shown in Figure~\ref{choadbar}).  A small dialog will
@@ -1988,8 +2122,8 @@ periodic flux distribution.
 
 \subsection{Block Integrals}
 Once a closed contour has been specified in Block mode and the
-block appears highlighted in green, Block Integrals over the
-specified area. These integrals are performed by analytically
+block appears highlighted in green, Block Integrals can be performed over
+the specified area. These integrals are performed by analytically
 integrating the specified kernel over each element in the defined
 region, and summing the results for all elements.
 
@@ -2004,7 +2138,7 @@ the screen in a pop-up box.
 The block integrals currently supported are:
 \begin{itemize}
 \item {\tt A.J}  This integral is the evaluation of $\int A \cdot J
-dV$ that is usually used evaluate inductance for linear problems.
+dV$ that is usually used to evaluate inductance for linear problems.
 Generally, the self-inductance of a coil is:
 \be L_{self}= \frac{\int A \cdot J dV}{i^2} \ee
 where $i$ is the current flowing through the coil.
@@ -2049,7 +2183,7 @@ can be obtained by solving the formula:
 \be E = \frac{L i^2}{2} \ee
 In the case of nonlinear materials, the energy is computed via:
 \be W \ = \int \left( \int_0^B H(B') dB' \right) dV \ee
-to take proper account of the energy under nonlinear conditions
+to take proper account of the energy under nonlinear conditions.
 \item{\tt Magnetic field coenergy} For linear problems, coenergy
 is numerically the same as energy.  For nonlinear problems,
 coenergy is defined as:
@@ -2065,9 +2199,10 @@ perturbation.  The component of force determined in this way acts
 along the direction of the perturbation--one has to perform two
 such operations to get both horizontal and vertical components of
 the force.
-\item {\tt Hyst. and/or Laminated eddy current losses}.  This
+\item {\tt Hysteresis, Laminated eddy, or Proximity effect}.  This
 selection is typically used to obtain the core losses produced in
-laminated iron sections in harmonic problems.
+laminated iron sections in harmonic problems.  It also accounts for the
+proximity effect losses of a region defined as a bulk wound coil.
 \item {\tt Resistive losses}  This selection integrates the $i^2R$
 losses due to currents flowing in the ``$z$'' direction (or
 $\theta$ direction, if you are evaluating an axisymmetric problem).
@@ -2106,7 +2241,7 @@ selects the blocks upon which force result is desired and selects the {\tt Force
 program then computes the weighting function by solving an
 additional Laplace equation over the air surrounding the blocks upon which the force is to be computed.
 It may take a few seconds to compute the weighting
-function--progress is be indicated by a progress bar that is
+function--progress is indicated by a progress bar that is
 displayed while the weighting function is being computed. The
 stress tensor is then evaluated as a volume integration, and the
 results are displayed.  The results are typically more accurate
@@ -2116,10 +2251,10 @@ Stress Tensor force result.
 
 If the user is interested in the contours along which the integral
 was performed, the "stress tensor mask" box can be checked in the
-contour plot dialog.  A set of orange (by default) lines will be
-displayed that.
+contour plot dialog.  A set of orange (by default) lines is then
+displayed.
 
-\item {\tt Torque via Weighted Stress Tensor}  This integral is
+\item {\tt Torque via Weighted Stress Tensor}  This integral is the
 torque version of the {\tt Force via Weighted Stress Tensor}
 integral. Instead of force, torque about (0,0) is computed using
 the same weighting function approach.
@@ -2130,6 +2265,12 @@ obtain moment of inertia, the result of this integral must be multiplied
 by the density of the selected region.  For 2D planar problems, the
 moment of inertia about the z-axis ({\em i.e.} about x=0,y=0) is computed.
 For axisymmetric problems, the integral is computed about the r=0 axis.
+
+\item {\tt Total Loss Density}  This selection reports the {\tt Total
+losses} of the selected blocks divided by their volume, in Watts per cubic
+meter.  It is a convenience for comparing regions of different size, since
+the total loss of a large block will exceed that of a small one even when
+the small one is running hotter.
 
 \end{itemize}
 
@@ -2143,16 +2284,16 @@ and torques using FEMM.
 \subsubsection{Lorentz Force/Torque}
 If one is attempting to compute the force on a collection of
 currents in a region containing {\em only} materials with a unit
-relative permeability, the volume integral of Lorentz torque is
-always the method to employ.  Lorentz force results tend to be
-very accurate.  However, again, they are only applicable for the
-forces on conductors of with unit permeability ({\em e.g.} coils
+relative permeability, the volume integral of Lorentz force is
+always the method to employ.  Lorentz results tend to be
+very accurate.  However, they are only applicable to the
+forces on conductors with unit permeability ({\em e.g.} coils
 in a voice coil actuator).
 
 \subsubsection{Weighted Stress Tensor Volume Integral}
 This volume integral greatly simplifies the computation of forces
 and torques, as compared to evaluating forces via the stress tensor
-line integral of differentiation of coenergy. Merely select the
+line integral or by differentiation of coenergy. Merely select the
 blocks upon which force or torque are to be computed and evaluate
 the integral. No particular ``art'' is required in getting good
 force or torque results (as opposed to the Stress tensor line
@@ -2162,13 +2303,15 @@ computed.
 
 One limitation of the Weighted Stress Tensor integral is that the
 regions upon which the force is being computed must be entirely
-surrounded by air and/or abutting a boundary. In cases in which the
+surrounded by air and/or abutting a boundary.  The program checks this
+and refuses a selection that abuts a region which is not free space,
+rather than returning a wrong answer.  In cases in which the
 desired region abuts a non-air region, force results may be deduced
 from differentiation of coenergy--see (\ref{coenergyforce}).
 
 \subsubsection{Maxwell Stress Tensor Line Integral}
-The indiscriminate use Maxwell's Stress Tensor can result in bad
-predictions forces and  torques.  The goal of this section is to
+The indiscriminate use of Maxwell's Stress Tensor can result in bad
+predictions of forces and torques.  The goal of this section is to
 explain how to set up problems and properly choose integration
 paths so that good estimations of force and torque might be
 obtained via stress tensor methods.  Generally, you should not
@@ -2199,7 +2342,7 @@ for $B$ and $H$ changes rapidly--these areas are just not well
 approximated by a piece-wise approximation.  Specifically, large
 errors can arise in the tangential components of $B$ and $H$ in
 elements adjacent to boundaries between materials of different
-permeabilites.  The worst errors arise on this sort of interface at
+permeabilities.  The worst errors arise on this sort of interface at
 corners, where the exact solution for $B$ is nearly a singularity.
 
 If the stress tensor integral is evaluated on the interface between
@@ -2218,7 +2361,7 @@ rationale for the first guideline for obtaining forces via stress
 tensor:
 
 \begin{quote}
-Never integrate stress stress tensor along an interface between
+Never integrate the stress tensor along an interface between
 materials.  Always define the integration contour as a closed path
 around the object of interest with the contour displaced several
 elements (at least two elements) away from any interfaces or
@@ -2319,38 +2462,27 @@ Figure~\ref{fig6}.
 \label{fig6}
 \end{figure}
 
-The first selection is the \texttt{Problem Type} drop list. This
-drop box allows the user to choose from a 2-D planar problem (the
-\texttt{Planar} selection), or an axisymmetric problem (the
-\texttt{Axisymmetric} selection).
+The dialog's entries, in the order they appear:
 
+\begin{itemize}
 
-
-
-
-Next is the \texttt{Length Units} drop list. This box identifies
+\item{\tt Length Units}. This box identifies
 what unit is associated with the dimensions prescribed in the
 model's geometry. Currently, the program supports inches,
 millimeters, centimeters, meters, mils, and $\mu $meters.
 
+\item{\tt Problem Type}. This
+drop box allows the user to choose from a 2-D planar problem (the
+\texttt{Planar} selection), or an axisymmetric problem (the
+\texttt{Axisymmetric} selection).
 
-
-
-
-The first edit box is the \texttt{Depth} specification. If a Planar
-problem is selected, this edit box becomes enabled. This value is
-the length of the geometry in the ``into the page'' direction. This
-value is used for scaling integral results in the post processor
-(e.g. force, inductance, etc.) to the appropriate length. The units
-of the Depth selection are the same as the selected length units.
-
-The second edit box is the \texttt{Solver Precision} edit box. The
+\item{\tt Precision}. The
 number in this edit box specifies the stopping criteria for the
 linear solver. The linear algebra problem could be represented by:
 
-\begin{equation}
+\begin{displaymath}
 M x = b
-\end{equation}
+\end{displaymath}
 
 \noindent
 where $M$ is a square matrix, $b$ is a vector, and $x$ is a vector of
@@ -2358,11 +2490,19 @@ unknowns to be determined. The solver precision value determines the maximum
 allowable value for $\vert \vert b - Mx\vert \vert / \vert \vert b\vert
 \vert $. The default value is $10^{ - 8}$.
 
-The third edit box is labeled {\tt Min Angle}.  The entry in this box is used as a
-constraint in the Triangle meshing program.  Triangle adds points to the mesh to
+\item{\tt Depth}. If a Planar
+problem is selected, this edit box becomes enabled. This value is
+the length of the geometry in the ``into the page'' direction. This
+value is used for scaling integral results in the post processor
+(e.g. force, inductance, etc.) to the appropriate length. The units
+of the Depth selection are the same as the selected length units.
+
+\item{\tt Min Angle (deg)}.  The entry in this box is used as a
+constraint sent to the mesh generator, {\tt tangle}.  The mesh generator
+adds points to the mesh to
 ensure that no angles smaller than the specified angle occur. If the minimum angle
 is 20.7 degrees or smaller, the triangulation algorithm is theoretically guaranteed to
-terminate (assuming infinite precision arithmetic -- Triangle may
+terminate (assuming infinite precision arithmetic -- the mesh generator may
 fail to terminate if you run out of precision).  In practice, the
 algorithm often succeeds for minimum angles up to 33.8 degrees.
 For highly refined meshes, however, it may be necessary to reduce
@@ -2370,12 +2510,22 @@ the minimum angle to well below 20 to avoid problems associated
 with insufficient floating-point precision.  The edit box will accept
 values between 1 and 33.8 degrees.
 
-Lastly, there is an optional \texttt{Comment} edit box. The user
+\item{\tt Smart Mesh}.  When {\tt On}, the mesh generator derives a
+characteristic element size from the average length of the model's line
+segments and applies it at the ends of those segments, refining the mesh
+toward corners.  Endpoints belonging only to arcs are left alone, so a
+smooth surface is not refined merely for being curved.
+When {\tt Off}, element sizes come only from the mesh size specified on each
+block label, together with any per-segment maximum side length.
+
+\item{\tt Comment}. The user
 can enter in a few lines of text that give a brief description of
 the problem that is being solved. This is useful if the user is
 running several small variations on a given geometry. The comment
 can then be used to identify the relevant features for a particular
 geometry.
+
+\end{itemize}
 
 \subsection{Definition of Properties}
 
@@ -2398,18 +2548,16 @@ pictured in Figure~\ref{fig7} appears.
 
 
 
-This dialog is the manager for a particular type of properties. All
-currently defined properties are displayed in the \texttt{Property
-Name} drop list at the top of the dialog. At the beginning of a new
-model definition, the box will be blank, since no properties have
-yet been defined. Pushing the \texttt{Add Property} button allows
-the user to define a new property type. The \texttt{Delete
-Property} button removes the definition of the property currently
-in view in the \texttt{Property Name} box. The \texttt{Modify
-Property} button allows the user to view and edit the property
-currently selected in the \texttt{Property Name} box. Specifics for
-defining the various property types are addressed in the
-following subsections.
+This dialog is the manager for a particular type of property, and its
+title changes to match the type chosen from the menu. All currently
+defined properties of that type are listed in the box on the left. At the
+beginning of a new model definition, the list will be empty, since no
+properties have yet been defined. Pushing the {\tt Add} button allows the
+user to define a new property. The {\tt Delete} button removes the
+property currently selected in the list, and {\tt Modify} opens the
+selected property for viewing and editing --- as does double-clicking the
+property itself. {\tt Close} dismisses the dialog. Specifics for defining
+the various property types are addressed in the following subsections.
 
 \subsubsection{Point Properties}
 
@@ -2453,7 +2601,7 @@ Property} dialog pictured in Figure~\ref{fig9} appears.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{belaman9}}
-\caption{Boundary Condition dialog.}
+\caption{Boundary Properties dialog.}
 \label{fig9}
 \end{figure}
 
@@ -2462,9 +2610,10 @@ property. The default name is ``New Boundary,'' but you should
 change this name to something more descriptive of the boundary that
 is being defined.
 
-The next selection is the \texttt{BC Type} drop list. This
-specifies the boundary condition type. Currently, FEMM electrostatics problems 
-support the following types of boundaries:
+The next selection is the \texttt{Type} drop list. This
+specifies the boundary condition type. The dialog shows only the
+parameters that belong to the selected type. Currently, FEMM
+electrostatics problems support the following types of boundaries:
 
 \texttt{Fixed Voltage} With this type of boundary condition, potential $V$ is
 set to a prescribed along a given boundary
@@ -2478,7 +2627,7 @@ set to a prescribed along a given boundary
 \end{equation}
 
 The parameters for this class of boundary condition are specified in the
-\texttt{Mixed BC parameters} box in the dialog. By the choice of
+\texttt{Mixed BC} boxes in the dialog. By the choice of
 coefficients, this boundary condition can either be a Robin or a Neumann
 boundary condition. By carefully selecting the $c_0 $ coefficient and
 specifying $c_1 = 0$, this boundary condition can be applied to the outer
@@ -2498,7 +2647,8 @@ inherent in some problems to reduce the size of the domain which must be
 modeled. The domain merely needs to be periodic, as opposed to obeying more
 restrictive $V = 0$ or $\partial V / \partial n = 0$ line of symmetry
 conditions. Another useful application of periodic boundary conditions is
-for the modeling of ``open boundary'' problems, as discussed in Appendix~3.
+for the modeling of ``open boundary'' problems, as discussed in
+Appendix~\ref{KelvinBC}.
 Often, a periodic boundary is made up of several different line or arc
 segments. A different periodic condition must be defined for each section of
 the boundary, since each periodic BC can only be applied to a line or arc
@@ -2533,11 +2683,13 @@ descriptive name for the material that is being described. Enter it in the
 
 Next, permittivity for the material needs to be specified. FEMM allows you
 to specify different relative permittivities in the vertical and horizontal
-directions (\textit{$\varepsilon $}$_{x}$ for the x- or horizontal direction, and \textit{$\varepsilon $}$_{y}$ for the y-
-or vertical .
+directions: \textit{$\varepsilon $}$_{x}$, in the
+{\tt Relative permittivity, x} box, applies in the x- or horizontal
+direction, and \textit{$\varepsilon $}$_{y}$, in the
+{\tt Relative permittivity, y} box, in the y- or vertical direction.
 
-A volume charge density (\textit{$\rho $}) can also be prescribed by filling in the
-appropriate box in the material properties dialog.
+A volume charge density (\textit{$\rho $}) can also be prescribed, in
+C/m$^3$, in the {\tt Charge density} box.
 
 
 \subsubsection{Material Library}
@@ -2603,6 +2755,14 @@ Figure~\ref{fig12}.
 \label{fig12}
 \end{figure}
 
+The {\tt Name} box names the conductor, so that it can be assigned to
+segments and arcs and reported on in the postprocessor.  The {\tt Type}
+drop list chooses which of the two quantities is prescribed:
+{\tt Prescribed charge} or {\tt Prescribed voltage}.  Whichever is selected, its
+edit box is enabled and the other is greyed out --- the greyed quantity is
+the one the program computes for you during the solution.
+
+
 \subsection{Analysis Tasks}
 
 Meshing the model, analyzing the model, and viewing the results are
@@ -2621,8 +2781,7 @@ generator to make sure that the mesh is up to date, so you never
 have to call the mesher from within femm. However, it is almost
 always important to get a look at the mesh and see that it ``looks
 right.'' When the mesh generation button is pressed, the mesher is
-called. While the mesher is running, an entry labeled ``triangle''
-will appear on the Windows taskbar. After the geometry is
+called. After the geometry is
 triangulated, the finite element mesh is loaded into memory and
 displayed underneath the defined nodes, segments, and block labels
 as a set of yellow lines.
@@ -2636,12 +2795,14 @@ from memory, and the memory that it occupied is freed for other
 uses.
 
 The second button, with the ``hand-crank'' icon, executes the solver,
-\texttt{Belasolv.exe}. Before Belasolve is actually run, the Triangle is
-called to make sure the mesh is up to date. Then, Belasolve is called. When
-Belasolve runs, it opens up a console window to display status information
-to the user. However, Belasolve requires no user interaction while it is
-running. When Belasolve is finished analyzing your problem, the console
-window will disappear. The time that Belasolve requires is highly dependent
+\texttt{belasolv}. The mesh is brought up to date first: the
+\texttt{tangle} mesher is built into the solver, so meshing is the solver's
+own first step rather than a separate program. While
+belasolv runs, a \texttt{Solver} window displays status information
+to the user. belasolv requires no user interaction while it is
+running, although the window's \texttt{Abort} button will stop it. When
+belasolv is finished analyzing your problem, the window
+closes. The time that belasolv requires is highly dependent
 on the problem being solved. Solution times are typically on the order of 1
 to 10 seconds, depending upon the size and complexity of the problem and the
 speed of the machine analyzing the problem.
@@ -2655,14 +2816,14 @@ analysis is finished.
 \section{Electrostatics Postprocessor}
 
 
-The the electrostaticss postprocessing functionality of femm is
+The electrostatics postprocessing functionality of FEMM is
 used to view solutions generated by the {\tt belasolv} solver.  An
 electrostatics postprocessor window can be opened either by loading
 some previously run analyses via {\tt File|Open} on the main menu,
 or by pressing the ``big magnifying glass'' icon from within a
 preprocessor window to view a newly generated solution.
 Electrostatics postprocessor data files stored on disk have the
-{\tt .res} prefix.
+{\tt .res} extension.
 
 Operation of the electrostatics postprocessor ({\em i.e.} modes, view manipulation) is
 very similar to that of the magnetics postprocessor.  Refer to
@@ -2702,17 +2863,19 @@ orange flux lines.
 \subsection{Density Plot}
 
 Density plots are also a useful way to get a quick feel for the
-flux density in various parts of the model. By default, a flux
-density plot is not displayed when the postprocessor first starts.
-However, the plot can be displayed by pressing the middle button in
+field in various parts of the model. By default, a density plot of voltage
+is displayed when the postprocessor first starts; which quantity is plotted,
+or whether a density plot appears at all, is set under
+{\tt Edit|Preferences}.  The plot can also be changed at any time by
+pressing the middle button in
 the Graph Mode section of the toolbar (see Figure~\ref{fig17}). A
-dialog the pops up that allows the user to turn density plotting
+dialog then pops up that allows the user to turn density plotting
 on.
 
 The user can select between density plots of Voltage (V) or the magnitude of
 Electric Field Intensity (E) or Electric Flux Density (D). The field at each
 point is classified into one of twenty contours distributed evenly between
-either the minimum and maximum flux densities or user-specified bounds.
+either the minimum and maximum values or user-specified bounds.
 
 \subsection{Vector Plots}
 
@@ -2808,12 +2971,14 @@ interest on each side of a boundary can be obtained.
 \subsection{Line Integrals}
 
 Once a contour has been specified in Contours mode, Line Integrals can be
-performed along the specified contour. These integrals are performed by
-evaluating a large number of points at evenly spaced along the contour and
-integrating using a simple trapezoidal-type integration scheme.
+performed along the specified contour.  How the integral is evaluated
+depends on which one is chosen.  {\tt E.t} follows from the voltage at the
+contour's endpoints, and {\tt Contour Length} is a sum of segment lengths,
+so both are exact.  {\tt D.n} and the stress tensor integrals instead sample
+the field along each segment of the contour and sum by the midpoint rule.
 
 To perform an integration, press the ``integral'' icon on the
-toolbar (as shown in Figure~0). A small dialog will appear with a
+toolbar (as shown in Figure~\ref{fig18}). A small dialog will appear with a
 drop list. Choose the desired integral from the drop list and press
 \texttt{OK}. The amount of time required to perform the integral
 will be virtually instantaneous for some types of integrals;
@@ -2827,15 +2992,15 @@ The line integrals currently supported are:
 \begin{itemize}
 
 
-\item \texttt{E.t }This integral returns the voltage drop along the defined
-contour
+\item \texttt{E.t}. This integral returns the voltage drop along the defined
+contour.
 
-\item \texttt{D.n}. This integral returns the total electrix flux passing through
+\item \texttt{D.n}. This integral returns the total electric flux passing through
 a volume defined by extruding or sweeping the defined contour. If this
 integral is performed over a closed contour, the resulting quantity is equal
 to the charge contained inside the contour.
 
-\item \texttt{Contour Length/Area}. This integral returns the length of the
+\item \texttt{Contour Length}. This integral returns the length of the
 defined contour in meters, as well as the area of the extruded or swept
 volume associated with the defined contour.
 
@@ -2857,7 +3022,7 @@ some guidelines must be followed to get accurate torque results.
 
 To select the regions over which a block integral is to be performed,
 left-click with the mouse in the desired region. The selected region will
-appear highlighted in green. For some block integrals ($i.e.$ weighted stress
+appear highlighted in green. For some block integrals ({\em i.e.} weighted stress
 tensor force and torque), one desires to select a conductor composed of
 lines and points, rather than a block. In this case, the desired conductor
 can be selected by clicking on it with the right mouse button. The selected
@@ -2883,7 +3048,7 @@ The block integrals currently supported are:
 \begin{itemize}
 
 
-\item \texttt{Stored Energy }This selection calculates the energy stored in the
+\item \texttt{Stored energy}. This selection calculates the energy stored in the
 electric field in the specified region by integrating ($\frac{1}{2}
 D \cdot E$) over the selected area.
 
@@ -2891,11 +3056,11 @@ D \cdot E$) over the selected area.
 
 \item \texttt{Block volume}
 
-\item \texttt{Average D over volume}
+\item \texttt{Average D over block}
 
-\item \texttt{Average E over volume}
+\item \texttt{Average E over block}
 
-\item \texttt{Force via Weighted Stress Tensor }The Weighted Stress Tensor block
+\item \texttt{Force via Weighted Stress Tensor}. The Weighted Stress Tensor block
 integrals automatically compute a weighting function over the
 finite element mesh that allows all possible air elements to
 contribute to the stress tensor integration. This approach is
@@ -2906,7 +3071,7 @@ is desired and selects the \texttt{Force via Weighted Stress
 Tensor} integral. The program then computes the weighting function
 by solving an additional Laplace equation over the air surrounding
 the blocks upon which the force is to be computed. It may take a
-few seconds to compute the weighting function--progress is be
+few seconds to compute the weighting function--progress is
 indicated by a progress bar that is displayed while the weighting
 function is being computed. The stress tensor is then evaluated as
 a volume integration, and the results are displayed. The results
@@ -2917,9 +3082,9 @@ averaged to yield the Weighted Stress Tensor force result.
 
 If the user is interested in the contours along which the integral was
 performed, the "stress tensor mask" box can be checked in the contour plot
-dialog. A set of orange (by default) lines will be displayed that.
+dialog. A set of orange (by default) lines is then displayed.
 
-\item \texttt{Torque via Weighted Stress Tensor} This integral is torque version
+\item \texttt{Torque via Weighted Stress Tensor}. This integral is the torque version
 of the \texttt{Force via Weighted Stress Tensor} integral. Instead
 of force, torque about (0,0) is computed using the same weighting
 function approach.
@@ -2928,7 +3093,7 @@ function approach.
 
 \subsection{Force/Torque Calculation} \label{forcetorquesection}
 
-Often, the calculation of electrostatic and torques is a goal of
+Often, the calculation of electrostatic forces and torques is a goal of
 finite element analysis. This section discusses some of the
 different methods of deducing electrostatic forces and torques.
 
@@ -2951,8 +3116,8 @@ electric field energy.
 
 Generally, you should not use the Stress Tensor line integral to compute
 forces and torques if it can be avoided (i.e. use the volume integral
-version instead). The indiscriminate use Maxwell's Stress Tensor can result
-in bad predictions forces and torques.
+version instead). The indiscriminate use of Maxwell's Stress Tensor can result
+in bad predictions of forces and torques.
 
 Maxwell's stress tensor prescribes a force per unit area produced by the
 electric field on a surface. The differential force produced is:
@@ -3021,39 +3186,23 @@ associated with that conductor are displayed.
 \section{Exporting of Graphics}
 
 Ultimately, you may want to export graphics from FEMM for inclusion
-in reports and so on. It is possible to get what you are seeing on
-the screen onto disk in several different graphics formats.
+in reports and so on.
 
-Probably the easiest way to get graphics out of FEMM is to use the
-\texttt{Copy as Bitmap} or \texttt{Copy as Metafile} selections off of the
-main menu's \texttt{Edit} list. These command takes whatever is
-currently in the FEMM window and copies it to the clipboard as a
-Device Independent Bitmap (\texttt{.bmp} format) and Extended
-Metafile (\texttt{.emf} format), respectively. The clipboard data
-can then be pasted directly into most applications (e.g. Word, MS
-Paint, etc).
+The easiest way is the {\tt Copy as Bitmap} selection off of the main
+menu's {\tt Edit} list.  This copies whatever is currently displayed in the
+active window to the clipboard as a bitmap, which can then be pasted
+directly into most applications.
 
-L$_{A}$T$_{E}$X afficionados typically find PostScript to be the
-most useful type of graphics output. FEMM does not support
-postscript output directly, but it is still relatively easy to
-create postcript figures with FEMM. To obtain a postscript version
-of the current view, you first must set up a postscript printer
-driver that outputs to \texttt{File:}. This is done via the
-following steps: Choose +Settings/Printers+ off of the Windows
-Start menu. A window containing the list of currently defined
-printers will appear. Double click on the \texttt{Add Printer} icon
-in this list. The
-\texttt{Add Printer Wizard} will appear on the screen. Choose \texttt{Local
-Printer}; hit \texttt{Next}; A list of printers will appear. Choose
-a postscript printer off of this list. The Apple Laserwriter II NT
-is a good choice. Select \texttt{FILE:} as the port which will be
-used with this printer. Accept the defaults for all remaining
-questions. Now, when you want a postscript picture of the currently
-displayed screen, just choose +File/Print+ off of FEMM's main menu.
-As the printer, choose the postscript printer that you have
-previously defined. When you print to this printer, you will be
-prompted for a file name, and graphic will be written as a
-postscript figure to the specified file name.
+To write the same picture straight to a file instead, use the
+{\tt mi\_savebitmap} and {\tt mo\_savebitmap} scripting commands (and their
+{\tt ei\_}, {\tt hi\_} and {\tt ci\_} equivalents), described in the
+Python Scripting chapter.  Because a script can set up the view before
+saving, this is also the convenient way to produce the same figure from
+several models, or the same model at several rotor positions.
+
+FEMM does not produce vector output.  Earlier versions could copy a Windows
+Enhanced Metafile, and the {\tt savemetafile} scripting commands are still
+accepted so that old scripts do not fail, but they do nothing.
 
 %-----------------------------------------------------------------------------------
 %
@@ -3213,7 +3362,7 @@ from the element's centroid.
 The use of smoothing to recover the accuracy lost by
 differentiating $A$ is known as {\em superconvergence}. Of the
 greatest interest to FEMM are so-called ``patch recovery''
-techniques. The basic idea is the the solutions for $B$ are most
+techniques. The basic idea is that the solutions for $B$ are most
 accurate at the centroid of the triangular element (known as its
 {\em Gauss Point}). One desires a continuous profile of $B$ that
 can be interpolated from nodal values, in the same way that vector
@@ -3229,7 +3378,7 @@ plane at the node point's location as its smoothed value of $B$
 
 However, this approach to patch recovery has a lot of shortcomings.
 For the rather irregular meshes that can arise in finite elements,
-the least-squares fit problem can be ill-condition, or even
+the least-squares fit problem can be ill-conditioned, or even
 singular, at some nodes in the finite element mesh.  Furthermore,
 the superconvergence solution can actually be less accurate than
 the piece-wise constant solution in the neighborhood of boundaries
@@ -3370,7 +3519,7 @@ magnet.
 
 Using these insights, the permanent magnet can be modeled.  The
 {\em coercivity} (denoted $H_c$) of the magnet is the absolute
-value of the MMF that it takes to bring the the field in the magnet
+value of the MMF that it takes to bring the field in the magnet
 to zero.  This value (in units of Amps/Meter) is entered in the
 \verb+H_c+ box in the Material Properties dialog (see
 Figure~\ref{blockpropdlg}). If the magnet material is nonlinear,
@@ -3762,7 +3911,7 @@ region.
 
 \section{Nonlinear Time Harmonic Formulation} \label{nonlineartimeharmonicappendix}
 
-Starting with the the 3.3 version of FEMM, the program includes a
+Starting with the 3.3 version of FEMM, the program includes a
 ``nonlinear time harmonic'' solver. In general, the notion of a
 ``nonlinear time harmonic'' analysis is something of a kludge. To
 obtain a purely sinusoidal response when a system is driven with a
@@ -3799,7 +3948,7 @@ A ``nonlinear hysteresis lag'' parameter is then applied to the
 effective $BH$ curve. The lag is assumed to be proportional to the
 permeability, which gives a hysteresis loss that is always
 proportional to $|B|^2$. This form was suggested by O'Kelly \cite{okelly}.
-It has been suggested that that the Steinmetz
+It has been suggested that the Steinmetz
 equation could be used to specify hysteresis lag, but the Steinmetz
 equation is badly behaved at low flux levels (i.e. one can't solve
 for a hysteresis lag that produces the Steinmetz $|B|^{1.6}$ form

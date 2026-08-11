@@ -10,19 +10,33 @@
 #include <QDialog>
 #include <QComboBox>
 #include <QLabel>
+#include <vector>
 #include "heat_types.h"
 
 class PyLineEdit;
 
-// Material: name, Kx, Ky, qv, Kt
+class QPushButton;
+
+// Material: name, T-k curve selection, Kx, Ky, qv, Kt
 class HeatMaterialEditorDialog : public QDialog {
     Q_OBJECT
 public:
     HeatMaterialEditorDialog(QWidget *parent = nullptr);
     void fromProp(const HMaterialProp &m);
     void toProp(HMaterialProp &m) const;
+private slots:
+    void onNonlinearChanged(int idx);
+    void onEditTKCurve();
 private:
     PyLineEdit *m_name, *m_Kx, *m_Ky, *m_qv, *m_Kt;
+    QLabel *m_KxLabel, *m_KyLabel;
+    QComboBox *m_nlcurve;
+    QPushButton *m_tkButton;
+
+    // The T-k curve as entered. Held here rather than in the prop so that a
+    // cancelled edit leaves the material alone.
+    std::vector<double> m_T, m_K;
+    int m_npts = 0;
 };
 
 // Boundary: name, type, Tset, qs, Tinf, h, beta, TinfRad

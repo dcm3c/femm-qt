@@ -279,6 +279,13 @@ public:
 
     bool Smooth = true;
     bool ShiftH = true;   // shift H in PMs (subtract Hc, report separately)
+
+    // Sampling density for the line integrals that are evaluated numerically
+    // (the stress tensor pair and (B.n)^2); the rest are exact and ignore it.
+    // A member rather than a constant so the GUI can hand over the user's
+    // preference without libfemm having to know what a preference is -- the
+    // three scalar results documents have carried the same field all along.
+    int d_LineIntegralPoints = 400;
     bool bHasMask = false;
     int WeightingScheme = 0;
 

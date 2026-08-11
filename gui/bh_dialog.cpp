@@ -3,151 +3,49 @@
 
 // bh_dialog.cpp — B-H curve data editor for nonlinear magnetic materials
 // Ported from femm42src/femm/BHData.cpp
-// Users enter B and H values as newline-separated lists.
+// Users enter B and H values as newline-separated lists. The dialog frame is
+// CurveDataDialog, shared with the heat flow T-k editor.
 
 #include "bh_dialog.h"
-#include "plot_widget.h"
 
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QFormLayout>
-#include <QDialogButtonBox>
-#include <QPushButton>
-#include <QLabel>
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QTextStream>
-#include <cstdio>
 #include <cmath>
-#include <sstream>
+#include <vector>
 
-BHDataDialog::BHDataDialog(QWidget *parent) : QDialog(parent)
+static CurveDataDialog::Spec bhSpec()
 {
-    setWindowTitle(tr("B-H Curve Data"));
-    resize(500, 400);
-
-    auto *topLabel = new QLabel(tr("Enter B and H values (one per line, monotonically increasing B):"));
-
-    m_bEdit = new QTextEdit;
-    m_bEdit->setPlaceholderText(tr("B values (Tesla)"));
-
-    m_hEdit = new QTextEdit;
-    m_hEdit->setPlaceholderText(tr("H values (A/m)"));
-
-    auto *dataLayout = new QHBoxLayout;
-    auto *bCol = new QVBoxLayout;
-    bCol->addWidget(new QLabel(tr("B (Tesla)")));
-    bCol->addWidget(m_bEdit);
-    auto *hCol = new QVBoxLayout;
-    hCol->addWidget(new QLabel(tr("H (A/m)")));
-    hCol->addWidget(m_hEdit);
-    dataLayout->addLayout(bCol);
-    dataLayout->addLayout(hCol);
-
-    auto *importBtn = new QPushButton(tr("Import from file..."));
-    connect(importBtn, &QPushButton::clicked, this, &BHDataDialog::onImport);
-
-    auto *plotBtn = new QPushButton(tr("Plot B-H Curve"));
-    connect(plotBtn, &QPushButton::clicked, this, [this]() { onPlotBH(false); });
-    auto *logPlotBtn = new QPushButton(tr("Log Plot B-H Curve"));
-    connect(logPlotBtn, &QPushButton::clicked, this, [this]() { onPlotBH(true); });
-
-    auto *btnRow = new QHBoxLayout;
-    btnRow->addWidget(importBtn);
-    btnRow->addStretch();
-    btnRow->addWidget(plotBtn);
-    btnRow->addWidget(logPlotBtn);
-
-    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-    connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
-    connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
-
-    auto *layout = new QVBoxLayout(this);
-    layout->addWidget(topLabel);
-    layout->addLayout(dataLayout);
-    layout->addLayout(btnRow);
-    layout->addWidget(buttons);
+    CurveDataDialog::Spec s;
+    s.windowTitle    = QObject::tr("B-H Curve Data");
+    s.namedTitle     = QObject::tr("B-H Curve: %1");
+    s.prompt         = QObject::tr("Enter B and H values (one per line, monotonically increasing B):");
+    s.xHeader        = QObject::tr("B (Tesla)");
+    s.yHeader        = QObject::tr("H (A/m)");
+    s.xPlaceholder   = QObject::tr("B values (Tesla)");
+    s.yPlaceholder   = QObject::tr("H values (A/m)");
+    s.plotButton     = QObject::tr("Plot B-H Curve");
+    s.logPlotButton  = QObject::tr("Log Plot B-H Curve");
+    s.plotTitle      = QObject::tr("B-H Curve");
+    s.xAxisLabel     = QObject::tr("H, Amp/Meter");
+    s.yAxisLabel     = QObject::tr("B, Tesla");
+    s.importTitle    = QObject::tr("Import B-H Data");
+    return s;
 }
 
-void BHDataDialog::setMaterialName(const QString &name)
+BHDataDialog::BHDataDialog(QWidget *parent) : CurveDataDialog(bhSpec(), parent)
 {
-    m_matName = name;
-    setWindowTitle(tr("B-H Curve: %1").arg(name));
 }
 
-void BHDataDialog::setData(const std::vector<double> &B, const std::vector<double> &H, int npts)
+void BHDataDialog::conditionData(std::vector<double> &B, std::vector<double> &H) const
 {
-    QString bText, hText;
-    for (int i = 0; i < npts; i++) {
-        if (i > 0) { bText += "\n"; hText += "\n"; }
-        bText += QString::number(B[i], 'g', 10);
-        hText += QString::number(H[i], 'g', 10);
-    }
-    m_bEdit->setPlainText(bText);
-    m_hEdit->setPlainText(hText);
-}
-
-void BHDataDialog::getData(std::vector<double> &B, std::vector<double> &H, int &npts) const
-{
-    B.clear();
-    H.clear();
-
-    // Parse B values
-    QStringList bLines = m_bEdit->toPlainText().split('\n', Qt::SkipEmptyParts);
-    QStringList hLines = m_hEdit->toPlainText().split('\n', Qt::SkipEmptyParts);
-
-    int n = std::min(bLines.size(), hLines.size());
+    std::vector<double> Bk, Hk;
     double lastB = -1e30;
-
-    for (int i = 0; i < n; i++) {
-        bool okB, okH;
-        double bv = bLines[i].trimmed().toDouble(&okB);
-        double hv = hLines[i].trimmed().toDouble(&okH);
-        if (!okB || !okH) continue;
-        if (bv <= lastB) continue;  // enforce monotonicity
-        B.push_back(bv);
-        H.push_back(hv);
-        lastB = bv;
+    for (size_t i = 0; i < B.size(); i++) {
+        if (B[i] <= lastB) continue;   // enforce monotonicity
+        Bk.push_back(B[i]);
+        Hk.push_back(H[i]);
+        lastB = B[i];
     }
-    npts = (int)B.size();
-}
-
-void BHDataDialog::onImport()
-{
-    QString path = QFileDialog::getOpenFileName(this,
-        tr("Import B-H Data"), QString(),
-        tr("Text Files (*.txt *.csv *.dat);;All Files (*)"));
-    if (path.isEmpty()) return;
-
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QMessageBox::warning(this, tr("Error"), tr("Could not open file"));
-        return;
-    }
-
-    QString bText, hText;
-    QTextStream in(&file);
-    while (!in.atEnd()) {
-        QString line = in.readLine().trimmed();
-        if (line.isEmpty() || line.startsWith('#') || line.startsWith('%')) continue;
-
-        // Try to parse two numbers per line (B H or B,H)
-        line.replace(',', ' ').replace('\t', ' ');
-        QStringList parts = line.split(' ', Qt::SkipEmptyParts);
-        if (parts.size() >= 2) {
-            bool okB, okH;
-            double bv = parts[0].toDouble(&okB);
-            double hv = parts[1].toDouble(&okH);
-            if (okB && okH) {
-                if (!bText.isEmpty()) { bText += "\n"; hText += "\n"; }
-                bText += QString::number(bv, 'g', 10);
-                hText += QString::number(hv, 'g', 10);
-            }
-        }
-    }
-
-    m_bEdit->setPlainText(bText);
-    m_hEdit->setPlainText(hText);
+    B.swap(Bk);
+    H.swap(Hk);
 }
 
 // ================================================================
@@ -261,47 +159,33 @@ static double getH(double b, const std::vector<double> &B,
     return 0;
 }
 
-void BHDataDialog::onPlotBH(bool logScale)
+CurveDataDialog::PlotData BHDataDialog::buildPlotData(const std::vector<double> &B,
+                                                      const std::vector<double> &H) const
 {
-    std::vector<double> B, H;
-    int npts;
-    getData(B, H, npts);
+    const int npts = (int)B.size();
 
-    if (npts < 3) {
-        QMessageBox::information(this, tr("Plot B-H Curve"),
-            tr("Must have at least 3 pairs of data points."));
-        return;
-    }
-
-    // Work on copies for spline computation (smoothing modifies data)
+    // Work on copies: getSlopes smooths the data in place when the entered
+    // points would give a spline that is not single-valued.
     std::vector<double> Bw = B, Hw = H;
     std::vector<double> slope;
     getSlopes(Bw, Hw, npts, slope);
 
-    // Build interpolated curve (101 points like original FEMM)
-    PlotSeries series;
-    series.label = tr("B-H Curve");
+    PlotData pd;
+
+    // 101 points across the curve, as Original FEMM draws it. H goes on the
+    // horizontal axis, so the interpolated H is the plot's x.
     double db = (Bw[npts - 1] - Bw[0]) / 100.0;
     for (int i = 0; i <= 100; i++) {
         double b = Bw[0] + i * db;
-        double h = getH(b, Bw, Hw, slope, npts);
-        series.x.push_back(h);  // H on X axis
-        series.y.push_back(b);  // B on Y axis
+        pd.cx.push_back(getH(b, Bw, Hw, slope, npts));
+        pd.cy.push_back(b);
     }
 
-    // Raw data points as markers
-    PlotMarkers markers;
+    // Markers sit on the points as entered, not as smoothed
     for (int i = 0; i < npts; i++) {
-        markers.x.push_back(H[i]);
-        markers.y.push_back(B[i]);
+        pd.mx.push_back(H[i]);
+        pd.my.push_back(B[i]);
     }
 
-    QString title = m_matName.isEmpty() ? tr("B-H Curve") : tr("B-H Curve: %1").arg(m_matName);
-    auto *dlg = new PlotDialog(title, this);
-    dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->plot()->addSeries(series);
-    dlg->plot()->setMarkers(markers);
-    dlg->plot()->setAxisLabels(tr("H, Amp/Meter"), tr("B, Tesla"));
-    dlg->plot()->setLogX(logScale);
-    dlg->show();
+    return pd;
 }

@@ -16,43 +16,32 @@ option brings up the Problem Definition dialog, shown in
 Figure~\ref{hfig5}.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{belaman6}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{hprobdef}}
 \caption{Problem Definition dialog.}
 \label{hfig5}
 \end{figure}
 
-The first selection is the \texttt{Problem Type} drop list. This
-drop box allows the user to choose from a 2-D planar problem (the
-\texttt{Planar} selection), or an axisymmetric problem (the
-\texttt{Axisymmetric} selection).
+The dialog's entries, in the order they appear:
 
+\begin{itemize}
 
-
-
-
-Next is the \texttt{Length Units} drop list. This box identifies
+\item{\tt Length Units}. This box identifies
 what unit is associated with the dimensions prescribed in the
 model's geometry. Currently, the program supports inches,
 millimeters, centimeters, meters, mils, and $\mu $meters.
 
+\item{\tt Problem Type}. This
+drop box allows the user to choose from a 2-D planar problem (the
+\texttt{Planar} selection), or an axisymmetric problem (the
+\texttt{Axisymmetric} selection).
 
-
-
-
-The first edit box is the \texttt{Depth} specification. If a Planar
-problem is selected, this edit box becomes enabled. This value is
-the length of the geometry in the ``into the page'' direction. This
-value is used for scaling integral results in the post processor
-(e.g. force, inductance, etc.) to the appropriate length. The units
-of the Depth selection are the same as the selected length units.
-
-The second edit box is the \texttt{Solver Precision} edit box. The
+\item{\tt Precision}. The
 number in this edit box specifies the stopping criteria for the
 linear solver. The linear algebra problem could be represented by:
 
-\begin{equation}
+\begin{displaymath}
 M x = b
-\end{equation}
+\end{displaymath}
 
 \noindent
 where $M$ is a square matrix, $b$ is a vector, and $x$ is a vector of
@@ -60,11 +49,19 @@ unknowns to be determined. The solver precision value determines the maximum
 allowable value for $\vert \vert b - Mx\vert \vert / \vert \vert b\vert
 \vert $. The default value is $10^{ - 8}$.
 
-The third edit box is labeled {\tt Min Angle}.  The entry in this box is used as a
-constraint in the Triangle meshing program.  Triangle adds points to the mesh to
+\item{\tt Depth}. If a Planar
+problem is selected, this edit box becomes enabled. This value is
+the length of the geometry in the ``into the page'' direction. This
+value is used for scaling integral results in the post processor
+(e.g. force, inductance, etc.) to the appropriate length. The units
+of the Depth selection are the same as the selected length units.
+
+\item{\tt Min Angle (deg)}.  The entry in this box is used as a
+constraint sent to the mesh generator, {\tt tangle}.  The mesh generator
+adds points to the mesh to
 ensure that no angles smaller than the specified angle occur. If the minimum angle
 is 20.7 degrees or smaller, the triangulation algorithm is theoretically guaranteed to
-terminate (assuming infinite precision arithmetic -- Triangle may
+terminate (assuming infinite precision arithmetic -- the mesh generator may
 fail to terminate if you run out of precision).  In practice, the
 algorithm often succeeds for minimum angles up to 33.8 degrees.
 For highly refined meshes, however, it may be necessary to reduce
@@ -72,12 +69,22 @@ the minimum angle to well below 20 to avoid problems associated
 with insufficient floating-point precision.  The edit box will accept
 values between 1 and 33.8 degrees.
 
-Lastly, there is an optional \texttt{Comment} edit box. The user
+\item{\tt Smart Mesh}.  When {\tt On}, the mesh generator derives a
+characteristic element size from the average length of the model's line
+segments and applies it at the ends of those segments, refining the mesh
+toward corners.  Endpoints belonging only to arcs are left alone, so a
+smooth surface is not refined merely for being curved.
+When {\tt Off}, element sizes come only from the mesh size specified on each
+block label, together with any per-segment maximum side length.
+
+\item{\tt Comment}. The user
 can enter in a few lines of text that give a brief description of
 the problem that is being solved. This is useful if the user is
 running several small variations on a given geometry. The comment
 can then be used to identify the relevant features for a particular
 geometry.
+
+\end{itemize}
 
 \subsection{Definition of Properties}
 
@@ -100,18 +107,16 @@ pictured in Figure~\ref{hfig7} appears.
 
 
 
-This dialog is the manager for a particular type of properties. All
-currently defined properties are displayed in the \texttt{Property
-Name} drop list at the top of the dialog. At the beginning of a new
-model definition, the box will be blank, since no properties have
-yet been defined. Pushing the \texttt{Add Property} button allows
-the user to define a new property type. The \texttt{Delete
-Property} button removes the definition of the property currently
-in view in the \texttt{Property Name} box. The \texttt{Modify
-Property} button allows the user to view and edit the property
-currently selected in the \texttt{Property Name} box. Specifics for
-defining the various property types are addressed in the
-following subsections.
+This dialog is the manager for a particular type of property, and its
+title changes to match the type chosen from the menu. All currently
+defined properties of that type are listed in the box on the left. At the
+beginning of a new model definition, the list will be empty, since no
+properties have yet been defined. Pushing the {\tt Add} button allows the
+user to define a new property. The {\tt Delete} button removes the
+property currently selected in the list, and {\tt Modify} opens the
+selected property for viewing and editing --- as does double-clicking the
+property itself. {\tt Close} dismisses the dialog. Specifics for defining
+the various property types are addressed in the following subsections.
 
 \subsubsection{Point Properties}
 
@@ -144,7 +149,7 @@ Property} dialog pictured in Figure~\ref{hfig9} appears.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{hbdryprop}}
-\caption{Boundary Condition dialog.}
+\caption{Boundary Properties dialog.}
 \label{hfig9}
 \end{figure}
 
@@ -153,10 +158,11 @@ property. The default name is {\tt New Boundary}, but you should
 change this name to something more descriptive of the boundary that
 is being defined.
 
-The next selection is the \texttt{BC Type} drop list. This
-specifies the boundary condition type. Currently, FEMM heat flow problems
-support the following types of boundaries: Fixed Temperature, Heat Flux, Convection,
-Radiation, Periodic, and Antiperiodic. These boundary conditions are
+The next selection is the \texttt{Type} drop list. This
+specifies the boundary condition type, and the dialog shows only the
+parameters that belong to the selected type. Currently, FEMM heat flow
+problems support the following types of boundaries: Fixed Temperature,
+Heat Flux, Convection, Radiation, Periodic, and Anti-Periodic. These boundary conditions are
 described in detail in Section~\ref{bcsection}.
 
 \subsubsection{Materials Properties}
@@ -178,20 +184,49 @@ As with Point and Boundary properties, the first step is to choose a
 descriptive name for the material that is being described. Enter it in the
 \texttt{Name} edit box in lieu of {\tt New Material}.
 
-Next, the thermal conductivity for the material needs to be specified. There is a drop
-list on the dialog that allows the user to select either a contant thermal conductivity
-({\em i.e.} independent of temperature), or a thermal conductivity that is prescribed
-as a function of temperature. If conductivity is selected, FEMM allows you
-to specify different conductivities in the vertical and horizontal
-directions (\textit{$\varepsilon $}$_{x}$ for the x- or horizontal direction, and \textit{$\varepsilon $}$_{y}$ for the y-
-or vertical. If {\tt Thermal Conductivity Depends on Temperature} is selected, the 
-{\tt Edit Nonlinear Thermal Conductivity Curve} becomes enabled.  Press the button
-to enter temperature-conductivity pairs.  The program will interpolate linearly between 
-the entered points.  If the program must extrapolate off the end of the defined curve,
-conductivity takes the value of the nearest defined T-k point.
+Next, the thermal conductivity for the material needs to be specified.  The
+{\tt T-k Curve} drop list chooses between a conductivity that is constant and
+one that varies with temperature.
 
-A volume heat generation can also be prescribed by filling in the
-appropriate box in the material properties dialog.
+With {\tt Constant Thermal Conductivity} selected, FEMM
+allows you to specify different conductivities in the vertical and horizontal
+directions: $k_x$, in the {\tt Thermal conductivity, x} box, applies in the
+x- or horizontal direction, and $k_y$, in the
+{\tt Thermal conductivity, y} box, in the y- or vertical direction.  Both are
+in W/m-K.
+
+If {\tt Thermal Conductivity Depends on Temperature} is selected instead,
+those two boxes are disabled and the {\tt Edit T-k Curve...} button becomes
+enabled.  Press the button to enter temperature-conductivity pairs, one per
+line, in the dialog pictured in Figure~\ref{hfig10b} --- the same
+arrangement in which B-H data is entered for a nonlinear magnetic material.
+The points need not be entered in order; they are sorted by temperature.
+The program interpolates linearly between the entered points, and if it must
+extrapolate off the end of the defined curve, conductivity takes the value of
+the nearest defined T-k point.  A temperature-dependent material is
+isotropic: the interpolated conductivity applies in both directions.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{htkdata}}
+\caption{Thermal conductivity curve dialog.}
+\label{hfig10b}
+\end{figure}
+
+The {\tt Import from file...} button reads the points from a two-column text
+file.  The program first asks which column is which and what units the file
+is in; temperatures in Celsius, Fahrenheit or Rankine and conductivities in
+Btu/(ft*hr*F) or kcal/(m*hr*K) are converted to Kelvin and W/(m*K) as they
+are read.  {\tt Plot T-k Curve} draws the interpolated curve through the
+entered points, so a bad point is easy to spot.
+
+A volume heat generation can also be prescribed, in W/m$^3$, in the
+{\tt Volume heat generation} box.
+
+The {\tt Volumetric heat capacity} box, in MJ/(m$^3\cdot$K), is used only by
+transient analyses --- that is, by problems that step forward in time from a
+previous solution, which are set up through the {\tt hi\_probdef} scripting
+command's previous solution and time step arguments.  The entry has no effect
+on a steady-state solution.
 
 \subsubsection{Material Library}
 
@@ -248,6 +283,14 @@ Figure~\ref{hfig12}.
 \label{hfig12}
 \end{figure}
 
+The {\tt Name} box names the conductor, so that it can be assigned to
+segments and arcs and reported on in the postprocessor.  The {\tt Type}
+drop list chooses which of the two quantities is prescribed:
+{\tt Prescribed heat flux} or {\tt Prescribed temperature}.  Whichever is selected, its
+edit box is enabled and the other is greyed out --- the greyed quantity is
+the one the program computes for you during the solution.
+
+
 \subsection{Analysis Tasks}
 
 Meshing the model, analyzing the model, and viewing the results are
@@ -266,8 +309,7 @@ generator to make sure that the mesh is up to date, so you never
 have to call the mesher from within FEMM. However, it is almost
 always important to get a look at the mesh and see that it ``looks
 right.'' When the mesh generation button is pressed, the mesher is
-called. While the mesher is running, an entry labeled ``triangle''
-will appear on the Windows taskbar. After the geometry is
+called. After the geometry is
 triangulated, the finite element mesh is loaded into memory and
 displayed underneath the defined nodes, segments, and block labels
 as a set of yellow lines.
@@ -281,12 +323,14 @@ from memory, and the memory that it occupied is freed for other
 uses.
 
 The second button, with the ``hand-crank'' icon, executes the solver,
-\texttt{hsolv.exe}. Before hsolv is actually run, the Triangle is
-called to make sure the mesh is up to date. Then, hsolv is called. When
-hsolv runs, it opens up a console window to display status information
-to the user. However, hsolv requires no user interaction while it is
-running. When hsolv is finished analyzing your problem, the console
-window will disappear. The time that hsolv requires is highly dependent
+\texttt{hsolv}. The mesh is brought up to date first: the
+\texttt{tangle} mesher is built into the solver, so meshing is the solver's
+own first step rather than a separate program. While
+hsolv runs, a \texttt{Solver} window displays status information
+to the user. hsolv requires no user interaction while it is
+running, although the window's \texttt{Abort} button will stop it. When
+hsolv is finished analyzing your problem, the window
+closes. The time that hsolv requires is highly dependent
 on the problem being solved. Solution times are typically on the order of 1
 to 10 seconds, depending upon the size and complexity of the problem and the
 speed of the machine analyzing the problem.
@@ -299,14 +343,14 @@ analysis is finished.
 %------------------------------------------------------------------------------------
 \section{Heat Flow Postprocessor}
 
-The the heat flow postprocessing functionality of FEMM is
+The heat flow postprocessing functionality of FEMM is
 used to view solutions generated by the {\tt hsolv} solver.  A heat flow
 postprocessor window can be opened either by loading
 some previously run analyses via {\tt File|Open} on the main menu,
 or by pressing the ``big magnifying glass'' icon from within a
 preprocessor window to view a newly generated solution.
 Heat flow postprocessor data files stored on disk have the
-{\tt .anh} prefix.
+{\tt .anh} extension.
 
 Operation of the heat flow postprocessor ({\em i.e.} modes, view manipulation) is
 very similar to that of the magnetics postprocessor.  Refer to
@@ -432,7 +476,7 @@ evaluating a large number of points at evenly spaced along the contour and
 integrating using a simple trapezoidal-type integration scheme.
 
 To perform an integration, press the ``integral'' icon on the
-toolbar (as shown in Figure~0). A small dialog will appear with a
+toolbar (as shown in Figure~\ref{hfig18}). A small dialog will appear with a
 drop list. Choose the desired integral from the drop list and press
 \texttt{OK}. The amount of time required to perform the integral
 will be virtually instantaneous for some types of integrals;

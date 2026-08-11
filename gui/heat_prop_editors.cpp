@@ -6,11 +6,13 @@
 
 #include "heat_prop_editors.h"
 #include "py_line_edit.h"
+#include "tk_dialog.h"
 
 #include <QVBoxLayout>
 #include <QFormLayout>
 #include <QDialogButtonBox>
 #include <QLabel>
+#include <QPushButton>
 
 // ================================================================
 // Material editor: name, Kx, Ky, qv, Kt
@@ -24,11 +26,25 @@ HeatMaterialEditorDialog::HeatMaterialEditorDialog(QWidget *parent) : QDialog(pa
     m_name = new PyLineEdit; m_name->setText("New Material");
     form->addRow(tr("Name:"), m_name);
 
+    m_nlcurve = new QComboBox;
+    m_nlcurve->addItem(tr("Constant Thermal Conductivity"));               // 0
+    m_nlcurve->addItem(tr("Thermal Conductivity Depends on Temperature")); // 1
+    form->addRow(tr("T-k Curve:"), m_nlcurve);
+    connect(m_nlcurve, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &HeatMaterialEditorDialog::onNonlinearChanged);
+
     m_Kx = new PyLineEdit; m_Kx->setText("1");
-    form->addRow(tr("Thermal conductivity, x (W/m-K):"), m_Kx);
+    m_KxLabel = new QLabel(tr("Thermal conductivity, x (W/m-K):"));
+    form->addRow(m_KxLabel, m_Kx);
 
     m_Ky = new PyLineEdit; m_Ky->setText("1");
-    form->addRow(tr("Thermal conductivity, y (W/m-K):"), m_Ky);
+    m_KyLabel = new QLabel(tr("Thermal conductivity, y (W/m-K):"));
+    form->addRow(m_KyLabel, m_Ky);
+
+    m_tkButton = new QPushButton(tr("Edit T-k Curve..."));
+    m_tkButton->setEnabled(false);
+    form->addRow(m_tkButton);
+    connect(m_tkButton, &QPushButton::clicked, this, &HeatMaterialEditorDialog::onEditTKCurve);
 
     m_qv = new PyLineEdit; m_qv->setText("0");
     form->addRow(tr("Volume heat generation (W/m^3):"), m_qv);
@@ -43,6 +59,32 @@ HeatMaterialEditorDialog::HeatMaterialEditorDialog(QWidget *parent) : QDialog(pa
     auto *layout = new QVBoxLayout(this);
     layout->addLayout(form);
     layout->addWidget(buttons);
+
+    onNonlinearChanged(0);
+}
+
+// OF hd_MatDlg::OnSelchangeNlcombo(): a temperature-dependent material takes
+// its conductivity from the curve, so the constant entries go dead and the
+// curve editor comes alive.
+void HeatMaterialEditorDialog::onNonlinearChanged(int idx)
+{
+    const bool nl = (idx == 1);
+    m_Kx->setEnabled(!nl);
+    m_Ky->setEnabled(!nl);
+    m_KxLabel->setEnabled(!nl);
+    m_KyLabel->setEnabled(!nl);
+    m_tkButton->setEnabled(nl);
+}
+
+void HeatMaterialEditorDialog::onEditTKCurve()
+{
+    TKDataDialog dlg(this);
+    dlg.setMaterialName(m_name->text());
+    if (m_npts > 0) dlg.setData(m_T, m_K, m_npts);
+    if (dlg.exec() == QDialog::Accepted) {
+        dlg.getData(m_T, m_K, m_npts);
+        if (m_npts > 128) m_npts = 128;   // HMaterialProp::Kn is Kn[128]
+    }
 }
 
 void HeatMaterialEditorDialog::fromProp(const HMaterialProp &m)
@@ -52,6 +94,18 @@ void HeatMaterialEditorDialog::fromProp(const HMaterialProp &m)
     m_Ky->setText(QString::number(m.Ky, 'g', 15));
     m_qv->setText(QString::number(m.qv, 'g', 15));
     m_Kt->setText(QString::number(m.Kt, 'g', 15));
+
+    // Kn[i] carries the temperature in its real part and the conductivity
+    // there in its imaginary part -- the packing the .feh format uses.
+    m_npts = m.npts;
+    if (m_npts > 128) m_npts = 128;
+    m_T.clear(); m_K.clear();
+    for (int i = 0; i < m_npts; i++) {
+        m_T.push_back(m.Kn[i].re);
+        m_K.push_back(m.Kn[i].im);
+    }
+    m_nlcurve->setCurrentIndex(m_npts > 0 ? 1 : 0);
+    onNonlinearChanged(m_nlcurve->currentIndex());
 }
 
 void HeatMaterialEditorDialog::toProp(HMaterialProp &m) const
@@ -61,6 +115,19 @@ void HeatMaterialEditorDialog::toProp(HMaterialProp &m) const
     m.Ky = m_Ky->evaluateAsDouble(1);
     m.qv = m_qv->evaluateAsDouble(0);
     m.Kt = m_Kt->evaluateAsDouble(0);
+
+    // OF hd_MatDlg::OnOK(): a one-point curve is not a curve, so it collapses
+    // to a constant material at that conductivity. Otherwise the constant
+    // entries are set from the curve's first point, which is what GetK falls
+    // back on if the curve is ever dropped.
+    bool nl = (m_nlcurve->currentIndex() == 1) && (m_npts > 0);
+    if (nl) {
+        if (m_npts == 1) nl = false;
+        m.Kx = m_K[0];
+        m.Ky = m.Kx;
+    }
+    m.npts = nl ? m_npts : 0;
+    for (int i = 0; i < m.npts; i++) m.Kn[i] = CComplex(m_T[i], m_K[i]);
 }
 
 // ================================================================

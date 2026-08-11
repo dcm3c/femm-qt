@@ -2858,7 +2858,9 @@ CloseFEMM::usage =
 
 OpenFEMM::usage =
 "OpenFEMM[] starts an external instance of FEMM and establishes an associated TCP connection.
-OpenFEMM[1] starts FEMM minimized"
+If an instance is already listening on the port, OpenFEMM connects to it rather than starting another.
+OpenFEMM[1] starts the headless engine instead of the interactive shell, so no window appears.
+OpenFEMM[bHide, port] chooses both."
 
 OpenFEMM::femmerr =
 "femm-qt returned an error: `1`. Aborting evaluation. Use Quiet[..., OpenFEMM::femmerr] or Off[OpenFEMM::femmerr] to suppress."

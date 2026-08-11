@@ -79,15 +79,19 @@ MaterialEditorDialog::MaterialEditorDialog(QWidget *parent) : QDialog(parent)
     m_LamFill = new PyLineEdit; m_LamFill->setText("1");
     form->addRow(tr("Fill factor:"), m_LamFill);
 
+    // The hysteresis lag angle is phi everywhere else -- <Phi_h> in the file
+    // format, phi_hmax / phi_hx / phi_hy in the manual and in mi_addmaterial --
+    // and OF's dialog labelled all three with the Symbol font's phi. The C++
+    // members keep OF's Theta_h* names. U+03C6 is the character OF used.
     m_Theta_hn = new PyLineEdit; m_Theta_hn->setText("0");
-    form->addRow(QStringLiteral("\u03b8\u2095 (deg):"), m_Theta_hn);
+    form->addRow(QStringLiteral("\u03c6\u2095 (deg):"), m_Theta_hn);
 
     m_Theta_hx = new PyLineEdit; m_Theta_hx->setText("0");
     m_Theta_hy = new PyLineEdit; m_Theta_hy->setText("0");
     auto *thRow = new QHBoxLayout;
     thRow->addWidget(new QLabel("x:")); thRow->addWidget(m_Theta_hx);
     thRow->addWidget(new QLabel("y:")); thRow->addWidget(m_Theta_hy);
-    form->addRow(QStringLiteral("\u03b8\u2095 x/y:"), thRow);
+    form->addRow(QStringLiteral("\u03c6\u2095 x/y:"), thRow);
 
     m_NStrands = new PyLineEdit; m_NStrands->setText("0");
     m_WireD = new PyLineEdit; m_WireD->setText("0");

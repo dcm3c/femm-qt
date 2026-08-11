@@ -187,6 +187,9 @@ public:
 
     // Display state
     bool Smooth = true;
+    // Sampling density for the numerically evaluated line integrals.
+    // Public alongside Smooth: the GUI sets it from the user's preference.
+    int d_LineIntegralPoints = 400;
     bool bHasMask = false;
 
     // Line plot data
@@ -218,7 +221,6 @@ private:
     void FindBoundaryEdges();
     bool IsKosher(int k) const;
 
-    int d_LineIntegralPoints = 400;
 };
 
 #endif // ELEC_RESULTS_DOC_H

@@ -259,8 +259,16 @@ transcription of the embedded raster (native is 1 px per pt, see the
 correction above), and written with a pHYs chunk of 72 dpi. Verified: output
 pixel dimensions equal the source BoundingBox in points for all 61, so
 pdflatex computes exactly the natural size the BoundingBox used to give and
-every figure prints at its original size. The `.ps`/`.eps` originals are left
-in place.
+every figure prints at its original size.
+
+**The 73 `.ps`/`.eps` originals were deleted once the prose pass was done**
+(all tracked, so `git show <rev>:femm-qt/manual/<name>` recovers any of them).
+Every one of the 66 referenced figures had a `.png` by then, so nothing
+depended on them. The companion change matters more than the deletion:
+`\DeclareGraphicsExtensions` no longer lists `.eps,.ps`. While the
+PostScript was present, a figure with no `.png` fell back to its 2004
+PostScript and the build stayed clean -- a missed capture was invisible.
+A missing figure is now an error.
 
 **Source changes** (`manual.tex` preamble + 71 include sites):
 
@@ -446,3 +454,162 @@ UI, so they only need redoing if the underlying plots should look modern:
 **Line drawings (6)** — hand-drawn schematics that do not age and need
 nothing: `eqmag`, `ezlam`, `hardlam`, `lamscheme`, `belaman20`, `thisside`
 (the last two are the same drawing stored twice).
+
+---
+
+## 8. Prose/dialog reconciliation (IN PROGRESS)
+
+The figures are all current. **The prose is not.** Every dialog figure now shows
+the femm-qt dialog, but the surrounding text still describes the 2004 one, so a
+reader with the figure beside the text meets fields nobody explains and, worse,
+positional references that no longer hold. This section is the worklist.
+
+### 8.1 What "stale" looks like — three distinct failures
+
+Calibrated on the magnetics Problem Definition (commit 878b32b), which had all
+three:
+
+1. **Undocumented fields.** The dialog gained controls that did not exist in
+   2004. Known additions: `AC Solver`, `Smart Mesh`, `Prev. Solution`,
+   `Prev. Type` (Problem Definition); `Material Type` and the nonlinear B-H
+   checkbox (Material Properties).
+2. **Positional references that no longer match.** The old text counts fields
+   -- "the first selection", "the second edit box" -- in an order the dialog
+   does not use. Problem Type was introduced first but sits third; Depth was
+   "the second edit box" while Precision, called "the third", appears above it.
+   **Fix by naming fields rather than numbering them**, which also stops it
+   drifting the next time the layout changes.
+3. **Renamed controls.** Captions were fixed in earlier commits, but check body
+   text too: "Solver Precision" is now just `Precision`, "Block Property" is
+   `Material Properties`, "Materials Library" is `Material Library`.
+
+### 8.2 The method that worked, in order
+
+1. `Read` the figure. Note every control, top to bottom, with its exact label.
+2. Read the surrounding prose (`grep -n "includegraphics.*{stem}" manual.tex`
+   then read ~30 lines either side).
+3. **For each control the prose does not explain, find out what it actually
+   does before writing a word.** This is the expensive step and the one that
+   makes the result worth having. Sources, in order of usefulness:
+   - `gui/*_dialog.cpp` for the control's combo entries and enable/disable
+     rules (e.g. `problem_dialog.cpp` gives AC Solver = Successive
+     Approximation / Newton, Prev. Type = None / Incremental / Frozen);
+   - the solver or mesher for what the setting *means* -- `Smart Mesh` looked
+     generic until `tangle.cpp:3671` showed it derives a characteristic length
+     from the average line-segment length and applies it at segment endpoints
+     only, so corners refine but a smooth arc surface does not;
+   - `libfemm/*_document.cpp` for the file-format field it maps to.
+   Do not write "enables automatic meshing" when the code says something
+   specific. That is the whole value of the exercise.
+4. Rewrite as an ordered list naming each field, **preserving the existing
+   explanations verbatim** where they are still true. Only the framing changes.
+5. Build, check, commit one dialog (or one dialog across all four physics) per
+   commit.
+
+### 8.3 Worklist -- DONE
+
+Every dialog family has been through the pass:
+
+| dialogs | commit |
+|---|---|
+| Problem Definition (magnetics) | 878b32b |
+| Grid Properties | polar work |
+| X-Y Plot, Circuit/Conductor results | corrected at capture time |
+| Material Properties (4 physics) | 9c91442 |
+| Problem Definition (elec, heat, current) | 57a3679 |
+| Materials list / property manager (4) | f9dd61f |
+| Boundary Conditions (4) | 2ebd3ad |
+| Nodal, Circuit, Conductor (4) | 2802f6c |
+| Material Library (4) | 08d1cf4 |
+| B-H Curve Data | this commit |
+
+**What the pass was actually worth.** The prose fixes were the smaller
+half. Reconciling text against dialogs turned up four defects in the
+program itself, none of which had been tripped over in normal use:
+
+1. the heat material dialog had no T-k curve editor at all (3aa5e8c);
+2. the log B-H plot was unusable, because H = 0 clamped the axis to
+   thirty empty decades (313f503);
+3. the hysteresis lag angle was labelled theta while the file format,
+   the manual and the scripting interface all say phi (66c8bc3);
+4. the magnetics material library was documented as `mlibrary.dat`, a
+   name the program never looks for (08d1cf4) -- unlike the three above
+   this one is not a port gap but an error in the 2004 manual: OF opens
+   `matlib.dat` too (`fe_libdlg.cpp:80`), and `mlibrary.dat` appears
+   nowhere in OF's source.
+
+Two smaller documentation gaps closed along the way: the air gap boundary
+types, which the scripting chapter had documented but the GUI chapter had
+not, and the current flow Material Library, which had no section at all.
+
+**The lesson worth carrying forward:** when the prose and the dialog
+disagree, check Original FEMM before assuming *either* is right. Two of
+the four defects above were port gaps (1 and 3), one was a femm-qt bug
+that OF does not have (2), and one was a manual error older than femm-qt
+(4). OF's source settles which -- its `.rc` file is the authority on what
+a label used to say, and its `*_libdlg.cpp` on what a file is called.
+
+**Method note:** read the whole section, not just the thirty lines around
+the figure. The circuit paragraph was drafted twice because a thorough
+explanation of series versus parallel already sat sixty lines above the
+figure.
+### 8.4 Verification loop
+
+```
+cd femm-qt/manual                      # NB: the Bash tool resets cwd between
+                                       # calls -- cd explicitly every time, or
+                                       # pdflatex fails with "Emergency stop"
+                                       # and it looks like a LaTeX error
+for i in 1 2 3; do pdflatex -interaction=nonstopmode -jobname=manual_check manual.tex >/dev/null 2>&1; done
+grep -c '^!' manual_check.log                      # errors, want 0
+grep -c 'LaTeX Warning: Reference' manual_check.log # undefined refs, want 0
+grep -o "([0-9]* pages" manual_check.log | tail -1  # 162 as of 878b32b
+cp manual_check.pdf ../build/bin/manual.pdf
+cp manual_check.pdf manual.pdf          # may fail if a viewer holds it; say so
+rm -f manual_check.*
+```
+
+Edit `.tex` with a Python script written via the `Write` tool, not a bash
+heredoc -- the LaTeX backslashes get eaten. `manual.tex` is LF; `heatflow.tex`
+and `cflow.tex` are **CRLF**, so match line endings when patching multi-line
+strings.
+
+### 8.5 Cost
+
+About 25k tokens for the magnetics Problem Definition, of which ~15k was step 3
+(finding out what the fields do). Most remaining dialogs are simpler, and the
+four-physics families share most of their text. Estimate **8-12 dialogs per
+session**; the property editors are the expensive ones.
+
+### 8.6 Found by the Material Properties pass -- not prose problems
+
+Both are for the author to decide on; the manual currently describes the
+program as it is.
+
+1. ~~**The heat Material Properties dialog has no T-k curve editor.**~~
+   **FIXED** -- it was a porting gap, not a design choice. The curve was
+   already carried in the `.feh` format (`<TKPoints>`), honoured by the solver
+   (`hsolv/prob1big.cpp:135`) and the postprocessor, and preserved when a
+   material was edited (`prop_list_dialog.cpp:278`); only the editor was
+   missing. Restored as the `T-k Curve` drop list plus an `Edit T-k Curve...`
+   button, with `gui/tk_dialog.cpp` (from OF `KCurve.cpp` / `TKDatafile.cpp`)
+   as the point editor. The B-H and T-k editors now share
+   `gui/curve_dialog.cpp`; the shared frame reproduces the B-H layout exactly,
+   so `bhdata.png` stays valid. `hblockprop.png` was recaptured and a new
+   figure, `htkdata.png`, was added to the heat chapter.
+2. ~~**The hysteresis lag angle is called two different things.**~~ **FIXED**
+   -- also a port issue. Everything else already said phi: `<Phi_h>` in the
+   file format, $\phi_{hmax}$ / $\phi_{hx}$ / $\phi_{hy}$ in the manual and in
+   `mi_addmaterial`, and OF's own dialog, whose three hysteresis labels were
+   the Symbol font's `f` (= U+03C6). Only femm-qt's dialog had drifted to
+   theta. Relabelled, and the manual's bridging clause dropped. The C++
+   members stay `Theta_h*`, which is what OF calls them internally too.
+
+### 8.7 One open question for the author
+
+The `Prev. Type` paragraph in 878b32b states physics rather than UI:
+Incremental as a small-signal problem about an operating point using the
+incremental permeability there, Frozen as holding permeability at the values
+the previous solution reached. That matches the code comments and the
+program's historical behaviour, but it should be confirmed by someone who
+knows the formulation rather than inferred from `prob1big.cpp`.

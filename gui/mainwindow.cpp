@@ -713,6 +713,37 @@ ScalarResultsWidget *MainWindow::activeScalarResults() const
     return sub ? qobject_cast<ScalarResultsWidget *>(sub->widget()) : nullptr;
 }
 
+// Smoothing is the results document's own flag -- the one mo_smooth and its
+// per-physics siblings set -- so toggling it needs no recomputation, only a
+// repaint. The scalar widget holds one of three document types and exactly one
+// of them is non-null.
+void MainWindow::setPostprocessorSmoothing(bool on)
+{
+    if (auto *r = activeResults()) {
+        if (auto *d = r->document()) d->Smooth = on;
+        r->update();
+        return;
+    }
+    if (auto *s = activeScalarResults()) {
+        if (auto *d = s->document())      d->Smooth = on;
+        if (auto *d = s->heatDocument())  d->Smooth = on;
+        if (auto *d = s->currDocument())  d->Smooth = on;
+        s->update();
+    }
+}
+
+bool MainWindow::postprocessorSmoothing() const
+{
+    if (auto *r = activeResults())
+        return r->document() ? r->document()->Smooth : true;
+    if (auto *s = activeScalarResults()) {
+        if (auto *d = s->document())      return d->Smooth;
+        if (auto *d = s->heatDocument())  return d->Smooth;
+        if (auto *d = s->currDocument())  return d->Smooth;
+    }
+    return true;
+}
+
 // ================================================================
 // UI switching
 // ================================================================
@@ -903,7 +934,7 @@ void MainWindow::syncPostprocessorMenus(QWidget *active)
     // and re-apply state back onto the (already-correct) widget.
     QAction *acts[] = { m_ppActDensity, m_ppActContours, m_ppActMesh,
                         m_ppMeshTB, m_showGridTB, m_snapGridTB,
-                        m_ppActPoints, m_ppActNames };
+                        m_ppActPoints, m_ppActNames, m_ppActSmooth };
     for (QAction *a : acts) a->blockSignals(true);
     m_ppActDensity->setChecked(density);
     m_ppActContours->setChecked(contours);
@@ -913,6 +944,7 @@ void MainWindow::syncPostprocessorMenus(QWidget *active)
     m_snapGridTB->setChecked(snap);
     m_ppActPoints->setChecked(points);
     m_ppActNames->setChecked(names);
+    m_ppActSmooth->setChecked(postprocessorSmoothing());
     for (QAction *a : acts) a->blockSignals(false);
 
     // Re-sync the postprocessor mode (Point/Contour/Area) toolbar/menu to this
@@ -1983,8 +2015,16 @@ void MainWindow::createPostprocessorUI()
     m_ppActContours->setCheckable(true); m_ppActContours->setChecked(true);
     connect(m_ppActContours, &QAction::toggled, this, &MainWindow::onPPToggleContours);
 
+    // Same handler the toolbar button uses. These three menu items used to
+    // report the feature as unimplemented while the toolbar did it perfectly
+    // well, so a user who reached for the menu was told the wrong thing.
     m_ppMenuView->addAction(tr("&Vector Plot..."), QKeySequence(), [this]() {
-        updateStatus("Vector plot not yet implemented");
+        auto *s = activeScalarResults(); if (s) { s->showVectorPlotDialog(this); return; }
+        auto *r = activeResults();
+        if (r) {
+            r->showVectorPlotDialog(this);
+            if (r->m_showVectors) m_ppActDensity->setChecked(false);
+        }
     });
 
     m_ppMenuView->addSeparator();
@@ -2022,16 +2062,29 @@ void MainWindow::createPostprocessorUI()
         else { auto *s = activeScalarResults(); if (s) { s->m_showPoints = on; s->update(); } }
     });
 
+    // Smoothing is a per-solution property, not just a start-up default: it
+    // lives on the results document (the same flag mo_smooth sets), so it can
+    // be toggled for the window in front of you without disturbing the
+    // preference that seeds new ones.
+    m_ppActSmooth = m_ppMenuView->addAction(tr("S&moothing"));
+    m_ppActSmooth->setCheckable(true);
+    m_ppActSmooth->setChecked(true);
+    connect(m_ppActSmooth, &QAction::toggled, [this](bool on) {
+        setPostprocessorSmoothing(on);
+    });
+
     m_ppMenuOperation = menuBar()->addMenu(tr("O&peration"));
     m_ppMenuOperation->addAction(tr("&Point Values"), QKeySequence(), this, &MainWindow::onPPPointMode);
     m_ppMenuOperation->addAction(tr("&Contours"), QKeySequence(), this, &MainWindow::onPPContourMode);
     m_ppMenuOperation->addAction(tr("&Areas"), QKeySequence(), this, &MainWindow::onPPAreaMode);
     m_ppMenuOperation->addSeparator();
     m_ppMenuOperation->addAction(tr("Plot &X-Y..."), QKeySequence(), [this]() {
-        updateStatus("X-Y plot dialog not yet implemented (use mo_makeplot from Python)");
+        auto *s = activeScalarResults(); if (s) { s->showXYPlotDialog(this); return; }
+        auto *r = activeResults(); if (r) { r->showXYPlotDialog(this); return; }
     });
     m_ppMenuOperation->addAction(tr("&Integrate..."), QKeySequence(), [this]() {
-        updateStatus("Integration dialog not yet implemented (use mo_blockintegral/mo_lineintegral from Python)");
+        auto *s = activeScalarResults(); if (s) { s->showIntegrateDialog(this, outputDialog()); return; }
+        auto *r = activeResults(); if (r) { r->showIntegrateDialog(this, outputDialog()); return; }
     });
 
     // Window and Help are added separately and always visible

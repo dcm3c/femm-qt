@@ -199,6 +199,9 @@ public:
 
     // Display state
     bool Smooth = true;
+    // Sampling density for the numerically evaluated line integrals.
+    // Public alongside Smooth: the GUI sets it from the user's preference.
+    int d_LineIntegralPoints = 400;
     bool bHasMask = false;
 
     // Line plot data — vals has 3 entries for AC (|mag|, Re, Im), 1 for DC
@@ -230,7 +233,6 @@ private:
     void FindBoundaryEdges();
     bool IsKosher(int k) const;
 
-    int d_LineIntegralPoints = 400;
 };
 
 #endif // CURR_RESULTS_DOC_H

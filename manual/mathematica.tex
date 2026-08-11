@@ -15,11 +15,17 @@ Get["mathfemm.m"]
 OpenFEMM[]
 \end{verbatim}
 
-\verb+OpenFEMM[]+ launches a FEMM process and connects to it.  By default it
-starts the interactive shell ({\tt femm\_gui}) and uses port 48015.  Pass
-\verb+OpenFEMM[1]+ to launch the headless engine ({\tt femm\_headless}) instead,
-with no window, or \verb+OpenFEMM[bHide, port]+ to choose both the visibility and
-the port.
+\verb+OpenFEMM[]+ connects to a FEMM process, launching one if necessary.  By
+default it starts the interactive shell ({\tt femm\_gui}) and uses port 48015.
+Pass \verb+OpenFEMM[1]+ to launch the headless engine ({\tt femm\_headless})
+instead, with no window, or \verb+OpenFEMM[bHide, port]+ to choose both the
+visibility and the port.
+
+If a FEMM process is already listening on that port, {\tt OpenFEMM} attaches to
+it rather than starting a second one.  That is what allows a notebook to be
+re-run after an aborted script without leaving a trail of orphaned FEMM
+windows, and it means the {\tt bHide} argument has no effect when an instance
+is already running.
 
 Once connected, FEMM is controlled through the Mathematica functions provided by
 the package, which mirror the Python command set documented in the scripting
@@ -53,8 +59,14 @@ femm_headless --port 48015
 
 The interactive shell {\tt femm\_gui} also serves the same protocol while
 displaying its window.  The connection is single-client: one program controls a
-given FEMM process at a time, and the process exits when that client
-disconnects.
+given FEMM process at a time, and a second program that connects while the
+first is still attached is refused with an error rather than queued.
+
+The process exits when its client disconnects, so that a binding which is
+killed does not leave an orphaned FEMM behind.  A consequence worth knowing:
+a script that wants to leave the window up for inspection when it finishes
+must keep its connection open, rather than closing it or calling
+{\tt closefemm}.
 
 The protocol is a simple line-based text exchange.  The client sends a command
 --- any statement or expression accepted by FEMM's Python interpreter --- as a
@@ -71,6 +83,13 @@ newline-terminated line:
 \item If the command raises an error, the reply is a single line beginning with
       \verb+error:+ followed by the error message.
 \end{itemize}
+
+Two details matter when writing a client.  Values are rendered for the wire
+rather than as Python would print them: a boolean is {\tt true} or
+{\tt false} rather than {\tt True} or {\tt False}, and a string is returned
+unquoted.  And only the value of the command reaches the socket --- anything
+the command prints, and the traceback of an error, go to FEMM's own output
+instead, so a client cannot recover them from the reply.
 
 All of the supplied toolboxes are thin wrappers over this protocol, each
 presenting it as native function calls in its host language: {\tt OctaveFEMM}

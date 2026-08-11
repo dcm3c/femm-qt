@@ -52,6 +52,9 @@ void ElectrostaticsHandler::showIntegrateDialog(QWidget *parent, OutputDialog *o
         if (!ok) return;
         int intType = types.indexOf(choice);
         double z[4] = {};
+        // Sampling density comes from the user's preference, read here rather
+        // than at load time so a change takes effect on the next integral.
+        doc->d_LineIntegralPoints = QSettings().value("eo/liPoints", 400).toInt();
         doc->LineIntegral(intType, z);
         QString text;
         switch (intType) {

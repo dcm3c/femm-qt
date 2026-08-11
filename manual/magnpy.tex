@@ -117,7 +117,7 @@ output of the Python console window. Any number of comma-separated items can be
 printed at once via the print command.
 
 
-\item {\tt quit()} Close all documents and exit the the Interactive
+\item {\tt quit()} Close all documents and exit the Interactive
 Shell at the end of the currently executing Python script.
 
 
@@ -132,9 +132,10 @@ To set smart meshing on or off on a file-by-file basis, use  \verb+mi_smartmesh+
 \section{Magnetics Preprocessor Scripting Command Set}
 
 A number of different commands are available in the preprocessor.
-Two naming conventions can be used: one which separates words in
-the command names by underscores, and one that eliminates the
-underscores.
+Command names carry exactly one underscore, the one that follows the
+two-letter prefix.  Original FEMM additionally accepted a longer
+spelling that broke the remainder of each name up with further
+underscores; that spelling is not supported.
 
 \subsection{Object Add/Remove Commands}
 
@@ -387,7 +388,7 @@ Set the display area to be from the bottom left corner specified by
 
 \begin{itemize}
 \item{\verb+mi_showgrid()+} Show the grid points.
-\item{\verb+mi_hidegrid()+} Hide the grid points points.
+\item{\verb+mi_hidegrid()+} Hide the grid points.
 \item{\verb+mi_gridsnap("flag")+}
 Setting {\tt flag} to "on" turns on snap to grid, setting {\tt
 flag} to {\tt "off"} turns off snap to grid.
@@ -595,9 +596,8 @@ The various properties that can be modified are listed below:
 \subsection{Miscellaneous}
 \begin{itemize}
 \item{\tt mi\_savebitmap("filename")} saves a bitmapped screenshot of the current
-view to the file specified by {\tt "filename"}, subject to the {\tt
-printf}-type formatting explained previously for the {\tt
-savefemmfile} command.
+view to the file specified by {\tt "filename"}.  As with {\tt mi\_saveas},
+a backslash in the path must be doubled.
 \item{\tt mi\_savemetafile("filename")} is retained for script
 compatibility but does nothing: femm-qt has no metafile output.  Use {\tt
 mi\_savebitmap} to save a picture of the current view.
@@ -661,9 +661,8 @@ extension, {\em e.g.} {\tt mi\_setprevious("mymodel.ans",1)}
 \section{Magnetics Post Processor Scripting Command Set}
 
 There are a number of scripting commands designed to operate in
-the postprocessor.  As with the preprocessor commands, these
-commands can be used with either the underscore naming or with the
-no-underscore naming convention.
+the postprocessor.  As with the preprocessor commands, each name
+carries exactly one underscore, the one after the two-letter prefix.
 
 \subsection{Data Extraction Commands}
 
@@ -916,7 +915,7 @@ piece-wise constant over each element.  Setting {\tt flag} equal to
 {\tt "on"} turns on smoothing, and setting {\tt flag} to {\tt
 "off"} turns off smoothing.
 \item{\verb+mo_showgrid()+} Show the grid points.
-\item{\verb+mo_hidegrid()+} Hide the grid points points.
+\item{\verb+mo_hidegrid()+} Hide the grid points.
 \item{\verb+mo_gridsnap("flag")+}
 Setting {\tt flag} to "on" turns on snap to grid, setting {\tt
 flag} to {\tt "off"} turns off snap to grid.
@@ -987,14 +986,18 @@ current grid size setting.
 \item{\tt mo\_close()} Closes the current post-processor instance.
 \item{\tt mo\_refreshview()} Redraws the current view.
 \item{\tt mo\_reload()} Reloads the solution from disk.
+\item{\tt mo\_gettitle()} Returns the file path of the current output
+document as a string.
+\item{\tt mo\_setfocus("documentname")} Switches the magnetics output
+file upon which post-processor commands are to act.  If more than one
+magnetics output file is open at a time, this command selects between them.
+{\tt documentname} is the name of the desired document as it appears on the
+window's title bar; the {\tt .ans} extension may be omitted.
 \item{\tt mo\_savebitmap("filename")} saves a bitmapped screen shot of the current
-view to the file specified by {\tt "filename"}. Note that if you
-use a path you must use two backslashes ({\em e.g.}
-\verb+"c:\\temp\\myfemmfile.fem"+). If the file name contains a space
-({\em e.g.} file names like \verb+c:\program files\stuff+) you must
-enclose the file name in (extra) quotes by using a
-\verb+\"+ sequence. For example:\\
- \verb+mo_save_bitmap("\"c:\\temp\\screenshot.bmp\"")+
+view to the file specified by {\tt "filename"}.  A backslash in the path
+must be doubled, as in any Python string ({\em e.g.}
+\verb+"c:\\temp\\myfemmfile.bmp"+); a file name containing spaces needs
+nothing special.
 \item{\tt mo\_savemetafile("filename")} is retained for script
 compatibility but does nothing: femm-qt has no metafile output.  Use {\tt
 mo\_savebitmap} to save a picture of the current view.

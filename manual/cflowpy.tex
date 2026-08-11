@@ -1,9 +1,10 @@
 \section{Current Flow Preprocessor Scripting Command Set}
 
 A number of different commands are available in the preprocessor.
-Two naming conventions can be used: one which separates words in
-the command names by underscores, and one that eliminates the
-underscores.
+Command names carry exactly one underscore, the one that follows the
+two-letter prefix.  Original FEMM additionally accepted a longer
+spelling that broke the remainder of each name up with further
+underscores; that spelling is not supported.
 
 \subsection{Object Add/Remove Commands}
 \begin{itemize}
@@ -281,7 +282,7 @@ specified by \texttt{(x2,y2)}.
 \begin{itemize}
 \item \texttt{ci\_showgrid()} Show the grid points.
 
-\item \texttt{ci\_hidegrid()} Hide the grid points points.
+\item \texttt{ci\_hidegrid()} Hide the grid points.
 
 \item \texttt{ci\_gridsnap("flag")} Setting flag to ''on'' turns on snap to grid,
 setting flag to "off"turns off snap to grid.
@@ -459,9 +460,8 @@ The various properties that can be modified are listed below:
 
 \begin{itemize}
 \item \texttt{ci\_savebitmap("filename")} saves a bitmapped screenshot of the current
-view to the file specified by \texttt{"filename"}, subject to the
-\texttt{printf}-type formatting explained previously for the
-\texttt{ci\_saveas} command.
+view to the file specified by \texttt{"filename"}.  As with
+\texttt{ci\_saveas}, a backslash in the path must be doubled.
 
 \item \texttt{ci\_savemetafile("filename")} is retained for script
 compatibility but does nothing: femm-qt has no metafile output. Use
@@ -530,9 +530,8 @@ reasonable values for the missing parameters.
 \section{Current Flow Post Processor Scripting Command Set}
 
 There are a number of scripting commands designed to operate in
-the postprocessor. As with the preprocessor commands, these
-commands can be used with either the underscore naming or with the
-no-underscore naming convention.
+the postprocessor. As with the preprocessor commands, each name
+carries exactly one underscore, the one after the two-letter prefix.
 
 \subsection{Data Extraction Commands}
 \begin{itemize}
@@ -744,7 +743,7 @@ smoothing.
 
 \item \texttt{co\_showgrid()} Show the grid points.
 
-\item \texttt{co\_hidegrid()} Hide the grid points points.
+\item \texttt{co\_hidegrid()} Hide the grid points.
 
 \texttt{co\_gridsnap("flag")} Setting flag to ''on'' turns on snap to grid,
 setting flag to "off" turns off snap to grid.
@@ -797,8 +796,8 @@ $V$ contour plot with options:
 
 \texttt{type} the type of contour plot to be rendered.
 
-If \texttt{co\_numcontours} is -1 all parameters are ignored and
-default values are used, \\ e.g. \texttt{show{\_}contour{\_}plot(-1)}
+If \texttt{numcontours} is -1 all parameters are ignored and
+default values are used, \\ e.g. \texttt{co\_showcontourplot(-1)}
 
 The type can take on the values of {\tt "real"}, {\tt "imag"}, or {\tt "both"}, denoting
 the real part of voltage, the imaginary part of voltage, or both components of voltage.
@@ -844,19 +843,17 @@ current grid size setting.
 \item{\tt co\_refreshview()} Redraws the current view.
 
 \item{\tt co\_reload()} Reloads the solution from disk.
+\item{\tt co\_setfocus("documentname")} Switches the current flow output
+file upon which post-processor commands are to act.  If more than one
+current flow output file is open at a time, this command selects between them.
+{\tt documentname} is the name of the desired document as it appears on the
+window's title bar; the {\tt .anc} extension may be omitted.
 
 \item \texttt{co\_savebitmap("filename")} saves a bitmapped screen shot of the current
-view to the file specified by \texttt{"filename"}. Note that if you
-use a path you must use two backslashes (e.g.
-\texttt{"c:$\backslash \backslash $temp$\backslash \backslash
-$myfile.bmp"}). If the file name contains a space (e.g. file
-names like c:$\backslash $program files$\backslash $stuff) you must
-enclose the file name in (extra) quotes by using a
-\texttt{$\backslash $"} sequence. For example:
-
-\texttt{co\_savebitmap("$\backslash $"c:$\backslash \backslash
-$temp$\backslash \backslash $screenshot.bmp$\backslash $"")}
-
+view to the file specified by {\tt "filename"}.  A backslash in the path
+must be doubled, as in any Python string ({\em e.g.}
+\verb+"c:\\temp\\myfemmfile.bmp"+); a file name containing spaces needs
+nothing special.
 \item \texttt{co\_savemetafile("filename")} is retained for script
 compatibility but does nothing: femm-qt has no metafile output. Use
 \texttt{co\_savebitmap} to save a picture of the current view.

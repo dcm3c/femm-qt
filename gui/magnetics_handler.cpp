@@ -66,6 +66,9 @@ void MagneticsHandler::showIntegrateDialog(QWidget *parent, OutputDialog *out)
         if (!ok) return;
         int intType = types.indexOf(choice);
         CComplex z[4] = {};
+        // Sampling density comes from the user's preference, read here rather
+        // than at load time so a change takes effect on the next integral.
+        doc->d_LineIntegralPoints = QSettings().value("pp/liPoints", 400).toInt();
         doc->LineIntegral(intType, z);
         bool isAC = (doc->Frequency != 0);
         bool isAxi = (doc->ProblemType == 1);

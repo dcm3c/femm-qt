@@ -25,7 +25,9 @@ add_executable(femm_gui
     elec_prop_editors.cpp
     prop_list_dialog.cpp
     problem_dialog.cpp
+    curve_dialog.cpp
     bh_dialog.cpp
+    tk_dialog.cpp
     prefs_dialog.cpp
     scalar_prefs_dialog.cpp
     pre_prefs_dialog.cpp

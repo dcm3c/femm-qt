@@ -21,33 +21,30 @@ Figure~\ref{cfig5}.
 \label{cfig5}
 \end{figure}
 
-The first selection is the \texttt{Problem Type} drop list. This
-drop box allows the user to choose from a 2-D planar problem (the
-\texttt{Planar} selection), or an axisymmetric problem (the
-\texttt{Axisymmetric} selection).
+The dialog's entries, in the order they appear:
 
-Next is the \texttt{Length Units} drop list. This box identifies
+\begin{itemize}
+
+\item{\tt Frequency (Hz)} denotes the frequency at which the problem is
+to be analyzed.
+
+\item{\tt Length Units}. This box identifies
 what unit is associated with the dimensions prescribed in the
 model's geometry. Currently, the program supports inches,
 millimeters, centimeters, meters, mils, and $\mu $meters.
 
-The first edit box, {\tt Frequency, Hz}, denotes the frequency at 
-which the problem is to be analyzed. 
+\item{\tt Problem Type}. This
+drop box allows the user to choose from a 2-D planar problem (the
+\texttt{Planar} selection), or an axisymmetric problem (the
+\texttt{Axisymmetric} selection).
 
-The second edit box is the \texttt{Depth} specification. If a Planar
-problem is selected, this edit box becomes enabled. This value is
-the length of the geometry in the ``into the page'' direction. This
-value is used for scaling integral results in the post processor
-(e.g. force, inductance, etc.) to the appropriate length. The units
-of the Depth selection are the same as the selected length units.
-
-The second edit box is the \texttt{Solver Precision} edit box. The
+\item{\tt Precision}. The
 number in this edit box specifies the stopping criteria for the
 linear solver. The linear algebra problem could be represented by:
 
-\begin{equation}
+\begin{displaymath}
 M x = b
-\end{equation}
+\end{displaymath}
 
 \noindent
 where $M$ is a square matrix, $b$ is a vector, and $x$ is a vector of
@@ -55,11 +52,19 @@ unknowns to be determined. The solver precision value determines the maximum
 allowable value for $\vert \vert b - Mx\vert \vert / \vert \vert b\vert
 \vert $. The default value is $10^{ - 8}$.
 
-The third edit box is labeled {\tt Min Angle}.  The entry in this box is used as a
-constraint in the Triangle meshing program.  Triangle adds points to the mesh to
+\item{\tt Depth}. If a Planar
+problem is selected, this edit box becomes enabled. This value is
+the length of the geometry in the ``into the page'' direction. This
+value is used for scaling integral results in the post processor
+(e.g. force, inductance, etc.) to the appropriate length. The units
+of the Depth selection are the same as the selected length units.
+
+\item{\tt Min Angle (deg)}.  The entry in this box is used as a
+constraint sent to the mesh generator, {\tt tangle}.  The mesh generator
+adds points to the mesh to
 ensure that no angles smaller than the specified angle occur. If the minimum angle
 is 20.7 degrees or smaller, the triangulation algorithm is theoretically guaranteed to
-terminate (assuming infinite precision arithmetic -- Triangle may
+terminate (assuming infinite precision arithmetic -- the mesh generator may
 fail to terminate if you run out of precision).  In practice, the
 algorithm often succeeds for minimum angles up to 33.8 degrees.
 For highly refined meshes, however, it may be necessary to reduce
@@ -67,12 +72,22 @@ the minimum angle to well below 20 to avoid problems associated
 with insufficient floating-point precision.  The edit box will accept
 values between 1 and 33.8 degrees.
 
-Lastly, there is an optional \texttt{Comment} edit box. The user
+\item{\tt Smart Mesh}.  When {\tt On}, the mesh generator derives a
+characteristic element size from the average length of the model's line
+segments and applies it at the ends of those segments, refining the mesh
+toward corners.  Endpoints belonging only to arcs are left alone, so a
+smooth surface is not refined merely for being curved.
+When {\tt Off}, element sizes come only from the mesh size specified on each
+block label, together with any per-segment maximum side length.
+
+\item{\tt Comment}. The user
 can enter in a few lines of text that give a brief description of
 the problem that is being solved. This is useful if the user is
 running several small variations on a given geometry. The comment
 can then be used to identify the relevant features for a particular
 geometry.
+
+\end{itemize}
 
 \subsection{Definition of Properties}
 
@@ -87,23 +102,21 @@ Conductors. When any one of these selections is chosen, the dialog
 pictured in Figure~\ref{cfig7} appears.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{hpropdef}}
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{cpropdef}}
 \caption{Materials dialog.}
 \label{cfig7}
 \end{figure}
 
-This dialog is the manager for a particular type of properties. All
-currently defined properties are displayed in the \texttt{Property
-Name} drop list at the top of the dialog. At the beginning of a new
-model definition, the box will be blank, since no properties have
-yet been defined. Pushing the \texttt{Add Property} button allows
-the user to define a new property type. The \texttt{Delete
-Property} button removes the definition of the property currently
-in view in the \texttt{Property Name} box. The \texttt{Modify
-Property} button allows the user to view and edit the property
-currently selected in the \texttt{Property Name} box. Specifics for
-defining the various property types are addressed in the
-following subsections.
+This dialog is the manager for a particular type of property, and its
+title changes to match the type chosen from the menu. All currently
+defined properties of that type are listed in the box on the left. At the
+beginning of a new model definition, the list will be empty, since no
+properties have yet been defined. Pushing the {\tt Add} button allows the
+user to define a new property. The {\tt Delete} button removes the
+property currently selected in the list, and {\tt Modify} opens the
+selected property for viewing and editing --- as does double-clicking the
+property itself. {\tt Close} dismisses the dialog. Specifics for defining
+the various property types are addressed in the following subsections.
 
 \subsubsection{Point Properties}
 
@@ -136,7 +149,7 @@ Property} dialog pictured in Figure~\ref{cfig9} appears.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{cd3}}
-\caption{Boundary Condition dialog.}
+\caption{Boundary Properties dialog.}
 \label{cfig9}
 \end{figure}
 
@@ -145,10 +158,11 @@ property. The default name is {\tt New Boundary}, but you should
 change this name to something more descriptive of the boundary that
 is being defined.
 
-The next selection is the \texttt{BC Type} drop list. This
-specifies the boundary condition type. Currently, FEMM supports the
-following types of boundaries: Fixed Voltage, Mixed, Prescribed surface current density,
-Periodic, and Antiperiodic. These boundary conditions are
+The next selection is the \texttt{Type} drop list. This
+specifies the boundary condition type, and the dialog shows only the
+parameters that belong to the selected type. Currently, FEMM supports the
+following types of boundaries: Fixed Voltage, Mixed BC, Surface Current
+Density, Periodic, and Anti-Periodic. These boundary conditions are
 described in detail in Section~\ref{bcsection}.
 
 \subsubsection{Materials Properties}
@@ -174,13 +188,15 @@ descriptive name for the material that is being described. Enter it in the
 %Relative Electrical Permittivity
 %Loss Tangent
 
-Next, electrical conductivitiy for the material needs to be specified. FEMM allows you
+Next, electrical conductivity for the material needs to be specified. FEMM allows you
 to specify different electrical conductivities in the vertical and horizontal
-directions (\textit{$\sigma$}$_{x}$ for the x- or horizontal direction, and \textit{$\sigma$}$_{y}$ for the y-
-or vertical direction.
+directions: \textit{$\sigma$}$_{x}$, in the {\tt Conductivity, $\sigma$x} box,
+applies in the x- or horizontal direction, and \textit{$\sigma$}$_{y}$, in the
+{\tt Conductivity, $\sigma$y} box, in the y- or vertical direction.  Both are
+in S/m.
 
 The next pair of boxes represents the relative electrical permittivity for the material. Similar to the
-electrical conducitvity, textit{$\varepsilon $}$_{x}$ represents permittivity in the x- or horizontal direction,
+electrical conductivity, \textit{$\varepsilon $}$_{x}$ represents permittivity in the x- or horizontal direction,
 and \textit{$\varepsilon $}$_{y}$ for the y- or vertical direction.  If the material is
 a lossy dielectric, this value is considered to be the amplitude of complex permittivity.
 
@@ -218,6 +234,9 @@ If the complex-valued permittivity is defined as:
 \end{equation}
 The loss tangent is then defined as:
 \begin{equation} \mbox{loss tangent} = \frac{\sin \phi}{\cos \phi} \end{equation}
+The loss tangent is entered separately for each direction, in the
+{\tt Loss Tangent, tan $\delta$x} and {\tt Loss Tangent, tan $\delta$y}
+boxes.
 
 For material that are also conductive, FEMM combines the defined conductivity, permittivity,
 and loss tangent to obtain the complex-valued effective electrical conductivities:
@@ -227,6 +246,38 @@ and loss tangent to obtain the complex-valued effective electrical conductivitie
 \end{eqnarray}
 which takes into account resistive losses and addition dielectric losses due to the
 definition of a non-zero loss tangent.
+
+\subsubsection{Material Library}
+
+Since one kind of material might be needed in several different
+models, FEMM has a built-in library of current flow Material Properties
+definitions. The user can access and maintain this library through the
+\texttt{Properties $\vert $ Material Library} selection off of the
+main menu. When this option is selected, the
+\texttt{Current Flow Material Library} dialog pictured in
+Figure~\ref{cfig11} appears.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[scale=\dlgscale,max width=\textwidth]{cc_matlib}}
+\caption{Current Flow Material Library dialog}
+\label{cfig11}
+\end{figure}
+
+This dialog allows the user to exchange material definitions between the
+current model and the materials library via a drag-and-drop interface.
+
+A number of different options are available via a mouse button right-click
+when the cursor is located on top of a material or folder. Materials can be
+edited by double-clicking on the desired material.
+
+Material from other material libraries or models can be imported by selecting
+the ``Import Materials'' option from the right-button menu that appears when
+the pointer is over the root-level folder of either the Library or Model
+materials lists.
+
+The materials library should be located in the same directory as
+the FEMM executable files, under the filename \texttt{condlib.dat}.
+If you move the materials library, FEMM will not be able to find it.
 
 \subsubsection{Conductor Properties}
 
@@ -251,6 +302,14 @@ Figure~\ref{cfig12}.
 \label{cfig12}
 \end{figure}
 
+The {\tt Name} box names the conductor, so that it can be assigned to
+segments and arcs and reported on in the postprocessor.  The {\tt Type}
+drop list chooses which of the two quantities is prescribed:
+{\tt Prescribed Current} or {\tt Prescribed Voltage}.  Whichever is selected, its
+edit box is enabled and the other is greyed out --- the greyed quantity is
+the one the program computes for you during the solution.
+
+
 \subsection{Analysis Tasks}
 
 Meshing the model, analyzing the model, and viewing the results are
@@ -269,8 +328,7 @@ generator to make sure that the mesh is up to date, so you never
 have to call the mesher from within FEMM. However, it is almost
 always important to get a look at the mesh and see that it ``looks
 right.'' When the mesh generation button is pressed, the mesher is
-called. While the mesher is running, an entry labeled ``triangle''
-will appear on the Windows taskbar. After the geometry is
+called. After the geometry is
 triangulated, the finite element mesh is loaded into memory and
 displayed underneath the defined nodes, segments, and block labels
 as a set of yellow lines.
@@ -284,12 +342,14 @@ from memory, and the memory that it occupied is freed for other
 uses.
 
 The second button, with the ``hand-crank'' icon, executes the solver,
-\texttt{csolv.exe}. Before csolv is actually run, the Triangle is
-called to make sure the mesh is up to date. Then, csolv is called. When
-csolv runs, it opens up a console window to display status information
-to the user. However, csolv requires no user interaction while it is
-running. When csolv is finished analyzing your problem, the console
-window will disappear. The time that csolv requires is highly dependent
+\texttt{csolv}. The mesh is brought up to date first: the
+\texttt{tangle} mesher is built into the solver, so meshing is the solver's
+own first step rather than a separate program. While
+csolv runs, a \texttt{Solver} window displays status information
+to the user. csolv requires no user interaction while it is
+running, although the window's \texttt{Abort} button will stop it. When
+csolv is finished analyzing your problem, the window
+closes. The time that csolv requires is highly dependent
 on the problem being solved. Solution times are typically on the order of 1
 to 10 seconds, depending upon the size and complexity of the problem and the
 speed of the machine analyzing the problem.
@@ -302,14 +362,14 @@ analysis is finished.
 %------------------------------------------------------------------------------------
 \section{Current Flow Postprocessor}
 
-The the current flow postprocessing functionality of FEMM is
+The current flow postprocessing functionality of FEMM is
 used to view solutions generated by the {\tt csolv} solver.  A current flow
 postprocessor window can be opened either by loading
 some previously run analyses via {\tt File|Open} on the main menu,
 or by pressing the ``big magnifying glass'' icon from within a
 preprocessor window to view a newly generated solution.
 Current flow postprocessor data files stored on disk have the
-{\tt .anh} prefix.
+{\tt .anc} extension.
 
 Operation of the current flow postprocessor ({\em i.e.} modes, view manipulation) is
 very similar to that of the magnetics postprocessor.  Refer to
@@ -419,7 +479,7 @@ evaluating a large number of points at evenly spaced along the contour and
 integrating using a simple trapezoidal-type integration scheme.
 
 To perform an integration, press the ``integral'' icon on the
-toolbar (as shown in Figure~0). A small dialog will appear with a
+toolbar (as shown in Figure~\ref{cfig18}). A small dialog will appear with a
 drop list. Choose the desired integral from the drop list and press
 \texttt{OK}. The amount of time required to perform the integral
 will be virtually instantaneous for some types of integrals;

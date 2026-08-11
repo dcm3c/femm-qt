@@ -125,6 +125,12 @@ private:
     ResultsWidget *activeResults() const;
     ScalarResultsWidget *activeScalarResults() const;
 
+    // Smoothing lives on the active postprocessor's results document, whichever
+    // physics it belongs to. Both halves are needed: the menu sets it, and
+    // syncPostprocessorMenus reads it back when the active window changes.
+    void setPostprocessorSmoothing(bool on);
+    bool postprocessorSmoothing() const;
+
     // Pointer to the active document's cartesian/polar display flag, or null
     // when nothing is in focus. Every document type spells it Coords but they
     // share no common base, so the lookup goes by widget type.
@@ -190,6 +196,7 @@ private:
     QAction *m_ppMeshTB = nullptr;
     QAction *m_ppActPoints = nullptr;   // View | Show Points
     QAction *m_ppActNames = nullptr;    // View | Show Block Names
+    QAction *m_ppActSmooth = nullptr;   // View | Smoothing
 
     // Grid toggle actions (menu + left nav toolbar — kept in sync)
     QAction *m_showGridMenu = nullptr;

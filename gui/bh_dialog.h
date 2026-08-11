@@ -5,30 +5,26 @@
 #ifndef BH_DIALOG_H
 #define BH_DIALOG_H
 
-#include <QDialog>
-#include <QTextEdit>
-#include <vector>
-
-class QPushButton;
+#include "curve_dialog.h"
 
 struct FMaterialProp;
 
-class BHDataDialog : public QDialog {
+class BHDataDialog : public CurveDataDialog {
     Q_OBJECT
 public:
     BHDataDialog(QWidget *parent = nullptr);
-    void setMaterialName(const QString &name);
-    void setData(const std::vector<double> &B, const std::vector<double> &H, int npts);
-    void getData(std::vector<double> &B, std::vector<double> &H, int &npts) const;
 
-private slots:
-    void onImport();
-    void onPlotBH(bool logScale = false);
+protected:
+    // B must increase monotonically, so a point that does not advance B is
+    // dropped rather than reordered -- a B-H curve that doubles back is not a
+    // curve the solver can invert.
+    void conditionData(std::vector<double> &B, std::vector<double> &H) const override;
 
-private:
-    QTextEdit *m_bEdit;
-    QTextEdit *m_hEdit;
-    QString m_matName;
+    // The cubic spline needs three points to be a spline at all.
+    int minimumPlotPoints() const override { return 3; }
+
+    PlotData buildPlotData(const std::vector<double> &B,
+                           const std::vector<double> &H) const override;
 };
 
 #endif // BH_DIALOG_H

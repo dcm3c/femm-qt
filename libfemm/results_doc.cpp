@@ -3744,7 +3744,7 @@ void ResultsDoc::LineIntegral(int type, CComplex *z)
     }
 
     // Types 1, 3, 4, 5: point sampling along contour with element caching
-    int NumPlotPoints = 400;
+    int NumPlotPoints = d_LineIntegralPoints;
 
     if (type == 1) {
         // H.t (MMF drop along contour)
