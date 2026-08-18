@@ -28,6 +28,7 @@ extern "C" {
 #include <cstring>
 #include <functional>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -48,6 +49,24 @@ extern const mp_obj_type_t femm_fn_type;
 }
 
 namespace femm_py {
+
+// A failure that should reach the script as OSError rather than the RuntimeError
+// every other bound function raises. Filesystem calls (py_os.cpp) throw this:
+// `except OSError` is what a script written against CPython or MicroPython says,
+// and a module named os that raised something else would be its own small trap.
+struct os_error : std::runtime_error {
+    // errno is part of OSError's interface, not decoration: the standard way
+    // to say "the directory was already there" is
+    //     except OSError as e:
+    //         if e.errno != errno.EEXIST: raise
+    // and with no errno that reads as an unrelated failure and re-raises.
+    // micropython-lib's tempfile does exactly this, which is how the gap was
+    // found. 0 means "no specific code", and the exception is then raised with
+    // the message alone, as before.
+    explicit os_error(const std::string &what, int err = 0)
+        : std::runtime_error(what), code(err) {}
+    int code;
+};
 
 // ---------------------------------------------------------------------------
 // Traits

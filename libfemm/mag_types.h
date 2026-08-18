@@ -64,8 +64,13 @@ struct FBlockLabel {
     double MagDir = 0.0;          // magnetization direction, degrees
     int Turns = 1;
     bool IsSelected = false;
-    std::string BlockType;
-    std::string InCircuit;
+    // "<None>", not an empty string, for the same reason OF's four label
+    // classes initialise them that way (NOSEBL.CPP:90, hd/bd/cd_nosebl.cpp:91):
+    // a label that has just been placed and one loaded with material index 0
+    // are the same state, and it should have one spelling. Both are written
+    // back as index 0, since neither matches a material or circuit name.
+    std::string BlockType = "<None>";
+    std::string InCircuit = "<None>";
     std::string MagDirFctn;
     int InGroup = 0;
     bool IsExternal = false;

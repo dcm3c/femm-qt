@@ -161,6 +161,17 @@ static mp_obj_t compare_function(mp_obj_t x1, mp_obj_t x2, uint8_t op) {
         NOT_IMPLEMENTED_FOR_COMPLEX()
     }
     #endif
+    // femm-qt: widen int32 before the strides are computed, since the kernels
+    // below are the same macro matrix as the arithmetic ones and would read an
+    // int32 array as doubles. Must happen before ndarray_can_broadcast, whose
+    // strides describe the array it is given.
+    if(lhs->dtype == NDARRAY_INT32) {
+        lhs = ndarray_widen_int32(lhs);
+    }
+    if(rhs->dtype == NDARRAY_INT32) {
+        rhs = ndarray_widen_int32(rhs);
+    }
+
     uint8_t ndim = 0;
     size_t *shape = m_new(size_t, ULAB_MAX_DIMS);
     int32_t *lstrides = m_new(int32_t, ULAB_MAX_DIMS);
@@ -510,6 +521,9 @@ MP_DEFINE_CONST_FUN_OBJ_2(compare_minimum_obj, compare_minimum);
 //|     ...
 mp_obj_t compare_nonzero(mp_obj_t x) {
     ndarray_obj_t *ndarray_x = ndarray_from_mp_obj(x, 0);
+    if(ndarray_x->dtype == NDARRAY_INT32) {
+        ndarray_x = ndarray_widen_int32(ndarray_x);   // femm-qt; see above
+    }
     // since ndarray_new_linear_array calls m_new0, the content of zero is a single zero
     ndarray_obj_t *zero = ndarray_new_linear_array(1, NDARRAY_UINT8);
 

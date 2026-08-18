@@ -29,7 +29,8 @@
 #include "elec_results_doc.h"
 #include "heat_results_doc.h"
 #include "curr_results_doc.h"
-#include "utf8_io.h"      // femm_widen for a Unicode-safe chdir on Windows
+#include "utf8_io.h"      // UTF-8 <-> wide at the OS boundary
+#include "py_os.h"        // femm_os_chdir: the one working-directory setter
 #include <filesystem>
 #include <system_error>
 
@@ -49,7 +50,11 @@ void register_global_femm_funcs()
 {
     auto &m = femm_py::femm_module;
 
-    m.def("quit", []() { std::exit(0); });
+    m.def("quit", []() {
+        // Let the transport shut its listening socket first; see set_exit_hook.
+        if (auto hook = get_exit_hook()) hook();
+        std::exit(0);
+    });
     m.alias("exit", "quit");
 
     // plot([title], x, [xlabel], y1, [lbl1], y2, [lbl2], ...) - X-Y line plot
@@ -274,17 +279,24 @@ void register_global_femm_funcs()
     });
     m.alias("opendocument", "_femm_open");
 
+    // One implementation behind setcurrentdirectory, chdir and os.chdir: the
+    // working directory is one piece of state, and three ways to set it is how
+    // they drift apart. femm_os_chdir widens for the OS, so a Unicode
+    // (umlaut/CJK) directory name works. Unlike the old inline version it
+    // reports a failure instead of silently leaving you where you were.
     m.def("setcurrentdirectory", [](const std::string &path) {
-        std::string fp = fixpath(path);
-#ifdef _WIN32
-        // fp is UTF-8; the narrow _chdir would decode it as ANSI, so widen and
-        // use _wchdir to honor a Unicode (umlaut/CJK) directory name.
-        _wchdir(femm_widen(fp).c_str());
-#else
-        (void)chdir(fp.c_str());
-#endif
+        femm_os_chdir(path);
     });
     m.alias("chdir", "setcurrentdirectory");
+
+    m.def("getcurrentdirectory", []() {
+        std::error_code ec;
+        std::string p = femm_u8string(std::filesystem::current_path(ec));
+        if (ec) throw std::runtime_error("getcurrentdirectory: " + ec.message());
+        for (auto &c : p) if (c == '\\') c = '/';
+        return p;
+    });
+    m.alias("getcwd", "getcurrentdirectory");
 
     auto viewcb = [](const char *cmd) {
         auto cb = get_view_command_callback();

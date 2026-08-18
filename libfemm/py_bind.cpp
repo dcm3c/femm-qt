@@ -9,6 +9,7 @@
 #include "py_bind.h"
 
 #include <cstdio>
+#include <cstring>          // strlen, for the OSError(errno, msg) form
 #include <exception>
 
 namespace femm_py {
@@ -62,6 +63,8 @@ extern "C" mp_obj_t femm_fn_call(mp_obj_t self_in, size_t n_args, size_t n_kw,
     // and jumping out of a live catch would skip destroying the in-flight
     // exception object (and is UB on some unwinders).
     char what[512];
+    bool isOsError = false;
+    int osErrno = 0;
     try {
         // Varargs functions take (n_args, args) directly, no padding.
         if (self->raw_impl)
@@ -77,10 +80,25 @@ extern "C" mp_obj_t femm_fn_call(mp_obj_t self_in, size_t n_args, size_t n_kw,
             call_args = buf;
         }
         return (*self->impl)(call_args);
+    } catch (const femm_py::os_error &e) {
+        // Filesystem failures reach the script as OSError; caught before the
+        // std::exception arm below, which it derives from.
+        std::snprintf(what, sizeof what, "%s", e.what());
+        isOsError = true;
+        osErrno = e.code;
     } catch (const std::exception &e) {
         std::snprintf(what, sizeof what, "%s", e.what());
     } catch (...) {
         std::snprintf(what, sizeof what, "unknown C++ exception in femm function");
     }
-    mp_raise_msg_varg(&mp_type_RuntimeError, MP_ERROR_TEXT("%s"), what);
+    if (isOsError && osErrno != 0) {
+        // OSError(errno, message) is the two-argument form, which is what
+        // populates e.errno. The one-argument form leaves it None, so a script
+        // testing e.errno sees nothing to test.
+        mp_obj_t args[2] = { MP_OBJ_NEW_SMALL_INT(osErrno),
+                             mp_obj_new_str(what, strlen(what)) };
+        nlr_raise(mp_obj_new_exception_args(&mp_type_OSError, 2, args));
+    }
+    mp_raise_msg_varg(isOsError ? &mp_type_OSError : &mp_type_RuntimeError,
+                      MP_ERROR_TEXT("%s"), what);
 }

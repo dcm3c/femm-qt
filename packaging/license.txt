@@ -42,6 +42,16 @@ installed alongside the program in the bin\ directory:
   * MicroPython (MIT, Copyright (c) 2013-2026
     Damien P. George)                                     -- LICENSE-MicroPython.txt
   * ulab (MIT, Copyright (c) 2019 Zoltan Voros)           -- LICENSE-ulab.txt
+  * the pure-Python standard-library modules (datetime, itertools,
+    operator, shutil, tempfile, copy, contextlib, fnmatch,
+    functools, traceback, types), from micropython-lib
+    (MIT, Copyright (c) 2013, 2014 micropython-lib
+    contributors)                                         -- LICENSE-micropython-lib.txt
+
+    Those are used unmodified. Where FEMM adds to one, the addition is a
+    separate file beside it (an __init__.py next to the upstream _core.py)
+    and is FEMM's own, under the MIT License above. csv and glob are FEMM's
+    entirely -- micropython-lib has neither.
   * the complex eigen-decomposition in common/fullmatrix.cpp, adapted from
     melihaltun/complexEigenPairSolver
     (MIT, Copyright (c) 2018 melihaltun)                  -- LICENSE-melihaltun.txt

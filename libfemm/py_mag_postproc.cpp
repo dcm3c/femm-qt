@@ -35,6 +35,17 @@ using std::optional;
 static const char *MOERR = "No magnetics output in focus";
 
 static ResultsDoc *s_rdoc = nullptr;
+
+// A phasor at frequency, a plain number at DC. Every getter below uses this:
+// a quantity that cannot have an imaginary part should not arrive carrying
+// one. mo_blockintegral has applied the same rule for a while; these are the
+// getters that never got it, which is why a DC force used to read (1234.5+0j).
+// The TCP wire is unaffected -- its formatter already writes a zero-imaginary
+// complex as a bare real, so the text every client parses is unchanged.
+static mp_obj_t mag_num(CComplex v) {
+    return (s_rdoc->Frequency == 0) ? femm_py::caster<double>::cast(v.re)
+                                    : femm_py::caster<CComplex>::cast(v);
+}
 ResultsDoc *active_results_document() { return s_rdoc; }
 
 static int findAGE(const char *name) {
@@ -69,13 +80,23 @@ void register_mag_postproc_py(ResultsDoc *doc) {
     femm_py::Module &m = femm_py::femm_module;
 
     // ---- Point values (14 values, or None) ----
-    using PV = std::tuple<CComplex, CComplex, CComplex, double, double, CComplex, CComplex,
-                          CComplex, CComplex, CComplex, CComplex, double, double, double>;
-    m.def("mo_getpointvalues", [](double px, double py) -> optional<PV> {
+    //
+    // A, B, H, J and mu are phasors in an AC problem and plain numbers in a DC
+    // one, so their Python type follows the problem: complex at frequency, real
+    // at DC. Same rule mo_blockintegral applies -- a value that cannot have an
+    // imaginary part should not arrive carrying one, which is what made
+    // print() collapse 1+0j to 1 to hide it. The wire is unaffected: its
+    // formatter already writes a zero-imaginary complex as a bare real.
+    m.def("mo_getpointvalues", [](double px, double py) -> mp_obj_t {
         check_doc(s_rdoc, MOERR);
         ResultsDoc::PointVals u;
-        if (!s_rdoc->GetPointValues(px, py, u)) return std::nullopt;
-        return PV{u.A, u.B1, u.B2, u.c, u.E, u.H1, u.H2, u.Je, u.Js, u.mu1, u.mu2, u.Pe, u.Ph, u.ff};
+        if (!s_rdoc->GetPointValues(px, py, u)) return mp_const_none;
+        auto D = [](double v) { return caster<double>::cast(v); };
+        auto Z = [](CComplex v) { return mag_num(v); };
+        mp_obj_t items[14] = { Z(u.A), Z(u.B1), Z(u.B2), D(u.c), D(u.E),
+                               Z(u.H1), Z(u.H2), Z(u.Je), Z(u.Js),
+                               Z(u.mu1), Z(u.mu2), D(u.Pe), D(u.Ph), D(u.ff) };
+        return mp_obj_new_tuple(14, items);
     });
 
     // ---- Block selection / integration ----
@@ -129,6 +150,10 @@ void register_mag_postproc_py(ResultsDoc *doc) {
         auto C = [](CComplex v) { return caster<CComplex>::cast(v); };
         auto D = [](double v) { return caster<double>::cast(v); };
         switch (type) {
+            // NOT mag_num: LineIntegral packs two real quantities into one
+            // complex here (dividing a vector by the unit normal puts the normal
+            // component in .re and the tangential one in .im), so the imaginary
+            // part is meaningful at DC and must not be dropped.
             case 0: case 1: case 5: { mp_obj_t it[2] = {C(z[0]), C(z[1])}; return mp_obj_new_tuple(2, it); }
             case 2: { mp_obj_t it[2] = {D(z[0].re), D(z[0].im)}; return mp_obj_new_tuple(2, it); }
             case 3:
@@ -152,15 +177,16 @@ void register_mag_postproc_py(ResultsDoc *doc) {
     });
 
     // ---- Circuit properties (amps, volts, flux) ----
-    m.def("mo_getcircuitproperties", [](const std::string &name)
-              -> std::tuple<CComplex, CComplex, CComplex> {
+    m.def("mo_getcircuitproperties", [](const std::string &name) -> mp_obj_t {
         check_doc(s_rdoc, MOERR);
         int k = -1;
         for (int i = 0; i < (int)s_rdoc->circproplist.size(); i++)
             if (s_rdoc->circproplist[i].CircName == name) { k = i; break; }
         if (k < 0) throw std::runtime_error("Unknown circuit " + name);
-        return std::make_tuple(s_rdoc->circproplist[k].Amps, s_rdoc->GetVoltageDrop(k),
-                               s_rdoc->GetFluxLinkage(k));
+        mp_obj_t items[3] = { mag_num(s_rdoc->circproplist[k].Amps),
+                              mag_num(s_rdoc->GetVoltageDrop(k)),
+                              mag_num(s_rdoc->GetFluxLinkage(k)) };
+        return mp_obj_new_tuple(3, items);
     });
 
     // ---- Contour ----
@@ -456,8 +482,7 @@ void register_mag_postproc_py(ResultsDoc *doc) {
     });
 
     // ---- Air gap element functions ----
-    m.def("mo_getgapb", [](const std::string &name, double angle_deg)
-              -> std::tuple<CComplex, CComplex> {
+    m.def("mo_getgapb", [](const std::string &name, double angle_deg) -> mp_obj_t {
         check_doc(s_rdoc, MOERR);
         int idx = findAGE(name.c_str());
         CComplex br(0, 0), bt(0, 0);
@@ -470,7 +495,8 @@ void register_mag_postproc_py(ResultsDoc *doc) {
                 bt = bt + age.btc[k] * cos(n * tta) + age.bts[k] * sin(n * tta);
             }
         }
-        return std::make_tuple(br, bt);
+        mp_obj_t items[2] = { mag_num(br), mag_num(bt) };
+        return mp_obj_new_tuple(2, items);
     });
 
     m.def("mo_gapintegral", [](const std::string &name, int type) -> mp_obj_t {
@@ -592,7 +618,7 @@ void register_mag_postproc_py(ResultsDoc *doc) {
         return mp_obj_new_tuple(1, it);
     });
 
-    m.def("mo_getgapa", [](const std::string &name, double angle_deg) -> CComplex {
+    m.def("mo_getgapa", [](const std::string &name, double angle_deg) -> mp_obj_t {
         check_doc(s_rdoc, MOERR);
         int idx = findAGE(name.c_str());
         CComplex ac(0, 0);
@@ -606,7 +632,7 @@ void register_mag_postproc_py(ResultsDoc *doc) {
                 else ac = ac + (R / n) * (-age.brs[k] * cos(n * tta) + age.brc[k] * sin(n * tta));
             }
         }
-        return ac;
+        return mag_num(ac);
     });
 
     m.def("mo_getgapharmonics", [](const std::string &name, optional<double> opt_n) -> mp_obj_t {

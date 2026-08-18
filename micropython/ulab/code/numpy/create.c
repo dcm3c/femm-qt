@@ -90,6 +90,8 @@ static ndarray_obj_t *create_linspace_arange(mp_float_t start, mp_float_t step, 
         ARANGE_LOOP(uint16_t, ndarray, len, step, stop);
     } else if(dtype == NDARRAY_INT16) {
         ARANGE_LOOP(int16_t, ndarray, len, step, stop);
+    } else if(dtype == NDARRAY_INT32) {
+        ARANGE_LOOP(int32_t, ndarray, len, step, stop);
     } else {
         ARANGE_LOOP(mp_float_t, ndarray, len, step, stop);
     }

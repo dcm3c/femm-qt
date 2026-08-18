@@ -1,0 +1,115 @@
+diff --git a/femm-qt/micropython/micropython_embed/extmod/modtime.c b/femm-qt/micropython/micropython_embed/extmod/modtime.c
+index ee89882..9985a2b 100644
+--- a/femm-qt/micropython/micropython_embed/extmod/modtime.c
++++ b/femm-qt/micropython/micropython_embed/extmod/modtime.c
+@@ -40,6 +40,13 @@
+ 
+ #include "shared/timeutils/timeutils.h"
+ 
++// FEMM: a port with a real timezone sets this and supplies
++// mp_time_localtime_epoch, mp_time_now_seconds and mp_time_mktime_local from
++// its MICROPY_PY_TIME_INCLUDEFILE. Left off, everything below is upstream.
++#ifndef MICROPY_PY_TIME_HOST_TIMEZONE
++#define MICROPY_PY_TIME_HOST_TIMEZONE (0)
++#endif
++
+ // localtime([secs])
+ // Convert a time expressed in seconds since the Epoch into an 8-tuple which
+ // contains: (year, month, mday, hour, minute, second, weekday, yearday)
+@@ -52,6 +59,21 @@
+ // - second  is 0-59
+ // - weekday is 0-6 for Mon-Sun
+ // - yearday is 1-366
++// FEMM: factored out so gmtime can share it. See MICROPY_PY_TIME_HOST_TIMEZONE.
++static mp_obj_t time_struct_time_tuple(const timeutils_struct_time_t *tm) {
++    mp_obj_t tuple[8] = {
++        mp_obj_new_int(tm->tm_year),
++        mp_obj_new_int(tm->tm_mon),
++        mp_obj_new_int(tm->tm_mday),
++        mp_obj_new_int(tm->tm_hour),
++        mp_obj_new_int(tm->tm_min),
++        mp_obj_new_int(tm->tm_sec),
++        mp_obj_new_int(tm->tm_wday),
++        mp_obj_new_int(tm->tm_yday),
++    };
++    return mp_obj_new_tuple(8, tuple);
++}
++
+ static mp_obj_t time_localtime(size_t n_args, const mp_obj_t *args) {
+     timeutils_struct_time_t tm;
+     if (n_args == 0 || args[0] == mp_const_none) {
+@@ -60,22 +82,33 @@ static mp_obj_t time_localtime(size_t n_args, const mp_obj_t *args) {
+     } else {
+         // Convert given seconds to tuple.
+         mp_timestamp_t seconds = timeutils_obj_get_timestamp(args[0]);
++        #if MICROPY_PY_TIME_HOST_TIMEZONE
++        // FEMM: on a host with a timezone, localtime(t) must be LOCAL. The
++        // call below is a UTC calculation, which is right only where there is
++        // no timezone to apply.
++        mp_time_localtime_epoch(seconds, &tm);
++        #else
+         timeutils_seconds_since_epoch_to_struct_time(seconds, &tm);
++        #endif
+     }
+-    mp_obj_t tuple[8] = {
+-        mp_obj_new_int(tm.tm_year),
+-        mp_obj_new_int(tm.tm_mon),
+-        mp_obj_new_int(tm.tm_mday),
+-        mp_obj_new_int(tm.tm_hour),
+-        mp_obj_new_int(tm.tm_min),
+-        mp_obj_new_int(tm.tm_sec),
+-        mp_obj_new_int(tm.tm_wday),
+-        mp_obj_new_int(tm.tm_yday),
+-    };
+-    return mp_obj_new_tuple(8, tuple);
++    return time_struct_time_tuple(&tm);
+ }
+ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_time_localtime_obj, 0, 1, time_localtime);
+ 
++#if MICROPY_PY_TIME_HOST_TIMEZONE
++// FEMM: a real gmtime, rather than an alias for localtime. Both forms are UTC;
++// the no-argument one only needs a "now" in epoch seconds to convert.
++static mp_obj_t time_gmtime(size_t n_args, const mp_obj_t *args) {
++    timeutils_struct_time_t tm;
++    mp_timestamp_t seconds = (n_args == 0 || args[0] == mp_const_none)
++        ? mp_time_now_seconds()
++        : timeutils_obj_get_timestamp(args[0]);
++    timeutils_seconds_since_epoch_to_struct_time(seconds, &tm);
++    return time_struct_time_tuple(&tm);
++}
++MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_time_gmtime_obj, 0, 1, time_gmtime);
++#endif
++
+ // mktime()
+ // This is the inverse function of localtime. Its argument is a full 8-tuple
+ // which expresses a time as per localtime. It returns an integer which is
+@@ -90,9 +123,17 @@ static mp_obj_t time_mktime(mp_obj_t tuple) {
+         mp_raise_TypeError(MP_ERROR_TEXT("mktime needs a tuple of length 8 or 9"));
+     }
+ 
++    #if MICROPY_PY_TIME_HOST_TIMEZONE
++    // FEMM: mktime is documented right above as the inverse of localtime, so
++    // where localtime is local this has to be too.
++    return timeutils_obj_from_timestamp(mp_time_mktime_local(mp_obj_get_int(elem[0]),
++        mp_obj_get_int(elem[1]), mp_obj_get_int(elem[2]), mp_obj_get_int(elem[3]),
++        mp_obj_get_int(elem[4]), mp_obj_get_int(elem[5])));
++    #else
+     return timeutils_obj_from_timestamp(timeutils_mktime(mp_obj_get_int(elem[0]),
+         mp_obj_get_int(elem[1]), mp_obj_get_int(elem[2]), mp_obj_get_int(elem[3]),
+         mp_obj_get_int(elem[4]), mp_obj_get_int(elem[5])));
++    #endif
+ }
+ MP_DEFINE_CONST_FUN_OBJ_1(mp_time_mktime_obj, time_mktime);
+ 
+@@ -200,7 +241,11 @@ static const mp_rom_map_elem_t mp_module_time_globals_table[] = {
+     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_time) },
+ 
+     #if MICROPY_PY_TIME_GMTIME_LOCALTIME_MKTIME
++    #if MICROPY_PY_TIME_HOST_TIMEZONE
++    { MP_ROM_QSTR(MP_QSTR_gmtime), MP_ROM_PTR(&mp_time_gmtime_obj) },   // FEMM
++    #else
+     { MP_ROM_QSTR(MP_QSTR_gmtime), MP_ROM_PTR(&mp_time_localtime_obj) },
++    #endif
+     { MP_ROM_QSTR(MP_QSTR_localtime), MP_ROM_PTR(&mp_time_localtime_obj) },
+     { MP_ROM_QSTR(MP_QSTR_mktime), MP_ROM_PTR(&mp_time_mktime_obj) },
+     #endif

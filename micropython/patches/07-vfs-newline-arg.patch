@@ -1,0 +1,95 @@
+diff --git a/femm-qt/micropython/micropython_embed/extmod/vfs.c b/femm-qt/micropython/micropython_embed/extmod/vfs.c
+index d2a7af5..efd8ef9 100644
+--- a/femm-qt/micropython/micropython_embed/extmod/vfs.c
++++ b/femm-qt/micropython/micropython_embed/extmod/vfs.c
+@@ -318,18 +318,51 @@ MP_DEFINE_CONST_FUN_OBJ_1(mp_vfs_umount_obj, mp_vfs_umount);
+ 
+ // Note: buffering and encoding args are currently ignored
+ mp_obj_t mp_vfs_open(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+-    enum { ARG_file, ARG_mode, ARG_encoding };
++    // FEMM patch 07 adds ARG_newline. The enum below is upstream's and is
++    // already out of step with the table (ARG_encoding indexes buffering);
++    // nothing reads either, so it is left alone rather than renumbered under
++    // a patch that would then own it.
++    enum { ARG_file, ARG_mode, ARG_encoding, ARG_newline = 4 };
+     static const mp_arg_t allowed_args[] = {
+         { MP_QSTR_file, MP_ARG_OBJ | MP_ARG_REQUIRED, {.u_rom_obj = MP_ROM_NONE} },
+         { MP_QSTR_mode, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_QSTR(MP_QSTR_r)} },
+         { MP_QSTR_buffering, MP_ARG_INT, {.u_int = -1} },
+         { MP_QSTR_encoding, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE} },
++        { MP_QSTR_newline, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE} },
+     };
+ 
+     // parse args
+     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+ 
++    // FEMM patch 07: newline="", which is the documented way to write a CSV
++    // file and previously raised TypeError. Without it, on Windows, the
++    // writer's "\r\n" meets text mode's \n -> \r\n translation and every
++    // record ends "\r\r\n" -- which Excel shows as a blank row between each
++    // pair of records. Accepted (and validated) on every platform so a script
++    // is portable; only Windows text mode has anything to stop doing.
++    if (args[ARG_newline].u_obj != mp_const_none) {
++        size_t nl_len;
++        mp_obj_str_get_data(args[ARG_newline].u_obj, &nl_len);
++        if (nl_len != 0) {
++            // "\n"/"\r"/"\r\n" have real CPython semantics (translate TO the
++            // given terminator) that are not implemented. Refusing is better
++            // than accepting and doing something else.
++            mp_raise_ValueError(MP_ERROR_TEXT("only newline='' or None is supported"));
++        }
++        // Signalled to the file layer as a private mode character rather than
++        // a new argument, because the VFS open protocol passes exactly two.
++        // Every mode parser ignores characters it does not know, so this is
++        // inert for VFS types that never translated anything.
++        size_t mode_len;
++        const char *mode_s = mp_obj_str_get_data(args[ARG_mode].u_obj, &mode_len);
++        vstr_t vstr;
++        vstr_init(&vstr, mode_len + 1);
++        vstr_add_strn(&vstr, mode_s, mode_len);
++        vstr_add_char(&vstr, 'N');
++        args[ARG_mode].u_obj = mp_obj_new_str_from_vstr(&vstr);
++    }
++
+     #if MICROPY_VFS_POSIX
+     // If the file is an integer then delegate straight to the POSIX handler
+     if (mp_obj_is_small_int(args[ARG_file].u_obj)) {
+diff --git a/femm-qt/micropython/micropython_embed/extmod/vfs_posix_file.c b/femm-qt/micropython/micropython_embed/extmod/vfs_posix_file.c
+index 7d3e2c9..0660c40 100644
+--- a/femm-qt/micropython/micropython_embed/extmod/vfs_posix_file.c
++++ b/femm-qt/micropython/micropython_embed/extmod/vfs_posix_file.c
+@@ -69,6 +69,7 @@ mp_obj_t mp_vfs_posix_file_open(const mp_obj_type_t *type, mp_obj_t file_in, mp_
+     const char *mode_s = mp_obj_str_get_str(mode_in);
+ 
+     int mode_rw = 0, mode_x = 0;
++    bool no_translate = false;   // FEMM patch 07: set by newline=""
+     while (*mode_s) {
+         switch (*mode_s++) {
+             case 'r':
+@@ -91,6 +92,13 @@ mp_obj_t mp_vfs_posix_file_open(const mp_obj_type_t *type, mp_obj_t file_in, mp_
+             case 't':
+                 type = &mp_type_vfs_posix_textio;
+                 break;
++            case 'N':
++                // FEMM patch 07. Not a user-facing mode character: mp_vfs_open
++                // appends it for newline="". The file stays TEXT at the Python
++                // level (str in, str out) and becomes untranslated at the OS
++                // level, which is exactly what CPython's newline="" means.
++                no_translate = true;
++                break;
+         }
+     }
+ 
+@@ -122,9 +130,10 @@ mp_obj_t mp_vfs_posix_file_open(const mp_obj_type_t *type, mp_obj_t file_in, mp_
+     //    Windows, so files a script writes still look right to Notepad.
+     //    'b' vs 't' is already decided above, in the choice of object type.
+     MP_HAL_RETRY_SYSCALL(fd, femm_wopen_utf8(fname, mode_x | mode_rw,
+-                                             type == &mp_type_vfs_posix_fileio),
++                                             type == &mp_type_vfs_posix_fileio || no_translate),
+                          mp_raise_OSError(err));
+     #else
++    (void)no_translate;   // FEMM patch 07: nothing translates here to begin with
+     MP_HAL_RETRY_SYSCALL(fd, open(fname, mode_x | mode_rw, 0644), mp_raise_OSError(err));
+     #endif
+     o->fd = fd;

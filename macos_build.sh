@@ -192,6 +192,33 @@ done
 cp ../luafemm/femm.lua ../luafemm/femm-lua.sh bin/
 chmod +x bin/femm-lua.sh
 
+# ---- 3b. Python scripting assets ------------------------------------
+# init_py() puts exeDir()+"python" on sys.path and pybridge_host.cpp looks for
+# its CPython worker at exeDir()+"pybridge-worker/", so in a DISTRIBUTED bundle
+# both have to sit in Contents/MacOS beside the executables.  CMake stages them
+# into build/bin/, which is beside the .app rather than inside it, so without
+# this step an installed app has no datetime and no matplotlib bridge -- while
+# a developer build has both, which is exactly the kind of difference that
+# reaches a user.
+#
+# Copied, not symlinked the way the .dat files above are: those are WRITTEN by
+# the material editor, so a second copy would drift.  These are read-only at
+# runtime and CMake rewrites them on every build, so a copy is the simpler
+# thing that cannot go stale.  Done here, after macdeployqt, so it never sees
+# a .py file in MacOS/ and tries to read it as a Mach-O binary.
+for pydir in python pybridge-worker; do
+    if [ -d "bin/$pydir" ]; then
+        rm -rf "$APP_BIN/$pydir"
+        cp -R "bin/$pydir" "$APP_BIN/$pydir"
+        # A CPython process that reads python/ leaves .pyc files of MicroPython
+        # source behind; they are junk, and inside a signed bundle they are junk
+        # that has to be sealed.
+        find "$APP_BIN/$pydir" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+    else
+        echo "WARNING: bin/$pydir not found -- datetime and the matplotlib bridge will be MISSING from the bundle"
+    fi
+done
+
 # ---- 4. License and notice files -------------------------------------
 # A binary distribution has to carry the license text for everything it ships,
 # and the bundle previously carried none. Contents/Resources/ is the idiomatic
@@ -221,6 +248,7 @@ copy_license ../lua/liblua/COPYRIGHT             Lua-COPYRIGHT.txt
 copy_license ../lua/luasocket-1.0/COPYRIGHT      LuaSocket-COPYRIGHT.txt
 copy_license ../micropython/LICENSE.micropython  LICENSE-MicroPython.txt
 copy_license ../micropython/ulab/LICENSE         LICENSE-ulab.txt
+copy_license ../pylib/vendor/LICENSE.micropython-lib   LICENSE-micropython-lib.txt
 # macOS-only: macdeployqt copies Qt's transitive Homebrew dependencies into
 # Contents/Frameworks/, so the bundle redistributes them. Their notices are
 # aggregated into THIRD-PARTY-NOTICES.txt by

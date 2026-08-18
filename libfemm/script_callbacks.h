@@ -43,6 +43,17 @@ typedef int (*RunSolverCallback)(const char *exePath, const char *basePath, int 
 void set_run_solver_callback(RunSolverCallback cb);
 RunSolverCallback get_run_solver_callback();
 
+// Called immediately before a scripted quit() ends the process, while the
+// program is still fully alive. The IPC server registers this to close its
+// LISTENING socket: exit() is slow in the GUI, and until the process actually
+// dies a soon-to-be-dead port still accepts connections -- so the next client
+// (the second line of a batch file, or a script that reopens after
+// closefemm()) latches onto a corpse instead of spawning its own server, and
+// its first command fails with "connection closed unexpectedly".
+typedef void (*ExitHook)();
+void set_exit_hook(ExitHook cb);
+ExitHook get_exit_hook();
+
 // GUI view commands (zoom, grid, save, window management).
 // Returns a string result (gettitle etc.) or NULL.
 typedef const char *(*ViewCommandCallback)(const char *cmd, int nargs, double *args);

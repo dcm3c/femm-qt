@@ -48,6 +48,8 @@
 #endif
 #ifdef _WIN32
 #include <windows.h>
+// FEMM patch 05: UTF-8 aware existence test, defined in femm_port_hooks.c.
+int femm_wstat_utf8_kind(const char *utf8Path);
 #endif
 
 typedef struct _mp_obj_vfs_posix_t {
@@ -95,6 +97,17 @@ static mp_import_stat_t mp_vfs_posix_import_stat(void *self_in, const char *path
         vstr_add_str(&self->root, path);
         path = vstr_null_terminated_str(&self->root);
     }
+    #ifdef _WIN32
+    // FEMM patch 05: path is UTF-8, and the narrow stat() would decode it as
+    // ANSI -- so `import mymodule` from a non-ASCII directory on sys.path would
+    // not find the file that is plainly there. Same boundary as the open() call
+    // in vfs_posix_file.c; femm_wstat_utf8_kind is in femm_port_hooks.c.
+    switch (femm_wstat_utf8_kind(path)) {
+        case 2:  return MP_IMPORT_STAT_DIR;
+        case 1:  return MP_IMPORT_STAT_FILE;
+        default: return MP_IMPORT_STAT_NO_EXIST;
+    }
+    #else
     struct stat st;
     if (stat(path, &st) == 0) {
         if (S_ISDIR(st.st_mode)) {
@@ -104,6 +117,7 @@ static mp_import_stat_t mp_vfs_posix_import_stat(void *self_in, const char *path
         }
     }
     return MP_IMPORT_STAT_NO_EXIST;
+    #endif
 }
 
 static mp_obj_t vfs_posix_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {

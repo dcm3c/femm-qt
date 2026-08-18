@@ -364,6 +364,8 @@ static mp_obj_t numerical_sum_mean_std_ndarray(ndarray_obj_t *ndarray, mp_obj_t 
                 RUN_SUM(uint16_t, array, results, rarray, _shape_strides);
             } else if(ndarray->dtype == NDARRAY_INT16) {
                 RUN_SUM(int16_t, array, results, rarray, _shape_strides);
+            } else if(ndarray->dtype == NDARRAY_INT32) {
+                RUN_SUM(int32_t, array, results, rarray, _shape_strides);
             } else {
                 // for floats, the sum might be inaccurate with the naive summation
                 // call mean, and multiply with the number of samples
@@ -393,6 +395,8 @@ static mp_obj_t numerical_sum_mean_std_ndarray(ndarray_obj_t *ndarray, mp_obj_t 
                 RUN_MEAN_STD(uint16_t, array, farray, _shape_strides, div, isStd);
             } else if(ndarray->dtype == NDARRAY_INT16) {
                 RUN_MEAN_STD(int16_t, array, farray, _shape_strides, div, isStd);
+            } else if(ndarray->dtype == NDARRAY_INT32) {
+                RUN_MEAN_STD(int32_t, array, farray, _shape_strides, div, isStd);
             } else {
                 RUN_MEAN_STD(mp_float_t, array, farray, _shape_strides, div, isStd);
             }
@@ -541,6 +545,8 @@ static mp_obj_t numerical_argmin_argmax_ndarray(ndarray_obj_t *ndarray, mp_obj_t
             RUN_ARGMIN(ndarray, uint16_t, array, results, rarray, shape, strides, index, optype);
         } else if(ndarray->dtype == NDARRAY_INT16) {
             RUN_ARGMIN(ndarray, int16_t, array, results, rarray, shape, strides, index, optype);
+        } else if(ndarray->dtype == NDARRAY_INT32) {
+            RUN_ARGMIN(ndarray, int32_t, array, results, rarray, shape, strides, index, optype);
         } else {
             RUN_ARGMIN(ndarray, mp_float_t, array, results, rarray, shape, strides, index, optype);
         }
@@ -657,6 +663,8 @@ static mp_obj_t numerical_sort_helper(mp_obj_t oin, mp_obj_t axis, uint8_t inpla
             HEAPSORT(ndarray, uint8_t, array, shape, strides, ax, increment, ndarray->shape[ax]);
         } else if((ndarray->dtype == NDARRAY_UINT16) || (ndarray->dtype == NDARRAY_INT16)) {
             HEAPSORT(ndarray, uint16_t, array, shape, strides, ax, increment, ndarray->shape[ax]);
+        } else if(ndarray->dtype == NDARRAY_INT32) {
+            HEAPSORT(ndarray, int32_t, array, shape, strides, ax, increment, ndarray->shape[ax]);
         } else {
             HEAPSORT(ndarray, mp_float_t, array, shape, strides, ax, increment, ndarray->shape[ax]);
         }
@@ -807,6 +815,8 @@ mp_obj_t numerical_argsort(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw
             HEAP_ARGSORT(ndarray, uint8_t, array, shape, strides, ax, increment, ndarray->shape[ax], iarray, istrides, iincrement);
         } else if((ndarray->dtype == NDARRAY_UINT16) || (ndarray->dtype == NDARRAY_INT16)) {
             HEAP_ARGSORT(ndarray, uint16_t, array, shape, strides, ax, increment, ndarray->shape[ax], iarray, istrides, iincrement);
+        } else if(ndarray->dtype == NDARRAY_INT32) {
+            HEAP_ARGSORT(ndarray, int32_t, array, shape, strides, ax, increment, ndarray->shape[ax], iarray, istrides, iincrement);
         } else {
             HEAP_ARGSORT(ndarray, mp_float_t, array, shape, strides, ax, increment, ndarray->shape[ax], iarray, istrides, iincrement);
         }
@@ -970,6 +980,8 @@ mp_obj_t numerical_diff(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_ar
         RUN_DIFF(ndarray, uint16_t, array, results, rarray, shape, strides, index, stencil, N);
     } else if(ndarray->dtype == NDARRAY_INT16) {
         RUN_DIFF(ndarray, int16_t, array, results, rarray, shape, strides, index, stencil, N);
+    } else if(ndarray->dtype == NDARRAY_INT32) {
+        RUN_DIFF(ndarray, int32_t, array, results, rarray, shape, strides, index, stencil, N);
     } else {
         RUN_DIFF(ndarray, mp_float_t, array, results, rarray, shape, strides, index, stencil, N);
     }

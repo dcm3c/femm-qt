@@ -20,6 +20,7 @@
 
 #include "py_state.h"
 #include "tcp_server.h"
+#include "script_callbacks.h"   // set_exit_hook
 #include "utf8_io.h"
 
 #include <csignal>
@@ -48,14 +49,14 @@ static volatile std::sig_atomic_t g_repl_mode = 0;
 // non-REPL idle process (an idle server / finished batch run) falls through to
 // the default action and exits. Re-armed each time because both Windows and
 // System-V signal() reset the disposition to default before invoking the handler.
-static void sigint_handler(int)
+static void sigint_handler(int sig)
 {
     if (g_repl_mode || py_is_running()) {
         py_request_interrupt();
-        std::signal(SIGINT, sigint_handler);
+        std::signal(sig, sigint_handler);
     } else {
-        std::signal(SIGINT, SIG_DFL);
-        std::raise(SIGINT);
+        std::signal(sig, SIG_DFL);
+        std::raise(sig);
     }
 }
 
@@ -209,6 +210,13 @@ int main(int argc, char *argv[])
 
     // Ctrl+C interrupts a running script/command when launched from a terminal.
     std::signal(SIGINT, sigint_handler);
+#ifdef _WIN32
+    // Ctrl+Break too, which on Windows is the companion "stop this console
+    // program" key -- and the only console signal deliverable to another
+    // process group, so it is also how a supervising process (or a test) can
+    // interrupt a long run without killing it outright.
+    std::signal(SIGBREAK, sigint_handler);
+#endif
 
     // Parse arguments
     int port = 48015;
@@ -267,6 +275,11 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // A scripted quit() must not leave the port advertised while the process
+    // takes its time dying; see set_exit_hook in script_callbacks.h.
+    static TcpServer *s_ipcServer = &server;
+    set_exit_hook([]() { if (s_ipcServer) s_ipcServer->stop(); });
+
     // Execute startup script if provided
     if (haveScript) {
         fprintf(stderr, "Executing: %s\n", script.c_str());
@@ -285,12 +298,17 @@ int main(int argc, char *argv[])
             else
                 fprintf(stderr, "Script error: %s\n", errmsg);
             if (runAndExit) {
+                // Listener first: close_py() is slow -- it also stops the
+                // matplotlib worker -- and a port that is about to die must
+                // not go on accepting. See TcpServer's disconnect path.
+                server.stop();
                 close_py();
                 return interrupted ? 130 : 1;
             }
         }
         if (runAndExit) {
             fprintf(stderr, "Script complete, exiting.\n");
+            server.stop();          // before close_py(); see above
             close_py();
             return 0;
         }
@@ -299,6 +317,7 @@ int main(int argc, char *argv[])
     // Run event loop (blocks until quit)
     server.run();
 
+    server.stop();                  // idempotent; makes the ordering explicit
     close_py();
     return 0;
 }

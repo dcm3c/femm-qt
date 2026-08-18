@@ -24,6 +24,12 @@ file(GLOB_RECURSE MPY_SOURCES "${MPY_DIR}/micropython_embed/*.c")
 # Exclude the embed port's mphalport.c: py_state.cpp provides its own
 # mp_hal_stdout_tx_strn[_cooked] routed through a settable output sink.
 list(FILTER MPY_SOURCES EXCLUDE REGEX "port/mphalport\\.c$")
+# Exclude the lib/ sources that their modules #include as .c files (upstream
+# does this deliberately): crypto-algorithms/sha256.c inside modhashlib.c, and
+# re1.5's engine inside modre.c. Compiling them again on their own would define
+# every sha256_/re1.5 symbol twice.
+list(FILTER MPY_SOURCES EXCLUDE REGEX "crypto-algorithms/sha256\\.c$")
+list(FILTER MPY_SOURCES EXCLUDE REGEX "lib/re1\\.5/.*\\.c$")
 # ulab (numpy/scipy ndarrays) is a USER_C_MODULE: the regen generates its qstrs
 # and the `ulab` module registration into genhdr (USER_C_MODULES=ulab in
 # regen.sh), but the embed packager only ships py/*, so ulab's own .c are

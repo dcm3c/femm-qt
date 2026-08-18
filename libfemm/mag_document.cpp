@@ -476,8 +476,16 @@ bool MagDocument::OpenDocument(const std::string &pathname)
                 else
                     blk.MaxArea = 0;
 
+                // Material index 0 means "no material", which is spelled
+                // "<None>" -- as OF does here (FemmeDoc.cpp:2267) and as the
+                // three scalar loaders do. Naming it, rather than leaving the
+                // field empty, keeps one spelling for the state that the
+                // property dialog, the mesh shading and the pre-solve check
+                // all have to recognise.
                 if (blockIdx > 0 && blockIdx <= (int)blockproplist.size())
                     blk.BlockType = blockproplist[blockIdx - 1].BlockName;
+                else
+                    blk.BlockType = "<None>";
                 if (circIdx > 0 && circIdx <= (int)circproplist.size())
                     blk.InCircuit = circproplist[circIdx - 1].CircName;
 

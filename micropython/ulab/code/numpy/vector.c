@@ -104,6 +104,8 @@ static mp_obj_t vector_generic_vector(size_t n_args, const mp_obj_t *pos_args, m
             ITERATE_VECTOR(uint16_t, target, tarray, tstrides, source, sarray);
         } else if(source->dtype == NDARRAY_INT16) {
             ITERATE_VECTOR(int16_t, target, tarray, tstrides, source, sarray);
+        } else if(source->dtype == NDARRAY_INT32) {
+            ITERATE_VECTOR(int32_t, target, tarray, tstrides, source, sarray);
         } else {
             ITERATE_VECTOR(mp_float_t, target, tarray, tstrides, source, sarray);
         }
@@ -151,6 +153,8 @@ static mp_obj_t vector_generic_vector(mp_obj_t o_in, mp_float_t (*f)(mp_float_t)
             ITERATE_VECTOR(uint16_t, array, source, sarray);
         } else if(source->dtype == NDARRAY_INT16) {
             ITERATE_VECTOR(int16_t, array, source, sarray);
+        } else if(source->dtype == NDARRAY_INT32) {
+            ITERATE_VECTOR(int32_t, array, source, sarray);
         } else {
             ITERATE_VECTOR(mp_float_t, array, source, sarray);
         }

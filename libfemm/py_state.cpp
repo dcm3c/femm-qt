@@ -8,6 +8,9 @@
 #include "py_bind.h"
 #include "py_clinalg.h"
 #include "py_init_script.h"
+#include "py_os.h"
+#include "py_pybridge.h"
+#include "pybridge_host.h"
 #include "script_callbacks.h"
 
 #include <cstdio>
@@ -58,6 +61,7 @@ void set_py_output_sink(PyOutputSink sink) { s_output_sink = sink; }
 static int s_running_depth = 0;  // >0 while exec_python is on the stack
 
 void set_py_vm_hook(PyVmHook hook) { femm_vm_hook_fn = hook; }
+PyVmHook py_vm_hook() { return femm_vm_hook_fn; }
 
 // Fired once when the outermost exec_python() unwinds (s_running_depth -> 0).
 // See py_state.h. Headless/TCP leave this null and pay nothing.
@@ -68,6 +72,10 @@ void set_py_post_exec_hook(PyPostExecHook hook) { s_post_exec_hook = hook; }
 bool py_is_running() { return s_running_depth > 0; }
 
 void py_request_interrupt() { mp_sched_keyboard_interrupt(); }
+
+bool py_interrupt_pending() {
+    return MP_STATE_THREAD(mp_pending_exception) != MP_OBJ_NULL;
+}
 
 extern "C" void mp_hal_stdout_tx_strn_cooked(const char *str, size_t len) {
     if (s_output_sink) s_output_sink(str, len);
@@ -126,9 +134,12 @@ static void format_complex(std::string &out, double re, double im) {
 // (I* notation) instead — that format is the IPC contract and must not change.
 static void format_complex_display(std::string &out, double re, double im) {
     char b[96];
-    if (im == 0)        // collapse: a real-valued result reads as a real
-        snprintf(b, sizeof b, "%.17g", re);
-    else if (re == 0)   // pure imaginary: "0.5j", "-3j", "1j"
+    // Complex stays complex, matching _femm_fmt in the init script -- one rule,
+    // two places it has to be written. The zero-imaginary collapse that used to
+    // live here existed because the DC getters returned complex-typed reals;
+    // they return real numbers now, so a complex result means a phasor and its
+    // zero imaginary part is information.
+    if (re == 0 && im != 0)   // pure imaginary: "0.5j", "-3j", "1j"
         snprintf(b, sizeof b, "%.17gj", im);
     else if (im < 0)
         snprintf(b, sizeof b, "%.17g-%.17gj", re, -im);
@@ -254,6 +265,13 @@ void init_py() {
             MP_STATE_VM(vfs_cur) = MP_STATE_VM(vfs_cur)->next;
     }
 #endif
+
+    // `os` and `os.path`. After the mount, so open() and os.* agree about the
+    // working directory from the first line of a script.
+    register_os_py();
+
+    // `_pybridge`: transport only, and it spawns nothing until a script asks.
+    register_pybridge_py();
 
     // All three entry points (console, TCP exec, line-edit) share this dict.
     femm_py::femm_module.globals = mp_globals_get();
@@ -541,6 +559,12 @@ bool py_eval_string(const char *expr, std::string *out) {
 }
 
 void close_py() {
+    // The worker is a child process, not a heap object: nothing below would
+    // reap it. close_py() is only ever called at process exit today, so this
+    // is "femm-qt is quitting" rather than "the interpreter is being reset" --
+    // when a reset command does exist it should send `clear` instead, keeping
+    // the worker and its figure windows alive.
+    femm_pybridge_shutdown();
     cleanup_global_femm_state();
     gc_sweep_all();
     mp_deinit();
@@ -558,7 +582,18 @@ void close_py() {
 }
 
 int exec_python_file(const char *path, char *errmsg, int errmsg_size) {
-    FILE *f = femm_fopen(path, "r");
+    // Binary, and sized by what was actually READ -- both halves matter, and
+    // getting either wrong is invisible until a script happens to be the wrong
+    // length. Opened "r" (text) on Windows, ftell reports the on-disk byte
+    // count while fread returns CHARACTERS, fewer by one per CRLF; the two
+    // disagree, and a CRLF script of certain sizes reached the lexer damaged
+    // and failed with a bare "invalid syntax" naming no line. A 400-statement
+    // file failed where the identical file with LF endings, and the same file
+    // at 410 statements, both ran.
+    //
+    // MicroPython's lexer handles CRLF itself, so there is nothing to gain
+    // from letting the CRT translate.
+    FILE *f = femm_fopen(path, "rb");
     if (!f) {
         if (errmsg) std::snprintf(errmsg, errmsg_size, "Cannot open %s", path);
         return -1;
@@ -566,8 +601,24 @@ int exec_python_file(const char *path, char *errmsg, int errmsg_size) {
     std::fseek(f, 0, SEEK_END);
     long sz = std::ftell(f);
     std::fseek(f, 0, SEEK_SET);
-    std::string buf(sz, '\0');
-    std::fread(&buf[0], 1, sz, f);
+    if (sz < 0) sz = 0;
+    std::string buf(static_cast<size_t>(sz), '\0');
+    size_t got = std::fread(&buf[0], 1, static_cast<size_t>(sz), f);
+    const bool shortRead = std::ferror(f) != 0;
     std::fclose(f);
+    if (shortRead) {
+        if (errmsg) std::snprintf(errmsg, errmsg_size, "Cannot read %s", path);
+        return -1;
+    }
+    buf.resize(got);
+    // A NUL anywhere in the source would silently truncate the script at the
+    // lexer, so say so instead. (Reaching here means a binary file was handed
+    // to -run, not that anything above went wrong.)
+    if (buf.find('\0') != std::string::npos) {
+        if (errmsg)
+            std::snprintf(errmsg, errmsg_size,
+                          "%s is not a text file (contains a NUL byte)", path);
+        return -1;
+    }
     return exec_python(buf.c_str(), errmsg, errmsg_size);
 }

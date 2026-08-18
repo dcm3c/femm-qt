@@ -1,66 +1,111 @@
 diff --git a/femm-qt/micropython/micropython_embed/py/objstr.c b/femm-qt/micropython/micropython_embed/py/objstr.c
-index e8b2512..155a66e 100644
+index e8b2512..a2bbd9f 100644
 --- a/femm-qt/micropython/micropython_embed/py/objstr.c
 +++ b/femm-qt/micropython/micropython_embed/py/objstr.c
-@@ -1393,7 +1393,31 @@ static vstr_t mp_obj_str_format_helper(const char *str, const char *top, int *ar
+@@ -992,6 +992,45 @@ static bool arg_looks_numeric(mp_obj_t arg) {
+     ;
+ }
+ 
++#if MICROPY_PY_BUILTINS_COMPLEX
++// FEMM patch: format a complex under a numeric type code, which MicroPython
++// otherwise refuses -- "%g" % z and "{:g}".format(z) both raise upstream.
++//
++// The output is CPython's, exactly: both components always, signed imaginary
++// part, a trailing j, and no parentheses, so format(3+4j, 'g') is "3+4j",
++// format(1j, 'g') is "0+1j" and format(3+0j, 'g') is "3+0j". Nothing is
++// collapsed -- that only happens for str()/repr(), which MicroPython already
++// renders as CPython does.
++//
++// The I*-notation this used to print belongs to the TCP wire format alone
++// (libfemm/py_state.cpp), which is an interface contract with the octave/
++// matlab/mathematica clients. It has no business in a script's own output.
++//
++// The text is built into a vstr first and then padded as a unit, so width and
++// alignment mean for a complex what they mean for a real -- "{:>14g}" pads to
++// fourteen columns whether the value has an imaginary part or not.
++static void femm_print_complex(const mp_print_t *print, mp_obj_t arg, char type,
++                               int flags, char fill, int width, int prec) {
++    vstr_t vstr;
++    mp_print_t vstr_print;
++    vstr_init_print(&vstr, 24, &vstr_print);
++
++    mp_float_t re, im;
++    mp_obj_complex_get(arg, &re, &im);
++
++    mp_print_float(&vstr_print, re, type, 0, 0, 0, prec);
++    // Negative zero counts as negative, as it does in CPython: 3-0.0j prints
++    // "3-0j". Comparing 1/im catches it without needing signbit().
++    bool neg = (im < 0) || (im == 0 && (mp_float_t)1 / im < 0);
++    mp_print_str(&vstr_print, neg ? "-" : "+");
++    mp_print_float(&vstr_print, neg ? -im : im, type, 0, 0, 0, prec);
++    mp_print_str(&vstr_print, "j");
++
++    mp_print_strn(print, vstr.buf, vstr.len, flags, fill, width);
++    vstr_clear(&vstr);
++}
++#endif
++
+ #if MICROPY_PY_BUILTINS_STR_OP_MODULO
+ static mp_obj_t arg_as_int(mp_obj_t arg) {
+     #if MICROPY_PY_BUILTINS_FLOAT
+@@ -1254,7 +1293,14 @@ static vstr_t mp_obj_str_format_helper(const char *str, const char *top, int *ar
+             vstr_clear(&format_spec_vstr);
+         }
+         if (!align) {
+-            if (arg_looks_numeric(arg)) {
++            // FEMM patch: a complex counts as numeric here too, so "{:14g}"
++            // right-aligns it exactly as it right-aligns a real. Without this
++            // the same format spec padded one and not the other.
++            if (arg_looks_numeric(arg)
++                #if MICROPY_PY_BUILTINS_COMPLEX
++                || mp_obj_is_type(arg, &mp_type_complex)
++                #endif
++                ) {
+                 align = '>';
+             } else {
+                 align = '<';
+@@ -1349,7 +1395,18 @@ static vstr_t mp_obj_str_format_helper(const char *str, const char *top, int *ar
+ 
+         // NOTE: no else here. We need the e, f, g etc formats for integer
+         //       arguments (from above if) to take this if.
+-        if (arg_looks_numeric(arg)) {
++        //
++        // FEMM patch: a complex takes it too. Without this it fell through to
++        // the "not a number" branch below and "{:g}".format(z) raised, even
++        // though the complex case inside the switch was written and working --
++        // it was simply unreachable from here, so only "%g" % z ever used it.
++        // A type code that makes no sense for a complex ('d', 'x') still lands
++        // on the same "unknown format code" error a float would give.
++        if (arg_looks_numeric(arg)
++            #if MICROPY_PY_BUILTINS_COMPLEX
++            || mp_obj_is_type(arg, &mp_type_complex)
++            #endif
++            ) {
+             if (!type) {
+ 
+                 // Even though the docs say that an unspecified type is the same
+@@ -1393,7 +1450,12 @@ static vstr_t mp_obj_str_format_helper(const char *str, const char *top, int *ar
                  case 'F':
                  case 'g':
                  case 'G':
 -                    mp_print_float(&print, mp_obj_get_float(arg), type, flags, fill, width, precision);
-+                    // FEMM patch: complex -> CComplex::ToString style (re+I*im),
-+                    // using the format's precision for both components.
++                    // FEMM patch: complex -> CComplex::ToString style (re+I*im).
 +                    if (mp_obj_is_type(arg, &mp_type_complex)) {
-+                        mp_float_t re, im;
-+                        mp_obj_complex_get(arg, &re, &im);
-+                        if (im == 0) {
-+                            mp_print_float(&print, re, type, flags, fill, width, precision);
-+                        } else if (im == 1) {
-+                            if (re != 0) { mp_print_float(&print, re, type, 0, 0, 0, precision); mp_print_str(&print, "+"); }
-+                            mp_print_str(&print, "I");
-+                        } else if (im == -1) {
-+                            if (re != 0) { mp_print_float(&print, re, type, 0, 0, 0, precision); }
-+                            mp_print_str(&print, "-I");
-+                        } else if (im < 0) {
-+                            if (re != 0) { mp_print_float(&print, re, type, 0, 0, 0, precision); }
-+                            mp_print_str(&print, "-I*");
-+                            mp_print_float(&print, -im, type, 0, 0, 0, precision);
-+                        } else {
-+                            if (re != 0) { mp_print_float(&print, re, type, 0, 0, 0, precision); mp_print_str(&print, "+"); }
-+                            mp_print_str(&print, "I*");
-+                            mp_print_float(&print, im, type, 0, 0, 0, precision);
-+                        }
++                        femm_print_complex(&print, arg, type, flags, fill, width, precision);
 +                    } else {
 +                        mp_print_float(&print, mp_obj_get_float(arg), type, flags, fill, width, precision);
 +                    }
                      break;
  
                  case '%':
-@@ -1615,7 +1639,30 @@ static mp_obj_t str_modulo_format(mp_obj_t pattern, size_t n_args, const mp_obj_
+@@ -1615,7 +1677,12 @@ static mp_obj_t str_modulo_format(mp_obj_t pattern, size_t n_args, const mp_obj_
              case 'F':
              case 'g':
              case 'G':
 -                mp_print_float(&print, mp_obj_get_float(arg), *str, flags, fill, width, prec);
 +                // FEMM patch: complex -> CComplex::ToString style.
 +                if (mp_obj_is_type(arg, &mp_type_complex)) {
-+                    mp_float_t re, im;
-+                    mp_obj_complex_get(arg, &re, &im);
-+                    if (im == 0) {
-+                        mp_print_float(&print, re, *str, flags, fill, width, prec);
-+                    } else if (im == 1) {
-+                        if (re != 0) { mp_print_float(&print, re, *str, 0, 0, 0, prec); mp_print_str(&print, "+"); }
-+                        mp_print_str(&print, "I");
-+                    } else if (im == -1) {
-+                        if (re != 0) { mp_print_float(&print, re, *str, 0, 0, 0, prec); }
-+                        mp_print_str(&print, "-I");
-+                    } else if (im < 0) {
-+                        if (re != 0) { mp_print_float(&print, re, *str, 0, 0, 0, prec); }
-+                        mp_print_str(&print, "-I*");
-+                        mp_print_float(&print, -im, *str, 0, 0, 0, prec);
-+                    } else {
-+                        if (re != 0) { mp_print_float(&print, re, *str, 0, 0, 0, prec); mp_print_str(&print, "+"); }
-+                        mp_print_str(&print, "I*");
-+                        mp_print_float(&print, im, *str, 0, 0, 0, prec);
-+                    }
++                    femm_print_complex(&print, arg, *str, flags, fill, width, prec);
 +                } else {
 +                    mp_print_float(&print, mp_obj_get_float(arg), *str, flags, fill, width, prec);
 +                }

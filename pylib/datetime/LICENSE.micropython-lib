@@ -1,0 +1,42 @@
+_core.py in this directory is copied verbatim from micropython-lib
+(https://github.com/micropython/micropython-lib), python-stdlib/datetime,
+version 4.1.0, originally written by Lorenzo Cappelletti.  It is redistributed
+under the terms below, which is micropython-lib's own LICENSE.
+
+Note that this is a DIFFERENT copyright holder from LICENSE-MicroPython.txt:
+that file covers the MicroPython interpreter itself (micropython/micropython,
+Copyright (c) 2013-2026 Damien P. George), and this one covers the separate
+micropython-lib module repository.  Both are MIT.
+
+micropython-lib's datetime is an independent implementation, not a port of
+CPython's Lib/datetime.py, so no part of it is under the Python Software
+Foundation license.  (micropython-lib's repository LICENSE also reproduces the
+Python License, for those of its modules that ARE derived from CPython.  This
+is not one of them.)
+
+__init__.py beside it is not upstream code.  It is part of FEMM and is under
+FEMM's own MIT license; see LICENSE-MIT.
+
+=============== MIT License ===============
+
+The MIT License (MIT)
+
+Copyright (c) 2013, 2014 micropython-lib contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

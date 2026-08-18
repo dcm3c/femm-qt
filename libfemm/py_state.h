@@ -48,6 +48,12 @@ void set_py_output_sink(PyOutputSink sink);
 typedef void (*PyVmHook)();
 void set_py_vm_hook(PyVmHook hook);
 
+// The hook currently installed, or nullptr. A blocking C++ call reachable from
+// script (the matplotlib bridge) calls this while it waits, so the UI stays as
+// responsive as it is during a busy script -- same function, same throttle,
+// rather than a second pumping policy that could drift from this one.
+PyVmHook py_vm_hook();
+
 // Hook fired once after each *top-level* exec_python() / exec_python_file()
 // returns — i.e. once per interactive line and once per script file, but NOT
 // on event-pump re-entry (a nested exec_python while a script is already
@@ -67,6 +73,12 @@ void py_request_interrupt();
 // re-entrancy guard: event pumping means the user can type while a script
 // runs.
 bool py_is_running();
+
+// True if an exception (a Stop request, in practice) is scheduled to fire at
+// the next VM branch. Blocking C++ called from a script must poll this and
+// abandon what it is doing: the VM never reaches that branch while it sits
+// inside C++, so without this Esc does nothing and the status bar lies.
+bool py_interrupt_pending();
 
 // Initialise the embedded MicroPython runtime and the shared global namespace.
 // Must be called once before exec_python().

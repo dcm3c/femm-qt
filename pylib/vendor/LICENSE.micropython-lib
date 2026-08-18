@@ -1,0 +1,62 @@
+The .py files in this directory are copied VERBATIM from micropython-lib
+(https://github.com/micropython/micropython-lib) and are redistributed under
+the terms below, which is micropython-lib's own LICENSE.
+
+  abc.py            python-stdlib/abc
+  argparse.py       python-stdlib/argparse
+  base64.py         python-stdlib/base64
+  bisect.py         python-stdlib/bisect
+  contextlib.py     python-stdlib/contextlib
+  copy.py           python-stdlib/copy
+  fnmatch.py        python-stdlib/fnmatch
+  functools.py      python-stdlib/functools
+  heapq.py          python-stdlib/heapq
+  inspect.py        python-stdlib/inspect
+  pathlib.py        python-stdlib/pathlib
+  pickle.py         python-stdlib/pickle
+  pprint.py         python-stdlib/pprint
+  stat.py           python-stdlib/stat
+  string/           python-stdlib/string      (a package upstream: both of its
+                    files come across, and it carries its own copy of this
+                    notice)
+  traceback.py      python-stdlib/traceback
+  types.py          python-stdlib/types
+  ucontextlib.py    micropython/ucontextlib   (note: NOT python-stdlib --
+                    contextlib imports it, and vendoring one without the
+                    other is an ImportError)
+
+The sibling datetime/, itertools/, operator/, shutil/ and tempfile/ directories
+hold an upstream _core.py under this same licence, with femm-qt's own additions
+in an __init__.py beside it. Each carries its own copy of this notice, so that
+any one of those directories travels complete -- which is the point of keeping
+the notice in a file rather than in a header: it lets _core.py stay byte-
+identical to upstream, so re-vendoring is a plain copy and `diff` stays empty.
+
+Note that this is a DIFFERENT copyright holder from LICENSE-MicroPython.txt:
+that file covers the MicroPython interpreter itself (micropython/micropython,
+Copyright (c) 2013-2026 Damien P. George), and this one covers the separate
+micropython-lib module repository. Both are MIT.
+
+=============== MIT License ===============
+
+The MIT License (MIT)
+
+Copyright (c) 2013, 2014 micropython-lib contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

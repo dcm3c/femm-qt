@@ -34,6 +34,11 @@ mp_float_t ndarray_get_float_uint16(void *data) {
     return (mp_float_t)(*(uint16_t *)data);
 }
 
+mp_float_t ndarray_get_float_int32(void *data) {
+    // femm-qt addition; see the NDARRAY_INT32 note in ndarray.h
+    return (mp_float_t)(*(int32_t *)data);
+}
+
 mp_float_t ndarray_get_float_int16(void *data) {
     // Returns a float value from an int16_t type
     return (mp_float_t)(*(int16_t *)data);
@@ -55,6 +60,8 @@ void *ndarray_get_float_function(uint8_t dtype) {
         return ndarray_get_float_uint16;
     } else if(dtype == NDARRAY_INT16) {
         return ndarray_get_float_int16;
+    } else if(dtype == NDARRAY_INT32) {
+        return ndarray_get_float_int32;
     } else {
         return ndarray_get_float_float;
     }
@@ -70,6 +77,8 @@ mp_float_t ndarray_get_float_index(void *data, uint8_t dtype, size_t index) {
         return (mp_float_t)((uint16_t *)data)[index];
     } else if(dtype == NDARRAY_INT16) {
         return (mp_float_t)((int16_t *)data)[index];
+    } else if(dtype == NDARRAY_INT32) {
+        return (mp_float_t)((int32_t *)data)[index];
     } else {
         return (mp_float_t)((mp_float_t *)data)[index];
     }
@@ -86,6 +95,8 @@ mp_float_t ndarray_get_float_value(void *data, uint8_t dtype) {
         return (mp_float_t)(*(uint16_t *)data);
     } else if(dtype == NDARRAY_INT16) {
         return (mp_float_t)(*(int16_t *)data);
+    } else if(dtype == NDARRAY_INT32) {
+        return (mp_float_t)(*(int32_t *)data);
     } else {
         return *((mp_float_t *)data);
     }
@@ -104,6 +115,13 @@ uint8_t ndarray_upcast_dtype(uint8_t ldtype, uint8_t rdtype) {
     // int8 + uint16 => uint16
     // uint16 + int16 => float
 
+    if((ldtype == NDARRAY_INT32) || (rdtype == NDARRAY_INT32)) {
+        // femm-qt: int32 is a storage type; every operation on it produces
+        // float64, which represents all of int32 exactly. This is checked
+        // BEFORE the identical-dtype rule below, so that int32 + int32 also
+        // becomes float rather than an int32 the kernels cannot produce.
+        return NDARRAY_FLOAT;
+    }
     if(ldtype == rdtype) {
         // if the two dtypes are equal, the result is also of that type
         return ldtype;
@@ -142,6 +160,10 @@ void ndarray_set_float_int16(void *data, mp_float_t datum) {
     *((int16_t *)data) = (int16_t)datum;
 }
 
+void ndarray_set_float_int32(void *data, mp_float_t datum) {
+    *((int32_t *)data) = (int32_t)datum;
+}
+
 void ndarray_set_float_float(void *data, mp_float_t datum) {
     *((mp_float_t *)data) = datum;
 }
@@ -156,6 +178,8 @@ void *ndarray_set_float_function(uint8_t dtype) {
         return ndarray_set_float_uint16;
     } else if(dtype == NDARRAY_INT16) {
         return ndarray_set_float_int16;
+    } else if(dtype == NDARRAY_INT32) {
+        return ndarray_set_float_int32;
     } else {
         return ndarray_set_float_float;
     }

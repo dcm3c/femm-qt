@@ -20,4 +20,11 @@ MICROPYTHON_TOP = ../../micropython-1.28.0
 # Phase-10 CMake regen step (the stock embed package omits extmod).
 SRC_QSTR += extmod/vfs.c extmod/vfs_posix.c extmod/vfs_posix_file.c extmod/vfs_reader.c
 
+# Same for the stdlib modules enabled in mpconfigport.h: without them in the
+# scan, genhdr/ has neither their qstrs (dumps, loads, sha256, localtime, ...)
+# nor the MP_REGISTER_MODULE entries, so `import json` would fail even though
+# modjson.c compiled.
+SRC_QSTR += extmod/modjson.c extmod/modre.c extmod/modrandom.c \
+            extmod/modbinascii.c extmod/modhashlib.c extmod/modtime.c
+
 include $(MICROPYTHON_TOP)/ports/embed/embed.mk

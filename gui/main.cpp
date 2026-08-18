@@ -33,6 +33,7 @@
 #include "document.h"
 #include "py_state.h"
 #include "script_callbacks.h"
+#include "script_prefs_dialog.h"
 #include "py_mag_editor.h"
 #include "py_elec_editor.h"
 #include "py_heat_editor.h"
@@ -655,10 +656,17 @@ int main(int argc, char *argv[])
     // Layer 1: Python engine
     init_py();
     set_gui_mode(true);
+    // libfemm holds no Qt, so the stored bridge preferences are pushed in from
+    // here rather than read there. Before any script runs.
+    ScriptPrefsDialog::applySaved();
 
     // Layer 2: IPC server (runs inside Qt event loop via QTimer)
     TcpServer server;
     server.listen(port);
+    // A scripted quit() must not leave the port advertised while the process
+    // takes its time dying; see set_exit_hook in script_callbacks.h.
+    static TcpServer *s_ipcServer = &server;
+    set_exit_hook([]() { if (s_ipcServer) s_ipcServer->stop(); });
 
     // Layer 3: GUI
     MainWindow w(&server);

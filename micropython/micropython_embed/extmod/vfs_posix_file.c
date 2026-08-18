@@ -37,6 +37,9 @@
 
 #ifdef _WIN32
 #define fsync _commit
+// FEMM patch 05: UTF-8 aware open, defined in femm_port_hooks.c. `binary`
+// selects _O_BINARY over _O_TEXT rather than inheriting the CRT default.
+int femm_wopen_utf8(const char *utf8Path, int flags, int binary);
 #else
 #include <poll.h>
 #endif
@@ -66,6 +69,7 @@ mp_obj_t mp_vfs_posix_file_open(const mp_obj_type_t *type, mp_obj_t file_in, mp_
     const char *mode_s = mp_obj_str_get_str(mode_in);
 
     int mode_rw = 0, mode_x = 0;
+    bool no_translate = false;   // FEMM patch 07: set by newline=""
     while (*mode_s) {
         switch (*mode_s++) {
             case 'r':
@@ -88,6 +92,13 @@ mp_obj_t mp_vfs_posix_file_open(const mp_obj_type_t *type, mp_obj_t file_in, mp_
             case 't':
                 type = &mp_type_vfs_posix_textio;
                 break;
+            case 'N':
+                // FEMM patch 07. Not a user-facing mode character: mp_vfs_open
+                // appends it for newline="". The file stays TEXT at the Python
+                // level (str in, str out) and becomes untranslated at the OS
+                // level, which is exactly what CPython's newline="" means.
+                no_translate = true;
+                break;
         }
     }
 
@@ -103,7 +114,28 @@ mp_obj_t mp_vfs_posix_file_open(const mp_obj_type_t *type, mp_obj_t file_in, mp_
 
     const char *fname = mp_obj_str_get_str(fid);
     int fd;
+    #ifdef _WIN32
+    // FEMM patch 05, two Windows-only corrections:
+    //
+    // 1. fname is UTF-8; the CRT's narrow open() would decode it as ANSI and
+    //    reach a different file from every femm command on a non-ASCII path.
+    //    femm_wopen_utf8 (femm_port_hooks.c) widens first.
+    // 2. The translation mode is chosen here rather than left to the CRT's
+    //    global default, which is text for every mode -- including "rb"/"wb",
+    //    where it corrupted binary data (b"\n\n\n" reached disk as six bytes)
+    //    and, on read, made a full buffer look short. mp_reader_vfs_readbyte
+    //    reads a short read as EOF, so `import` truncated any script-written
+    //    module past ~48 bytes into a SyntaxError. A binary file is now really
+    //    binary; a text file keeps the CRLF translation CPython also does on
+    //    Windows, so files a script writes still look right to Notepad.
+    //    'b' vs 't' is already decided above, in the choice of object type.
+    MP_HAL_RETRY_SYSCALL(fd, femm_wopen_utf8(fname, mode_x | mode_rw,
+                                             type == &mp_type_vfs_posix_fileio || no_translate),
+                         mp_raise_OSError(err));
+    #else
+    (void)no_translate;   // FEMM patch 07: nothing translates here to begin with
     MP_HAL_RETRY_SYSCALL(fd, open(fname, mode_x | mode_rw, 0644), mp_raise_OSError(err));
+    #endif
     o->fd = fd;
     return MP_OBJ_FROM_PTR(o);
 }

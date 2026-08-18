@@ -38,6 +38,7 @@
 static DocOpenedCallback       s_docOpenedCb    = nullptr;
 static ResultsOpenedCallback   s_resultsOpenedCb = nullptr;
 static RunSolverCallback       s_runSolverCb    = nullptr;
+static ExitHook                s_exitHook       = nullptr;
 static MeshLoadedCallback      s_meshLoadedCb   = nullptr;
 static ViewCommandCallback     s_viewCmdCb      = nullptr;
 
@@ -47,6 +48,8 @@ void set_results_opened_callback(ResultsOpenedCallback cb) { s_resultsOpenedCb =
 ResultsOpenedCallback get_results_opened_callback()      { return s_resultsOpenedCb; }
 void set_run_solver_callback(RunSolverCallback cb)       { s_runSolverCb = cb; }
 RunSolverCallback get_run_solver_callback()              { return s_runSolverCb; }
+void set_exit_hook(ExitHook cb)                          { s_exitHook = cb; }
+ExitHook get_exit_hook()                                 { return s_exitHook; }
 void set_mesh_loaded_callback(MeshLoadedCallback cb)     { s_meshLoadedCb = cb; }
 MeshLoadedCallback get_mesh_loaded_callback()            { return s_meshLoadedCb; }
 void set_view_command_callback(ViewCommandCallback cb)   { s_viewCmdCb = cb; }
@@ -296,10 +299,14 @@ std::string exeDir()
 }
 
 // Human-readable text for the exit codes the solvers (fkn/belasolv/hsolv/csolv)
-// return. The codes are shared across the four solvers; where they diverge
-// slightly (fkn folds meshing into 2; hsolv's 5 is an allocation failure) the
-// wording is kept general enough to cover both. Returns nullptr for unknown
-// codes so the caller falls back to the bare number.
+// return. All four use the same codes for the same failures -- 1, 2, 4, 5, 6, 7
+// and 9 through 13 appear in every one of their main.cpp files -- so one table
+// serves all four physics. Two are narrower than the rest: 3 (previous solution)
+// is only reachable from hsolv, since fkn reports a failed mesh reuse as 2, and
+// 8 is no longer returned by anything (meshing failures became 13 when meshing
+// moved in-process). Both are kept so an older solver binary still reads
+// correctly. Returns nullptr for unknown codes so the caller falls back to the
+// bare number.
 static const char *solverErrorText(int code)
 {
     switch (code) {
@@ -308,10 +315,17 @@ static const char *solverErrorText(int code)
     case 3: return "could not load the previous (bias) solution";
     case 4: return "out of memory (matrix allocation failed)";
     case 5: return "the solve failed -- out of memory, non-convergence, or an "
-                   "ill-posed problem (e.g. a region with no material assigned)";
+                   "ill-posed problem";
     case 6: return "failed to write the results file";
     case 7: return "could not load the problem file";
     case 8: return "meshing failed";
+    case 9: return "axisymmetric geometry extends to r < 0 -- move it onto or "
+                   "to the right of the r = 0 axis";
+    case 10: return "a region has no material assigned -- run the mesh generator "
+                    "to highlight the regions without a block label";
+    case 11: return "the solver could not find the problem file";
+    case 12: return "the problem file could not be parsed";
+    case 13: return "meshing failed";
     default: return nullptr;
     }
 }
@@ -331,10 +345,16 @@ int analyzeDocument(DocumentBase *doc, int hide, char *errmsg, int errmsg_size)
     // default block label does NOT cover this: the default applies only to regions
     // with no label at all, not to a label left without a material. (The standalone
     // solver CLI, which bypasses this, guards the same case in each solver's main.)
+    // "No material" is spelled "<None>" now, whether the label was just placed
+    // or loaded with material index 0. The empty string means the same thing
+    // and is still accepted here, as it is at the two display sites and in the
+    // mesh shading above: it is what a default-constructed label carried before
+    // FBlockLabel named the state, so it can still arrive from a caller built
+    // against the old header.
     {
         bool hasNone = false;
         for (const auto &b : doc->blocklist)
-            if (b.BlockType == "<None>") { hasNone = true; break; }
+            if (b.BlockType == "<None>" || b.BlockType.empty()) { hasNone = true; break; }
         if (hasNone) {
             if (errmsg) snprintf(errmsg, errmsg_size,
                 "A block label has no material assigned. Assign a material to "

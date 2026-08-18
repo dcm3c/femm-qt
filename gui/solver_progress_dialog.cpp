@@ -7,6 +7,17 @@
 #include <QApplication>
 #include <QRegularExpression>
 
+// Set by runSolver whenever a visible run ends non-zero; consumed by
+// takeFailureReported(). See the header for why it exists.
+static bool s_failureReported = false;
+
+bool SolverProgressDialog::takeFailureReported()
+{
+    bool reported = s_failureReported;
+    s_failureReported = false;
+    return reported;
+}
+
 SolverProgressDialog::SolverProgressDialog(QWidget *parent)
     : QDialog(parent), m_proc(nullptr), m_exitCode(-1),
       m_aborted(false), m_finished(false)
@@ -62,6 +73,7 @@ int SolverProgressDialog::runSolver(const QString &exePath, const QString &baseP
     m_aborted = false;
     m_finished = false;
     m_partialLine.clear();
+    s_failureReported = false;
 
     m_proc = new QProcess(this);
     m_proc->setProgram(exePath);
@@ -72,6 +84,16 @@ int SolverProgressDialog::runSolver(const QString &exePath, const QString &baseP
             this, &SolverProgressDialog::onReadyRead);
     connect(m_proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             this, &SolverProgressDialog::onFinished);
+    // finished() is never emitted if the process fails to start (a missing or
+    // unrunnable solver executable), so without this the wait loop below spins
+    // forever. Report it in the log like any other failure.
+    connect(m_proc, &QProcess::errorOccurred, this,
+            [this](QProcess::ProcessError err) {
+                if (err != QProcess::FailedToStart) return;
+                m_log->appendPlainText(tr("Could not start the solver: %1")
+                                           .arg(m_proc->program()));
+                m_finished = true;
+            });
 
     m_proc->start();
     show();
@@ -103,6 +125,10 @@ int SolverProgressDialog::runSolver(const QString &exePath, const QString &baseP
         connect(m_abortBtn, &QPushButton::clicked, this, &QDialog::accept);
         exec();  // modal until the user closes it
     }
+
+    // Either the user read the failure above, or they aborted the run
+    // themselves. Both mean the caller need not say it again.
+    if (m_exitCode != 0) s_failureReported = true;
 
     hide();
     return m_exitCode;

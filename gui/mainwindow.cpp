@@ -7,6 +7,7 @@
 #include "mainwindow.h"
 #include "py_console.h"
 #include "pre_prefs_dialog.h"
+#include "script_prefs_dialog.h"
 #include "coord_display.h"
 #include "editor_widget.h"
 #include "results_widget.h"
@@ -39,6 +40,7 @@
 #include "tcp_server.h"
 #include "output_dialog.h"
 #include "copy_move_dialog.h"
+#include "solver_progress_dialog.h"
 #include "complex.h"
 
 #include <QMenuBar>
@@ -1221,12 +1223,15 @@ void MainWindow::onAnalyze()
     else if (e->document()->physicsType() == 2) solveCmd = "hi_analyse(0)";
     else if (e->document()->physicsType() == 3) solveCmd = "ci_analyse(0)";
     if (exec_python(solveCmd, errmsg, sizeof(errmsg)) != 0) {
-        // A pre-mesh validation failure (e.g. a region with no material) returns
-        // before the solver runs, so there's no progress dialog to carry the
-        // message -- surface it in a pop-up rather than a easily-missed status
-        // line.
+        // A pre-mesh validation failure (e.g. a block label with no material)
+        // returns before the solver runs, so there's no progress dialog to carry
+        // the message -- surface it in a pop-up rather than an easily-missed
+        // status line. Once the solver has run, though, its progress dialog has
+        // already shown the failure along with the solver's own diagnostic, which
+        // says more than the exit code this message would repeat.
         updateStatus(tr("Analysis failed"));
-        QMessageBox::warning(this, tr("Analysis Failed"), QString::fromUtf8(errmsg));
+        if (!SolverProgressDialog::takeFailureReported())
+            QMessageBox::warning(this, tr("Analysis Failed"), QString::fromUtf8(errmsg));
     } else {
         updateStatus("Analysis complete");
     }
@@ -1570,6 +1575,13 @@ void MainWindow::createCommonMenus()
         if (r) { r->showPrefsDialog(this); return; }
         auto *s = activeScalarResults();
         if (s) { s->showPrefsDialog(this); return; }
+    });
+    // Application-wide rather than per-document, so it lives beside
+    // Preferences rather than inside it -- and unlike Preferences it is
+    // available with no document open.
+    edit->addAction(tr("&Scripting Preferences..."), QKeySequence(), [this]() {
+        ScriptPrefsDialog dlg(this);
+        dlg.exec();
     });
 }
 

@@ -39,6 +39,8 @@ Name: "{app}\bin\platforms"
 Name: "{app}\bin\styles"
 Name: "{app}\bin\imageformats"
 Name: "{app}\bin\iconengines"
+Name: "{app}\bin\python"
+Name: "{app}\bin\pybridge-worker"
 Name: "{app}\examples"
 Name: "{app}\mfiles"
 Name: "{app}\mathfemm"
@@ -94,6 +96,19 @@ Source: "..\luafemm\femm-lua.bat";                 DestDir: "{app}\bin"; Flags: 
 Source: "..\lua\liblua\COPYRIGHT";                 DestDir: "{app}\bin"; DestName: "Lua-COPYRIGHT.txt";       Flags: ignoreversion
 Source: "..\lua\luasocket-1.0\COPYRIGHT";          DestDir: "{app}\bin"; DestName: "LuaSocket-COPYRIGHT.txt"; Flags: ignoreversion
 
+; Python-side scripting assets.  init_py() puts exeDir()+"python" on sys.path,
+; so that directory holds the pure-Python stdlib modules (datetime), the
+; PyBridge client, and the matplotlib forwarding shims.  The CPython worker
+; gets a directory of its own, for the two shadowing reasons spelled out in
+; libfemm/CMakeLists.txt -- do not merge them.
+;
+; Wildcards rather than a line per file: the shim set grows, and a shim that
+; was added but not listed here fails at import in front of a user rather than
+; at build time.  __pycache__ is excluded because a CPython process that reads
+; python/ leaves .pyc files of MicroPython source behind -- junk to ship.
+Source: "bin\python\*";          DestDir: "{app}\bin\python";          Excludes: "__pycache__"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "bin\pybridge-worker\*"; DestDir: "{app}\bin\pybridge-worker"; Excludes: "__pycache__"; Flags: ignoreversion recursesubdirs createallsubdirs
+
 ; Documentation
 Source: "..\manual\manual.pdf";                DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "..\LICENSE-MIT";                   DestDir: "{app}\bin"; Flags: ignoreversion
@@ -102,6 +117,10 @@ Source: "..\NOTICE-Qt.txt";                 DestDir: "{app}\bin"; Flags: ignorev
 ; Third-party MIT notices (compiled into the binaries)
 Source: "..\micropython\LICENSE.micropython"; DestDir: "{app}\bin"; DestName: "LICENSE-MicroPython.txt"; Flags: ignoreversion
 Source: "..\micropython\ulab\LICENSE";      DestDir: "{app}\bin"; DestName: "LICENSE-ulab.txt"; Flags: ignoreversion
+; The fullest of the copies (each pylib package carries one so that a stray
+; copy of the directory is still a compliant copy); this is the one a user
+; browsing bin\ should find.
+Source: "..\pylib\vendor\LICENSE.micropython-lib"; DestDir: "{app}\bin"; DestName: "LICENSE-micropython-lib.txt"; Flags: ignoreversion
 Source: "..\LICENSE-melihaltun.txt";        DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "..\readme.txt";                    DestDir: "{app}"    ; Flags: ignoreversion isreadme
 

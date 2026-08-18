@@ -22,6 +22,22 @@ FEMM-specific functions have been added for manipulating files in
 both the pre- and post-processor.  These commands are described in
 the following sections.
 
+All three ways of building a string work, and can be mixed freely:
+
+\begin{verbatim}
+    turns, current = 250, 1.5 + 0.2j
+    print("%d turns at %g A" % (turns, current))
+    print("{} turns at {:g} A".format(turns, current))
+    print(f"{turns} turns at {current:g} A")
+\end{verbatim}
+
+\noindent
+Each prints {\tt 250 turns at 1.5+0.2j A}.  Complex values are accepted by
+{\tt \%g}, {\tt \%e} and {\tt \%f} and print the way desktop Python prints
+them, which is a FEMM addition --- desktop Python raises instead, having no
+particular need to format a complex number.  Since so many FEMM results are
+complex, that seemed the wrong trade to inherit.
+
 \section{Importing Python Modules}
 
 FEMM scripts can import user-written Python modules using the standard
@@ -45,11 +61,210 @@ Download the desired \verb+.py+ file and place it in the \verb+python/+
 folder.
 
 Note: only pure-Python modules can be added this way; CPython C-extension
-modules are not compatible with MicroPython.  One notable numerical package is,
-however, bundled in: \verb+ulab+, an array and linear-algebra subset of NumPy
-and SciPy, ships with FEMM and is available to scripts as
-\verb+import numpy as np+ (and \verb+import scipy+).  It implements much, but
-not all, of the NumPy API.
+modules are not compatible with MicroPython.
+
+\subsection*{Modules that are built in}
+
+These need no installation --- just {\tt import}:
+
+\begin{itemize}
+\item{\tt numpy}, {\tt scipy} --- arrays and linear algebra, provided by
+\verb+ulab+.  Much, but not all, of the NumPy API; \verb+import numpy as np+
+works as it would in desktop Python.
+\item{\tt math}, {\tt cmath} --- real and complex mathematics.
+\item{\tt os}, {\tt os.path} --- files and directories (see the next
+section).
+\item{\tt sys} --- {\tt argv}, {\tt path}, {\tt modules}, {\tt platform},
+{\tt version}.
+\item{\tt time} --- {\tt time()}, {\tt localtime()}, {\tt gmtime()},
+{\tt mktime()}, {\tt sleep()}, and the {\tt ticks\_ms}/{\tt ticks\_diff}
+pair for timing.  Seconds are counted from 1970 and {\tt time()} returns a
+float, as in desktop Python.  {\tt localtime()} and {\tt mktime()} work in
+the machine's own timezone and {\tt gmtime()} in UTC, again as in desktop
+Python.  {\tt sleep()} keeps the user interface responsive, so a delay in a
+script does not freeze the window.
+\item{\tt datetime} --- {\tt datetime}, {\tt date}, {\tt time},
+{\tt timedelta} and {\tt timezone}, with {\tt strftime()},
+{\tt strptime()}, {\tt isoformat()}, {\tt fromisoformat()} and
+{\tt isocalendar()}.  Two things it does not have: a timezone database
+(build fixed offsets with {\tt timezone(timedelta(hours=2))}), and format
+specifiers inside f-strings --- write {\tt d.strftime("\%Y-\%m-\%d")}
+rather than \verb+f"{d:%Y-%m-%d}"+, which this interpreter cannot dispatch.
+Month and day names are always English.
+\item{\tt json}, {\tt re} --- reading and writing JSON, and regular
+expressions.  {\tt re} covers the usual syntax including counted repetition
+({\tt \textbackslash d\{4\}}), and provides {\tt findall}, {\tt finditer},
+{\tt split}, {\tt sub}, {\tt subn}, {\tt fullmatch} and {\tt escape}.  Three
+things it does not have: the flags ({\tt re.IGNORECASE} and friends), lookahead
+and lookbehind, and named groups.  All three fail immediately rather than
+quietly doing the wrong thing, so a pattern that compiles behaves as it reads.
+\item{\tt csv} --- reading and writing comma-separated files, with
+{\tt reader}, {\tt writer}, {\tt DictReader}, {\tt DictWriter},
+{\tt Sniffer} and the dialect registry.  Writing a CSV file is worth one
+note: open it with \verb+newline=""+, as in
+
+\begin{verbatim}
+    import csv
+    f = open("results.csv", "w", newline="")
+    w = csv.writer(f)
+    w.writerow(["n", "x", "y"])
+    w.writerow([1, 0.5, 1.0])
+    f.close()
+\end{verbatim}
+
+\noindent
+Without \verb+newline=""+ every line ends with an extra carriage return,
+and Excel then shows a blank row between each pair of records.  This is
+not a FEMM quirk --- desktop Python behaves the same way on Windows, and
+for the same reason.  A file being read benefits from it too: it is what
+lets a quoted field contain a line break.
+\item{\tt random} --- {\tt random()}, {\tt uniform()}, {\tt randint()},
+{\tt choice()}, {\tt seed()}.  Seeded from the clock at startup, so results
+differ from run to run unless {\tt seed()} is called.
+\item{\tt binascii}, {\tt hashlib} --- hex and base64 encoding, SHA-256.
+\item{\tt glob} --- filenames by pattern, which is how a batch job finds its
+models:
+
+\begin{verbatim}
+    import glob
+    for path in sorted(glob.glob("models/*.fem")):
+        open(path)
+        mi_analyze()
+\end{verbatim}
+
+\noindent
+{\tt *}, {\tt ?} and {\tt [abc]} work in any part of the path, and
+\verb+glob.glob("**/*.fem", recursive=True)+ walks subfolders too.  Results
+come back unsorted, as in desktop Python --- sort them if the order matters.
+\item{\tt os}, {\tt shutil}, {\tt tempfile} --- files and directories.
+{\tt shutil} adds {\tt copyfile}, {\tt copy}, {\tt copytree}, {\tt move} and
+{\tt rmtree} on top of what {\tt os} offers, which is what a script moving
+result files around wants.
+\item{\tt itertools}, {\tt functools}, {\tt operator}, {\tt copy} --- looping,
+sorting and grouping helpers.  {\tt itertools.groupby} turns a flat sweep into
+per-parameter runs, {\tt operator.itemgetter} sorts a table of results by a
+column, and {\tt copy.deepcopy} duplicates a parameter dictionary without
+sharing its contents.
+\item{\tt contextlib}, {\tt traceback}, {\tt types} --- {\tt with}-statement
+helpers, formatted exception text, and the type objects.
+\item{\tt logging}, {\tt textwrap} --- progress messages with levels and
+timestamps, and paragraph formatting for reports.
+\item{\tt pathlib}, {\tt stat}, {\tt string}, {\tt pprint}, {\tt bisect},
+{\tt heapq}, {\tt base64}, {\tt pickle}, {\tt abc}, {\tt inspect},
+{\tt argparse} --- the rest of the everyday standard library.  Note that
+{\tt string} here is the character constants and {\tt translate()};
+{\tt Template} and {\tt Formatter} are not included.
+\item{\tt sys} --- as above, and since 2026-08 also {\tt stdout},
+{\tt stderr} and {\tt stdin}, so \verb+print(msg, file=sys.stderr)+ and
+\verb+sys.stdout.write(...)+ work.  {\tt print} also accepts {\tt sep} and
+{\tt end}; note that its default separator is a TAB, which is FEMM's
+convention rather than desktop Python's space.
+\item{\tt collections}, {\tt struct}, {\tt array}, {\tt io}, {\tt errno},
+{\tt gc} --- the remaining general-purpose pieces.
+\item{\tt matplotlib}, {\tt xlsxwriter}, {\tt zipfile} --- publication-quality
+plots, Excel workbooks, and zip archives.  These two are different from everything above: they are not
+part of FEMM but are forwarded to a Python installation on the machine, so
+they need one (see the {\em Plotting with matplotlib} chapter, which also
+covers reaching any other Python package the same way).
+\end{itemize}
+
+MicroPython's versions of these are subsets.  The differences are usually
+small but occasionally surprising: {\tt re} has no module-level
+{\tt split()}, for instance --- use \verb+re.compile(pattern).split(s)+.
+The MicroPython library documentation describes each module as implemented.
+
+\section{Files and Directories}
+
+The {\tt os} module provides the file and directory operations a script
+usually needs, with the spelling Python programmers expect:
+
+\begin{itemize}
+\item{\tt os.getcwd()}, {\tt os.chdir(path)} --- read and set the working
+directory.  {\tt getcwd()} and {\tt setcurrentdirectory()} are the same
+two calls under FEMM's own names.
+\item{\tt os.listdir([path])} --- the names in a directory, as a list.
+\item{\tt os.mkdir(path)}, {\tt os.makedirs(path)} --- create one
+directory, or a directory and any missing parents.
+\item{\tt os.remove(path)} ({\tt os.unlink}), {\tt os.rmdir(path)},
+{\tt os.rename(old, new)}.
+\item{\tt os.stat(path)} --- a ten-element tuple, as in MicroPython:
+mode, inode, device, links, uid, gid, size, and the access, modification
+and creation times.  Element 6 is the size in bytes.
+\item{\tt os.path.exists}, {\tt isdir}, {\tt isfile}, {\tt getsize},
+{\tt abspath}, {\tt join}, {\tt split}, {\tt splitext}, {\tt dirname},
+{\tt basename} --- the usual path helpers.
+\end{itemize}
+
+A failed operation raises {\tt OSError}, so a script can guard one in the
+normal way:
+
+\begin{verbatim}
+    import os
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+    for name in os.listdir(indir):
+        if os.path.splitext(name)[1] == ".fem":
+            open(os.path.join(indir, name))
+            mi_analyze()
+\end{verbatim}
+
+Paths behave the same way here as in every other FEMM command: a
+backslash is accepted and normalized to a forward slash, and results come
+back with forward slashes on all platforms.  Accented and non-Latin
+directory names work --- {\tt os}, the FEMM commands, Python's own
+{\tt open()} and {\tt import} all agree about which file a path names,
+and a module kept in such a directory can be imported like any other.
+
+Files opened in text mode behave as they do in desktop Python: a
+{\tt \textbackslash n} is written as the platform's line ending and read
+back as {\tt \textbackslash n}, so text written by a script looks right
+to other Windows programs.  Files opened in binary mode ({\tt "rb"},
+{\tt "wb"}) are exact, byte for byte, with no translation at all.
+
+Note that {\tt open()} does double duty.  Called with a single argument
+naming a {\tt .fem}, {\tt .fee}, {\tt .feh} or {\tt .fec} file it opens
+that {\em document}, exactly as {\tt opendocument()} does; called any
+other way it is Python's file {\tt open()}.  Reach for
+{\tt opendocument()} when the intent should be unambiguous.
+
+\subsection*{Writing results as a table}
+
+A parameter sweep usually ends with a table of numbers destined for a
+spreadsheet or a plotting program.  There is no {\tt csv} module, but for a
+purely numeric table {\tt numpy} writes and reads one directly:
+
+\begin{verbatim}
+    import numpy as np
+
+    data = np.array([[0.0, 1.50, 0.021],
+                     [0.5, 1.25, 0.019]])
+    np.savetxt("sweep.csv", data, delimiter=",", header="angle,By,torque")
+
+    back = np.loadtxt("sweep.csv", delimiter=",")
+\end{verbatim}
+
+{\tt savetxt} accepts {\tt delimiter} and {\tt header} (the header line is
+written with a leading {\tt \#}); it does not accept a {\tt fmt} argument,
+and writes fifteen decimal places.
+
+When the columns are not all numbers --- a material name beside a force, say
+--- or when the header must not begin with a {\tt \#}, write the lines
+directly.  It is a two-line loop, and the formatting is then exactly what
+you asked for:
+
+\begin{verbatim}
+    f = open("sweep.csv", "w")
+    f.write("angle,By,torque\n")
+    for angle, by, torque in results:
+        f.write("%g,%g,%g\n" % (angle, by, torque))
+    f.close()
+\end{verbatim}
+
+Reading such a file back is the same in reverse, splitting each line on the
+comma and converting the pieces.  Be aware that splitting on commas is only
+safe for data of this kind: a general CSV file may quote a field that itself
+contains a comma or a line break, and unpicking that correctly takes a real
+parser.  For files your own scripts wrote, splitting is exactly right.
 
 \section{Predefined Constants and Units}
 

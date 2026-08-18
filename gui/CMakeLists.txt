@@ -31,6 +31,7 @@ add_executable(femm_gui
     prefs_dialog.cpp
     scalar_prefs_dialog.cpp
     pre_prefs_dialog.cpp
+    script_prefs_dialog.cpp
     solver_progress_dialog.cpp
     view_colors.cpp
     py_console.cpp

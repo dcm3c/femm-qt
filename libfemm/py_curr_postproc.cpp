@@ -23,6 +23,15 @@ using std::optional;
 static const char *COERR = "No current flow output in focus";
 
 static CurrResultsDoc *s_doc = nullptr;
+
+// A phasor at frequency, a plain number at DC -- the same rule the magnetics
+// getters and both block integrals follow, so a value that cannot have an
+// imaginary part does not arrive carrying one. The TCP wire is unaffected: its
+// formatter writes a zero-imaginary complex as a bare real either way.
+static mp_obj_t cf_num(CComplex v) {
+    return (s_doc->Frequency == 0) ? femm_py::caster<double>::cast(v.re)
+                                   : femm_py::caster<CComplex>::cast(v);
+}
 CurrResultsDoc *active_curr_results() { return s_doc; }
 void deactivate_curr_postproc_py() { s_doc = nullptr; }
 
@@ -30,16 +39,22 @@ void register_curr_postproc_py(CurrResultsDoc *doc) {
     s_doc = doc;
     femm_py::Module &m = femm_py::femm_module;
 
-    // ---- Point values: 15 complex (V,Jx,Jy,Kx,Ky,Ex,Ey,ex,ey,Jdx,Jdy,ox,oy,Jcx,Jcy) ----
-    using PV = std::tuple<CComplex, CComplex, CComplex, CComplex, CComplex, CComplex, CComplex,
-                          CComplex, CComplex, CComplex, CComplex, CComplex, CComplex, CComplex,
-                          CComplex>;
-    m.def("co_getpointvalues", [](double px, double py) -> optional<PV> {
+    // ---- Point values: 15 values (V,Jx,Jy,Kx,Ky,Ex,Ey,ex,ey,Jdx,Jdy,ox,oy,Jcx,Jcy) ----
+    //
+    // Complex at frequency, real at DC -- the same rule the magnetics point
+    // values and both block integrals follow. At DC there is no displacement
+    // current and nothing is a phasor, so a complex type here would only be
+    // carrying an imaginary part that is structurally zero.
+    m.def("co_getpointvalues", [](double px, double py) -> mp_obj_t {
         check_doc(s_doc, COERR);
         CPointVals u;
-        if (!s_doc->GetPointValues(px, py, u)) return std::nullopt;
-        return PV{u.V, u.Jx, u.Jy, u.Kx, u.Ky, u.Ex, u.Ey, u.ex, u.ey,
-                  u.Jdx, u.Jdy, u.ox, u.oy, u.Jcx, u.Jcy};
+        if (!s_doc->GetPointValues(px, py, u)) return mp_const_none;
+        auto Z = [](CComplex v) { return cf_num(v); };
+        mp_obj_t items[15] = { Z(u.V), Z(u.Jx), Z(u.Jy), Z(u.Kx), Z(u.Ky),
+                               Z(u.Ex), Z(u.Ey), Z(u.ex), Z(u.ey),
+                               Z(u.Jdx), Z(u.Jdy), Z(u.ox), Z(u.oy),
+                               Z(u.Jcx), Z(u.Jcy) };
+        return mp_obj_new_tuple(15, items);
     });
 
     // ---- Block selection / integration ----
@@ -113,22 +128,30 @@ void register_curr_postproc_py(CurrResultsDoc *doc) {
     });
 
     // ---- Line integral: 4 complex values ----
-    m.def("co_lineintegral", [](int type) -> std::tuple<CComplex, CComplex, CComplex, CComplex> {
+    m.def("co_lineintegral", [](int type) -> mp_obj_t {
         check_doc(s_doc, COERR);
         if (type < 0 || type > 3)
             throw std::runtime_error("Invalid line integral selected " + std::to_string(type));
         CComplex z[4] = {};
         s_doc->LineIntegral(type, z);
-        return std::make_tuple(z[0], z[1], z[2], z[3]);
+        // NOT cf_num: LineIntegral packs the normal component in .re and the
+        // tangential one in .im (it divides the current vector by the unit
+        // normal, matching OF), so this imaginary part is a second real
+        // quantity, not a phasor -- dropping it at DC lost J.t.
+        mp_obj_t items[4] = { caster<CComplex>::cast(z[0]), caster<CComplex>::cast(z[1]),
+                              caster<CComplex>::cast(z[2]), caster<CComplex>::cast(z[3]) };
+        return mp_obj_new_tuple(4, items);
     });
 
     // ---- Conductor properties (V, q complex); throws if unknown ----
-    m.def("co_getconductorproperties", [](const std::string &name)
-              -> std::tuple<CComplex, CComplex> {
+    m.def("co_getconductorproperties", [](const std::string &name) -> mp_obj_t {
         check_doc(s_doc, COERR);
         for (int i = 0; i < (int)s_doc->circproplist.size(); i++)
-            if (name == s_doc->circproplist[i].CircName)
-                return std::make_tuple(s_doc->circproplist[i].V, s_doc->circproplist[i].q);
+            if (name == s_doc->circproplist[i].CircName) {
+                mp_obj_t items[2] = { cf_num(s_doc->circproplist[i].V),
+                                      cf_num(s_doc->circproplist[i].q) };
+                return mp_obj_new_tuple(2, items);
+            }
         throw std::runtime_error("Unknown conductor");
     });
 

@@ -23,6 +23,13 @@ public:
     // Returns process exit code, or -1 if aborted.
     int runSolver(const QString &exePath, const QString &basePath);
 
+    // True if the last visible run ended badly and the user has already been
+    // told -- either by the modal failure state of this dialog (which shows the
+    // solver's own diagnostic) or by their own Abort click. Callers use it to
+    // suppress a second, less informative pop-up. Reading consumes the flag, so
+    // it cannot leak into a later run.
+    static bool takeFailureReported();
+
 private slots:
     void onReadyRead();
     void onAbort();

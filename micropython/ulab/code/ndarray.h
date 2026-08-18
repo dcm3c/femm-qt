@@ -122,12 +122,28 @@ void ndarray_set_complex_value(void *, size_t , mp_obj_t );
 
 extern const mp_obj_type_t ulab_ndarray_type;
 
+// femm-qt: NDARRAY_INT32 is an addition to upstream ulab, whose integer types
+// stop at 16 bits. 32767 does not index a finite-element mesh, and upstream
+// wraps silently rather than complaining, so on a desktop the omission is a
+// source of wrong answers rather than a saved kilobyte.
+//
+// It is a *storage* dtype: creation, indexing, slicing, tobytes/frombuffer and
+// the library functions all handle it, but arithmetic on it produces float64
+// (see ndarray_widen_int32, and ndarray_upcast_dtype in ulab_tools.c). That
+// is exact for every int32 value, and it leaves ulab's macro-expanded
+// arithmetic core -- the part that would have to be re-merged on every
+// upstream update -- completely untouched. Upstream already has the same rule
+// for a case it cannot represent: uint16 + int16 => float.
+//
+// int64 is deliberately absent: it cannot round-trip through float64 above
+// 2**53, so the same approach would silently lose precision.
 enum NDARRAY_TYPE {
     NDARRAY_BOOL = '?', // this must never be assigned to the dtype!
     NDARRAY_UINT8 = 'B',
     NDARRAY_INT8 = 'b',
     NDARRAY_UINT16 = 'H',
     NDARRAY_INT16 = 'h',
+    NDARRAY_INT32 = 'i',    // femm-qt addition
     #if ULAB_SUPPORTS_COMPLEX
         NDARRAY_COMPLEX = 'c',
     #endif
@@ -195,6 +211,7 @@ bool ndarray_is_dense(ndarray_obj_t *);
 ndarray_obj_t *ndarray_copy_view(ndarray_obj_t *);
 ndarray_obj_t *ndarray_copy_view_convert_type(ndarray_obj_t *, uint8_t );
 void ndarray_copy_array(ndarray_obj_t *, ndarray_obj_t *, uint8_t );
+ndarray_obj_t *ndarray_widen_int32(ndarray_obj_t *);   // femm-qt addition
 
 MP_DECLARE_CONST_FUN_OBJ_KW(ndarray_array_constructor_obj);
 mp_obj_t ndarray_make_new(const mp_obj_type_t *, size_t , size_t , const mp_obj_t *);

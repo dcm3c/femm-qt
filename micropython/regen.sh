@@ -8,7 +8,11 @@
 set -e
 cd "$(dirname "$0")"
 export PATH="/c/Qt/Tools/mingw1310_64/bin:/usr/bin:$PATH"
-UP=../micropython-1.28.0
+# Where the upstream tree lives. Must match MICROPYTHON_TOP in
+# micropython_embed.mk, which is relative to this same directory -- they
+# disagreed until 2026-08 (UP one level too shallow), so a regen died in the
+# packager before reaching the copies below.
+UP=../../micropython-1.28.0
 
 rm -rf build-embed
 rm -rf micropython_embed 2>/dev/null || true
@@ -37,11 +41,43 @@ cp "$UP"/extmod/vfs.c "$UP"/extmod/vfs.h \
    "$UP"/extmod/vfs_posix_file.c "$UP"/extmod/vfs_reader.c \
    micropython_embed/extmod/
 
-# interrupt_char.c provides mp_hal_set_interrupt_char + mp_interrupt_char, used
-# by micropython.kbd_intr() (enabled at ROM level CORE_FEATURES). The stock
-# embed package copies only gchelper* from shared/runtime, so bundle it too.
+# Standard-library modules enabled in mpconfigport.h. The flag alone only tells
+# the build they exist -- the packager ships py/ and nothing else from extmod,
+# so each module's source has to come along too, or the link fails on the
+# module object the generated moduledefs.h now references.
+cp "$UP"/extmod/modjson.c "$UP"/extmod/modre.c "$UP"/extmod/modrandom.c \
+   "$UP"/extmod/modbinascii.c "$UP"/extmod/modhashlib.c \
+   "$UP"/extmod/modtime.c "$UP"/extmod/modtime.h \
+   micropython_embed/extmod/
+
+# re1.5 is the regex engine behind `re`. Like sha256 below, modre.c #includes
+# its .c files, so they must be present but not separately compiled.
+mkdir -p micropython_embed/lib/re1.5
+cp "$UP"/lib/re1.5/*.c "$UP"/lib/re1.5/*.h micropython_embed/lib/re1.5/
+
+# modhashlib.c #includes lib/crypto-algorithms/sha256.c (a .c, deliberately) --
+# so the file must be present but must NOT also be compiled on its own, or every
+# sha256_* symbol is defined twice. femm-qt's CMakeLists filters it out of the
+# glob for exactly this reason.
+mkdir -p micropython_embed/lib/crypto-algorithms
+cp "$UP"/lib/crypto-algorithms/sha256.c "$UP"/lib/crypto-algorithms/sha256.h \
+   micropython_embed/lib/crypto-algorithms/
+
+# timeutils backs time.localtime/mktime; interrupt_char.c provides
+# mp_hal_set_interrupt_char + mp_interrupt_char, used by micropython.kbd_intr()
+# (enabled at ROM level CORE_FEATURES). The stock embed package copies only
+# gchelper* from shared/runtime, so bundle both.
+#
+# sys_stdio_mphal.c joins them: modsys.c only DECLARES mp_sys_stdout_obj and
+# friends, so without it MICROPY_PY_SYS_STDFILES cannot link and sys.stdout
+# does not exist. It writes through mp_hal_stdout_tx_strn, which is the route
+# print() already takes to the console.
 cp "$UP"/shared/runtime/interrupt_char.c \
+   "$UP"/shared/runtime/sys_stdio_mphal.c \
    micropython_embed/shared/runtime/
+mkdir -p micropython_embed/shared/timeutils
+cp "$UP"/shared/timeutils/timeutils.c "$UP"/shared/timeutils/timeutils.h \
+   micropython_embed/shared/timeutils/
 
 # Apply FEMM-specific patches (complex formatting, comparisons, int()).
 # These are not upstream-able — see patches/README.md.

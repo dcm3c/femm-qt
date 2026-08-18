@@ -1,9 +1,60 @@
-B=/c/Claude/uPython/femm-qt/build/bin/femm_headless.exe
+# Run every regression suite. Portable: no absolute paths, so this works from
+# a checkout anywhere and on any platform.
+#
+#     bash _verify_all.sh
+#
+# Two path forms are in play on Windows and they are not interchangeable. This
+# script runs under Git Bash, which speaks /c/..., while the femm binaries are
+# native Windows programs that need C:/... -- `pwd -W` is what converts, and it
+# simply fails on macOS and Linux, where `pwd` is already right. Getting this
+# wrong is silent: the binary starts and then cannot find the script it was
+# handed.
+cd "$(dirname "$0")" || exit 1
+T=$(pwd -W 2>/dev/null || pwd)                  # this directory, as femm sees it
+
+# The build tree, likewise in both forms. FEMM_BUILD overrides for an
+# out-of-source build.
+BUILD=${FEMM_BUILD:-../build}
+if [ ! -d "$BUILD/bin" ]; then
+    echo "no build at $BUILD/bin -- build first, or set FEMM_BUILD"
+    exit 1
+fi
+BIN=$(cd "$BUILD/bin" && (pwd -W 2>/dev/null || pwd))
+
+X=""
+[ -x "$BUILD/bin/femm_headless.exe" ] && X=".exe"
+B="$BIN/femm_headless$X"
+FKN="$BIN/fkn$X"
+
+# macOS builds the GUI as a bundle; the executable is inside it.
+if [ -d "$BUILD/bin/femm_gui.app" ]; then
+    GUI="$BIN/femm_gui.app/Contents/MacOS/femm_gui"
+else
+    GUI="$BIN/femm_gui$X"
+fi
+
+if [ ! -f "$BUILD/bin/femm_headless$X" ]; then
+    echo "no femm_headless in $BUILD/bin -- build first"
+    exit 1
+fi
+
+# Scratch files go beside the goldens, not in /tmp: a couple of the comparers
+# read them back by relative name.
+TMP=${TMPDIR:-/tmp}
+
 run(){ # test compare golden fq
-  $B -run "C:/Claude/uPython/femm-qt/testing/$1" > "/tmp/$4.raw" 2>&1
-  grep -vE "FEMM headless|IPC:|Executing:|Script complete" "/tmp/$4.raw" > "$4"
+  $B -run "$T/$1" > "$TMP/$4.raw" 2>&1
+  grep -vE "FEMM headless|IPC:|Executing:|Script complete" "$TMP/$4.raw" > "$4"
   printf "%-26s " "${1%.py}:"; python3 "$2" "$3" "$4" 2>&1 | head -1
 }
+
+# Runs inside the interpreter rather than driving it, so it needs no comparer.
+inproc(){ # script label
+  printf "%-26s " "$2:"
+  $B -run "$T/$1" 2>&1 \
+    | grep -vE "FEMM headless|IPC:|Executing:|Script complete" | tail -1
+}
+
 run MOBlockIntegralTest.py   MOBlockIntegralCompare.py   OF_result.txt      fq_result.txt
 run ElecBlockIntegralTest.py EOBlockIntegralCompare.py   OF_elec_result.txt fq_elec_result.txt
 run HeatBlockIntegralTest.py HeatBlockIntegralCompare.py OF_heat_result.txt fq_heat_result.txt
@@ -24,7 +75,24 @@ run COPointValueTest.py      ScalarPointValueCompare.py  OF_copv_result.txt  fq_
 run HOPointValueTest.py      ScalarPointValueCompare.py  OF_hopv_result.txt  fq_hopv_result.txt
 
 printf "%-26s " "FluxConstraint:"; python3 FluxConstraintTest.py "$B" | tail -1
-printf "%-26s " "Transient:"; python3 TransientTest.py "${B%femm_headless.exe}fkn.exe" "$B" | tail -1
+printf "%-26s " "Transient:"; python3 TransientTest.py "$FKN" "$B" | tail -1
 printf "%-26s " "IncrementalLorentz:"; python3 IncrementalLorentzTest.py "$B" | tail -1
 printf "%-26s " "FQReference:"; python3 FQReferenceCompare.py | tail -1
+# Runs inside the interpreter rather than driving it, so it needs no comparer.
+inproc OsModuleTest.py OsModule
+inproc StdlibModuleTest.py StdlibModules
+inproc UlabInt32Test.py UlabInt32
+inproc DateTimeTest.py DateTime
+inproc CsvTest.py Csv
+inproc PylibTest.py Pylib
+printf "%-26s " "RunScriptSize:"; python3 RunScriptSizeTest.py "$B" | tail -1
+inproc ProxyDunderTest.py ProxyDunders
+# The matplotlib bridge. All three SKIP cleanly when no usable CPython is
+# installed -- it is an optional capability, not a build requirement.
+inproc PyBridgeHostTest.py PyBridgeHost
+inproc PyBridgeClientTest.py PyBridgeClient
+inproc PyBridgeBenchTest.py PyBridgeBench
+printf "%-26s " "PyBridgeInterrupt:"; python3 PyBridgeInterruptTest.py "$B" | tail -1
+printf "%-26s " "PyBridgeDiscovery:"; python3 PyBridgeDiscoveryTest.py "$B" | tail -1
+printf "%-26s " "PyBridgeNested:"; python3 PyBridgeNestedTest.py "$GUI" | tail -1
 echo "ALL DONE"

@@ -100,6 +100,7 @@ static const mp_rom_map_elem_t ulab_numpy_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_int8), MP_ROM_INT(NDARRAY_INT8) },
     { MP_ROM_QSTR(MP_QSTR_uint16), MP_ROM_INT(NDARRAY_UINT16) },
     { MP_ROM_QSTR(MP_QSTR_int16), MP_ROM_INT(NDARRAY_INT16) },
+    { MP_ROM_QSTR(MP_QSTR_int32), MP_ROM_INT(NDARRAY_INT32) },   // femm-qt addition
     { MP_ROM_QSTR(MP_QSTR_float), MP_ROM_INT(NDARRAY_FLOAT) },
     #if ULAB_SUPPORTS_COMPLEX
         { MP_ROM_QSTR(MP_QSTR_complex), MP_ROM_INT(NDARRAY_COMPLEX) },

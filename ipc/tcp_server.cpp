@@ -226,7 +226,17 @@ void TcpServer::handleClient()
         // is done must keep the binding's connection alive (i.e., don't
         // call closefemm at the end). This is the same model as OF and is
         // a clean "femm-qt lives iff a client is connected" lifecycle.
-        closeClient();
+        // stop(), not closeClient(): the LISTENING socket has to go too, and
+        // before the exit, not during it. exit(0) is far from instantaneous in
+        // the GUI -- windows tear down, statics unwind, the interpreter and
+        // its matplotlib worker shut down -- and for all of that time a port
+        // that is about to die is still accepting connections. A second
+        // femm-lua invocation started immediately after the first (the shape
+        // of every batch file) latches onto this corpse instead of spawning
+        // its own server, sends a command, and gets "FEMM connection closed
+        // unexpectedly". Refusing connections the moment we decide to exit
+        // makes the next client spawn its own, which is what it wanted.
+        stop();
         fprintf(stderr, "IPC: client disconnected, femm-qt exiting\n");
         exit(0);
     }

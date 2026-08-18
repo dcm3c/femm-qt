@@ -318,17 +318,50 @@ MP_DEFINE_CONST_FUN_OBJ_1(mp_vfs_umount_obj, mp_vfs_umount);
 
 // Note: buffering and encoding args are currently ignored
 mp_obj_t mp_vfs_open(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    enum { ARG_file, ARG_mode, ARG_encoding };
+    // FEMM patch 07 adds ARG_newline. The enum below is upstream's and is
+    // already out of step with the table (ARG_encoding indexes buffering);
+    // nothing reads either, so it is left alone rather than renumbered under
+    // a patch that would then own it.
+    enum { ARG_file, ARG_mode, ARG_encoding, ARG_newline = 4 };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_file, MP_ARG_OBJ | MP_ARG_REQUIRED, {.u_rom_obj = MP_ROM_NONE} },
         { MP_QSTR_mode, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_QSTR(MP_QSTR_r)} },
         { MP_QSTR_buffering, MP_ARG_INT, {.u_int = -1} },
         { MP_QSTR_encoding, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE} },
+        { MP_QSTR_newline, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE} },
     };
 
     // parse args
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+
+    // FEMM patch 07: newline="", which is the documented way to write a CSV
+    // file and previously raised TypeError. Without it, on Windows, the
+    // writer's "\r\n" meets text mode's \n -> \r\n translation and every
+    // record ends "\r\r\n" -- which Excel shows as a blank row between each
+    // pair of records. Accepted (and validated) on every platform so a script
+    // is portable; only Windows text mode has anything to stop doing.
+    if (args[ARG_newline].u_obj != mp_const_none) {
+        size_t nl_len;
+        mp_obj_str_get_data(args[ARG_newline].u_obj, &nl_len);
+        if (nl_len != 0) {
+            // "\n"/"\r"/"\r\n" have real CPython semantics (translate TO the
+            // given terminator) that are not implemented. Refusing is better
+            // than accepting and doing something else.
+            mp_raise_ValueError(MP_ERROR_TEXT("only newline='' or None is supported"));
+        }
+        // Signalled to the file layer as a private mode character rather than
+        // a new argument, because the VFS open protocol passes exactly two.
+        // Every mode parser ignores characters it does not know, so this is
+        // inert for VFS types that never translated anything.
+        size_t mode_len;
+        const char *mode_s = mp_obj_str_get_data(args[ARG_mode].u_obj, &mode_len);
+        vstr_t vstr;
+        vstr_init(&vstr, mode_len + 1);
+        vstr_add_strn(&vstr, mode_s, mode_len);
+        vstr_add_char(&vstr, 'N');
+        args[ARG_mode].u_obj = mp_obj_new_str_from_vstr(&vstr);
+    }
 
     #if MICROPY_VFS_POSIX
     // If the file is an integer then delegate straight to the POSIX handler

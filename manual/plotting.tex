@@ -1,0 +1,359 @@
+%-----------------------------------------------------------------------------------
+%
+%  Plotting with matplotlib (the PyBridge)
+%
+%-----------------------------------------------------------------------------------
+
+\chapter{Plotting with matplotlib}
+\label{pybridge}
+
+FEMM's scripting engine can drive {\tt matplotlib}, so a script can produce
+a publication-quality figure directly from a solution:
+
+\begin{verbatim}
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    ax.plot([0, 1, 2], [0, 1, 4], 'r-')
+    ax.set_xlabel("x")
+    plt.show()
+\end{verbatim}
+
+A real, interactive window appears --- with the usual zoom, pan and save
+toolbar --- and it stays alive after the script ends, so you can keep working
+with it.
+
+FEMM does not contain {\tt matplotlib} and does not install it.  The figure is
+drawn by whatever CPython you already have on the machine, running as a
+separate process that FEMM starts on demand and talks to over a local socket.
+Nothing is sent anywhere off the machine, and nothing is installed by using
+this feature.
+
+\section{What you need}
+
+A CPython 3.9 or newer with {\tt matplotlib}, and a window toolkit for it to
+draw with.  On Windows and macOS that usually means just
+
+\begin{verbatim}
+    pip install matplotlib
+\end{verbatim}
+
+\noindent because the installers from {\tt python.org} already include Tk,
+which is the toolkit {\tt matplotlib} falls back on.  Nothing else is needed.
+
+If Tk is absent --- Homebrew's Python omits it, and most Linux distributions
+package it separately --- install it alongside: {\tt brew install python-tk} on
+macOS, {\tt python3-tk} on Debian and Ubuntu, {\tt py311-tkinter} on FreeBSD.
+On FreeBSD use {\tt pkg} rather than {\tt pip} for {\tt matplotlib} as well,
+since there are no prebuilt wheels there and {\tt pip} would try to compile it
+from source.
+
+{\tt PyQt6} or {\tt PySide6} are {\em optional}.  If one of them is installed
+FEMM prefers it, giving the Qt window style instead of the Tk one; the plots
+are identical either way.
+
+FEMM finds a suitable interpreter by itself the first time a script plots
+something.  If none of the candidates will do, the error says which were tried
+and what was wrong with each:
+
+\begin{verbatim}
+    BridgeError: no usable Python found for the matplotlib bridge.
+    Tried: python.exe (has no interactive matplotlib backend)
+           python3.exe (could not be launched)
+    Install it with: pip install matplotlib. The python.org installer
+    already provides the Tk toolkit it needs; PyQt6 is optional and only
+    changes the window style
+\end{verbatim}
+
+To point FEMM at a particular interpreter --- if you keep several, or use a
+virtual environment --- set it under {\bf Edit\,$\rightarrow$\,Scripting
+Preferences}, or from a script:
+
+\begin{verbatim}
+    import pybridge
+    pybridge.set_interpreter("C:/Users/me/venv/Scripts/python.exe")
+\end{verbatim}
+
+The setting is remembered.  The {\tt FEMMQT\_PYTHON} environment variable does
+the same thing for a single run.
+
+\section{Which plot command to use}
+
+FEMM has a built-in {\tt plot()} for quick $x$--$y$ curves --- it takes an
+$x$ array and up to seven $y$ arrays, with optional labels, and opens a plain
+plot window.  It needs nothing installed, appears instantly, and is the right
+tool for a look at a sweep while you are working.
+
+Reach for {\tt matplotlib} when you want what {\tt plot()} deliberately does
+not do: contour and density plots, subplots, log axes, annotations, colour
+bars, control over fonts and sizes, and vector output for a paper.
+
+\section{Plotting a solution on its own mesh}
+
+The example {\tt examples/plot-mesh-matplotlib.py} solves a model, reads its
+finite-element mesh back, and draws the vector potential as a filled contour on
+the actual triangulation rather than on a resampled grid.  The core of it is:
+
+\begin{verbatim}
+    import numpy as np, pybridge
+
+    nn, ne = int(mo_numnodes()), int(mo_numelements())
+
+    x = np.zeros(nn)
+    y = np.zeros(nn)
+    a = np.zeros(nn)
+    for k in range(1, nn + 1):
+        nx, ny = mo_getnode(k)
+        x[k-1], y[k-1] = nx, ny
+        a[k-1] = mo_getpointvalues(nx, ny)[0]
+
+    tri = np.zeros((ne, 3), dtype=np.int32)
+    for k in range(1, ne + 1):
+        e = mo_getelement(k)
+        tri[k-1][0] = int(e[0]) - 1     # FEMM numbers nodes from 1
+        tri[k-1][1] = int(e[1]) - 1
+        tri[k-1][2] = int(e[2]) - 1
+
+    plt = pybridge.import_module("matplotlib.pyplot")
+    fig, ax = plt.subplots()
+    ax.tricontourf(x, y, tri, a, levels=40)
+    ax.set_aspect("equal")
+    plt.show()
+\end{verbatim}
+
+On a 73,000-node, 146,000-element model that reads back in about 1.4 seconds
+and draws in about 0.6.
+
+Two details in that fragment matter more than they look.
+
+\subsection*{Keep bulk numbers in arrays, not lists}
+
+{\tt x}, {\tt y} and {\tt a} are {\tt numpy} arrays that are allocated once and
+filled in place.  The obvious alternative --- appending to a Python list --- is
+much slower, and not only for the list itself.  A list of 73,000 floats is
+73,000 separate objects on the interpreter's heap, and the garbage collector
+walks all of them every time anything else allocates.  Measured on the mesh
+above, a loop that reads 20,000 elements takes
+
+\begin{center}
+\begin{tabular}{lr}
+with the node data in a {\tt numpy} array & 1.9 ms \\
+with the same data in a Python list       & 69.7 ms \\
+\end{tabular}
+\end{center}
+
+\noindent and the gap widens as the mesh grows.  The array also crosses to
+{\tt matplotlib} as raw bytes rather than element by element, so the transfer
+costs about 60 ms for eight megabytes.
+
+\subsection*{Use {\tt int32} for indices}
+
+The triangle array is declared {\tt dtype=np.int32}.  FEMM's {\tt numpy} is
+{\tt ulab}, whose next-widest integer is {\tt int16}, and a mesh passes its
+32,767 limit almost immediately --- silently, with the index wrapping to a
+negative number.  {\tt int32} holds a little over two billion, which is enough
+for any mesh, and it halves the bytes compared with storing indices as floats.
+
+\section{Other packages}
+
+The bridge is not specific to {\tt matplotlib}, and it does not insist on it
+either: if the Python it finds has no plotting backend, FEMM will still use it
+for everything else, and only a request for a figure fails.  Anything
+importable by the CPython it found can be used:
+
+\begin{verbatim}
+    import pybridge
+    csv = pybridge.import_module("csv")
+
+    with pybridge.open("results.csv", "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["angle", "torque"])
+        w.writerows(data)
+\end{verbatim}
+
+Note {\tt pybridge.open()}: the file is opened by the {\em other} process, so
+that a CPython reader or writer gets a file object it can actually use.  Both
+processes see the same filesystem, so the path means the same thing to both.
+
+Spreadsheets are the other common want, and {\tt xlsxwriter} is close enough
+to universal that it gets the same treatment as {\tt matplotlib}: just import
+it.  Formats, charts and all.
+
+\begin{verbatim}
+    import xlsxwriter
+    wb = xlsxwriter.Workbook("sweep.xlsx")
+    ws = wb.add_worksheet("torque")
+    bold = wb.add_format({"bold": True})
+
+    ws.write_row(0, 0, ["angle", "torque"], bold)
+    ws.write_column(1, 0, angle)          # a whole column in one call
+    ws.write_column(1, 1, torque)
+    wb.close()
+\end{verbatim}
+
+Note {\tt write\_column} rather than a loop over {\tt write}.  Every call is a
+round trip, so writing 720 cells one at a time costs about 85 ms where two
+column writes cost one --- the same rule as everywhere else here, which is to
+cross in bulk rather than per item.
+
+Archives are the third: {\tt zipfile} is forwarded too, so bundling up a run's
+outputs is the code you would write anywhere.
+
+\begin{verbatim}
+    import zipfile
+    with zipfile.ZipFile("run.zip", "w", zipfile.ZIP_DEFLATED) as z:
+        z.write("coil.fem")
+        z.write("coil.ans")
+        z.writestr("notes.txt", "swept 0 to 45 degrees")
+\end{verbatim}
+
+\noindent
+Note that these are {\em paths}: both processes see the same filesystem, so
+the worker opens the files itself and nothing large crosses between them.
+
+\subsection*{What crosses, and what does not}
+
+Numbers, strings, arrays and containers of those cross by value; anything else
+crosses as a proxy, and calling a method on a proxy just works.  There are two
+things that cannot cross at all, and both are worth knowing before you meet
+them:
+
+\begin{itemize}
+\item{\bf An open file} belongs to the process that opened it.
+{\tt Workbook("sweep.xlsx")} above is fine, because that is a {\em path} ---
+the worker opens the file itself.  But handing a file {\em object} to a
+CPython library cannot work:
+
+\begin{verbatim}
+    f = open("sweep.xlsx", "wb")        # FEMM's file
+    wb = xlsxwriter.Workbook(f)         # error: a FileIO cannot cross
+\end{verbatim}
+
+\noindent
+Use \verb+pybridge.open(path, mode)+ instead, which opens the file in the
+worker and hands back something CPython can write to.  The reverse direction
+works as well: FEMM's own {\tt csv} module will happily write to a
+{\tt pybridge.open()} file.
+
+\item{\bf A function} defined in your script cannot be passed as a callback.
+Define it in the worker with {\tt pybridge.exec()} and refer to it by name.
+\end{itemize}
+
+\noindent
+Both raise immediately and say which of the two remedies applies, so this is
+something you find out at the call rather than in the output.
+
+Useful entry points, all in the {\tt pybridge} module:
+
+\begin{itemize}
+\item{\tt pybridge.import\_module("name")} --- any CPython module, as a proxy.
+
+\item{\tt pybridge.eval("expr")}, {\tt pybridge.exec("statements")} ---
+evaluate or run code in the other process.  The namespace persists between
+calls and starts with {\tt np} (CPython's real {\tt numpy}) and {\tt plt}
+already imported.
+
+\item{\tt pybridge.put("name", value)} --- send an array or list across and
+bind it to a name there.  This is the efficient way to move a lot of data.
+
+\item{\tt pybridge.fetch(obj)} --- bring a value back by value; an array
+returns as a {\tt numpy} array here.
+
+\item{\tt pybridge.info()} --- which interpreter, which versions, which
+plotting backend is in use.
+
+\item{\tt pybridge.restart()}, {\tt pybridge.shutdown()} --- discard the
+helper process and its windows, or stop it.  It restarts by itself on next
+use.
+\end{itemize}
+
+\section{Which {\tt numpy}, which {\tt scipy}}
+
+Inside FEMM, {\tt numpy} and {\tt scipy} are built in.  They run in the same
+process, with no data copied anywhere, and they are what {\tt import numpy}
+gives you --- not the CPython packages of the same name.  For almost all
+post-processing they are the right answer, and reaching across the bridge for
+them would be a straight loss.
+
+They cover more than the word ``built-in'' suggests: some 115 {\tt numpy}
+names, including a complete {\tt numpy.linalg} ({\tt solve}, {\tt inv},
+{\tt det}, {\tt eig}, {\tt qr}, {\tt svd}, {\tt pinv}, {\tt cond},
+{\tt rank}, {\tt cholesky}, {\tt norm}, all of them working on complex
+matrices), {\tt numpy.fft}, {\tt polyfit} and {\tt polyval},
+{\tt interp}, {\tt convolve}, {\tt trapz}, {\tt loadtxt} and {\tt savetxt};
+and from {\tt scipy}, {\tt integrate.quad}, {\tt optimize.bisect},
+{\tt optimize.newton}, {\tt optimize.fmin}, {\tt signal.sosfilt} and the
+{\tt special} functions.
+
+What they do not have, and where the bridge earns its keep:
+
+\begin{itemize}
+\item{\bf Curve fitting} beyond polynomials --- there is no
+{\tt curve\_fit} or {\tt least\_squares}.
+\item{\bf Spline interpolation} --- {\tt interp} is linear only.
+\item{\bf Differential equations} --- no {\tt odeint} or {\tt solve\_ivp}.
+\item{\bf Spectral estimation and filter design} --- {\tt sosfilt} applies a
+filter but nothing designs one, and there is no {\tt welch} or
+{\tt periodogram}.
+\item{\bf Statistics} --- no {\tt scipy.stats} at all.
+\end{itemize}
+
+For those, ask for the CPython package by name:
+
+\begin{verbatim}
+    import pybridge
+
+    pybridge.put("f", frequency)          # arrays computed in FEMM
+    pybridge.put("z", impedance)
+    pybridge.exec("from scipy.interpolate import CubicSpline")
+    pybridge.exec("s = CubicSpline(f, z)")
+    fine = pybridge.fetch(pybridge.eval("s(np.linspace(0, 1000, 2000))"))
+\end{verbatim}
+
+Note that there is no {\tt import scipy.interpolate} shim, deliberately.  The
+longer spelling is a reminder that the call is leaving FEMM: each one is a
+round trip to the other process, which is nothing when you call it once on a
+finished array and a great deal if you call it inside a loop over elements.
+Doing the arithmetic with the built-in {\tt numpy} and crossing once, at the
+end, is almost always the right shape.
+
+The other reason to keep the two straight is that a FEMM-side function cannot
+cross.  This does not work:
+
+\begin{verbatim}
+    def residual(x):                      # a function defined here
+        return measured - model(x)
+    opt.least_squares(residual, x0)       # BridgeError
+\end{verbatim}
+
+\noindent because the optimiser would have to call back into FEMM.  Define the
+function on the far side with {\tt pybridge.exec} and it works normally; or
+keep the loop here, using the built-in {\tt scipy.optimize.fmin} or
+{\tt newton}, and call FEMM from inside it.  The second is usually what you
+want anyway when each evaluation is a finite-element solve.
+
+\section{Limitations}
+
+\begin{itemize}
+\item{\bf Functions cannot cross.}  A FEMM-side function cannot be passed to
+CPython, so there is no {\tt key=} argument to {\tt sorted}, no callback to
+{\tt FuncAnimation}, and no interactive widget or pick event.  Define such a
+function in the other process with {\tt pybridge.exec} instead.
+
+\item{\bf {\tt numpy} and {\tt scipy} stay local.}  Those names refer to
+FEMM's own built-in array library, which runs in-process and is much faster
+for ordinary work than sending each operation across.  When you specifically
+want CPython's {\tt numpy}, ask for it: {\tt pybridge.import\_module("numpy")},
+or use the {\tt np} already present in the {\tt eval} namespace.
+
+\item{\bf Figures belong to the other process.}  They appear in their own
+windows and cannot be embedded in a FEMM window.
+
+\item{\bf One call at a time.}  While a plotting call is in progress FEMM will
+refuse a second one rather than let two overlap.  This can only arise if a
+script is somehow re-entered while it waits.
+
+\item Pressing {\bf Esc} during a plotting call that has hung will abandon it.
+The helper process is discarded, and the next plotting command starts a fresh
+one; any figures it was holding are lost.
+\end{itemize}

@@ -278,8 +278,11 @@ _builtin_print = print
 def _femm_fmt(v):
     if isinstance(v, complex):
         re, im = v.real, v.imag
-        if im == 0:                       # collapse: real-valued reads as real
-            return "%.14g" % re
+        # A complex value is shown as complex, even when its imaginary part is
+        # zero. It used to collapse to the bare real, because the DC getters
+        # handed back complex-typed reals and "1234.5+0j" for a force was
+        # noise. Those return real numbers now, so a complex here means a
+        # phasor -- and "0" imaginary is then worth seeing, not worth hiding.
         if re == 0:                       # pure imaginary: "0.5j", "-3j", "1j"
             return "%.14gj" % im
         if im < 0:
@@ -288,8 +291,27 @@ def _femm_fmt(v):
     if isinstance(v, float):
         return "%.14g" % v
     return str(v)
-def print(*args):
-    _builtin_print('\t'.join(_femm_fmt(a) for a in args))
+def print(*args, **kw):
+    # sep/end/file are forwarded rather than swallowed. The DEFAULT separator
+    # stays a tab, which is FEMM's own convention and what every ported script
+    # expects -- but a script that asks for CPython's spelling should get it,
+    # and `print(msg, file=sys.stderr)` is ordinary Python that used to fail
+    # with "unexpected keyword argument".
+    sep = kw.pop('sep', '\t')
+    text = sep.join(_femm_fmt(a) for a in args)
+    end = kw.pop('end', None)
+    f = kw.pop('file', None)
+    if kw:
+        raise TypeError("print() got an unexpected keyword argument '%s'"
+                        % list(kw.keys())[0])
+    if f is not None:
+        f.write(text if end is None else text + end)
+        if end is None:
+            f.write('\n')
+    elif end is None:
+        _builtin_print(text)
+    else:
+        _builtin_print(text, end=end)
 
 # --- open() smart wrapper: FEMM document open vs Python file open ---
 _builtin_open = open
