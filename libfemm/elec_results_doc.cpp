@@ -14,6 +14,7 @@
 #include <cstring>
 #include <cmath>
 #include <algorithm>
+#include "point_location.h"
 
 #ifndef PI
 #define PI 3.141592653589793238462643383279
@@ -856,19 +857,17 @@ bool ElecResultsDoc::InTriangleTest(double x, double y, int i) const
     for (j = 0; j < 3; j++) {
         k2 = j + 1;
         if (k2 == 3) k2 = 0;
-        if (meshelem[i].p[k2] > meshelem[i].p[j]) {
-            z = (meshnode[meshelem[i].p[k2]].x - meshnode[meshelem[i].p[j]].x) *
-                    (y - meshnode[meshelem[i].p[j]].y) -
-                (meshnode[meshelem[i].p[k2]].y - meshnode[meshelem[i].p[j]].y) *
-                    (x - meshnode[meshelem[i].p[j]].x);
-            if (z < 0) return false;
-        } else {
-            z = (meshnode[meshelem[i].p[j]].x - meshnode[meshelem[i].p[k2]].x) *
-                    (y - meshnode[meshelem[i].p[k2]].y) -
-                (meshnode[meshelem[i].p[j]].y - meshnode[meshelem[i].p[k2]].y) *
-                    (x - meshnode[meshelem[i].p[k2]].x);
-            if (z > 0) return false;
-        }
+        // Lower node index first, so the shared-edge expression is identical
+        // for both triangles; fwd records which way the cyclic order runs.
+        int lo = meshelem[i].p[j], hi = meshelem[i].p[k2];
+        bool fwd = (hi > lo);
+        if (!fwd) { int sw = lo; lo = hi; hi = sw; }
+        double dx = meshnode[hi].x - meshnode[lo].x;
+        double dy = meshnode[hi].y - meshnode[lo].y;
+        z = dx * (y - meshnode[lo].y) - dy * (x - meshnode[lo].x);
+        double eps = kInTriangleTol * (dx * dx + dy * dy);
+        if (fwd) { if (z < -eps) return false; }
+        else     { if (z >  eps) return false; }
     }
 
     return true;

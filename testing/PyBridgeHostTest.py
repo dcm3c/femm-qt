@@ -53,6 +53,34 @@ def call(op, **fields):
     return msg.get("v"), blob
 
 
+def _skip_if_no_backend():
+    """SKIP when the worker answered but cannot plot.
+
+    ensure_started()/start() raise only when NO interpreter answered at all.
+    An interpreter without matplotlib greets perfectly well and is accepted as
+    a last resort by design (pybridge_host.cpp: "ensure_started() comes back
+    for this one if none does"), so without this check the tests sail past the
+    handshake and die further in with three unrelated-looking import errors
+    that never name the actual cause. That is the common case on macOS, where
+    Homebrew's PEP 668 python is first on the candidate list and refuses a
+    plain "pip3 install matplotlib".
+    """
+    import json as _json
+    import _pybridge as _pb
+    try:
+        # info() is the whole hello response FRAME; the report sits under "v",
+        # because the C++ side keeps the frame verbatim rather than parsing it.
+        hello = _json.loads(_pb.info()).get("v", {})
+    except Exception:
+        return False
+    if hello.get("backend"):
+        return False
+    why = hello.get("backend_error") or "no interactive matplotlib backend"
+    print("  %s: %s" % (_pb.interpreter(), why))
+    print("SKIP: the Python the bridge found cannot plot")
+    return True
+
+
 # --- startup ---------------------------------------------------------------
 
 check("not running before first use", not _pybridge.running())
@@ -63,6 +91,9 @@ except OSError as e:
     print("  " + str(e).split("\n")[0])
     for a in _pybridge.attempts():
         print("  tried " + a)
+    raise SystemExit(0)
+
+if _skip_if_no_backend():
     raise SystemExit(0)
 
 check("running after ensure_started", _pybridge.running())

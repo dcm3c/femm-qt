@@ -22,12 +22,42 @@ def close(a, b, tol=1e-9):
     return abs(a - b) < tol
 
 
+def _skip_if_no_backend():
+    """SKIP when the worker answered but cannot plot.
+
+    ensure_started()/start() raise only when NO interpreter answered at all.
+    An interpreter without matplotlib greets perfectly well and is accepted as
+    a last resort by design (pybridge_host.cpp: "ensure_started() comes back
+    for this one if none does"), so without this check the tests sail past the
+    handshake and die further in with unrelated-looking import errors that
+    never name the actual cause. That is the common case on macOS, where
+    Homebrew's PEP 668 python is first on the candidate list and refuses a
+    plain "pip3 install matplotlib".
+    """
+    import json as _json
+    import _pybridge as _pb
+    try:
+        # info() is the whole hello response FRAME; the report sits under "v",
+        # because the C++ side keeps the frame verbatim rather than parsing it.
+        hello = _json.loads(_pb.info()).get("v", {})
+    except Exception:
+        return False
+    if hello.get("backend"):
+        return False
+    why = hello.get("backend_error") or "no interactive matplotlib backend"
+    print("  %s: %s" % (_pb.interpreter(), why))
+    print("SKIP: the Python the bridge found cannot plot")
+    return True
+
+
 def main():
     try:
         pybridge.start()
     except pybridge.BridgeError as e:
         print("SKIP: no usable Python for the matplotlib bridge")
         print("  " + str(e).split("\n")[0])
+        return 0
+    if _skip_if_no_backend():
         return 0
 
     import numpy as np          # ulab, in-process -- NOT proxied
@@ -186,51 +216,63 @@ def main():
     # the remedy that fits, since that is the moment they learn the boundary
     # exists at all.
     try:
-        import xlsxwriter
-        from xlsxwriter import Workbook          # via module __getattr__
-        check("xlsxwriter version through the shim", "." in xlsxwriter.__version__,
-              str(xlsxwriter.__version__))
-        xlsx = "_pybridge_shim_test.xlsx"
-        wb = Workbook(xlsx)                      # a PATH: the worker opens it
-        ws = wb.add_worksheet("t")
-        ws.write_row(0, 0, ["a", "b"], wb.add_format({"bold": True}))
-        ws.write_column(1, 0, [1, 2, 3])
-        wb.close()
-        check("workbook written by path", os.path.exists(xlsx)
-              and os.stat(xlsx)[6] > 4000)
-
-        # A local file object must be refused, and told what to do instead.
-        lf = open("_pybridge_shim_local.xlsx", "wb")
-        try:
-            Workbook(lf)
-            check("local file object should not cross", False)
-        except pybridge.BridgeError as e:
-            check("file error names pybridge.open", "pybridge.open" in str(e),
-                  str(e))
-        lf.close()
-
-        # ...and pybridge.open() is that way through.
-        rf = pybridge.open("_pybridge_shim_remote.xlsx", "wb")
-        wb = Workbook(rf)
-        wb.add_worksheet()
-        wb.close()
-        rf.close()
-        check("workbook written through pybridge.open",
-              os.stat("_pybridge_shim_remote.xlsx")[6] > 4000)
-
-        for junk in (xlsx, "_pybridge_shim_local.xlsx",
-                     "_pybridge_shim_remote.xlsx"):
-            try:
-                os.remove(junk)
-            except Exception:
-                pass
+        import xlsxwriter                     # the shim; no worker contact yet
     except ImportError:
         check("xlsxwriter shim is importable", False)
-    except pybridge.BridgeError as e:
-        # No xlsxwriter in the worker's interpreter is not a femm-qt failure.
-        if "xlsxwriter" not in str(e):
-            raise
-        print("  (skipped xlsxwriter: not installed in the worker)")
+    else:
+        try:
+            from xlsxwriter import Workbook   # __getattr__: FIRST worker contact
+            check("xlsxwriter version through the shim", "." in xlsxwriter.__version__,
+                  str(xlsxwriter.__version__))
+            xlsx = "_pybridge_shim_test.xlsx"
+            wb = Workbook(xlsx)                      # a PATH: the worker opens it
+            ws = wb.add_worksheet("t")
+            ws.write_row(0, 0, ["a", "b"], wb.add_format({"bold": True}))
+            ws.write_column(1, 0, [1, 2, 3])
+            wb.close()
+            check("workbook written by path", os.path.exists(xlsx)
+                  and os.stat(xlsx)[6] > 4000)
+
+            # A local file object must be refused, and told what to do instead.
+            lf = open("_pybridge_shim_local.xlsx", "wb")
+            try:
+                Workbook(lf)
+                check("local file object should not cross", False)
+            except pybridge.BridgeError as e:
+                check("file error names pybridge.open", "pybridge.open" in str(e),
+                      str(e))
+            lf.close()
+
+            # ...and pybridge.open() is that way through.
+            rf = pybridge.open("_pybridge_shim_remote.xlsx", "wb")
+            wb = Workbook(rf)
+            wb.add_worksheet()
+            wb.close()
+            rf.close()
+            check("workbook written through pybridge.open",
+                  os.stat("_pybridge_shim_remote.xlsx")[6] > 4000)
+
+            for junk in (xlsx, "_pybridge_shim_local.xlsx",
+                         "_pybridge_shim_remote.xlsx"):
+                try:
+                    os.remove(junk)
+                except Exception:
+                    pass
+        except ImportError as e:
+            # The WORKER has no xlsxwriter. This has to be caught separately from
+            # the shim being missing, and it is the branch a stock Ubuntu takes:
+            # pybridge maps the worker's ModuleNotFoundError back to ImportError
+            # (pybridge.py:87), so it arrives here rather than as a BridgeError.
+            # Catching both in one handler, as this used to, turned a machine
+            # without the package into a failing suite row.
+            if "xlsxwriter" not in str(e):
+                raise
+            print("  (skipped xlsxwriter: not installed in the worker)")
+        except pybridge.BridgeError as e:
+            # No usable Python at all -- likewise not a femm-qt failure.
+            if "xlsxwriter" not in str(e):
+                raise
+            print("  (skipped xlsxwriter: no usable Python worker)")
 
     # --- the zipfile shim ------------------------------------------------------
     #
@@ -251,9 +293,11 @@ def main():
         check("zip was written and is smaller than its input",
               0 < os.stat(zpath)[6] < os.stat(src)[6])
         with zipfile.ZipFile(zpath) as z:
-            check("zip lists both members", sorted(z.namelist()),
-                  ["data.txt", "notes.txt"])
-            check("zip round trips bytes", z.read("notes.txt"), b"swept 0..45")
+            names = sorted(z.namelist())
+            check("zip lists both members", names == ["data.txt", "notes.txt"],
+                  str(names))
+            body = z.read("notes.txt")
+            check("zip round trips bytes", body == b"swept 0..45", str(body))
             check("zip is not corrupt", z.testzip() is None)
         for junk in (zpath, src):
             try:

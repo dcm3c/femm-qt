@@ -27,6 +27,9 @@
 
 #include <cstdio>
 #include <cstring>
+#include <algorithm>   // stable_sort, find: the interpreter scan
+#include <cctype>      // isdigit
+#include <utility>     // pair, for the (dev, ino) identity
 #include <chrono>
 #include <filesystem>
 #include <random>
@@ -51,6 +54,8 @@ typedef SOCKET socket_t;
 #include <spawn.h>
 #include <signal.h>
 #include <cerrno>
+#include <dirent.h>
+#include <sys/stat.h>
 #ifdef __APPLE__
 // environ is not directly linkable from every macOS target; this is the
 // documented accessor.
@@ -383,6 +388,138 @@ std::string readFrame(socket_t s, int deadlineMs, std::string &buf) {
 // Discovery
 // ---------------------------------------------------------------------------
 
+#if defined(__APPLE__) && !defined(_WIN32)
+// Is a developer directory actually installed?
+//
+// This gates every route to /usr/bin/python3, which without one is an xcrun
+// STUB that raises a GUI "Install Command Line Developer Tools" dialog the
+// moment it is executed. Discovery executes every candidate it collects, so
+// the gate has to cover the directory scan as well as the explicit entry --
+// /usr/bin is on PATH, so the scan would otherwise resurrect the stub past
+// the guard and pop the dialog on a machine with no Python at all.
+static bool appleToolchainPresent() {
+    std::error_code ec;
+    return fs::exists("/Library/Developer/CommandLineTools/usr/bin/python3", ec)
+        || fs::exists("/Applications/Xcode.app/Contents/Developer/usr/bin/python3", ec);
+}
+#endif
+
+#ifndef _WIN32
+// Every python3 / python3.N on the machine, newest first.
+//
+// Enumerating beats guessing here, and the guessing was tried first: a
+// hardcoded python3.14..python3.9 list reached one FreeBSD box and was stale
+// on arrival, since 3.15 already exists and every future release needs an
+// edit. A scan finds whatever is installed, including free-threaded builds
+// (python3.13t) and versions that did not exist when this shipped.
+//
+// SCANNING $PATH ALONE IS NOT ENOUGH, which is the part worth keeping. A macOS
+// .app launched from Finder inherits a minimal PATH -- /usr/bin:/bin:/usr/
+// sbin:/sbin -- with no Homebrew in it, and that is the ordinary way the GUI
+// starts. So the known install directories are always searched whether or not
+// they are on PATH; deleting them in favour of "just read PATH" would break
+// plotting for every Finder launch.
+static void scanForPythons(std::vector<std::string> &out) {
+    std::vector<std::string> dirs;
+    if (const char *path = std::getenv("PATH")) {
+        std::string p(path), one;
+        for (char ch : p) {
+            if (ch == ':') { if (!one.empty()) dirs.push_back(one); one.clear(); }
+            else one += ch;
+        }
+        if (!one.empty()) dirs.push_back(one);
+    }
+    // Always, PATH or not -- see the Finder note above.
+    for (const char *d : {"/usr/bin", "/usr/local/bin", "/opt/homebrew/bin",
+                          "/opt/local/bin",
+                          "/Library/Developer/CommandLineTools/usr/bin"})
+        dirs.push_back(d);
+
+    // name -> (major, minor); -1 sorts a bare python3 after every versioned
+    // one, so an explicit 3.15 wins over whatever python3 happens to be.
+    struct Found { std::string path; int minor; };
+    std::vector<Found> found;
+
+#ifdef __APPLE__
+    const bool skipUsrBin = !appleToolchainPresent();
+#endif
+    for (const std::string &d : dirs) {
+#ifdef __APPLE__
+        // See appleToolchainPresent(): /usr/bin/python3 must not be spawned
+        // when it is only a stub, and PATH contains /usr/bin.
+        if (skipUsrBin) {
+            std::string norm = d;
+            while (norm.size() > 1 && norm.back() == '/') norm.pop_back();
+            if (norm == "/usr/bin") continue;
+        }
+#endif
+        DIR *dp = opendir(d.c_str());
+        if (!dp) continue;
+        while (struct dirent *e = readdir(dp)) {
+            std::string n(e->d_name);
+            if (n.compare(0, 7, "python3") != 0) continue;
+            int minor = -1;
+            if (n.size() > 7) {
+                if (n[7] != '.') continue;              // python3-config etc.
+                size_t i = 8;
+                if (i >= n.size() || !isdigit((unsigned char)n[i])) continue;
+                minor = 0;
+                while (i < n.size() && isdigit((unsigned char)n[i]))
+                    minor = minor * 10 + (n[i++] - '0');
+                // "t" marks a free-threaded build; anything else (-config,
+                // -embed, .pc) is not an interpreter.
+                if (i < n.size() && !(n[i] == 't' && i + 1 == n.size())) continue;
+            }
+            std::string full = d + "/" + n;
+            if (access(full.c_str(), X_OK) != 0) continue;
+            found.push_back({full, minor});
+        }
+        closedir(dp);
+    }
+
+    std::stable_sort(found.begin(), found.end(),
+                     [](const Found &a, const Found &b) { return a.minor > b.minor; });
+    for (const Found &f : found) out.push_back(f.path);
+}
+#endif
+
+// Drop candidates that resolve to a binary already in the list.
+//
+// Without this, FreeBSD spawns the same interpreter four times: python3,
+// python, /usr/local/bin/python3 and python3.11 are one pkg-default symlink
+// there. Comparing (st_dev, st_ino) rather than the path string is what makes
+// symlinks and hardlinks collapse; comparing names would not.
+//
+// A name that cannot be resolved is KEPT, not dropped -- it may still be
+// spawnable through PATH, and letting posix_spawnp have the last word is
+// cheaper than reimplementing its search to be sure.
+static std::vector<std::string> dedupeByInode(const std::vector<std::string> &in) {
+#ifdef _WIN32
+    return in;
+#else
+    std::vector<std::pair<dev_t, ino_t>> seen;
+    std::vector<std::string> out;
+    for (const std::string &cand : in) {
+        struct stat st;
+        // st_ino == 0 means the platform does not report a usable identity
+        // (MinGW's stat does exactly this for every file). Keep the candidate
+        // rather than dedupe on a value that compares equal for everything --
+        // the cost of keeping too many is one wasted spawn, the cost of
+        // dropping too many is an interpreter that can plot going unfound.
+        if (cand.find('/') == std::string::npos
+            || stat(cand.c_str(), &st) != 0 || st.st_ino == 0) {
+            out.push_back(cand);
+            continue;
+        }
+        auto id = std::make_pair(st.st_dev, st.st_ino);
+        if (std::find(seen.begin(), seen.end(), id) != seen.end()) continue;
+        seen.push_back(id);
+        out.push_back(cand);
+    }
+    return out;
+#endif
+}
+
 std::vector<std::string> candidates() {
     std::vector<std::string> c;
     const Host &h = host();
@@ -399,11 +536,40 @@ std::vector<std::string> candidates() {
 #ifdef __APPLE__
     c.push_back("/opt/homebrew/bin/python3");
     c.push_back("/usr/local/bin/python3");
+    // Apple's own python3 goes LAST. It is where a Mac user's matplotlib most
+    // often ends up: Homebrew's python is PEP 668 externally-managed, so
+    // "pip3 install matplotlib" is refused there, and the path of least
+    // resistance is "pip3 install --user" against /usr/bin/python3.
+    //
+    // Three entries, because they fail differently. /usr/bin/python3 is the
+    // stable name and resolves through xcode-select, so it is the only one
+    // that finds a developer directory in a non-default location. The two
+    // concrete paths are the fallback for the opposite case -- a toolchain
+    // that is installed but that xcode-select cannot resolve, where the stub
+    // errors and the real binary still runs.
+    //
+    // The guard on /usr/bin/python3 is not optional. Without a developer
+    // directory it is an xcrun stub that pops a GUI "Install Command Line
+    // Developer Tools" dialog when executed -- and discovery executes every
+    // candidate. Stat'ing the real interpreters cannot raise that dialog on a
+    // machine with no Python, which is the worst possible audience for it.
+    // The concrete paths need no guard: if they exist they are real binaries.
+    if (appleToolchainPresent()) {
+        std::error_code ec;
+        c.push_back("/usr/bin/python3");
+        for (const char *r : {"/Library/Developer/CommandLineTools/usr/bin/python3",
+                              "/Applications/Xcode.app/Contents/Developer/usr/bin/python3"})
+            if (fs::exists(r, ec)) c.push_back(r);
+    }
 #else
     c.push_back("/usr/local/bin/python3");  // FreeBSD pkg lands here
 #endif
+    // Everything else on the machine, newest first, LAST so nothing above
+    // changes order: a working default is still preferred, and this only
+    // decides what happens once it has declined.
+    scanForPythons(c);
 #endif
-    return c;
+    return dedupeByInode(c);
 }
 
 std::string workerScript() {

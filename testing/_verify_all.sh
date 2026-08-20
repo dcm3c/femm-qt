@@ -87,6 +87,7 @@ inproc CsvTest.py Csv
 inproc PylibTest.py Pylib
 printf "%-26s " "RunScriptSize:"; python3 RunScriptSizeTest.py "$B" | tail -1
 inproc ProxyDunderTest.py ProxyDunders
+inproc PointLocationTest.py PointLocation
 # The matplotlib bridge. All three SKIP cleanly when no usable CPython is
 # installed -- it is an optional capability, not a build requirement.
 inproc PyBridgeHostTest.py PyBridgeHost

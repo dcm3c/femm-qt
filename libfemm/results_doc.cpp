@@ -15,6 +15,7 @@
 #include <cstring>
 #include <cmath>
 #include <algorithm>
+#include "point_location.h"
 
 #ifndef PI
 #define PI 3.141592653589793238462643383279
@@ -1899,6 +1900,11 @@ double ResultsDoc::GetElementBmag(int e) const
 // InTriangleTest — orientation-consistent point-in-triangle test
 // Works correctly with Cuthill-McKee sorted node ordering.
 // Ported from FemmviewDoc.cpp:2823-2853
+//
+// The index ordering and the tolerance are both load-bearing and neither is
+// obvious; point_location.h explains what each one prevents, with the measured
+// failure rates. Three other copies of this function exist (heat, elec, curr)
+// and must stay in step.
 bool ResultsDoc::InTriangleTest(double x, double y, int i) const
 {
     if (i < 0 || i >= (int)meshelem.size()) return false;
@@ -1906,20 +1912,17 @@ bool ResultsDoc::InTriangleTest(double x, double y, int i) const
     for (int j = 0; j < 3; j++) {
         int k = j + 1; if (k == 3) k = 0;
         double z;
-        if (meshelem[i].p[k] > meshelem[i].p[j]) {
-            z = (meshnode[meshelem[i].p[k]].x - meshnode[meshelem[i].p[j]].x) *
-                (y - meshnode[meshelem[i].p[j]].y) -
-                (meshnode[meshelem[i].p[k]].y - meshnode[meshelem[i].p[j]].y) *
-                (x - meshnode[meshelem[i].p[j]].x);
-            if (z < 0) return false;
-        }
-        else {
-            z = (meshnode[meshelem[i].p[j]].x - meshnode[meshelem[i].p[k]].x) *
-                (y - meshnode[meshelem[i].p[k]].y) -
-                (meshnode[meshelem[i].p[j]].y - meshnode[meshelem[i].p[k]].y) *
-                (x - meshnode[meshelem[i].p[k]].x);
-            if (z > 0) return false;
-        }
+        // Lower node index first, so the shared-edge expression is identical
+        // for both triangles; fwd records which way the cyclic order runs.
+        int lo = meshelem[i].p[j], hi = meshelem[i].p[k];
+        bool fwd = (hi > lo);
+        if (!fwd) { int sw = lo; lo = hi; hi = sw; }
+        double dx = meshnode[hi].x - meshnode[lo].x;
+        double dy = meshnode[hi].y - meshnode[lo].y;
+        z = dx * (y - meshnode[lo].y) - dy * (x - meshnode[lo].x);
+        double eps = kInTriangleTol * (dx * dx + dy * dy);
+        if (fwd) { if (z < -eps) return false; }
+        else     { if (z >  eps) return false; }
     }
     return true;
 }

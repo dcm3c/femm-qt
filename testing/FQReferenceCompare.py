@@ -32,6 +32,61 @@
 # budgets carry ~10x headroom over the observed floor while sitting 200-2000x
 # below the OF-comparison tolerances.
 #
+# THE BUDGETS ASSUME THE SAME FLOATING-POINT ARITHMETIC AS THE REFERENCE, and
+# the reason is NOT the solvers -- it is THE MESH. Everything above assumes
+# "same mesher, same mesh"; a build that contracts a*b+c into a fused
+# multiply-add does not produce the same mesh, so none of it applies.
+#
+# Measured 2026-08-19, same model, two builds differing only in FMA:
+#
+#     RadialMagneticBearingAC   16277 nodes  vs  16357 nodes
+#     my_SPM_motor_AGB         156238 nodes  vs 156277 nodes
+#     ~64% of vertices exist in only one of the two meshes
+#
+# The same build run twice is bit-identical, so this is not nondeterminism.
+# tangle's PREDICATES are immune to contraction (filter plus exact float256
+# fallback, so a sign decision cannot change) -- but meshing is not only
+# decisions. Circumcentres, off-centre Steiner placement and the quality
+# metrics compared against thresholds are ordinary arithmetic with no exact
+# fallback, and one ULP decides which triangle is worst. Refinement then
+# inserts a point somewhere marginally different and the cascade diverges.
+# "The predicates are safe" is true and does NOT imply "the mesh is stable".
+#
+# So a contracting build solves a DIFFERENT DISCRETE PROBLEM, and ~1e-3 in
+# derived quantities is ordinary mesh-to-mesh discretisation scatter -- the
+# OF suites carry 2-3% tolerances for exactly this reason, and they stay green
+# throughout. It is this test's premise that is violated, not the physics.
+#
+# Which builds contract: clang on arm64 by default, and gcc wherever FMA
+# exists, which -march=native turns on for any Haswell-or-later x86. Measured
+# 14 of 18 suites over budget, worst ~3e-3, with several movements
+# bit-identical between an arm64 mac and an x86 build compiled -mfma
+# -ffp-contract=fast -- which is what identified the cause. Reproduce with:
+#
+#     cmake .. -DCMAKE_CXX_FLAGS="-mfma -ffp-contract=fast" ...
+#     FEMM_BUILD=../build-fma bash _verify_all.sh
+#
+# DECIDED 2026-08-19: FMA STAYS ON. Turning it off on macOS was considered and
+# rejected -- the contracting build is not WRONG, it is a different mesh solved
+# correctly, and the measured price was 10-14% on AC harmonic solves (complex
+# multiply is exactly the shape FMA fuses). Transients and DC magnetostatics
+# were unaffected either way, so the cost bought nothing for the workloads that
+# matter.
+#
+# The standing consequence: THIS TEST IS EXPECTED TO FAIL ON macOS, and that
+# row should be read as "not applicable on a contracting build", not as red.
+# It remains the sharpest regression detector on Windows, Linux and FreeBSD,
+# which is where it is relied on.
+#
+# If it is ever wanted back on macOS, the way is a SECOND reference snapshot
+# generated there -- the test asks "did a change move our own answers", which
+# is a per-platform question and works fine against a per-platform baseline.
+# That costs another snapshot to regenerate on every intentional solver change,
+# which is why it was not done.
+#
+# Regenerating the SHARED reference on a contracting build would make this test
+# green and useless everywhere else; do not.
+#
 # HONEST DETECTION FLOOR: this test cannot see defects whose physical impact
 # is below ~1e-5 of quantity scale (e.g. the final-pass tolerance-enforcement
 # gap fixed in b8d9c76 moved results by only ~1e-7 of scale; it was found by
