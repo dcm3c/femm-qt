@@ -1274,6 +1274,14 @@ void DocumentBase::MirrorSelected(double x0, double y0, double x1, double y1, in
             if (blocklist[i].IsSelected) {
                 FBlockLabel b = blocklist[i];
                 mirrorPt(b.x, b.y, b.x, b.y);
+                // DELIBERATE DIVERGENCE FROM OF, decided 2026-08-21: OF
+                // guards the coercivity test on rotate and copy-rotate but NOT
+                // on mirror -- both its mirror sites (MOVECOPY.CPP:1949, 2047)
+                // reflect MagDir for every selected label. We guard all three,
+                // for consistency and to avoid rewriting a field that means
+                // nothing for the material. No physical difference either way,
+                // since MagDir is ignored on a non-magnet. Do not "restore" OF
+                // behaviour here without asking; the inconsistency is OF's.
                 if (blockIsMagnet(b)) {
                     // Reflect the direction in the same line, not just the
                     // point: the OF expression, MOVECOPY.CPP:1949.

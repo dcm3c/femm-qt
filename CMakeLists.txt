@@ -30,6 +30,46 @@ list(FILTER MPY_SOURCES EXCLUDE REGEX "port/mphalport\\.c$")
 # every sha256_/re1.5 symbol twice.
 list(FILTER MPY_SOURCES EXCLUDE REGEX "crypto-algorithms/sha256\\.c$")
 list(FILTER MPY_SOURCES EXCLUDE REGEX "lib/re1\\.5/.*\\.c$")
+
+# --- sys.stdout must go through the output sink, not through fd 1 ---
+# Two files define mp_sys_std{in,out,err}_obj: extmod/vfs_posix_file.c, which
+# puts them on raw POSIX fds, and shared/runtime/sys_stdio_mphal.c, which puts
+# them on mp_hal_stdout_tx_strn -- i.e. on py_state.cpp's settable output sink.
+# MICROPY_PY_SYS_STDFILES makes those objects the destination of print(), of
+# sys.stdout.write(), and of MP_PYTHON_PRINTER (mpprint.h), so which one links
+# decides where ALL script output goes.
+#
+# Only one can link, and the choice was being made by accident: vfs_posix_file.c
+# is pulled in regardless for ordinary file I/O, so its definition won and
+# sys_stdio_mphal.c was never pulled out of the archive. That routed every
+# print() to fd 1, which bypasses the GUI console -- and in a GUI-subsystem
+# process, which has no console at all, fd 1 is not even a valid descriptor, so
+# printing raised OSError(EBADF) instead of printing.
+#
+# Rename the posix ones out of the way (nothing references them inside their own
+# translation unit unless MICROPY_PY_SYS_STDIO_BUFFER is on, which it is not) so
+# the mp_hal definitions are what modsys.c resolves against. Done here rather
+# than by editing the file, which would put a local change in a tree that
+# regen.sh regenerates wholesale -- so a regen carries this fix along for free.
+#
+# What a regen CAN break is the path below. set_source_files_properties() on a
+# file that is not in the target is a silent no-op: no warning, clean build, and
+# every print() back on fd 1 -- invisible to a developer, because a binary
+# started from a shell has a valid fd 1. Only ConsolelessPrintTest.py would
+# notice. So assert the file is really in the glob, and fail the configure if a
+# version bump ever moves it.
+set(MPY_VFS_POSIX_FILE "${MPY_DIR}/micropython_embed/extmod/vfs_posix_file.c")
+list(FIND MPY_SOURCES "${MPY_VFS_POSIX_FILE}" _mpy_vfs_idx)
+if(_mpy_vfs_idx EQUAL -1)
+    message(FATAL_ERROR
+        "[micropython] ${MPY_VFS_POSIX_FILE} is not in the source list, so the "
+        "mp_sys_std*_obj rename below would do nothing and all script output "
+        "would go to fd 1 -- which a GUI-subsystem process does not have. "
+        "Find where the file moved to and update this path.")
+endif()
+set_source_files_properties("${MPY_VFS_POSIX_FILE}" PROPERTIES
+    COMPILE_DEFINITIONS "mp_sys_stdin_obj=mp_sys_stdin_obj_posix_unused;mp_sys_stdout_obj=mp_sys_stdout_obj_posix_unused;mp_sys_stderr_obj=mp_sys_stderr_obj_posix_unused")
+
 # ulab (numpy/scipy ndarrays) is a USER_C_MODULE: the regen generates its qstrs
 # and the `ulab` module registration into genhdr (USER_C_MODULES=ulab in
 # regen.sh), but the embed packager only ships py/*, so ulab's own .c are

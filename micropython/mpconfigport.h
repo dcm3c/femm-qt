@@ -155,6 +155,15 @@ extern void (*femm_vm_hook_fn)(void);
 // already writes -- the console in the GUI, the terminal headless. This also
 // switches on print()'s own `file=` keyword, which modbuiltins.c gates on the
 // same pair of flags.
+//
+// Turning this on also MOVES print(): modbuiltins.c:387 makes mp_sys_stdout_obj
+// its default `file`, and mpprint.h makes it MP_PYTHON_PRINTER as well, so the
+// flag does not merely add names -- it redirects everything that was already
+// working. extmod/vfs_posix_file.c defines the same three symbols on raw fds
+// and only one set can link, so the build has to say which; see the
+// set_source_files_properties() rename in the top-level CMakeLists.txt. Get
+// that wrong and script output goes to fd 1, which a GUI-subsystem process does
+// not have.
 #define MICROPY_PY_SYS_STDFILES             (1)
 
 // collections: namedtuple comes with CORE; OrderedDict + deque are otherwise

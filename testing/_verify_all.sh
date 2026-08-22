@@ -89,6 +89,7 @@ printf "%-26s " "RunScriptSize:"; python3 RunScriptSizeTest.py "$B" | tail -1
 inproc ProxyDunderTest.py ProxyDunders
 inproc PointLocationTest.py PointLocation
 inproc MagDirTransformTest.py MagDirTransform
+inproc FftTest.py Fft
 # The matplotlib bridge. All three SKIP cleanly when no usable CPython is
 # installed -- it is an optional capability, not a build requirement.
 inproc PyBridgeHostTest.py PyBridgeHost
@@ -97,4 +98,8 @@ inproc PyBridgeBenchTest.py PyBridgeBench
 printf "%-26s " "PyBridgeInterrupt:"; python3 PyBridgeInterruptTest.py "$B" | tail -1
 printf "%-26s " "PyBridgeDiscovery:"; python3 PyBridgeDiscoveryTest.py "$B" | tail -1
 printf "%-26s " "PyBridgeNested:"; python3 PyBridgeNestedTest.py "$GUI" | tail -1
+# Needs the GUI, and needs it started the way Explorer starts it -- with no
+# console behind it. Every other row here inherits this shell's descriptors,
+# so this is the only one that can see output escaping the sink.
+printf "%-26s " "ConsolelessPrint:"; python3 ConsolelessPrintTest.py "$GUI" | tail -1
 echo "ALL DONE"

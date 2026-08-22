@@ -165,6 +165,96 @@ try:
                 return _array([af[i] ** bf[i] for i in range(n)]).reshape(a.shape)
             return _elw(a, lambda x: x ** b)            # array ** scalar
 
+    # Arbitrary-length FFT, via Bluestein's algorithm.
+    #
+    # ulab's FFT takes power-of-two lengths only, which is an implementation
+    # limit and not a mathematical one -- MATLAB and CPython numpy transform
+    # any length, and a script translated from either should not have to
+    # resample its data to suit us. (The case that prompted this: a core-loss
+    # script steps a rotor 180 times, and 180 is not a power of two.)
+    #
+    # Bluestein turns a length-N DFT into a CONVOLUTION, which a power-of-two
+    # FFT can do. With w[n] = exp(-i*pi*n^2/N), the identity 2nk = n^2 + k^2 -
+    # (k-n)^2 gives
+    #
+    #     X[k] = w[k] * sum_n (x[n]*w[n]) * conj(w[k-n])
+    #
+    # i.e. w[k] times the linear convolution of u = x*w with v = conj(w),
+    # evaluated cyclically at length M = next power of two >= 2N-1.
+    #
+    # Powers of two keep ulab's own fast path untouched. Everything else costs
+    # one forward and one inverse transform of length M -- about 3x a same-size
+    # transform, since M overshoots N. v and its transform depend only on N, so
+    # they are cached: a script doing thousands of equal-length transforms
+    # (which is the usual shape) builds them once.
+    _bluestein_cache = {}
+
+    def _bluestein_tables(n):
+        e = _bluestein_cache.get(n)
+        if e is not None:
+            return e
+        m = 1
+        while m < 2 * n - 1:
+            m *= 2
+        # w[j] = exp(-i*pi*j^2/n). j^2 % (2n) keeps the angle small enough that
+        # cos/sin stay accurate for large n -- squaring j directly loses bits.
+        wr = [0.0] * n
+        wi = [0.0] * n
+        for j in range(n):
+            ang = -_math.pi * ((j * j) % (2 * n)) / n
+            wr[j] = _math.cos(ang)
+            wi[j] = _math.sin(ang)
+        w = _unp.array(wr) * (1 + 0j) + _unp.array(wi) * 1j
+        # v is conj(w) laid out for cyclic convolution: v[j] and v[m-j] both
+        # hold conj(w[j]), so the wrap-around picks up the negative lags.
+        vr = [0.0] * m
+        vi = [0.0] * m
+        for j in range(n):
+            vr[j] = wr[j]
+            vi[j] = -wi[j]
+            if j:
+                vr[m - j] = wr[j]
+                vi[m - j] = -wi[j]
+        v = _unp.array(vr) * (1 + 0j) + _unp.array(vi) * 1j
+        e = (m, w, _unp.fft.fft(v))
+        _bluestein_cache[n] = e
+        return e
+
+    def _fft_bluestein(x, n, m, w, vf):
+        pad = _unp.zeros(m) * (1 + 0j)
+        pad[0:n] = x * w
+        c = _unp.fft.ifft(_unp.fft.fft(pad) * vf)
+        return w * c[0:n]
+
+    def _as_complex_1d(a):
+        z = a if hasattr(a, 'dtype') else _array(a)
+        z = z * (1 + 0j)
+        n = 1
+        for d in z.shape:
+            n *= d
+        return z.reshape((n,)), n
+
+    def _fft(a, *args, **kw):
+        z, n = _as_complex_1d(a)
+        if n and (n & (n - 1)) == 0:
+            return _unp.fft.fft(z, *args, **kw)     # ulab's own fast path
+        m, w, vf = _bluestein_tables(n)
+        return _fft_bluestein(z, n, m, w, vf)
+
+    def _ifft(a, *args, **kw):
+        z, n = _as_complex_1d(a)
+        if n and (n & (n - 1)) == 0:
+            return _unp.fft.ifft(z, *args, **kw)
+        # ifft(x) = conj(fft(conj(x)))/n -- one code path, no second table set.
+        m, w, vf = _bluestein_tables(n)
+        r = _fft_bluestein(z.real - z.imag * 1j, n, m, w, vf)
+        return (r.real - r.imag * 1j) / n
+
+    class _FftProxy:
+        fft  = staticmethod(_fft)
+        ifft = staticmethod(_ifft)
+        def __getattr__(self, k): return getattr(_unp.fft, k)
+
     class _LinalgProxy:
         eig   = staticmethod(_eig);   qr   = staticmethod(_qr)
         svd   = staticmethod(_svd);   solve = staticmethod(_solve)
@@ -174,6 +264,7 @@ try:
         def __getattr__(self, k): return getattr(_unp.linalg, k)
     class _NumpyProxy:
         linalg = _LinalgProxy()
+        fft    = _FftProxy()
         dot    = staticmethod(_dot)
         array  = staticmethod(_array)
         sum    = staticmethod(_sum)

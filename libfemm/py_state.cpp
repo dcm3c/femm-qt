@@ -24,6 +24,7 @@ extern "C" {
 #include "py/stackctrl.h"
 #include "py/mpprint.h"
 #include "py/repl.h"
+#include "py/stream.h"   // MP_STREAM_POLL_WR, for mp_hal_stdio_poll below
 #include "extmod/vfs.h"
 #include "extmod/vfs_posix.h"
 }
@@ -46,6 +47,11 @@ static char s_heap[2 * 1024 * 1024];
 // embed port's port/mphalport.c is excluded from the build) so that print(),
 // tracebacks and sys.stdout can be redirected to the GUI console. When no sink
 // is set, output goes to the process stdout (headless/TCP mode).
+//
+// This is the ONLY route out. A GUI-subsystem process has no valid fd 1, so
+// anything reaching for one raises EBADF instead of printing -- which is what
+// happened when MICROPY_PY_SYS_STDFILES first went on and the vfs_posix
+// definitions of sys.stdout won the link. See the rename in CMakeLists.txt.
 // ---------------------------------------------------------------------------
 static PyOutputSink s_output_sink = nullptr;
 
@@ -85,6 +91,29 @@ extern "C" mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
     if (s_output_sink) s_output_sink(str, len);
     else std::fwrite(str, 1, len, stdout);
     return len;
+}
+
+// The other two halves of the mp_hal stdio interface. Nothing called them until
+// sys_stdio_mphal.c started linking (see the vfs_posix_file.c symbol rename in
+// the top-level CMakeLists.txt); its stdio_read/stdio_ioctl reference them, so
+// they have to exist or the link fails.
+//
+// stdin is read straight from the process, which is right when there is one
+// (headless in a terminal) and must not hang when there is not. A GUI-subsystem
+// process has no console at all, and scripts run on the GUI thread, so a
+// blocking read there would wedge the whole program. getchar() returns EOF
+// immediately on an invalid descriptor, and EOF is reported as Ctrl-D (4),
+// which is what MicroPython's own ports return -- verified not to hang in a
+// console-less GUI. builtins.input() does not exist in this port at all, so
+// sys.stdin.read() is the only way a script can get here.
+extern "C" int mp_hal_stdin_rx_chr(void) {
+    int c = std::getchar();
+    return (c == EOF) ? 4 : c;
+}
+
+// Always writable, never readable -- consistent with the above.
+extern "C" uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
+    return poll_flags & MP_STREAM_POLL_WR;
 }
 
 // ---------------------------------------------------------------------------

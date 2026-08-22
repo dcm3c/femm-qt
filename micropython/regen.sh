@@ -69,9 +69,15 @@ cp "$UP"/lib/crypto-algorithms/sha256.c "$UP"/lib/crypto-algorithms/sha256.h \
 # gchelper* from shared/runtime, so bundle both.
 #
 # sys_stdio_mphal.c joins them: modsys.c only DECLARES mp_sys_stdout_obj and
-# friends, so without it MICROPY_PY_SYS_STDFILES cannot link and sys.stdout
-# does not exist. It writes through mp_hal_stdout_tx_strn, which is the route
-# print() already takes to the console.
+# friends, and this is the definition that writes through
+# mp_hal_stdout_tx_strn -- the route to femm-qt's output sink, i.e. the GUI
+# console. DO NOT drop it on the reasoning that the link succeeds without it.
+# It does: extmod/vfs_posix_file.c also defines those three symbols, on raw
+# POSIX descriptors, and it is pulled in regardless for ordinary file I/O. That
+# builds cleanly and then sends every print() to fd 1, which a GUI-subsystem
+# process does not have -- the EBADF bug fixed in ff805af. femm-qt's
+# CMakeLists.txt renames the posix ones aside so this file is the one that
+# links; if a version bump moves either file, that rename is what to check.
 cp "$UP"/shared/runtime/interrupt_char.c \
    "$UP"/shared/runtime/sys_stdio_mphal.c \
    micropython_embed/shared/runtime/
