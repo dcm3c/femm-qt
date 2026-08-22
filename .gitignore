@@ -46,6 +46,12 @@ packaging/output/
 
 # Images, archives, documents — except the GUI icons and the manual's figures
 *.pdf
+# ...except the two PDFs the installers actually ship. They are build
+# products, but rebuilding them needs a full TeX installation, so a
+# source checkout without them means no Help > Manual on any platform
+# but Windows -- which was the case until 2026-08-22.
+!manual/manual.pdf
+!octavefemm/manual/octavefemm.pdf
 *.png
 !gui/icons/*.png
 # The manual's figures are sources, not build products: since the manual moved

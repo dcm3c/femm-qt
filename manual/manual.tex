@@ -1606,10 +1606,18 @@ Material from other material libraries or models can be imported by selecting th
 ``Import Materials'' option from the right-button menu that appears when the pointer
 is over the root-level folder of either the Library or Model materials lists.
 
-The materials library should be located in the same directory as
-the FEMM executable files, under the filename \verb+matlib.dat+.
-If you move the materials library, femm will not be able to find
-it.
+On Windows, Linux and FreeBSD, the materials library is located in the
+same directory as the FEMM executable files, under the filename
+\verb+matlib.dat+.  If you move the materials library, femm will not be
+able to find it.
+
+On macOS the application bundle is read-only once it has been signed, so
+the library cannot live inside it.  FEMM instead keeps your copy in
+\verb+~/Library/Application Support/FEMM/+, copying it there the first
+time it is needed from a pristine copy inside the bundle.  That copy is
+the one your edits go into, and it is shared by every copy of FEMM on the
+machine.  Deleting it restores the materials FEMM was shipped with, since
+the next run seeds a fresh one.
 
 \subsubsection{Circuit Properties}
 
