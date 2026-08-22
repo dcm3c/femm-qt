@@ -1144,6 +1144,22 @@ void DocumentBase::TranslateMove(double dx, double dy, int EditAction)
     EnforcePSLG();
 }
 
+// A permanent magnet's magnetization direction is part of its orientation, so a
+// geometric transform has to carry it along -- rotating or mirroring a magnet
+// without it leaves the body moved and the field still pointing the old way.
+// Guarded on coercivity exactly as OF does (MOVECOPY.CPP:659-664): MagDir is
+// meaningless for a non-magnet, and rotating it there would dirty the file for
+// no reason. materialCoercivity() is a DocumentBase hook that only the
+// magnetics document answers, so the three scalar physics get 0 and skip.
+//
+// MagDirFctn (the position-dependent form) is deliberately left alone, as OF
+// leaves it: where it is set the solver ignores MagDir entirely, so there is
+// nothing to correct.
+bool DocumentBase::blockIsMagnet(const FBlockLabel &b) const
+{
+    return materialCoercivity(b.BlockType) != 0.0;
+}
+
 void DocumentBase::RotateMove(CComplex c, double t, int EditAction)
 {
     if (EditAction == 1 || EditAction == 3) {
@@ -1168,6 +1184,7 @@ void DocumentBase::RotateMove(CComplex c, double t, int EditAction)
         if ((EditAction == 2 || EditAction == 4) && b.IsSelected) {
             CComplex p = (CComplex(b.x, b.y) - c) * rot + c;
             b.x = p.re; b.y = p.im;
+            if (blockIsMagnet(b)) b.MagDir += t;
         }
     }
     EnforcePSLG();
@@ -1257,6 +1274,12 @@ void DocumentBase::MirrorSelected(double x0, double y0, double x1, double y1, in
             if (blocklist[i].IsSelected) {
                 FBlockLabel b = blocklist[i];
                 mirrorPt(b.x, b.y, b.x, b.y);
+                if (blockIsMagnet(b)) {
+                    // Reflect the direction in the same line, not just the
+                    // point: the OF expression, MOVECOPY.CPP:1949.
+                    CComplex d = exp(CComplex(0, b.MagDir * PI / 180.0));
+                    b.MagDir = (180.0 / PI) * arg(p * (d / p).Conj());
+                }
                 b.IsSelected = false;
                 blocklist.push_back(b);
             }
@@ -1405,6 +1428,9 @@ void DocumentBase::RotateCopy(CComplex c, double t, int ncopies, int EditAction)
                     FBlockLabel b = blocklist[i];
                     CComplex p = (CComplex(b.x, b.y) - c) * rot + c;
                     b.x = p.re; b.y = p.im;
+                    // t*(nc+1), the angle THIS copy was turned through, not the
+                    // per-copy step -- copy 3 of a 30 degree sweep is at 90.
+                    if (blockIsMagnet(b)) b.MagDir += t * (nc + 1);
                     b.IsSelected = false;
                     blocklist.push_back(b);
                 }

@@ -120,6 +120,10 @@ public:
     // Transforms (EditAction: 0=nodes, 1=segs, 2=blocks, 3=arcs, 4=group)
     void markEndpointsOfSelectedSegments(int EditAction);
     void TranslateMove(double dx, double dy, int EditAction);
+    // True when this label's material is a permanent magnet, i.e. when its
+    // MagDir has to follow a geometric transform. See document.cpp.
+    bool blockIsMagnet(const FBlockLabel &b) const;
+
     void RotateMove(CComplex c, double t, int EditAction);
     void ScaleMove(double bx, double by, double sf, int EditAction);
     void MirrorSelected(double x0, double y0, double x1, double y1, int ea);
