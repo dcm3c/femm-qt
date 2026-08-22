@@ -117,6 +117,7 @@ function openfemm(; headless::Bool=false, port::Int=48015)
         candidates = String[]
         for d in searchdirs
             push!(candidates, joinpath(d, exename * ".exe"))                               # Windows
+            push!(candidates, joinpath(d, "femm_gui.app", "Contents", "MacOS", exename))   # macOS: inside the bundle
             push!(candidates, joinpath(d, exename))                                        # Linux / macOS CLI
             push!(candidates, joinpath(d, exename * ".app", "Contents", "MacOS", exename)) # macOS .app
         end

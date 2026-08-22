@@ -13,10 +13,19 @@
 set -u
 
 here="$(cd "$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")" && pwd)"
-LUA4="$here/lua4"
 FEMMLUA="$here/femm.lua"
 
-[ -x "$LUA4" ]    || { echo "femm-lua: cannot find lua4 next to this script: $LUA4" >&2; exit 1; }
+# lua4 sits beside this script in a source tree, but inside femm_gui.app in a
+# macOS distribution: it is the only BINARY among the client-side files, so it
+# ships inside the bundle, where the app's signature and notarisation ticket
+# already cover it. A loose Mach-O beside a signed .app carries its own
+# quarantine bit and cannot have a ticket stapled to it.
+LUA4="$here/lua4"
+if [ ! -x "$LUA4" ] && [ -x "$here/femm_gui.app/Contents/MacOS/lua4" ]; then
+    LUA4="$here/femm_gui.app/Contents/MacOS/lua4"
+fi
+
+[ -x "$LUA4" ]    || { echo "femm-lua: cannot find lua4 beside this script or inside femm_gui.app, looked in: $here" >&2; exit 1; }
 [ -f "$FEMMLUA" ] || { echo "femm-lua: cannot find femm.lua next to this script: $FEMMLUA" >&2; exit 1; }
 
 # FEMM_DIR: the bundled femm_gui / femm_headless live in this folder, so always

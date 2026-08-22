@@ -68,6 +68,7 @@ ninja
 APP="bin/femm_gui.app"
 APP_BIN="$APP/Contents/MacOS"
 APP_FRAMEWORKS="$APP/Contents/Frameworks"
+APP_RES="$APP/Contents/Resources"
 
 # ---- 1. Bundle Qt frameworks and dependent dylibs --------------------
 # macdeployqt is noisy: it prints a wall of "Cannot resolve rpath" and
@@ -99,7 +100,25 @@ fi
 # no-GUI front end that the language bindings (OctaveFEMM, pyFEMM, MathFEMM,
 # JuliaFEMM) start when asked for a headless session — they locate it via
 # $FEMM_DIR/femm_headless, so it must sit beside femm_gui in MacOS/.  Both rely
-# on the solvers and .dat files being co-located here (exeDir()).
+# on the solvers being co-located here (exeDir()).
+#
+# lua4 is here for a different reason, and it cuts against where it logically
+# belongs. Every binding on every platform lives OUTSIDE the program directory
+# -- the Windows installer puts octavefemm under app/mfiles, mathfemm under
+# app/mathfemm, juliafemm under app/juliafemm (packaging/femm-qt.iss) -- and
+# lua4 is a CLIENT interpreter that nothing inside the bundle ever invokes.
+#
+# But it is also the only BINARY among the client-side pieces. femm.lua,
+# openfemm.m, juliafemm.jl, scifemm.sci and femm.py are plain text and
+# Gatekeeper ignores them; a loose Mach-O shipped beside the .app is a separate
+# object with its own quarantine bit, and a notarisation ticket cannot be
+# stapled to a bare executable -- only to a .app, .dmg or .pkg. Downloaded
+# unsigned, it is refused outright from Terminal. Inside the bundle it is
+# covered by the same codesign --deep and the same stapled ticket as everything
+# else, for free.
+#
+# So the binary ships inside and its text companions ship outside, and
+# femm-lua.sh looks in both places (see luafemm/femm-lua.sh).
 BUNDLE_EXES="fkn belasolv hsolv csolv femm_headless lua4"
 for exe in $BUNDLE_EXES; do
     if [ -f "bin/$exe" ]; then
@@ -168,29 +187,147 @@ for fw in $PRUNE_FRAMEWORKS; do
     fi
 done
 
-# ---- 3. Material libraries (data files, not code) -------------------
-# Resolved via exeDir() -- from the directory of the running executable -- so
-# both binaries must reach them. femm_gui runs from the bundle; femm_headless
-# runs from bin/. The material-library editor WRITES these files, so a second
-# copy would silently drift; instead keep ONE real copy in the bundle (where
-# the GUI reads/writes it, and which a distributed .app must contain) and point
-# bin/ at it with relative symlinks. The links live only in the dev bin/, so
-# distribution ships just the bundle. Done AFTER macdeployqt so it never treats
-# the .dat files as Mach-O binaries.
-cp ../matlibs/*.dat "$APP_BIN/"
-chmod u+w "$APP_BIN"/*.dat   # Homebrew/source files may be read-only
-for dat in "$APP_BIN"/*.dat; do
-    ln -sf "femm_gui.app/Contents/MacOS/$(basename "$dat")" "bin/$(basename "$dat")"
-done
+# ---- 3. Material libraries (read-only seeds) ------------------------
+# These four are the only files femm-qt WRITES beside itself, and the write is
+# easy to trigger: the material-library dialog saves on every OK, edited or not.
+# So they cannot live in Contents/MacOS/, which codesign seals as nested code --
+# the first OK would invalidate the signature of a distributed .app.
+#
+# They go in Contents/Resources/ as read-only ORIGINALS. At runtime
+# libfemm/materialLibPath() copies each one, on first use, to
+# ~/Library/Application Support/FEMM/ and reads and writes it there; the bundle
+# is never written to. See docs/macos-appsupport-material-libs.md.
+#
+# Only in the bundle: nothing resolves a library path from bin/ any more (see
+# step 3c). No chmod either -- the seeds are meant to stay read-only, and
+# materialLibPath() is what makes the USER's copy writable.
+#
+# Still done AFTER macdeployqt, which chokes on non-Mach-O files it finds.
+mkdir -p "$APP_RES"
+cp ../matlibs/*.dat "$APP_RES/"
 
-# Lua 4 legacy client assets. These live in bin/ -- NOT the app bundle --
-# next to the lua4 interpreter and femm_headless that CMake builds there.
-# femm-lua.sh is self-contained: it sets FEMM_DIR to its own folder and loads
-# lua4 + femm.lua and finds the FEMM executables (including femm_gui.app) from
-# there, so it must sit beside them in bin/, matching the other platforms'
-# build scripts (linux_build.sh / freebsd_build.sh).
+# Lua 4 legacy client assets -- the TEXT half. These stay outside the bundle
+# with every other binding's client files; only the lua4 binary goes inside, for
+# signing (step 2). femm-lua.sh finds the interpreter and the engine wherever
+# they are: beside itself in a source tree, or inside femm_gui.app in a
+# distribution. Matches the other platforms' build scripts, where everything is
+# beside everything (linux_build.sh / freebsd_build.sh).
 cp ../luafemm/femm.lua ../luafemm/femm-lua.sh bin/
 chmod +x bin/femm-lua.sh
+
+# ---- 3b2. The manual ------------------------------------------------
+# Help > Manual (F1) opens applicationDirPath()/manual.pdf, which is where the
+# Windows installer and the Linux build script put it -- beside the executable.
+# A bundle cannot: codesign seals Contents/MacOS/ as nested code, and documents
+# belong in Resources/ anyway. mainwindow.cpp falls back to ../Resources/ on
+# macOS. Without this the Help menu has never worked in a macOS build.
+if [ -f ../manual/manual.pdf ]; then
+    cp ../manual/manual.pdf "$APP_RES/"
+else
+    echo "NOTE: ../manual/manual.pdf not found -- Help > Manual will be dead in"
+    echo "      this bundle. Build the manual first if that matters."
+fi
+
+# ---- 3d. Examples, bindings and the remaining documents -------------
+# A macOS distribution is the .app and nothing else -- there is no {app}
+# directory to hold sibling folders the way the Windows installer has. So the
+# read-only companions go where read-only companions belong on this platform,
+# Contents/Resources, and users reach them at
+#   /Applications/femm_gui.app/Contents/Resources/...
+# which is how Julia and Mathematica ship their equivalents.
+#
+# The examples here are read-only MASTERS. They cannot be used in place:
+# analysis writes the .fem back and drops an .ans beside it, and an example
+# SCRIPT is worse -- open("model.fem") then mi_saveas("temp.fem"), both relative
+# to the script's own directory, which is where -run and the GUI's script
+# toolbar both chdir. Inside the bundle the saveas fails outright.
+#
+# So packaging/macos_dmg.sh copies this directory back out as a loose
+# `Examples` folder in the DMG, which the user drags somewhere writable -- the
+# same arrangement as c:\femm-qt\examples on Windows. Keeping the masters here
+# as well costs half a megabyte and means the examples survive throwing the DMG
+# away.
+#
+# The example list comes out of the WINDOWS INSTALLER MANIFEST rather than being
+# a second list to keep in step -- packaging/femm-qt.iss already curates exactly
+# which files ship, and ../examples in a working tree also holds solver output
+# and scratch models that must not go out. Its paths are relative to packaging/,
+# and the DestDir is the only one ending in examples", so no backslash matching
+# is needed.
+mkdir -p "$APP_RES/examples"
+ex_n=0
+ex_missing=0
+while IFS= read -r rel; do
+    [ -n "$rel" ] || continue
+    src="../packaging/$rel"
+    if [ -f "$src" ]; then
+        cp "$src" "$APP_RES/examples/"
+        ex_n=$((ex_n + 1))
+    else
+        ex_missing=$((ex_missing + 1))
+        echo "WARNING: example listed in femm-qt.iss but not found: $src"
+    fi
+done < <(awk -F'"' '/DestDir: .*examples";/ { print $2 }' ../packaging/femm-qt.iss \
+         | tr '\\' '/')
+if [ "$ex_n" -eq 0 ]; then
+    echo "ERROR: no examples extracted from ../packaging/femm-qt.iss -- the"
+    echo "       manifest format must have changed. Fix the awk above rather"
+    echo "       than shipping a bundle with no examples."
+    exit 1
+fi
+echo "  examples: $ex_n copied${ex_missing:+, $ex_missing missing}"
+
+# The language bindings. Client-side text loaded by Octave/Julia/Mathematica/
+# Scilab/Python, never by femm-qt itself, so they are read-only here and need no
+# per-user copy. Directory names match the Windows installer's so one set of
+# instructions covers both. lua4 itself is NOT here -- it is a binary and lives
+# in MacOS/ for signing (step 2).
+mkdir -p "$APP_RES/bindings"
+copy_binding() {         # $1 = destination name, $2... = source files
+    dest="$APP_RES/bindings/$1"; shift
+    mkdir -p "$dest"
+    for f in "$@"; do
+        [ -f "$f" ] && cp "$f" "$dest/"
+    done
+}
+copy_binding mfiles    ../octavefemm/*.m
+copy_binding mathfemm  ../mathfemm/mathfemm.m
+copy_binding scifemm   ../scifemm/scifemm.sci
+copy_binding juliafemm ../juliafemm/juliafemm.jl
+copy_binding pyfemm    ../pyfemm/femm.py
+copy_binding luafemm   ../luafemm/femm.lua ../luafemm/README.md
+
+# The remaining documents, beside manual.pdf from step 3b2.
+for doc in ../readme.txt ../octavefemm/manual/octavefemm.pdf \
+           ../luafemm/femm-lua.pdf ../mathfemm/usage.nb; do
+    [ -f "$doc" ] && cp "$doc" "$APP_RES/"
+done
+
+# ---- 3c. Remove the loose copies of everything now in the bundle -----
+# CMake links these into bin/ and step 2 copied them into Contents/MacOS/.
+# Leaving both behind is not just clutter: they are two exeDir()s, and only the
+# bundle's has the solvers, the material-library seeds and the python assets
+# beside it. A stray run of bin/femm_headless would look like femm-qt and
+# behave differently.
+#
+# Nothing needs them now. The regression suite drives the bundle (e5ad776) and
+# all six language bindings resolve <dir>/femm_gui.app/Contents/MacOS/<exe>
+# ahead of the bare form, so they reach the bundle even with FEMM_DIR pointing
+# here (8302faa).
+#
+# lua4 goes too: step 2 copies it into the bundle so it is inside the signature,
+# and femm-lua.sh finds it there. Leaving a loose copy would put an unsigned
+# Mach-O beside a signed .app, which is the situation bundling it avoids.
+#
+# bin/python and bin/pybridge-worker also stay: CMake stages them there and
+# step 3b copies them in, so bin/ is their source, not a duplicate.
+#
+# A bare `ninja` recreates the binaries here without reassembling the bundle.
+# That is the point of the staleness check in testing/_verify_all.sh.
+for stale in fkn belasolv hsolv csolv femm_headless lua4; do
+    rm -f "bin/$stale"
+done
+rm -f bin/*.dat
 
 # ---- 3b. Python scripting assets ------------------------------------
 # init_py() puts exeDir()+"python" on sys.path and pybridge_host.cpp looks for
@@ -228,9 +365,6 @@ done
 # Placed AFTER macdeployqt, which inspects what it finds and chokes on
 # non-Mach-O files, and BEFORE the re-sign below, so the notices land inside the
 # signature instead of invalidating it.
-APP_RES="$APP/Contents/Resources"
-mkdir -p "$APP_RES"
-
 copy_license() {        # $1 = source path, $2 = name inside Resources/
     if [ -f "$1" ]; then
         cp "$1" "$APP_RES/$2"

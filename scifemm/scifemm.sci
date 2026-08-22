@@ -81,13 +81,17 @@ function openfemm(varargin)
 
     if type(jsock) == 1 then  // [] is type 1 (double); Java object is not
         // Find executable
-        candidates = list();
+        dirs = list();
         femmdir = getenv('FEMM_DIR', '');
         if femmdir <> '' then
-            candidates($+1) = femmdir + filesep() + exename;
+            dirs($+1) = femmdir + filesep();
         end
-        candidates($+1) = scifemm_path + '..' + filesep() + 'build' + filesep() + 'bin' + filesep() + exename;
-        candidates($+1) = scifemm_path + exename;
+        dirs($+1) = scifemm_path + '..' + filesep() + 'build' + filesep() + 'bin' + filesep();
+        dirs($+1) = scifemm_path;
+        candidates = list();
+        for k = 1:length(dirs)
+            candidates($+1) = dirs(k) + exename;
+        end
 
         // In each candidate directory try every platform's executable form;
         // the first that exists wins, so no OS branching is needed. The .app
@@ -95,9 +99,13 @@ function openfemm(varargin)
         // <exename>.app, whose real executable is at Contents/MacOS/<exename>);
         // that path only exists on macOS and is harmlessly skipped elsewhere.
         macsuffix = '.app' + filesep() + 'Contents' + filesep() + 'MacOS' + filesep() + exename;
+        // femm_headless has no .app of its own, so without this form a
+        // FEMM_DIR pointing at build/bin would launch the loose copy there
+        // instead of the one inside the bundle.
+        bundleform = 'femm_gui.app' + filesep() + 'Contents' + filesep() + 'MacOS' + filesep() + exename;
         exe = '';
         for k = 1:length(candidates)
-            forms = [candidates(k) + '.exe', candidates(k), candidates(k) + macsuffix];
+            forms = [candidates(k) + '.exe', dirs(k) + bundleform, candidates(k), candidates(k) + macsuffix];
             for j = 1:size(forms, '*')
                 if isfile(forms(j)) then
                     exe = forms(j);

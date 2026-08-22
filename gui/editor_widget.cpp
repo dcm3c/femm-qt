@@ -11,6 +11,7 @@
 
 #include "editor_widget.h"
 #include "coord_display.h"
+#include "zoom_fit.h"
 #include "document.h"
 #include "mag_document.h"
 #include "elec_document.h"
@@ -144,7 +145,7 @@ void EditorWidget::zoomFit()
     if (dx < 1e-12) dx = 1.0;
     if (dy < 1e-12) dy = 1.0;
 
-    double margin = 0.1;
+    double margin = kZoomFitMargin;   // shared; see zoom_fit.h
     xmin -= dx * margin; xmax += dx * margin;
     ymin -= dy * margin; ymax += dy * margin;
     dx = xmax - xmin; dy = ymax - ymin;

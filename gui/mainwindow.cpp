@@ -2308,7 +2308,18 @@ void MainWindow::createLeftToolbars()
 
     QMenu *help = menuBar()->addMenu(tr("&Help"));
     help->addAction(tr("&Manual"), QKeySequence(Qt::Key_F1), [this]() {
+        // Beside the executable on Windows and Linux, where the installer and
+        // the build scripts put it. A macOS bundle cannot do that: a document
+        // in Contents/MacOS/ is sealed as nested code by codesign, so the
+        // manual ships in Contents/Resources/ like every other bundled
+        // document -- see macos_build.sh and
+        // docs/macos-appsupport-material-libs.md for the same rule applied to
+        // the material libraries.
         QString pdfPath = QApplication::applicationDirPath() + "/manual.pdf";
+#ifdef Q_OS_MAC
+        if (!QFile::exists(pdfPath))
+            pdfPath = QApplication::applicationDirPath() + "/../Resources/manual.pdf";
+#endif
         if (QFile::exists(pdfPath))
             QDesktopServices::openUrl(QUrl::fromLocalFile(pdfPath));
         else

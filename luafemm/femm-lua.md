@@ -263,6 +263,37 @@ REM Windows
 set FEMM_DIR=C:\path\to\femm-qt\build\bin
 ```
 
+**macOS, from an installed `.app`.** A distributed femm-qt has no `bin/`
+directory -- everything lives inside the bundle -- so point `FEMM_DIR` at the
+bundle's executable folder instead:
+
+```bash
+export FEMM_DIR=/Applications/femm_gui.app/Contents/MacOS
+```
+
+The binding files themselves ship **inside** the bundle on macOS, since a
+distributed `.app` has no sibling folders to put them in:
+
+```
+/Applications/femm_gui.app/Contents/Resources/bindings/luafemm
+```
+
+The examples are alongside them, in `Contents/Resources/examples/` -- but those
+are read-only **masters**. Use the `Examples` folder the DMG carries next to the
+app: drag it somewhere of your own and work there. Example scripts need that,
+not just convenience: the FEMM idiom is `open("model.fem")` followed by
+`mi_saveas("temp.fem")` so the original is never modified, and both paths are
+relative to the script's own directory. Inside the read-only bundle the save
+fails and the script stops.
+
+Either setting works from a source build. The bundle path is worth preferring
+even there: `femm_headless` has no `.app` form, so with `FEMM_DIR` set to
+`build/bin` the bindings launch the loose copy in `bin/` while the GUI comes
+from the bundle. Both find the material libraries -- on macOS FEMM keeps the
+writable copies in `~/Library/Application Support/FEMM/`, shared by every
+femm-qt process on the machine -- but pointing at the bundle keeps one binary
+location rather than two.
+
 ---
 
 ## Troubleshooting

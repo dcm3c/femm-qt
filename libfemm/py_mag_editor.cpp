@@ -5,6 +5,7 @@
 // Operates on MagDocument via femm_py::Module.
 #include "py_mag_editor.h"
 #include "utf8_io.h"
+#include "material_lib_path.h"
 #include "py_mag_postproc.h"
 #include "py_editor_common.h"
 #include "mag_document.h"
@@ -522,7 +523,7 @@ void register_mag_editor_py(MagDocument *doc) {
 
     m.def("mi_getmaterial", [](const std::string &matname) {
         check_doc(s_doc, MAGERR);
-        std::string libPath = exeDir() + "matlib.dat";
+        std::string libPath = materialLibPath("matlib.dat");
         FILE *fp = femm_fopen(libPath, "rt");
         if (!fp) throw std::runtime_error("Couldn't open " + libPath);
 

@@ -78,6 +78,86 @@ try:
     def _norm(a):     return _clinalg_norm(_asc(a))
     def _dot(a, b):   return _clinalg_dot(_asc(a), _asc(b))
 
+    # Built on the kernels above rather than on anything new. numpy spells the
+    # rank of a matrix `matrix_rank`; this proxy shipped it as `rank`, which is
+    # not a numpy name at all, so pasted code could not find it. `rank` stays as
+    # an alias -- scripts here may already use it.
+    def _eigvals(a):  return _eig(a)[0]
+
+    def _lstsq(a, b, rcond=None):
+        """numpy returns (solution, residuals, rank, singular values). The
+        residuals are the sum of squares, and numpy gives an EMPTY array rather
+        than a number when the system is underdetermined or rank-deficient,
+        because there is no unique residual to report."""
+        if rcond is not None:
+            # rcond cuts small singular values, which changes the answer. It is
+            # not implemented, so it must refuse rather than be dropped.
+            raise NotImplementedError("lstsq(): rcond= is not supported")
+        A = _asc(a)
+        B = _asc(b)
+        x = _clinalg_dot(_clinalg_pinv(A), B)
+        rk = _clinalg_rank(A)
+        sv = _clinalg_svd(A)[1]
+        m = A.shape[0]
+        n = A.shape[1] if len(A.shape) > 1 else 1
+        if rk == n and m > n:
+            d = _clinalg_dot(A, x) - B
+            t = 0.0
+            for k in range(len(d)):
+                t += abs(d[k]) ** 2
+            res = _unp.zeros(1)
+            res[0] = t
+        else:
+            res = _unp.zeros(0)
+        return (x, res, rk, sv)
+
+    def _roots(p):
+        """Roots of a polynomial, coefficients highest power first -- the
+        eigenvalues of its companion matrix, which is why this belongs next to
+        eig rather than anywhere else. Leading zeros are dropped and trailing
+        ones become roots at the origin, as numpy does.
+
+        Returns complex, always. numpy hands back a real array when every root
+        happens to be real; this proxy's eig is complex throughout and
+        collapsing on a zero imaginary part is the thing femm-qt deliberately
+        stopped doing everywhere else."""
+        c = [complex(v) for v in (p if isinstance(p, (list, tuple)) else _asc(p))]
+        nz = [i for i in range(len(c)) if c[i] != 0]
+        if not nz:
+            return _unp.zeros(0) * (1 + 0j)
+        trailing = len(c) - nz[-1] - 1
+        c = c[nz[0]:nz[-1] + 1]
+        n = len(c) - 1
+        r = []
+        if n >= 1:
+            A = _unp.zeros((n, n)) * (1 + 0j)
+            row = _unp.zeros((n,)) * (1 + 0j)
+            for j in range(n):
+                row[j] = -c[j + 1] / c[0]
+            A[0] = row
+            for i in range(1, n):
+                row = _unp.zeros((n,)) * (1 + 0j)
+                row[i - 1] = 1.0
+                A[i] = row
+            r = [complex(v) for v in _eig(A)[0]]
+        out = _unp.zeros(len(r) + trailing) * (1 + 0j)
+        for k in range(len(r)):
+            out[k] = r[k]
+        return out
+
+    def _where(*args):
+        """numpy's where does two different jobs. With three arguments it
+        selects element-wise, which ulab implements; with one it is simply
+        nonzero(), which ulab also implements -- but ulab's where demands three,
+        so the one-argument form (the more common of the two in real code) was
+        raising a TypeError about positional arguments."""
+        if len(args) == 1:
+            return _unp.nonzero(args[0])
+        if len(args) == 3:
+            return _unp.where(*args)
+        raise ValueError("where() takes either 1 or 3 arguments, got %d"
+                         % len(args))
+
     # np.array on a complex Python list ("[[1+2j, 3], ...]") fails in ulab
     # ("can't convert complex to float"). Patch np.array to fall back to building
     # from real+imag parts, which ulab does accept. Re()/Im() (femm globals)
@@ -183,10 +263,22 @@ try:
     # evaluated cyclically at length M = next power of two >= 2N-1.
     #
     # Powers of two keep ulab's own fast path untouched. Everything else costs
-    # one forward and one inverse transform of length M -- about 3x a same-size
-    # transform, since M overshoots N. v and its transform depend only on N, so
-    # they are cached: a script doing thousands of equal-length transforms
-    # (which is the usual shape) builds them once.
+    # one forward and one inverse transform of length M, and M is at least 2N,
+    # so the work is 2*(M/N)*(log M / log N) times a same-size transform: about
+    # 4.5x where M lands just above 2N, and about 10x for an N just past a power
+    # of two, where M overshoots to nearly 4N. Measured on this machine at
+    # N=255/256, that is 41 us against 8 us.
+    #
+    # It really is all transform work and not per-call overhead: cost per
+    # butterfly comes out at 0.002-0.003 us on both paths for N >= 256, so the
+    # ratio is simply the butterfly count. (Below that a fixed few microseconds
+    # per call dominates either way.) Nothing here can be shaved -- a
+    # convolution needs two transforms, and ulab offers no length but a power of
+    # two to do them at.
+    #
+    # v and its transform depend only on N, so they are cached: a script doing
+    # thousands of equal-length transforms (which is the usual shape) builds
+    # them once.
     _bluestein_cache = {}
 
     def _bluestein_tables(n):
@@ -226,33 +318,139 @@ try:
         c = _unp.fft.ifft(_unp.fft.fft(pad) * vf)
         return w * c[0:n]
 
-    def _as_complex_1d(a):
+    def _as_complex(a):
         z = a if hasattr(a, 'dtype') else _array(a)
-        z = z * (1 + 0j)
-        n = 1
-        for d in z.shape:
-            n *= d
-        return z.reshape((n,)), n
+        return z * (1 + 0j)
 
-    def _fft(a, *args, **kw):
-        z, n = _as_complex_1d(a)
+    def _fft_1d(z, n, inv):
+        """One transform of a 1-D complex array. The only place the two
+        implementations are chosen between."""
         if n and (n & (n - 1)) == 0:
-            return _unp.fft.fft(z, *args, **kw)     # ulab's own fast path
+            return _unp.fft.ifft(z) if inv else _unp.fft.fft(z)   # ulab's own
         m, w, vf = _bluestein_tables(n)
-        return _fft_bluestein(z, n, m, w, vf)
-
-    def _ifft(a, *args, **kw):
-        z, n = _as_complex_1d(a)
-        if n and (n & (n - 1)) == 0:
-            return _unp.fft.ifft(z, *args, **kw)
+        if not inv:
+            return _fft_bluestein(z, n, m, w, vf)
         # ifft(x) = conj(fft(conj(x)))/n -- one code path, no second table set.
-        m, w, vf = _bluestein_tables(n)
         r = _fft_bluestein(z.real - z.imag * 1j, n, m, w, vf)
         return (r.real - r.imag * 1j) / n
 
+    def _norm_factor(norm, n, inv):
+        """Scale to apply ON TOP of what _fft_1d already produces, which is
+        numpy's default 'backward': nothing on the forward transform, 1/n on
+        the inverse. 'ortho' is Mathematica's convention, which is the one a
+        script ported from there needs."""
+        if norm is None or norm == "backward":
+            return 1.0
+        if norm == "ortho":
+            r = _math.sqrt(n)
+            return r if inv else (1.0 / r)
+        if norm == "forward":
+            return float(n) if inv else (1.0 / n)
+        raise ValueError("invalid norm %r; expected 'backward', 'ortho' or "
+                         "'forward'" % (norm,))
+
+    def _resize_axis(z, n, axis):
+        """numpy's n=: zero-pad or truncate along the transform axis, so the
+        transform is of length n rather than of the input's length."""
+        if not isinstance(n, int) or n < 1:
+            raise ValueError("invalid number of FFT data points (%r)" % (n,))
+        shp = z.shape
+        if len(shp) == 1:
+            if n == shp[0]:
+                return z
+            k = n if n < shp[0] else shp[0]
+            out = _unp.zeros((n,)) * (1 + 0j)
+            out[0:k] = z[0:k]
+            return out
+        if axis == 0:
+            return _resize_axis(z.transpose(), n, -1).transpose()
+        rows, cols = shp
+        if n == cols:
+            return z
+        k = n if n < cols else cols
+        out = _unp.zeros((rows, n)) * (1 + 0j)
+        for i in range(rows):
+            row = _unp.zeros((n,)) * (1 + 0j)
+            row[0:k] = z[i][0:k]
+            out[i] = row
+        return out
+
+    def _fft_along(z, inv, axis):
+        """Transform along one axis of a 1- or 2-D complex array, like numpy:
+        the shape is preserved and each line is transformed on its own. ulab is
+        built with ULAB_MAX_DIMS=2, so there is no third case."""
+        shp = z.shape
+        if len(shp) == 1:
+            if axis not in (0, -1):
+                raise ValueError("axis %r is out of bounds for a 1-D array"
+                                 % (axis,))
+            return _fft_1d(z, shp[0], inv)
+        if axis == 0:
+            # Columns. ulab has no axis argument anywhere, so borrow the rows
+            # case; transpose is cheap next to the transforms themselves.
+            return _fft_along(z.transpose(), inv, -1).transpose()
+        if axis not in (1, -1):
+            raise ValueError("axis %r is out of bounds for a 2-D array"
+                             % (axis,))
+        rows, cols = shp
+        out = _unp.zeros(shp) * (1 + 0j)
+        for i in range(rows):
+            out[i] = _fft_1d(z[i], cols, inv)
+        return out
+
+    # numpy's own default is axis=-1, i.e. ROWS. MATLAB's fft() of a matrix
+    # transforms COLUMNS, so a script ported from there wants axis=0 (or a
+    # transpose) -- silently the wrong answer otherwise, since both shapes are
+    # legal and neither complains.
+    def _fft_1axis(a, n, axis, norm, inv):
+        z = _as_complex(a)
+        if n is not None:
+            z = _resize_axis(z, n, axis)
+        # The transform length after any resize, which is what norm scales by.
+        shp = z.shape
+        ln = shp[0] if (len(shp) == 1 or axis == 0) else shp[1]
+        r = _fft_along(z, inv, axis)
+        f = _norm_factor(norm, ln, inv)
+        return r if f == 1.0 else r * f
+
+    def _fft(a, n=None, axis=-1, norm=None):
+        return _fft_1axis(a, n, axis, norm, False)
+
+    def _ifft(a, n=None, axis=-1, norm=None):
+        return _fft_1axis(a, n, axis, norm, True)
+
+    def _fft2_impl(a, s, axes, norm, inv, who):
+        if axes is not None and tuple(axes) not in ((-2, -1), (0, 1)):
+            raise NotImplementedError(who + "(): only the last two axes")
+        z = _as_complex(a)
+        if len(z.shape) != 2:
+            raise ValueError(who + "() needs a 2-D array")
+        if s is not None:
+            if len(s) != 2:
+                raise ValueError(who + "(): s must hold one length per axis")
+            z = _resize_axis(_resize_axis(z, s[1], -1), s[0], 0)
+        # Both axes carry the same convention, so composing gives numpy's
+        # answer: ortho ends up 1/sqrt(rows*cols), forward 1/(rows*cols).
+        rows, cols = z.shape
+        r = _fft_along(z, inv, -1)
+        f = _norm_factor(norm, cols, inv)
+        if f != 1.0:
+            r = r * f
+        r = _fft_along(r, inv, 0)
+        f = _norm_factor(norm, rows, inv)
+        return r if f == 1.0 else r * f
+
+    def _fft2(a, s=None, axes=None, norm=None):
+        return _fft2_impl(a, s, axes, norm, False, "fft2")
+
+    def _ifft2(a, s=None, axes=None, norm=None):
+        return _fft2_impl(a, s, axes, norm, True, "ifft2")
+
     class _FftProxy:
-        fft  = staticmethod(_fft)
-        ifft = staticmethod(_ifft)
+        fft   = staticmethod(_fft)
+        ifft  = staticmethod(_ifft)
+        fft2  = staticmethod(_fft2)
+        ifft2 = staticmethod(_ifft2)
         def __getattr__(self, k): return getattr(_unp.fft, k)
 
     class _LinalgProxy:
@@ -261,6 +459,9 @@ try:
         inv   = staticmethod(_inv);   det  = staticmethod(_det)
         pinv  = staticmethod(_pinv);  cond = staticmethod(_cond)
         rank  = staticmethod(_rank);  norm = staticmethod(_norm)
+        matrix_rank = staticmethod(_rank)     # numpy's own spelling
+        eigvals = staticmethod(_eigvals)
+        lstsq   = staticmethod(_lstsq)
         def __getattr__(self, k): return getattr(_unp.linalg, k)
     class _NumpyProxy:
         linalg = _LinalgProxy()
@@ -288,6 +489,8 @@ try:
         real   = staticmethod(_real)
         imag   = staticmethod(_imag)
         power  = staticmethod(_power)
+        where  = staticmethod(_where)
+        roots  = staticmethod(_roots)
         def __getattr__(self, k): return getattr(_unp, k)
 
     _sys.modules['numpy'] = _NumpyProxy()

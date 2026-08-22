@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# ======================================================================
+#  stage_extras.sh - copy the examples, the language bindings and the
+#                    loose documents into a destination directory.
+#
+#  Usage:  packaging/stage_extras.sh <dest-dir> <femm-qt-root>
+#
+#  Called by macos_build.sh (into femm_gui.app/Contents/Resources) and by
+#  the install step of linux_build.sh / freebsd_build.sh (into the
+#  installed program directory). One implementation, so the three cannot
+#  drift apart -- which is exactly how the Windows installer's own
+#  example list fell four years behind the repository.
+#
+#  The example list is read from packaging/femm-qt.iss rather than kept
+#  here. That file already curates which files ship, and the examples
+#  directory in a working tree also holds solver output and scratch
+#  models that must not go out.
+# ======================================================================
+set -eu
+
+DEST="${1:?usage: stage_extras.sh <dest-dir> <femm-qt-root>}"
+ROOT="${2:?usage: stage_extras.sh <dest-dir> <femm-qt-root>}"
+
+ISS="$ROOT/packaging/femm-qt.iss"
+[ -f "$ISS" ] || { echo "stage_extras: no manifest at $ISS" >&2; exit 1; }
+
+# ---- Examples --------------------------------------------------------
+# Every example line reads
+#   Source: "..\examples\X"; DestDir: "{app}\examples"; ...
+# and no other DestDir ends in examples", so the pattern needs no
+# backslash. The paths are relative to packaging/.
+mkdir -p "$DEST/examples"
+n=0
+missing=0
+while IFS= read -r rel; do
+    [ -n "$rel" ] || continue
+    src="$ROOT/packaging/$rel"
+    if [ -f "$src" ]; then
+        cp "$src" "$DEST/examples/"
+        n=$((n + 1))
+    else
+        missing=$((missing + 1))
+        echo "  WARNING: listed in femm-qt.iss but not found: $rel" >&2
+    fi
+done <<EOF
+$(awk -F'"' '/DestDir: .*examples";/ { print $2 }' "$ISS" | tr '\\' '/')
+EOF
+
+if [ "$n" -eq 0 ]; then
+    echo "stage_extras: no examples extracted from femm-qt.iss -- the manifest" >&2
+    echo "              format must have changed. Fix the awk above rather than" >&2
+    echo "              shipping with no examples." >&2
+    exit 1
+fi
+
+# ---- Language bindings ----------------------------------------------
+# Client-side text, loaded by Octave/Julia/Mathematica/Scilab/Python and
+# never by femm-qt itself. Directory names match the Windows installer's
+# so one set of instructions covers every platform: note that octavefemm
+# is installed as "mfiles" everywhere but the source tree.
+mkdir -p "$DEST/bindings"
+copy_binding() {                 # $1 = destination name, $2... = sources
+    d="$DEST/bindings/$1"; shift
+    mkdir -p "$d"
+    for f in "$@"; do
+        [ -f "$f" ] && cp "$f" "$d/"
+    done
+    return 0
+}
+copy_binding mfiles    "$ROOT"/octavefemm/*.m
+copy_binding mathfemm  "$ROOT/mathfemm/mathfemm.m"
+copy_binding scifemm   "$ROOT/scifemm/scifemm.sci"
+copy_binding juliafemm "$ROOT/juliafemm/juliafemm.jl"
+copy_binding pyfemm    "$ROOT/pyfemm/femm.py"
+copy_binding luafemm   "$ROOT/luafemm/femm.lua" "$ROOT/luafemm/README.md"
+
+# ---- Loose documents -------------------------------------------------
+for doc in "$ROOT/readme.txt" \
+           "$ROOT/octavefemm/manual/octavefemm.pdf" \
+           "$ROOT/luafemm/femm-lua.pdf" \
+           "$ROOT/mathfemm/usage.nb"; do
+    [ -f "$doc" ] && cp "$doc" "$DEST/"
+done
+
+if [ "$missing" -gt 0 ]; then
+    echo "  examples: $n copied, $missing missing"
+else
+    echo "  examples: $n copied"
+fi

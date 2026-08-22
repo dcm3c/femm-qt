@@ -65,6 +65,27 @@ holds `femm_gui` / `femm_headless`:
 set FEMM_DIR=C:\path\to\femm-qt\build\bin
 ```
 
+On macOS an installed `.app` has no `bin/`; point at the bundle instead:
+
+```bash
+export FEMM_DIR=/Applications/femm_gui.app/Contents/MacOS
+```
+
+The binding files themselves ship **inside** the bundle on macOS, since a
+distributed `.app` has no sibling folders to put them in:
+
+```
+/Applications/femm_gui.app/Contents/Resources/bindings/luafemm
+```
+
+The examples are alongside them, in `Contents/Resources/examples/` -- but those
+are read-only **masters**. Use the `Examples` folder the DMG carries next to the
+app: drag it somewhere of your own and work there. Example scripts need that,
+not just convenience: the FEMM idiom is `open("model.fem")` followed by
+`mi_saveas("temp.fem")` so the original is never modified, and both paths are
+relative to the script's own directory. Inside the read-only bundle the save
+fails and the script stops.
+
 (The `femm-lua` launcher sets this for you automatically — it only matters when
 you load `femm.lua` into your own Lua program. See **[femm-lua.md](femm-lua.md)**.)
 

@@ -10,6 +10,7 @@ add_library(libfemm STATIC
     py_bind_type.c
     py_init_script.cpp
     script_callbacks.cpp
+    material_lib_path.cpp
     document.cpp
     mag_document.cpp
     elec_document.cpp

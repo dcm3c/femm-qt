@@ -5,6 +5,7 @@
 // Operates on HeatDocument. All values real.
 #include "py_heat_editor.h"
 #include "utf8_io.h"
+#include "material_lib_path.h"
 #include "py_heat_postproc.h"
 #include "py_editor_common.h"
 #include "heat_document.h"
@@ -424,7 +425,7 @@ void register_heat_editor_py(HeatDocument *doc) {
 
     m.def("hi_getmaterial", [](const std::string &matname) {
         check_doc(s_doc, HERR);
-        std::string libPath = exeDir() + "heatlib.dat";
+        std::string libPath = materialLibPath("heatlib.dat");
         FILE *fp = femm_fopen(libPath, "rt");
         if (!fp) throw std::runtime_error("Couldn't open " + libPath);
         char s[1024], q[1024];

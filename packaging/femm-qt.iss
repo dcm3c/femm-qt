@@ -147,6 +147,22 @@ Source: "..\examples\cond_layer.FEC";               DestDir: "{app}\examples"; F
 Source: "..\examples\lrk.fem";                      DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "..\examples\IABC.fem";                     DestDir: "{app}\examples"; Flags: ignoreversion
 
+; Python examples and the models they open. Added 2026-08-22: these were
+; all tracked in the repository but had never been listed here, so the
+; Python scripting the port is built around shipped with no examples.
+Source: "..\examples\2horse_femm42.py";                     DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\ACElec2.py";                           DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\Force-vs-Position.py";                 DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\coilgun.py";                           DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\mySPMLossScriptAGB.py";                DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\open1.py";                             DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\plot-mesh-matplotlib.py";              DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\2horse_femm42.lua";                    DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\ACElec2.lua";                          DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\2horse.fem";                           DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\coil.fem";                             DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\my_SPM_motor_AGB.fem";                 DestDir: "{app}\examples"; Flags: ignoreversion
+
 ; OctaveFEMM / MATLAB interface
 Source: "..\octavefemm\manual\octavefemm.pdf";              DestDir: "{app}"; Flags: ignoreversion
 Source: "..\octavefemm\examples\demo2.m";                   DestDir: "{app}\examples"; Flags: ignoreversion

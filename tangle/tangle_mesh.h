@@ -102,6 +102,8 @@ enum TangleStatus {
 
 // Mesh a .fem file in-memory. Returns TANGLE_OK (0) on success, else one of the
 // TANGLE_ERR_* codes above (tangle_mesh_fem yields NO_FILE / PARSE / MESH).
+// outMesh is cleared on entry, so it is empty after any failure -- a non-zero
+// return always means "no mesh", never a stale one from an earlier call.
 int tangle_mesh_fem(const std::string& inputBase, Mesh& outMesh);
 
 #endif

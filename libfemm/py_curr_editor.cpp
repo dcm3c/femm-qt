@@ -6,6 +6,7 @@
 // boundary/point properties are complex.
 #include "py_curr_editor.h"
 #include "utf8_io.h"
+#include "material_lib_path.h"
 #include "py_curr_postproc.h"
 #include "py_editor_common.h"
 #include "curr_document.h"
@@ -413,7 +414,7 @@ void register_curr_editor_py(CurrDocument *doc) {
 
     m.def("ci_getmaterial", [](const std::string &matname) {
         check_doc(s_doc, CIERR);
-        std::string libPath = exeDir() + "condlib.dat";
+        std::string libPath = materialLibPath("condlib.dat");
         FILE *fp = femm_fopen(libPath, "rt");
         if (!fp) throw std::runtime_error("Couldn't open " + libPath);
         char s[1024], q[1024];

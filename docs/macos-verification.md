@@ -30,6 +30,172 @@ either once the tolerance was in.
 
 ---
 
+## Status: a second batch, written blind, 2026-08-22
+
+Everything in this batch was written on Windows and **has never executed on a
+Mac**. The macOS branches are `#ifdef`-ed out there and `macos_build.sh` never
+runs, so a green Windows suite says nothing about any of it. Work §0 below
+before anything else; it is all new since the 2026-08-18 pass.
+
+A Developer ID is **not** needed for any of it. It gates notarisation and
+stapling — i.e. distribution — not verification. `macos_build.sh` already
+applies an ad-hoc signature, which is enough to exercise every check here,
+including App Translocation (§0.6).
+
+---
+
+## 0. The material-library relocation and the bundle-only layout
+
+Nine commits, in dependency order: `e5ad776`, `1effc98`, `bb33316`, `e8e425f`,
+`8302faa`, `aee14a9`, `c0374fd`, `d801ffc`.
+
+**What changed, in one paragraph.** The four writable material libraries used to
+live in `Contents/MacOS/`, which codesign seals as nested code — and the
+material dialog saves on *every* OK, edited or not, so the first ordinary use of
+the Material Library would break a signed bundle. They now ship read-only in
+`Contents/Resources/` and are copied to `~/Library/Application Support/FEMM/` on
+first use. Along the way the bundle became the only place anything runs from on
+macOS: the suite drives it, the bindings resolve into it, and the loose copies
+in `bin/` are deleted after being copied in.
+
+### 0.1 Build and run the suite
+
+```bash
+./macos_build.sh clean
+bash testing/_verify_all.sh
+```
+
+Expect **44 rows, ALL DONE** (was 37 at the last pass; the new ones are
+`ConsolelessPrint`, `NumpyProxy`, `MaterialLib`, `SaveBeforeRun`, `CreateMesh`,
+`Fft`, `MagDirTransform`).
+`MaterialLib` is the one that matters here — it loads a material from each of
+the four libraries and reads the values back out of a saved document, so it
+fails if the seeding did not happen or came from the wrong place.
+
+### 0.2 The libraries landed in the right places
+
+```bash
+ls build/bin/femm_gui.app/Contents/Resources/*.dat     # 4 read-only seeds
+ls ~/Library/Application\ Support/FEMM/                # 4 writable copies
+ls build/bin/*.dat 2>/dev/null                         # MUST be empty
+ls build/bin/femm_headless build/bin/fkn 2>/dev/null   # MUST be empty
+```
+
+The last two are the point of `aee14a9`: no loose copies beside the bundle.
+
+### 0.2b Examples, bindings and documents are in the bundle
+
+```bash
+ls build/bin/femm_gui.app/Contents/Resources/examples | wc -l     # 56
+ls build/bin/femm_gui.app/Contents/Resources/bindings             # 6 directories
+ls build/bin/femm_gui.app/Contents/Resources/*.pdf                # manual + 2
+```
+
+The example list is extracted from `packaging/femm-qt.iss` at build time rather
+than kept as a second list, so a count other than 56 means the manifest changed
+or the extraction broke -- the script fails loudly if it extracts nothing at all.
+
+Then check both halves of the examples arrangement.
+
+The copy in the bundle is a read-only master: open one from
+`Contents/Resources/examples/` in the GUI and press Analyze. It must report that
+it could not save the file, **not** solve silently. That is the whole point of
+`dae3314`; before it, the run went ahead against the shipped geometry.
+
+The copy the DMG puts beside the app is the usable one. Drag `Examples`
+somewhere of your own and run a SCRIPT from it -- `Force-vs-Position.lua` is the
+sharpest test, since it does `open("Roters-Ch9Fig6.fem")` and then
+`mi_saveas("temp.fem")`, both relative to its own directory. It must run to
+completion. If it stops at the saveas, the examples went out read-only and no
+example script in the distribution can run.
+
+### 0.3 Re-seeding works
+
+```bash
+rm ~/Library/Application\ Support/FEMM/matlib.dat
+build/bin/femm_gui.app/Contents/MacOS/femm_headless -run testing/MaterialLibTest.py
+ls ~/Library/Application\ Support/FEMM/matlib.dat      # back again
+```
+
+### 0.4 The bundle is never written to
+
+Open the GUI, open the Material Library dialog, press OK without editing
+anything, then:
+
+```bash
+codesign --verify --deep --strict build/bin/femm_gui.app && echo "signature intact"
+```
+
+Before this batch that sequence broke the signature. It is the single most
+important check here, because it is the ordinary way a user assigns materials.
+
+### 0.5 The bindings reach the bundle
+
+The one path `MaterialLibTest` cannot cover — it runs in-process, while the
+bindings spawn a separate `femm_headless`. `femm_headless` has no `.app` form,
+so before `8302faa` it always resolved to the loose copy in `bin/`.
+
+```bash
+export FEMM_DIR="$PWD/build/bin"
+python3 -c "import sys; sys.path.insert(0,'pyfemm'); import femm; \
+            femm.openfemm(1); femm.newdocument(0); femm.mi_getmaterial('Air'); \
+            print('binding ok'); femm.closefemm()"
+```
+
+It must find `build/bin/femm_gui.app/Contents/MacOS/femm_headless`, **not**
+`build/bin/femm_headless` — which no longer exists, so a wrong resolution is a
+hard failure rather than a silent one. Repeat with `FEMM_DIR` pointing at
+`Contents/MacOS` directly; both must work.
+
+Then the Lua client, which finds `lua4` inside the bundle now (`d801ffc`):
+
+```bash
+build/bin/femm-lua.sh -h -e "openfemm(1); print('lua ok')"
+```
+
+### 0.6 App Translocation — no Developer ID required
+
+A quarantined app runs from a randomised read-only path. Simulate it:
+
+```bash
+cp -R build/bin/femm_gui.app /tmp/femm_gui.app
+xattr -w com.apple.quarantine "0081;00000000;Safari;" /tmp/femm_gui.app
+open /tmp/femm_gui.app
+```
+
+Materials must still load and save. This is precisely what the relocation was
+for, and it is testable today.
+
+### 0.7 Drag it to /Applications
+
+```bash
+cp -R build/bin/femm_gui.app /Applications/
+open /Applications/femm_gui.app
+```
+
+Check in the GUI: solve an example, open the Material Library, and press **F1**
+— the manual is new in the bundle (`c0374fd`) and has never worked on macOS.
+
+### 0.8 Nothing carries a Homebrew path
+
+The one thing I could not reason about from Windows. The solvers and
+`femm_headless` are copied in *after* `macdeployqt`, so their rpaths are never
+rewritten — harmless in theory, since they link no Qt, but worth confirming:
+
+```bash
+otool -L build/bin/femm_gui.app/Contents/MacOS/* | grep -i "homebrew\|/opt/\|/usr/local"
+```
+
+Anything listed here works on your machine and fails on a downloader's.
+
+### 0.9 If you rebuild with `ninja` instead of `macos_build.sh`
+
+`_verify_all.sh` should stop with `STALE:` and tell you to reassemble. `ninja`
+relinks `femm_gui` straight into the bundle but re-copies nothing else, so
+without that check the suite would silently test the previous build.
+
+---
+
 ## 1. Does it build
 
 ```bash

@@ -104,10 +104,25 @@ From the \texttt{femm-qt} directory, run the build script:
 This checks that the build tools are present, locates Qt~6 via
 Homebrew, configures the project with CMake, and builds it with Ninja.
 The GUI is produced as a macOS application bundle
-(\texttt{build/bin/femm\_gui.app}).  The build script copies the solver
-executables and material libraries into the bundle so the app is
-self-contained, and runs \texttt{macdeployqt} to bundle the Qt
-frameworks.
+(\texttt{build/bin/femm\_gui.app}), and the script then assembles
+everything else into it: the solvers, \texttt{femm\_headless}, the Lua~4
+interpreter, the Python scripting assets, the examples, the language
+bindings, the manual and the material libraries.  \texttt{macdeployqt}
+bundles the Qt frameworks.
+
+The bundle is the \emph{only} place anything runs from on macOS.  The
+loose copies CMake leaves in \texttt{build/bin} are deleted once they
+have been copied in, so that a stray \texttt{build/bin/femm\_headless}
+--- which would resolve its solvers and material libraries from the
+wrong directory --- cannot be run by accident.  The regression suite and
+the language bindings both reach into the bundle.
+
+The material libraries are a special case, because the material editor
+writes them and a signed bundle cannot be written to.  Read-only copies
+ship in \texttt{Contents/Resources}, and FEMM copies them to
+\texttt{\textasciitilde/Library/Application Support/FEMM/} the first time
+they are used; that is where your edits go, and they are shared by every
+copy of FEMM on the machine.
 
 To wipe the build directory and rebuild from scratch, pass
 \texttt{clean}:
@@ -126,9 +141,10 @@ from Terminal:
 open build/bin/femm_gui.app
 \end{lstlisting}
 
-Or the headless server (for scripted/IPC use):
+Or the headless server (for scripted/IPC use).  It lives inside the
+bundle, beside the GUI:
 \begin{lstlisting}
-./build/bin/femm_headless
+./build/bin/femm_gui.app/Contents/MacOS/femm_headless
 \end{lstlisting}
 
 \subsection{Setting FEMM\_DIR}
@@ -142,11 +158,21 @@ export FEMM_DIR=/path/to/femm-qt/build/bin
 Enter the \texttt{export} line exactly as shown --- a single line with no
 spaces around the \texttt{=}.  This one setting serves both a GUI session
 (\texttt{openfemm()} in OctaveFEMM) and a headless session
-(\texttt{openfemm(1)}): the bindings find \texttt{femm\_headless} directly in
-this directory and reach into the application bundle for the GUI
-(\texttt{femm\_gui.app/Contents/MacOS/femm\_gui}) on their own.  Add it to
-your \texttt{\textasciitilde/.zshrc} (or
+(\texttt{openfemm(1)}): the bindings look inside
+\texttt{femm\_gui.app/Contents/MacOS} for both executables, so either
+\texttt{build/bin} or the bundle's own \texttt{Contents/MacOS} works and
+both reach the same binaries.  For an installed copy there is no
+\texttt{build/bin}, so use the bundle:
+\begin{lstlisting}
+export FEMM_DIR=/Applications/femm_gui.app/Contents/MacOS
+\end{lstlisting}
+Add it to your \texttt{\textasciitilde/.zshrc} (or
 \texttt{\textasciitilde/.bash\_profile}) to make it persistent.
+
+The binding files themselves are inside the bundle too, at
+\texttt{Contents/Resources/bindings} --- \texttt{mfiles} for OctaveFEMM,
+and \texttt{mathfemm}, \texttt{scifemm}, \texttt{juliafemm},
+\texttt{pyfemm} and \texttt{luafemm} beside it.
 
 \section{Setting Up OctaveFEMM}
 
@@ -192,6 +218,62 @@ To verify, run \texttt{openfemm} at the Octave prompt: the FEMM window should
 appear and connect.  Use \texttt{openfemm(1)} for a headless session (no
 window), which talks to \texttt{femm\_headless} instead.
 
+\section{Packaging a Disk Image}
+
+To wrap the built bundle in a draggable \texttt{.dmg}:
+\begin{lstlisting}
+packaging/macos_dmg.sh
+\end{lstlisting}
+
+This is a separate step from the build, in the same way that running
+Inno Setup is separate from compiling on Windows.  The bundle has to
+exist to run and to test; a disk image is only needed to hand FEMM to
+someone else.  The script refuses to run if \texttt{femm\_gui.app} is
+missing, incomplete, or stale --- the last of those catches a
+\texttt{ninja} that relinked the GUI without reassembling the bundle
+around it.
+
+The image is written to \texttt{packaging/output/} and contains the
+application and a symlink to \texttt{/Applications}, so installing is
+the usual drag.  It also carries an \texttt{Examples} folder.
+
+That folder is not a duplicate of the copy inside the bundle, and the
+distinction matters.  Example scripts open a model and immediately save
+it under another name, so that the original is never modified:
+\begin{lstlisting}
+open("Roters-Ch9Fig6.fem")
+mi_saveas("temp.fem")
+\end{lstlisting}
+Both paths are relative to the script's own directory, which is where
+FEMM sets the working directory when it runs a script.  Inside the
+bundle that directory is read-only and the save fails, so drag the
+\texttt{Examples} folder somewhere of your own and work there.  The
+read-only copy inside the bundle is a master, kept so the examples
+survive throwing the disk image away.
+
+\subsection{Signing and notarisation}
+
+\texttt{macos\_build.sh} applies an ad-hoc signature, which is enough to
+build, run and test on your own machine.  It is \emph{not} enough for a
+disk image handed to anyone else: downloaded from the internet, an
+ad-hoc signed application is refused by Gatekeeper as coming from an
+unidentified developer.
+
+Distributing to others needs an Apple Developer ID, with which the
+bundle is signed, the image notarised, and the ticket stapled:
+\begin{lstlisting}
+codesign --force --options runtime --timestamp \
+         --sign "Developer ID Application: ..." \
+         build/bin/femm_gui.app
+xcrun notarytool submit <image>.dmg \
+         --keychain-profile <profile> --wait
+xcrun stapler staple <image>.dmg
+\end{lstlisting}
+Those steps are deliberately not part of \texttt{macos\_dmg.sh}: they
+need credentials, a network round trip to Apple, and decisions about the
+hardened runtime and entitlements that are best made against real error
+messages rather than guessed at in advance.
+
 \section{Troubleshooting}
 
 \subsection{Manual configuration}
@@ -200,7 +282,11 @@ The build script wraps the CMake/Ninja steps and assembles the app
 bundle.  The order of the bundling steps matters: \texttt{macdeployqt}
 must run \emph{before} the solvers and data files are copied in (it scans
 \texttt{MacOS/} and aborts on the \texttt{.dat} files otherwise), and the
-bundle must be re-signed afterward.  To run the steps by hand:
+bundle must be re-signed afterward.  The material libraries are the one
+thing FEMM writes beside itself, so they are seeded read-only into
+Contents/Resources/ and copied into the user's Application Support
+folder on first use; a signed bundle is never written to.
+To run the steps by hand:
 \begin{lstlisting}
 mkdir build && cd build
 cmake .. -G Ninja \
@@ -208,14 +294,18 @@ cmake .. -G Ninja \
     -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
 ninja
 APP=bin/femm_gui.app/Contents/MacOS
+RES=bin/femm_gui.app/Contents/Resources
 # 1. Bundle Qt frameworks FIRST, while the bundle holds only femm_gui.
 $(brew --prefix qt@6)/bin/macdeployqt bin/femm_gui.app
 # 2. Copy the solvers and the headless engine in afterward:
 for s in fkn belasolv hsolv csolv femm_headless; do
     cp bin/$s "$APP/"
 done
-# 3. Copy the material libraries (data, not code):
-cp ../matlibs/*.dat "$APP/"
+# 3. Material libraries: read-only SEEDS in Resources/, not MacOS/.
+#    FEMM copies them to ~/Library/Application Support/FEMM/ on first
+#    use and reads and writes them there, so nothing is ever written
+#    inside the bundle.
+mkdir -p "$RES" && cp ../matlibs/*.dat "$RES/"
 # 4. Re-seal the bundle with a deep ad-hoc signature:
 codesign --force --deep --sign - bin/femm_gui.app
 \end{lstlisting}

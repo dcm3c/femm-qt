@@ -24,6 +24,16 @@ set -euo pipefail
 SELF="${BASH_SOURCE[0]}"
 cd "$(dirname "$(readlink -f "$SELF" 2>/dev/null || echo "$SELF")")"
 
+# ---- Optional: install instead of building --------------------------
+# `install [prefix]` puts an ALREADY BUILT tree into the user's home and
+# exits. It deliberately does not build first: you install once and build
+# many times. packaging/unix_install.sh explains why the install goes to
+# $HOME rather than /usr/local.
+if [ "${1:-}" = "install" ]; then
+    shift
+    exec packaging/unix_install.sh "$PWD" "$PWD/build" "${1:-$HOME/.local}"
+fi
+
 # ---- Handle the optional 'clean' argument ----------------------------
 if [ "${1:-}" = "clean" ]; then
     echo "Removing build directory..."
@@ -69,6 +79,18 @@ ninja
 # writable in case the source files came in read-only.
 cp ../matlibs/*.dat bin/
 chmod u+w bin/*.dat
+
+# ---- Copy the manual -------------------------------------------------
+# Help > Manual (F1) opens applicationDirPath()/manual.pdf -- beside the
+# executable. Without this the Help menu reports "Could not find manual.pdf in
+# the application directory", which it did on this platform until 2026-08-22.
+# The Windows installer has always placed it in {app}\bin for the same reason.
+if [ -f ../manual/manual.pdf ]; then
+    cp ../manual/manual.pdf bin/
+else
+    echo "NOTE: ../manual/manual.pdf not found -- Help > Manual will not work."
+    echo "      Build the manual first if that matters."
+fi
 
 # ---- Copy the Lua 4 legacy client assets (lua4 built into bin/) ------
 cp ../luafemm/femm.lua ../luafemm/femm-lua.sh bin/

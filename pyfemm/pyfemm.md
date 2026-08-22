@@ -3,13 +3,68 @@
 Python interface to femm-qt using TCP IPC. Drop-in replacement for the
 original pyFEMM — same function names, no COM/ActiveX dependency.
 
+## Installing
+
+Not on PyPI yet. Install from a checkout.
+
+**For development** -- an editable install, so `git pull` is all it takes to
+pick up changes:
+
+```
+pip install -e pyfemm
+```
+
+from the `femm-qt` directory. This is what the maintainer's machine runs.
+
+**Plain install**, if you would rather not have a live link to the source tree:
+
+```
+pip install ./pyfemm
+```
+
+Either way the module is imported as `femm`, matching original pyFEMM, while
+the distribution is named `pyfemm-qt`:
+
+```
+python -c "import femm; print(femm.__file__)"
+```
+
+**Without pip at all**, copy `pyfemm/femm.py` next to your own script, or into
+the directory holding `femm_gui` and `femm_headless`.
+
+> An editable install records an absolute path. If you move or rename the
+> femm-qt directory, `import femm` breaks with no obvious clue -- `pip show
+> pyfemm-qt` prints the stale *Editable project location*. Re-run the install
+> from the new location to fix it.
+
 ## Setup
 
 Set `FEMM_DIR` to the directory containing `femm_gui` and `femm_headless`:
 
 ```
-set FEMM_DIR=C:\Temp\tangle\femm-qt\build\bin
+set FEMM_DIR=C:\path\to\femm-qt\build\bin
 ```
+
+On macOS an installed `.app` has no `bin/`; point at the bundle instead:
+
+```bash
+export FEMM_DIR=/Applications/femm_gui.app/Contents/MacOS
+```
+
+The binding files themselves ship **inside** the bundle on macOS, since a
+distributed `.app` has no sibling folders to put them in:
+
+```
+/Applications/femm_gui.app/Contents/Resources/bindings/pyfemm
+```
+
+The examples are alongside them, in `Contents/Resources/examples/` -- but those
+are read-only **masters**. Use the `Examples` folder the DMG carries next to the
+app: drag it somewhere of your own and work there. Example scripts need that,
+not just convenience: the FEMM idiom is `open("model.fem")` followed by
+`mi_saveas("temp.fem")` so the original is never modified, and both paths are
+relative to the script's own directory. Inside the read-only bundle the save
+fails and the script stops.
 
 Or place `femm.py` in the same directory as the executables.
 

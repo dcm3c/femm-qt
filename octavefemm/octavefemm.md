@@ -4,19 +4,73 @@ MATLAB/Octave interface to femm-qt using TCP IPC. Drop-in replacement
 for the original octaveFEMM — same function names, no ActiveX or
 file-link dependency. Requires MATLAB R2014b+ (for `tcpclient`).
 
+## Installing
+
+There is nothing to build or compile -- octaveFEMM is a directory of `.m`
+files. Put that directory on the MATLAB or Octave path:
+
+```matlab
+addpath('C:\path\to\femm-qt\octavefemm')
+```
+
+**The directory is not called the same thing everywhere**, which is the one
+thing likely to trip you up:
+
+| where | path to add |
+|---|---|
+| source checkout | `femm-qt/octavefemm` |
+| Windows install | `c:\femm-qt\mfiles` |
+| macOS app bundle | `/Applications/femm_gui.app/Contents/Resources/bindings/mfiles` |
+
+The installers rename it to `mfiles`; only the source tree calls it
+`octavefemm`.
+
+**To make it stick** across sessions, rather than retyping `addpath` every
+time:
+
+```matlab
+addpath('...')
+savepath                 % MATLAB, and Octave
+```
+
+In Octave you can instead put the `addpath` line in `~/.octaverc` (or
+`%USERPROFILE%\.octaverc` on Windows), which is often easier to keep track of
+than a saved path.
+
+Check it took:
+
+```matlab
+which openfemm
+```
+
 ## Setup
 
 Set `FEMM_DIR` to the directory containing `femm_gui` and `femm_headless`:
 
 ```matlab
-setenv('FEMM_DIR', 'C:\Temp\tangle\femm-qt\build\bin')
+setenv('FEMM_DIR', 'C:\path\to\femm-qt\build\bin')
 ```
 
-Then add the octavefemm directory to your MATLAB path:
+On macOS an installed `.app` has no `bin/`; point at the bundle instead:
 
-```matlab
-addpath('C:\Temp\tangle\femm-qt\octavefemm')
+```bash
+export FEMM_DIR=/Applications/femm_gui.app/Contents/MacOS
 ```
+
+The binding files themselves ship **inside** the bundle on macOS, since a
+distributed `.app` has no sibling folders to put them in:
+
+```
+/Applications/femm_gui.app/Contents/Resources/bindings/mfiles
+```
+
+The examples are alongside them, in `Contents/Resources/examples/` -- but those
+are read-only **masters**. Use the `Examples` folder the DMG carries next to the
+app: drag it somewhere of your own and work there. Example scripts need that,
+not just convenience: the FEMM idiom is `open("model.fem")` followed by
+`mi_saveas("temp.fem")` so the original is never modified, and both paths are
+relative to the script's own directory. Inside the read-only bundle the save
+fails and the script stops.
 
 ## Single Instance (backward compatible)
 

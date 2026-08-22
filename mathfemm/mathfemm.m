@@ -3152,6 +3152,7 @@ OpenFEMM[bHide_:0, port_:48015] := Module[{exename, femmdir, found, candidates, 
 		(* Contents/MacOS/<exename>; it only exists on macOS, skipped elsewhere. *)
 		If[StringQ[femmdir] && femmdir =!= "",
 			AppendTo[candidates, FileNameJoin[{femmdir, exename <> ".exe"}]];
+			AppendTo[candidates, FileNameJoin[{femmdir, "femm_gui.app", "Contents", "MacOS", exename}]];
 			AppendTo[candidates, FileNameJoin[{femmdir, exename}]];
 			AppendTo[candidates, FileNameJoin[{femmdir, exename <> ".app", "Contents", "MacOS", exename}]];
 		];

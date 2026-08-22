@@ -71,6 +71,7 @@ function openfemm(headless)
         -- bundle (the GUI builds as <exename>.app, whose real executable is at
         -- Contents/MacOS/<exename>); it only exists on macOS, skipped elsewhere.
         local forms = {
+            femmdir .. "/femm_gui.app/Contents/MacOS/" .. exename,           -- macOS: inside the bundle
             femmdir .. "/" .. exename,                                       -- Linux / macOS CLI
             femmdir .. "/" .. exename .. ".exe",                             -- Windows
             femmdir .. "/" .. exename .. ".app/Contents/MacOS/" .. exename,  -- macOS .app

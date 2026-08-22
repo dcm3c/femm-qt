@@ -8,8 +8,8 @@
 // Author: David Meeker
 // Generated with the assistance of Claude Code
 //
-// Version 0.4.17
-// 26 Jul 2026
+// Version 0.4.18
+// 22 Aug 2026
 //
 // Supports: -p -P -j -q -e -A -a -z -Q -I -Y options
 //
@@ -495,6 +495,7 @@ struct Mesh {
 void buildDelaunay(Mesh& mesh){
     auto& pts = mesh.vertices;
     int n = (int)pts.size();
+    if(n==0){ mesh.triangles.clear(); return; }   // bbox below reads pts[0]
 
     double minX=pts[0].x, maxX=pts[0].x, minY=pts[0].y, maxY=pts[0].y;
     for(auto& p : pts){
@@ -4359,6 +4360,7 @@ void cleanPSLG(Mesh& mesh, double tol, bool quiet){
     // and geometry no refinement could ever resolve, while still splitting
     // crossing segments (the intersection test is tolerance-independent).
     if(tol < 0){
+        if(pts.empty()) return;   // nothing to clean; bbox below would read pts[0]
         double minX=pts[0].x, maxX=pts[0].x, minY=pts[0].y, maxY=pts[0].y;
         for(auto& p : pts){
             minX=std::min(minX,p.x); maxX=std::max(maxX,p.x);
@@ -4731,6 +4733,16 @@ static int runMeshPipeline(Mesh& mesh, const Options& opts)
         ~MxcsrGuard(){ _mm_setcsr(saved); }
     } _mxguard;
 #endif
+    // A triangulation needs at least three points. Reject degenerate input up
+    // front rather than limping through the pipeline: with nothing to mesh, the
+    // later stages (jettison, node reordering) would index into empty arrays.
+    // Reported as a mesh failure so hosts surface it like any other.
+    if(mesh.vertices.size() < 3){
+        std::cerr<<"Error: nothing to mesh - the input has "<<mesh.vertices.size()
+                 <<" point(s); at least 3 are needed to form a triangle.\n";
+        return TANGLE_ERR_MESH;
+    }
+
     // Shift coordinates to near the origin to maximize floating-point precision.
     double shiftX=0, shiftY=0;
     if(!mesh.vertices.empty()){
@@ -4870,6 +4882,17 @@ static int runMeshPipeline(Mesh& mesh, const Options& opts)
                 if(t.neighbors[j]>=0) t.neighbors[j]=remap[t.neighbors[j]];
         mesh.triangles=std::move(live);
     }
+    // No triangles survived: the input encloses no area (all points collinear or
+    // coincident, every region flooded away as a hole, ...). Emitting an empty
+    // mesh is useless to a solver and the stages below assume a non-empty mesh,
+    // so stop here with a diagnosis instead.
+    if(mesh.triangles.empty()){
+        std::cerr<<"Error: no mesh was generated - the input encloses no area.\n"
+                   "Check for points that are all collinear or coincident, or for\n"
+                   "boundary segments that do not enclose a region.\n";
+        return TANGLE_ERR_MESH;
+    }
+
     // Edges are consumed only by writeEdgeFile; skip building them entirely when
     // no .edge output is requested. (The FEMM path forces opts.edges=true.)
     if(opts.edges) extractEdges(mesh);
@@ -4905,7 +4928,9 @@ static int runMeshPipeline(Mesh& mesh, const Options& opts)
     }
 
     // 9. Reverse Cuthill-McKee reordering + element sort by region
-    if(opts.reorder){
+    if(opts.reorder && !mesh.vertices.empty() && !mesh.triangles.empty()){
+        // (Empty meshes are rejected earlier; the guard keeps the renumbering
+        // below, which seeds itself with order[0], safe for any caller.)
         int nv=(int)mesh.vertices.size();
         int ne=(int)mesh.triangles.size();
 
@@ -5248,6 +5273,12 @@ int main(int argc, char* argv[]){
 
 int tangle_mesh_fem(const std::string& inputBase, Mesh& outMesh)
 {
+    // Clear the caller's mesh up front: on any failure return below it then
+    // stays empty rather than retaining whatever it held before. A caller that
+    // reuses one Mesh across calls (and does not check the return code) would
+    // otherwise be left holding the PREVIOUS model's mesh, which looks valid.
+    outMesh = Mesh{};
+
     std::string inputFile = inputBase;
     std::string ext;
 

@@ -108,6 +108,7 @@ function openfemm(varargin)
         for i = 1:numel(searchdirs)
             d = searchdirs{i};
             candidates{end+1} = fullfile(d, [exename '.exe']);                       % Windows
+            candidates{end+1} = fullfile(d, 'femm_gui.app', 'Contents', 'MacOS', exename);  % macOS: inside the bundle
             candidates{end+1} = fullfile(d, exename);                                % Linux / macOS CLI
             candidates{end+1} = fullfile(d, [exename '.app'], 'Contents', 'MacOS', exename);  % macOS .app
         end

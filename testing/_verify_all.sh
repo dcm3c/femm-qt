@@ -26,15 +26,48 @@ X=""
 B="$BIN/femm_headless$X"
 FKN="$BIN/fkn$X"
 
-# macOS builds the GUI as a bundle; the executable is inside it.
+# macOS ships everything inside femm_gui.app, and the bundle is what a user
+# runs -- so the suite exercises the copies in Contents/MacOS/, not the loose
+# build outputs in bin/. They are the same binaries, but not the same exeDir(),
+# and exeDir() is where the solvers, bin/python, the PyBridge worker and the
+# material libraries are all resolved from. Testing bin/ tests a layout nobody
+# ships.
+#
+# The .app directory is NOT evidence the bundle is usable: gui/CMakeLists.txt
+# sets MACOSX_BUNDLE, so CMake creates it at link time and a bare `ninja` leaves
+# it holding only femm_gui. macos_build.sh is what copies the solvers and
+# femm_headless in. So test for one of those, and say so out loud when it is
+# missing rather than quietly falling back to the copies that do not ship.
+APPBIN="$BIN/femm_gui.app/Contents/MacOS"
 if [ -d "$BUILD/bin/femm_gui.app" ]; then
-    GUI="$BIN/femm_gui.app/Contents/MacOS/femm_gui"
+    GUI="$APPBIN/femm_gui"
+    if [ -x "$BUILD/bin/femm_gui.app/Contents/MacOS/femm_headless" ]; then
+        B="$APPBIN/femm_headless"
+        FKN="$APPBIN/fkn"
+        # femm_gui is linked straight into the bundle by CMake (MACOSX_BUNDLE),
+        # so it is always current after a build. Everything else in there was
+        # COPIED by macos_build.sh. If femm_gui is the newer of the two, someone
+        # ran `ninja` without reassembling and the suite is about to test stale
+        # binaries -- which it cannot otherwise tell, since they exist and run.
+        if [ "$BUILD/bin/femm_gui.app/Contents/MacOS/femm_gui" -nt \
+             "$BUILD/bin/femm_gui.app/Contents/MacOS/femm_headless" ]; then
+            echo "STALE: femm_gui is newer than the copies inside femm_gui.app."
+            echo "       Run ./macos_build.sh; ninja alone does not"
+            echo "       reassemble the bundle, and these rows would test the"
+            echo "       previous build."
+            exit 1
+        fi
+    else
+        echo "NOTE: femm_gui.app holds no femm_headless -- run ./macos_build.sh"
+        echo "      to assemble it. Falling back to bin/, which is NOT the"
+        echo "      layout that ships."
+    fi
 else
     GUI="$BIN/femm_gui$X"
 fi
 
-if [ ! -f "$BUILD/bin/femm_headless$X" ]; then
-    echo "no femm_headless in $BUILD/bin -- build first"
+if [ ! -x "$B" ]; then
+    echo "no femm_headless at $B -- build first"
     exit 1
 fi
 
@@ -90,6 +123,10 @@ inproc ProxyDunderTest.py ProxyDunders
 inproc PointLocationTest.py PointLocation
 inproc MagDirTransformTest.py MagDirTransform
 inproc FftTest.py Fft
+inproc NumpyProxyTest.py NumpyProxy
+inproc MaterialLibTest.py MaterialLib
+inproc SaveBeforeRunTest.py SaveBeforeRun
+inproc CreateMeshTest.py CreateMesh
 # The matplotlib bridge. All three SKIP cleanly when no usable CPython is
 # installed -- it is an optional capability, not a build requirement.
 inproc PyBridgeHostTest.py PyBridgeHost

@@ -112,6 +112,43 @@ To wipe the build directory and rebuild from scratch, pass
 If the build fails because CMake cannot find Qt~6, see
 \textit{Manual configuration} under Troubleshooting.
 
+\section{Installing}
+
+You can run femm-qt from \texttt{build/bin} indefinitely; nothing requires
+an install.  To put it somewhere permanent instead:
+\begin{lstlisting}
+./linux_build.sh install
+\end{lstlisting}
+
+This installs what is already built --- it does not rebuild --- into your
+home directory:
+\begin{lstlisting}
+~/.local/opt/femm-qt/   the program, its solvers, the material
+                        libraries, the examples and the bindings
+~/.local/bin/           femm_gui, femm_headless, femm-lua
+~/.local/share/         menu entry and icon
+\end{lstlisting}
+
+\texttt{\textasciitilde/.local/bin} is already on \texttt{PATH} on current
+distributions, so \texttt{femm\_gui} then works from anywhere and FEMM
+appears in the application menu.  Pass a different prefix if you would
+rather it went elsewhere:
+\begin{lstlisting}
+./linux_build.sh install /opt/femm
+\end{lstlisting}
+
+It installs into your home rather than \texttt{/usr/local} on purpose.
+FEMM finds its solvers, scripting assets and material libraries beside
+its own executable, so a single self-contained directory needs no
+special handling --- and, more importantly, the material libraries and
+the examples stay \emph{writable}.  Both need to be: the material editor
+saves the libraries, and every example script opens a model and then
+immediately saves it under another name.  In a system directory they
+would be read-only and neither would work.
+
+To uninstall, delete the three paths listed above; the installer prints
+the exact commands when it finishes.
+
 \section{Running}
 
 Launch the GUI:
@@ -124,6 +161,14 @@ Or the headless server:
 ./bin/femm_headless
 \end{lstlisting}
 
+
+If you installed as above, use the copies on your \texttt{PATH} instead,
+from any directory:
+\begin{lstlisting}
+femm_gui
+femm_headless
+\end{lstlisting}
+
 \subsection{Setting FEMM\_DIR}
 
 The language bindings (OctaveFEMM, MathFEMM, pyFEMM, JuliaFEMM) locate
@@ -132,9 +177,20 @@ Set it to the \texttt{bin} directory:
 \begin{lstlisting}
 export FEMM_DIR=/path/to/femm-qt/build/bin
 \end{lstlisting}
+or, if you installed it, at the program directory:
+\begin{lstlisting}
+export FEMM_DIR=~/.local/opt/femm-qt
+\end{lstlisting}
 Add this to your \texttt{\textasciitilde/.bashrc} to make it persistent.
+The binding files themselves are in \texttt{bindings/} under whichever of
+those you use --- \texttt{mfiles} for OctaveFEMM, and \texttt{mathfemm},
+\texttt{scifemm}, \texttt{juliafemm}, \texttt{pyfemm} and
+\texttt{luafemm} beside it.
 
 \subsection{Desktop Integration (Optional)}
+
+\emph{The \texttt{install} step above does this for you, with an icon.}
+The recipe below is for running in place out of \texttt{build/bin}.
 
 To add femm-qt to your application menu, create a \texttt{.desktop} file:
 \begin{lstlisting}

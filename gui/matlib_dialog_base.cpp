@@ -7,6 +7,7 @@
 // to the subclass via pure virtual methods. See matlib_dialog_base.h.
 
 #include "matlib_dialog_base.h"
+#include "material_lib_path.h"
 #include "utf8_io.h"
 #include "matlib_tree.h"
 #include "document.h"
@@ -43,7 +44,11 @@ MatLibDialogBase::MatLibDialogBase(const QString &title, const QString &libFilen
     setWindowTitle(title);
     resize(700, 500);
 
-    m_libPath = QApplication::applicationDirPath().toStdString() + "/" + libFilename.toStdString();
+    // Not applicationDirPath(): the four .dat files are the only thing femm-qt
+    // writes beside itself, and on macOS that has to happen outside a signed
+    // bundle. materialLibPath() is the same resolver the *_getmaterial script
+    // commands use, so the reader and the writer cannot disagree.
+    m_libPath = materialLibPath(libFilename.toStdString().c_str());
 
     auto *splitter = new QSplitter(Qt::Horizontal);
 
@@ -232,7 +237,27 @@ void MatLibDialogBase::readFolderContents(FILE *fp, QTreeWidgetItem *parent)
 void MatLibDialogBase::saveLibrary()
 {
     FILE *fp = femm_fopen(m_libPath, "wt");
-    if (!fp) return;
+    if (!fp) {
+        // Say so. This used to `return` in silence, so a library that could not
+        // be written -- read-only file, full disk, folder not writable, the
+        // file held open by another program -- lost the user's edits with the
+        // dialog closing as if it had worked. Adding a material and finding it
+        // gone, repeatedly, with nothing to explain why.
+        //
+        // The case that surfaced it: one run of femm-qt under sudo leaves the
+        // .dat files root-owned, after which an ordinary session cannot write
+        // them. Nobody should be running it as root, which is why the libraries
+        // were left where they are rather than relocated -- but the failure has
+        // to be visible whatever the cause.
+        QMessageBox::warning(
+            this, tr("Could Not Save Material Library"),
+            tr("The material library could not be written:\n\n%1\n\n"
+               "Your changes to the library have NOT been saved. The file may "
+               "be read-only, the folder may not be writable, or the disk may "
+               "be full.")
+                .arg(QString::fromStdString(m_libPath)));
+        return;
+    }
     for (int i = 0; i < m_libTree->topLevelItemCount(); i++)
         writeTreeItem(m_libTree->topLevelItem(i), fp, 0);
     fclose(fp);

@@ -194,6 +194,31 @@ bool doc_registry_activate_results_byname(const std::string &name) {
 // ---------------------------------------------------------------------------
 // Shared mesh creation
 // ---------------------------------------------------------------------------
+
+// Meshing and analysis both write the document out first, because the mesher
+// and the solvers are separate processes that read it back from disk -- an edit
+// still in memory would otherwise be left out of the run.
+//
+// The write can fail, and until 2026-08-22 both callers ignored that: the run
+// went ahead against whatever happened to be on disk, which is the PREVIOUS
+// version of the model, and the results looked perfectly ordinary. A read-only
+// file, a full disk, a folder without write permission, or the file held open
+// by another program all do it. On macOS it is also what happens to an example
+// opened from inside the application bundle, which is read-only by design.
+static bool saveBeforeRun(DocumentBase *doc, const char *what,
+                          char *errmsg, int errmsg_size)
+{
+    if (doc->SaveDocument(doc->filePath)) return true;
+    if (errmsg)
+        snprintf(errmsg, errmsg_size,
+                 "Could not save \"%s\" before %s -- the file may be read-only, "
+                 "the disk full, or the folder not writable. Nothing was run: "
+                 "the solver reads the saved file, so continuing would have "
+                 "used the previous version of the model.",
+                 doc->filePath.c_str(), what);
+    return false;
+}
+
 int createMeshForDocument(DocumentBase *doc, char *errmsg, int errmsg_size)
 {
     if (!doc || doc->filePath.empty()) {
@@ -201,7 +226,7 @@ int createMeshForDocument(DocumentBase *doc, char *errmsg, int errmsg_size)
         return -1;
     }
 
-    doc->SaveDocument(doc->filePath);
+    if (!saveBeforeRun(doc, "creating the mesh", errmsg, errmsg_size)) return -1;
 
     namespace fs = std::filesystem;
     // Pass the FULL filename (with its extension) so the mesher loads THIS
@@ -383,7 +408,7 @@ int analyzeDocument(DocumentBase *doc, int hide, char *errmsg, int errmsg_size)
         }
     }
 
-    doc->SaveDocument(doc->filePath);
+    if (!saveBeforeRun(doc, "analysis", errmsg, errmsg_size)) return -1;
     int ret;
 
     namespace fs = std::filesystem;

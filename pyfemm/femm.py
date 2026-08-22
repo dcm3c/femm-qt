@@ -45,6 +45,7 @@ def _find_exe(exename):
     candidates = []
     for d in searchdirs:
         candidates.append(os.path.join(d, exename + '.exe'))                          # Windows
+        candidates.append(os.path.join(d, 'femm_gui.app', 'Contents', 'MacOS', exename))  # macOS: inside the bundle
         candidates.append(os.path.join(d, exename))                                   # Linux / macOS CLI
         candidates.append(os.path.join(d, exename + '.app', 'Contents', 'MacOS', exename))  # macOS .app
     for c in candidates:
