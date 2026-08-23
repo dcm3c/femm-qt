@@ -104,7 +104,7 @@ ln -s /Applications "$STAGE/Applications"
 # things to forget.
 #
 # The result is deliberately identical to what ./linux_build.sh install
-# produces -- ~/Documents/FEMM/{examples,docs,bindings} -- so one set of
+# produces -- ~/FEMM/{examples,docs,bindings} -- so one set of
 # instructions covers both platforms, and the paths printed in the build
 # guides are true on either.
 #
@@ -139,8 +139,27 @@ FEMM 5.0
 
 Two things to drag:
 
-  1. femm_gui.app  ->  Applications   (the alias is right there)
-  2. FEMM          ->  your Documents folder
+  1. femm_gui.app  ->  Applications
+     The Applications alias is right here in this window; drop it on that.
+
+  2. FEMM          ->  your home folder
+     There is no alias for this one -- every Mac has /Applications at the
+     same place, but your home folder is different for every person, so no
+     shortcut can point at it, and this window has no sidebar to drop onto.
+
+     So: in Finder's menu bar choose  Go > Home  (or press Shift-Command-H).
+     That opens a window on your home folder. Drag FEMM from this window
+     into that one.
+
+     Your home folder, and NOT Documents, on purpose. macOS protects
+     Documents, Desktop and Downloads: a program reading a file there needs
+     your permission first, and while an app can ask you for it, something
+     started from a terminal usually just fails with "Operation not
+     permitted" and no way offered to fix it. Since driving FEMM from Octave,
+     MATLAB, Python or a script is most of the point, the home folder -- which
+     is not protected -- saves everyone that. It also keeps the examples out
+     of iCloud, which would otherwise sync every solver output file you
+     produce.
 
 That second one matters. It holds the examples, and they have to live
 somewhere you can write: every example script opens a model and then saves
@@ -150,9 +169,9 @@ cannot run there.
 
 Dropping FEMM into Documents gives you:
 
-  ~/Documents/FEMM/examples    models and scripts, for every language
-  ~/Documents/FEMM/docs        the manual and the per-binding guides
-  ~/Documents/FEMM/bindings    the client files for other programs
+  ~/FEMM/examples    models and scripts, for every language
+  ~/FEMM/docs        the manual and the per-binding guides
+  ~/FEMM/bindings    the client files for other programs
 
 which is the same layout FEMM uses on Linux.
 
@@ -166,11 +185,11 @@ The bindings are client-side files loaded by Octave, MATLAB, Python, Julia,
 Scilab or Mathematica. Each finds FEMM by itself, so there is nothing to
 configure -- but each language has to be told where its own binding file is:
 
-  Octave/MATLAB  addpath('~/Documents/FEMM/bindings/mfiles')
-  Python         sys.path.append('~/Documents/FEMM/bindings/pyfemm')
-  Julia          include("~/Documents/FEMM/bindings/juliafemm/juliafemm.jl")
-  Scilab         exec('~/Documents/FEMM/bindings/scifemm/scifemm.sci')
-  Mathematica    Get["~/Documents/FEMM/bindings/mathfemm/mathfemm.m"]
+  Octave/MATLAB  addpath('~/FEMM/bindings/mfiles')
+  Python         sys.path.append('~/FEMM/bindings/pyfemm')
+  Julia          include("~/FEMM/bindings/juliafemm/juliafemm.jl")
+  Scilab         exec('~/FEMM/bindings/scifemm/scifemm.sci')
+  Mathematica    Get["~/FEMM/bindings/mathfemm/mathfemm.m"]
 
 Set FEMM_DIR only if you keep more than one copy of FEMM and need to say
 which one they should talk to.
@@ -188,9 +207,25 @@ version. Deleting that folder restores the materials FEMM shipped with.
 Uninstalling
 ------------
 
-Drag femm_gui.app to the Trash. ~/Documents/FEMM and the materials folder
+Drag femm_gui.app to the Trash. ~/FEMM and the materials folder
 are yours; delete them if you want them gone.
 READYME
+
+# ---- Permissions the image will carry --------------------------------
+# hdiutil copies the SOURCE FOLDER's modes onto the volume, and mktemp -d
+# creates its directory 0700. That put drwx------ on the volume root, which
+# Finder gets away with because it runs as the packager -- but a sandboxed
+# reader does not: double-clicking Read Me.txt on the mounted image failed
+# with "You don't have permission", while the file itself was a perfectly
+# ordinary 644. Reported from the first real DMG build.
+#
+# More generally the artifact must not inherit whoever-built-it's umask.
+# These three lines make it independent of that: a traversable root, content
+# readable by anyone, and directories anyone can enter. u+rwX,go+rX uses
+# capital X so the execute bit lands on directories only and never on data.
+chmod 755 "$STAGE"
+chmod -R u+rwX,go+rX "$FOLDER"
+chmod 644 "$STAGE/Read Me.txt"
 
 mkdir -p "$OUT_DIR"
 rm -f "$DMG"

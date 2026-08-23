@@ -26,6 +26,7 @@
 #include <QApplication>
 #include <QSettings>
 
+#include "mono_font.h"
 #define tr QObject::tr
 
 void ElectrostaticsHandler::showPrefsDialog(QWidget *parent)
@@ -181,7 +182,7 @@ void ElectrostaticsHandler::showCircuitDialog(QWidget *parent)
     for (auto &cp : doc->circproplist) combo->addItem(QString::fromStdString(cp.CircName));
     auto *textEdit = new QTextEdit;
     textEdit->setReadOnly(true);
-    textEdit->setFont(QFont("Consolas", 9));
+    textEdit->setFont(monoFont(9));
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close);
     QObject::connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::close);
     auto *layout = new QVBoxLayout(&dlg);

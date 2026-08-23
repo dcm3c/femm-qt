@@ -165,23 +165,41 @@ here.  Anything else you keep in that directory is untouched: only the
 files femm-qt ships are written.  Work in a copy, which is what every
 example script does on its second line.
 
-FEMM then appears in the application menu, and \texttt{femm\_gui} works
-from any directory.  The installer sorts out \texttt{PATH} itself: on Debian
-and Ubuntu \texttt{\textasciitilde/.local/bin} is added by the stock
-\texttt{\textasciitilde/.profile}, but only if it exists when you log in ---
-which it may not have until now --- so the installer says so rather than
-adding a second copy of what the distribution already does.  Where nothing
-arranges it, as on FreeBSD or under a custom prefix, it appends one marked
-line to your login profile; \texttt{FEMM\_NO\_MODIFY\_PATH=1} asks to be told
-instead of edited.
+FEMM then appears in the application menu.  For \texttt{femm\_gui} to work
+as a command, \texttt{\textasciitilde/.local/bin} has to be on your
+\texttt{PATH}, and \textbf{the installer does not put it there without being
+asked}.  Your shell startup files are your configuration --- kept in a
+dotfiles repository, synced between machines, or managed for you on an
+institutional login --- and an installer editing one uninvited produces a
+confusing diff at best and a change that is silently reverted at worst.
 
-The one thing it cannot do is fix the shell you ran it from, since no program
-can change the environment of the shell that launched it.  Log out and back
-in, or run \texttt{. \textasciitilde/.profile} in the shell you are using.
-Opening a new terminal window is \emph{not} enough:
-\texttt{\textasciitilde/.profile} is read when you log in, and a terminal on
-the desktop is not a login shell, so it inherits the \texttt{PATH} the session
-already had.
+So it checks, and tells you.  If the directory is already on \texttt{PATH}
+it says nothing at all.  On Debian and Ubuntu the stock
+\texttt{\textasciitilde/.profile} already adds
+\texttt{\textasciitilde/.local/bin} when it exists, so it will be there at
+your next login and the installer leaves well alone.  Otherwise it prints
+the one line to add and which file to add it to.
+
+If you would rather it did the edit, ask for it:
+\begin{lstlisting}
+./freebsd_build.sh install --modify-path
+\end{lstlisting}
+which appends a single marked block, once --- running it again finds the
+block and adds nothing.
+
+Which file that is depends on your shell, and so does when the change takes
+effect.  \texttt{\textasciitilde/.profile} is read at login by the desktop
+session, and every terminal inherits the environment from there, so a bash
+or \texttt{sh} user must log out and back in --- opening a new terminal
+window is \emph{not} enough.  \texttt{\textasciitilde/.zshrc} and fish's
+\texttt{config.fish} are read by every interactive shell, so there a new
+terminal really is sufficient.  Under \texttt{csh} or \texttt{tcsh} nothing
+is written at all: those read none of these files and use a different syntax
+entirely, so the installer prints the \texttt{set path} line for
+\texttt{\textasciitilde/.cshrc} rather than leave a line that would never run.
+
+Whatever you do, it cannot fix the shell you ran it from --- no program can
+change the environment of the shell that launched it.
 
 Pass a different prefix if you would rather it went elsewhere:
 \begin{lstlisting}

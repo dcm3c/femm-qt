@@ -25,16 +25,19 @@ SELF="${BASH_SOURCE[0]}"
 cd "$(dirname "$(readlink -f "$SELF" 2>/dev/null || echo "$SELF")")"
 
 # ---- Optional: install instead of building --------------------------
-# `install [prefix]` puts an ALREADY BUILT tree into the user's home and
-# exits. It deliberately does not build first: you install once and build
-# many times. packaging/unix_install.sh explains why the install goes to
-# $HOME rather than /usr/local.
+# `install [prefix] [--modify-path]` puts an ALREADY BUILT tree into the
+# user's home and exits. It deliberately does not build first: you install
+# once and build many times. packaging/unix_install.sh explains why the
+# install goes to $HOME rather than /usr/local.
+#
+# It does NOT touch your shell startup files unless you pass --modify-path;
+# by default it prints the one line to add and leaves the file alone.
 if [ "${1:-}" = "install" ]; then
     shift
     # Through bash, not by the executable bit alone: this tree usually
     # arrives as a zip by way of Windows and a shared folder, and that
     # road does not always carry Unix modes.
-    exec bash packaging/unix_install.sh "$PWD" "$PWD/build" "${1:-$HOME/.local}"
+    exec bash packaging/unix_install.sh "$PWD" "$PWD/build" "$@"
 fi
 
 # ---- Optional: undo that --------------------------------------------

@@ -35,9 +35,29 @@
 # ======================================================================
 set -eu
 
-ROOT="${1:?usage: unix_install.sh <femm-qt-root> <build-dir> [prefix]}"
-BUILD="${2:?usage: unix_install.sh <femm-qt-root> <build-dir> [prefix]}"
-PREFIX="${3:-$HOME/.local}"
+ROOT="${1:?usage: unix_install.sh <femm-qt-root> <build-dir> [prefix] [--modify-path]}"
+BUILD="${2:?usage: unix_install.sh <femm-qt-root> <build-dir> [prefix] [--modify-path]}"
+shift 2
+
+# --modify-path is OPT-IN, and deliberately so. Shell startup files are
+# personal configuration: they get managed in git repos, synced with chezmoi or
+# stow, and on institutional machines they live on an NFS home and are policed.
+# An installer that edits one without being asked produces a dirty diff at
+# best, and at worst is silently reverted by the next sync -- so the failure is
+# invisible until PATH mysteriously stops working. Set against that, the cost
+# of NOT editing is that the user reads one printed line and adds it, which is
+# cheap and obvious. rustup made the same call and it is the pattern nobody
+# complains about.
+PREFIX="$HOME/.local"
+MODIFY_PATH=0
+for arg in "$@"; do
+    case "$arg" in
+        --modify-path)    MODIFY_PATH=1 ;;
+        --no-modify-path) MODIFY_PATH=0 ;;
+        -*) echo "unix_install.sh: unknown option $arg" >&2; exit 2 ;;
+        *)  PREFIX="$arg" ;;
+    esac
+done
 
 BIN="$BUILD/bin"
 APPDIR="$PREFIX/opt/femm-qt"
@@ -249,7 +269,8 @@ echo "  documents   $DOCDIR"
 # process cannot change its parent's environment. So the current terminal
 # always needs a new shell or a re-source, and that much is announced.
 #
-# Set FEMM_NO_MODIFY_PATH=1 to skip the edit and only be told about it.
+# Pass --modify-path to have the line added for you; without it the
+# installer only tells you what to add.
 #
 # The login profile, and NOT ~/.bashrc, though that would make "open a new
 # terminal" true (it is read by every interactive bash shell). Decided
@@ -259,10 +280,29 @@ echo "  documents   $DOCDIR"
 # anything non-interactive. ~/.bashrc would have helped the case that already
 # works and missed the one that matters. (`ssh host femm_headless -run s.py`
 # reads neither -- that wants a full path, and no installer can fix it.)
-case "$(basename "${SHELL:-sh}")" in
-    zsh)  profile="$HOME/.zprofile" ;;
-    fish) profile="$HOME/.config/fish/config.fish" ;;
-    *)    profile="$HOME/.profile" ;;
+# WHICH startup file the shell will actually read is the whole question, and
+# it is not the same as "the login profile":
+#
+#   zsh   .zprofile is read by LOGIN shells only, and a terminal window on a
+#         desktop is interactive NON-login, so it never sees it. .zshrc is
+#         read by both, so that is the only reliable target. Reported from
+#         GhostBSD: the line went into .zprofile and echo $PATH never showed
+#         it. Logging out would not have helped either -- nothing reads
+#         ~/.zprofile for you the way a Linux session reads ~/.profile.
+#   fish  config.fish is read by every fish shell.
+#   sh/bash  ~/.profile is a login file, but the graphical session reads it at
+#         login and every terminal inherits that environment, so it works
+#         after a logout -- which is what the message below says.
+#
+# csh/tcsh get no file at all: they read none of the above, and
+# `export VAR=value` is not their syntax. Writing there would be a silent
+# no-op reported as success, so they are told what to add instead.
+shellname="$(basename "${SHELL:-sh}")"
+case "$shellname" in
+    zsh)       profile="$HOME/.zshrc" ;;
+    fish)      profile="$HOME/.config/fish/config.fish" ;;
+    csh|tcsh)  profile="" ;;
+    *)         profile="$HOME/.profile" ;;
 esac
 
 case ":${PATH-}:" in
@@ -270,8 +310,8 @@ case ":${PATH-}:" in
     *)                 path_state=absent ;;
 esac
 
-if [ "$path_state" = absent ]; then
-    # Does the login profile already arrange it? Either explicitly, or via the
+if [ "$path_state" = absent ] && [ -n "$profile" ]; then
+    # Does that file already arrange it? Either explicitly, or via the
     # Debian/Ubuntu snippet, which is conditional on the directory existing.
     if [ -f "$profile" ] && grep -q "$PREFIX/bin" "$profile"; then
         path_state=in_profile          # a line naming it outright -- ours, or
@@ -282,12 +322,16 @@ if [ "$path_state" = absent ]; then
     fi
 fi
 
-if [ "$path_state" = absent ] && [ -z "${FEMM_NO_MODIFY_PATH-}" ]; then
+if [ "$path_state" = absent ] && [ -z "$profile" ]; then
+    path_state=absent_csh
+fi
+
+if [ "$path_state" = absent ] && [ "$MODIFY_PATH" -eq 1 ]; then
     mkdir -p "$(dirname "$profile")"
     {
         echo ""
         echo "# added by femm-qt install"
-        if [ "$(basename "${SHELL:-sh}")" = fish ]; then
+        if [ "$shellname" = fish ]; then
             echo "fish_add_path $PREFIX/bin"
         else
             echo "export PATH=\"$PREFIX/bin:\$PATH\""
@@ -304,13 +348,20 @@ fi
 # in worked. (On a text console or over ssh a new login would do it, but that
 # is not how most people will meet this.) fish is the exception: config.fish
 # is read by every fish shell, so there a new terminal really is enough.
-if [ "$(basename "${SHELL:-sh}")" = fish ]; then
-    reload_where="Open a new terminal, or for this one:"
-    reload_cmd="source $profile"
-else
-    reload_where="Log out and back in, or for this shell only:"
-    reload_cmd=". $profile"
-fi
+# Which advice is true depends on the FILE, not the shell. ~/.profile is read
+# once at login by the desktop session; .zshrc and config.fish are read by
+# every interactive shell, where a new terminal genuinely is enough.
+case "$profile" in
+    "$HOME/.profile")
+        reload_where="Log out and back in, or for this shell only:"
+        reload_cmd=". $profile" ;;
+    *config.fish)
+        reload_where="Open a new terminal, or for this one:"
+        reload_cmd="source $profile" ;;
+    *)
+        reload_where="Open a new terminal, or for this one:"
+        reload_cmd=". $profile" ;;
+esac
 
 echo
 case "$path_state" in
@@ -333,8 +384,22 @@ case "$path_state" in
         echo "    $reload_cmd"
         ;;
     absent)
-        echo "$PREFIX/bin is not on your PATH. To add it, put this in $profile:"
-        echo "    export PATH=\"$PREFIX/bin:\$PATH\""
+        echo "$PREFIX/bin is not on your PATH, so those commands will not work"
+        echo "in a terminal yet. Add this line to $profile:"
+        if [ "$shellname" = fish ]; then
+            echo "    fish_add_path $PREFIX/bin"
+        else
+            echo "    export PATH=\"$PREFIX/bin:\$PATH\""
+        fi
+        echo "or re-run the install with --modify-path and it will be added for"
+        echo "you, in a marked block. Nothing is written to your shell files"
+        echo "unless you ask."
+        ;;
+    absent_csh)
+        echo "$PREFIX/bin is not on your PATH, and your shell is $shellname,"
+        echo "which reads neither ~/.profile nor ~/.zshrc -- so nothing was"
+        echo "changed for you. Add this to ~/.cshrc:"
+        echo "    set path = ( \$path $PREFIX/bin )"
         ;;
 esac
 if [ "$path_state" != live ]; then

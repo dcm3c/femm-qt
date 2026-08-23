@@ -25,6 +25,7 @@
 #include <cstdio>
 #include <algorithm>
 
+#include "mono_font.h"
 // Series colors matching original FEMM
 static const QColor seriesColors[] = {
     QColor(0, 0, 0),       // black
@@ -346,7 +347,7 @@ PlotDialog::PlotDialog(const QString &title, QWidget *parent)
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::close);
 
     m_cursorLabel = new QLabel;
-    m_cursorLabel->setFont(QFont("Consolas", 8));
+    m_cursorLabel->setFont(monoFont(8));
     m_cursorLabel->setMinimumHeight(16);
 
     connect(m_plot, &PlotWidget::cursorInfo, [this](const QString &text) {

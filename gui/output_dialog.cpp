@@ -12,6 +12,7 @@
 #include <QScreen>
 #include <QApplication>
 
+#include "mono_font.h"
 OutputDialog::OutputDialog(QWidget *parent)
     : QDialog(parent, Qt::Tool)
 {
@@ -19,7 +20,7 @@ OutputDialog::OutputDialog(QWidget *parent)
 
     m_text = new QTextEdit;
     m_text->setReadOnly(true);
-    m_text->setFont(QFont("Consolas", 9));
+    m_text->setFont(monoFont(9));
     m_text->setLineWrapMode(QTextEdit::NoWrap);
 
     auto *layout = new QVBoxLayout(this);

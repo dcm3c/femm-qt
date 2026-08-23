@@ -30,6 +30,7 @@
 #include <QTimer>
 #include <QWheelEvent>
 
+#include "mono_font.h"
 static PyConsole *s_console = nullptr;
 
 PyConsole *pyConsoleInstance() { return s_console; }
@@ -53,14 +54,14 @@ public:
         setFontSize(QSettings().value("console/fontSize", kDefaultPt).toInt());
     }
 
-    static constexpr int kDefaultPt = 9;    // Consolas 9, the historical default
+    static constexpr int kDefaultPt = 9;    // 9 pt, the historical default
     static constexpr int kMinPt = 5;
     static constexpr int kMaxPt = 48;
 
     // Apply and persist a console font size (clamped to a sane range).
     void setFontSize(int pt) {
         m_fontPt = qBound(kMinPt, pt, kMaxPt);
-        setFont(QFont("Consolas", m_fontPt));
+        setFont(monoFont(m_fontPt));
         QSettings().setValue("console/fontSize", m_fontPt);
     }
 

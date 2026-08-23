@@ -23,6 +23,7 @@
 #include <QMessageBox>
 #include <QSettings>
 
+#include "mono_font.h"
 #define tr QObject::tr
 
 HeatFlowHandler::HeatFlowHandler(ScalarResultsWidget *widget, HeatResultsDoc *doc)
@@ -122,7 +123,7 @@ void HeatFlowHandler::showCircuitDialog(QWidget *parent)
     for (auto &cp : m_doc->circproplist) combo->addItem(QString::fromStdString(cp.CircName));
     auto *textEdit = new QTextEdit;
     textEdit->setReadOnly(true);
-    textEdit->setFont(QFont("Consolas", 9));
+    textEdit->setFont(monoFont(9));
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close);
     QObject::connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::close);
     auto *layout = new QVBoxLayout(&dlg);

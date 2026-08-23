@@ -57,3 +57,22 @@ set_target_properties(femm_gui PROPERTIES
     WIN32_EXECUTABLE TRUE
     MACOSX_BUNDLE TRUE
     MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in")
+
+# The application icon, macOS only. Two halves are both required and neither
+# reports the other missing: Info.plist.in names femm.icns in CFBundleIconFile,
+# and the file itself has to be IN Contents/Resources. Without both, Finder
+# draws the blank placeholder icon and says nothing about why -- which is what
+# it did until 2026-08-23.
+#
+# MACOSX_PACKAGE_LOCATION is what puts it there, and it is why the file is
+# listed as a source: CMake treats a source with that property as a bundle
+# resource to copy rather than something to compile. Guarded by APPLE so the
+# other platforms never see a .icns in their source list. Windows takes its
+# icon from the .rc instead, and Linux from the .desktop entry's Icon= key
+# (see packaging/unix_install.sh).
+if(APPLE)
+    set(FEMM_ICNS "${CMAKE_CURRENT_SOURCE_DIR}/icons/femm.icns")
+    target_sources(femm_gui PRIVATE "${FEMM_ICNS}")
+    set_source_files_properties("${FEMM_ICNS}" PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources")
+endif()

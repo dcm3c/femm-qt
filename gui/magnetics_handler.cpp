@@ -29,6 +29,7 @@
 #include <QSettings>
 #include <cmath>
 
+#include "mono_font.h"
 #ifndef PI
 #define PI 3.141592653589793238462643383279
 #endif
@@ -503,7 +504,7 @@ void MagneticsHandler::showCircuitDialog(QWidget *parent)
         combo->addItem(QString::fromStdString(cp.CircName));
     auto *textEdit = new QTextEdit;
     textEdit->setReadOnly(true);
-    textEdit->setFont(QFont("Consolas", 9));
+    textEdit->setFont(monoFont(9));
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Close);
     QObject::connect(buttons, &QDialogButtonBox::rejected, &dlg, &QDialog::close);
     auto *layout = new QVBoxLayout(&dlg);

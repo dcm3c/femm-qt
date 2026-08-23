@@ -7,6 +7,7 @@
 #include <QApplication>
 #include <QRegularExpression>
 
+#include "mono_font.h"
 // Set by runSolver whenever a visible run ends non-zero; consumed by
 // takeFailureReported(). See the header for why it exists.
 static bool s_failureReported = false;
@@ -51,7 +52,7 @@ SolverProgressDialog::SolverProgressDialog(QWidget *parent)
     m_log = new QPlainTextEdit;
     m_log->setReadOnly(true);
     m_log->setMaximumBlockCount(500);
-    m_log->setFont(QFont("Consolas", 9));
+    m_log->setFont(monoFont(9));
     m_log->setMaximumHeight(160);
 
     m_abortBtn = new QPushButton(tr("Abort"));

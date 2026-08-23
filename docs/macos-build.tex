@@ -182,7 +182,7 @@ persistent.  Being first in the list, it beats everything else.
 
 The binding files themselves ship twice: read-only inside the bundle at
 \texttt{Contents/Resources/bindings}, and as a plain
-\texttt{\textasciitilde/Documents/FEMM/bindings} folder if you dragged
+\texttt{\textasciitilde/FEMM/bindings} folder if you dragged
 \texttt{FEMM} out of the disk image.  Use the second --- Finder will not
 browse into a \texttt{.app}, and Octave and Julia need a real path.  Both
 hold \texttt{mfiles} for OctaveFEMM, with \texttt{mathfemm},
@@ -222,7 +222,7 @@ to choose between them.
 
 \item \textbf{Add the m-files to Octave's path.}  Start Octave and run, once:
 \begin{lstlisting}
-addpath('~/Documents/FEMM/bindings/mfiles');
+addpath('~/FEMM/bindings/mfiles');
 savepath;
 \end{lstlisting}
 or, working from a source tree,
@@ -262,14 +262,25 @@ things: the application, a symlink to \texttt{/Applications}, a
 the app onto \texttt{Applications}, and \texttt{FEMM} onto the user's
 \texttt{Documents} folder:
 \begin{lstlisting}
-~/Documents/FEMM/examples    models and scripts, every language
-~/Documents/FEMM/docs        the manual and the per-binding guides
-~/Documents/FEMM/bindings    the client files for other programs
+~/FEMM/examples    models and scripts, every language
+~/FEMM/docs        the manual and the per-binding guides
+~/FEMM/bindings    the client files for other programs
 \end{lstlisting}
 
-That is deliberately the same tree \verb+./linux_build.sh install+
-produces, so one set of instructions describes both platforms and the
-paths quoted in the guides are true on either.
+The home folder rather than \texttt{\textasciitilde/Documents}, which is
+where the Linux install puts the same tree, and the difference is
+deliberate.  macOS protects \texttt{Documents}, \texttt{Desktop} and
+\texttt{Downloads} through TCC: a program that opens a file there under
+its own steam --- as opposed to one you picked in an open panel --- needs
+consent first.  An application with a window can ask for it, and
+\texttt{femm\_gui} does; a process without one generally just fails with
+\emph{Operation not permitted}.  Worse, an app that fails that way without
+prompting never appears in \textbf{Files \& Folders} in System Settings,
+so there is no obvious way to grant it afterwards --- Octave does exactly
+this.  Since driving FEMM from Octave, MATLAB, Python or a shell script is
+most of what it is for, the home folder, which TCC does not cover, avoids
+the whole business.  It also keeps a directory full of solver output from
+being synced to iCloud.
 
 It is one folder rather than three at the top level because three would
 be three things to drag and three things to forget.  It has to leave the

@@ -10,6 +10,8 @@
     <string>FEMM 5.0</string>
     <key>CFBundleExecutable</key>
     <string>femm_gui</string>
+    <key>CFBundleIconFile</key>
+    <string>femm.icns</string>
     <key>CFBundleVersion</key>
     <string>5.0</string>
     <key>CFBundleShortVersionString</key>
