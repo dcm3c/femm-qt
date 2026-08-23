@@ -20,7 +20,27 @@ cd "$(dirname "$(readlink -f "$0")")"
 # $HOME rather than /usr/local.
 if [ "${1:-}" = "install" ]; then
     shift
-    exec packaging/unix_install.sh "$PWD" "$PWD/build" "${1:-$HOME/.local}"
+    # Through bash, not by the executable bit alone: this tree usually
+    # arrives as a zip by way of Windows and a shared folder, and that
+    # road does not always carry Unix modes.
+    exec bash packaging/unix_install.sh "$PWD" "$PWD/build" "${1:-$HOME/.local}"
+fi
+
+# ---- Optional: undo that --------------------------------------------
+# `uninstall [prefix]` removes what the install created, reading the manifest
+# it left behind rather than guessing. Your own copies of the examples are
+# kept. Add -y to skip the confirmation.
+if [ "${1:-}" = "uninstall" ]; then
+    shift
+    prefix="$HOME/.local"
+    yes=""
+    for a in "$@"; do
+        case "$a" in
+            -y) yes="-y" ;;
+            *)  prefix="$a" ;;
+        esac
+    done
+    exec bash packaging/unix_uninstall.sh "$prefix" $yes
 fi
 
 # ---- Handle the optional 'clean' argument ----------------------------

@@ -71,13 +71,25 @@ if [ ! -x "$B" ]; then
     exit 1
 fi
 
+# The status-line filter is ANCHORED (^) on purpose. femm_headless writes its
+# status to stderr and script output to stdout, and these rows merge the two
+# with 2>&1 -- so if a status line were ever to land mid-line, an unanchored
+# pattern would delete the whole joined line, taking a line of real output with
+# it and leaving the line COUNT intact. That is not hypothetical: it happened
+# on Ubuntu, and it turned a perfect run into "torque = 47595" via
+#     torque = 0.38579Script complete, exiting.   <- deleted, prefix and all
+#     47595 0                                     <- kept, looks like a number
+# The cause is fixed (setvbuf in ipc/headless_main.cpp), but anchoring is what
+# makes a recurrence LOUD -- the joined line survives the filter and the row
+# fails on structure instead of quietly reporting a wrong value.
+
 # Scratch files go beside the goldens, not in /tmp: a couple of the comparers
 # read them back by relative name.
 TMP=${TMPDIR:-/tmp}
 
 run(){ # test compare golden fq
   $B -run "$T/$1" > "$TMP/$4.raw" 2>&1
-  grep -vE "FEMM headless|IPC:|Executing:|Script complete" "$TMP/$4.raw" > "$4"
+  grep -vE "^(FEMM headless|IPC:|Executing:|Script complete)" "$TMP/$4.raw" > "$4"
   printf "%-26s " "${1%.py}:"; python3 "$2" "$3" "$4" 2>&1 | head -1
 }
 
@@ -85,7 +97,7 @@ run(){ # test compare golden fq
 inproc(){ # script label
   printf "%-26s " "$2:"
   $B -run "$T/$1" 2>&1 \
-    | grep -vE "FEMM headless|IPC:|Executing:|Script complete" | tail -1
+    | grep -vE "^(FEMM headless|IPC:|Executing:|Script complete)" | tail -1
 }
 
 run MOBlockIntegralTest.py   MOBlockIntegralCompare.py   OF_result.txt      fq_result.txt
@@ -119,6 +131,7 @@ inproc DateTimeTest.py DateTime
 inproc CsvTest.py Csv
 inproc PylibTest.py Pylib
 printf "%-26s " "RunScriptSize:"; python3 RunScriptSizeTest.py "$B" | tail -1
+printf "%-26s " "RedirectedOutput:"; python3 RedirectedOutputTest.py "$B" | tail -1
 inproc ProxyDunderTest.py ProxyDunders
 inproc PointLocationTest.py PointLocation
 inproc MagDirTransformTest.py MagDirTransform

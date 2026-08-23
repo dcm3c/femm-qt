@@ -248,60 +248,21 @@ fi
 # as well costs half a megabyte and means the examples survive throwing the DMG
 # away.
 #
-# The example list comes out of the WINDOWS INSTALLER MANIFEST rather than being
-# a second list to keep in step -- packaging/femm-qt.iss already curates exactly
-# which files ship, and ../examples in a working tree also holds solver output
-# and scratch models that must not go out. Its paths are relative to packaging/,
-# and the DestDir is the only one ending in examples", so no backslash matching
-# is needed.
-mkdir -p "$APP_RES/examples"
-ex_n=0
-ex_missing=0
-while IFS= read -r rel; do
-    [ -n "$rel" ] || continue
-    src="../packaging/$rel"
-    if [ -f "$src" ]; then
-        cp "$src" "$APP_RES/examples/"
-        ex_n=$((ex_n + 1))
-    else
-        ex_missing=$((ex_missing + 1))
-        echo "WARNING: example listed in femm-qt.iss but not found: $src"
-    fi
-done < <(awk -F'"' '/DestDir: .*examples";/ { print $2 }' ../packaging/femm-qt.iss \
-         | tr '\\' '/')
-if [ "$ex_n" -eq 0 ]; then
-    echo "ERROR: no examples extracted from ../packaging/femm-qt.iss -- the"
-    echo "       manifest format must have changed. Fix the awk above rather"
-    echo "       than shipping a bundle with no examples."
-    exit 1
-fi
-echo "  examples: $ex_n copied${ex_missing:+, $ex_missing missing}"
-
-# The language bindings. Client-side text loaded by Octave/Julia/Mathematica/
-# Scilab/Python, never by femm-qt itself, so they are read-only here and need no
-# per-user copy. Directory names match the Windows installer's so one set of
-# instructions covers both. lua4 itself is NOT here -- it is a binary and lives
-# in MacOS/ for signing (step 2).
-mkdir -p "$APP_RES/bindings"
-copy_binding() {         # $1 = destination name, $2... = source files
-    dest="$APP_RES/bindings/$1"; shift
-    mkdir -p "$dest"
-    for f in "$@"; do
-        [ -f "$f" ] && cp "$f" "$dest/"
-    done
-}
-copy_binding mfiles    ../octavefemm/*.m
-copy_binding mathfemm  ../mathfemm/mathfemm.m
-copy_binding scifemm   ../scifemm/scifemm.sci
-copy_binding juliafemm ../juliafemm/juliafemm.jl
-copy_binding pyfemm    ../pyfemm/femm.py
-copy_binding luafemm   ../luafemm/femm.lua ../luafemm/README.md
-
-# The remaining documents, beside manual.pdf from step 3b2.
-for doc in ../readme.txt ../octavefemm/manual/octavefemm.pdf \
-           ../luafemm/femm-lua.pdf ../mathfemm/usage.nb; do
-    [ -f "$doc" ] && cp "$doc" "$APP_RES/"
-done
+# The staging itself is packaging/stage_extras.sh, shared with the install
+# step of linux_build.sh and freebsd_build.sh. It reads the example list out
+# of packaging/femm-qt.iss -- which already curates exactly which files ship,
+# and matters because ../examples in a working tree also holds solver output
+# and scratch models that must not go out.
+#
+# Shared rather than duplicated because the duplicate had already drifted: the
+# four per-binding markdown guides (pyfemm.md, octavefemm.md, femm-lua.md and
+# luafemm's README) were added to the shared copy and this one silently went on
+# shipping without them. Verified equivalent before the switch -- the inline
+# version and the shared one staged 710 byte-identical files, differing only by
+# those four documents.
+#
+# This script runs with cwd = build/, so the root is one level up.
+bash "../packaging/stage_extras.sh" "$APP_RES" "$(cd .. && pwd)"
 
 # ---- 3c. Remove the loose copies of everything now in the bundle -----
 # CMake links these into bin/ and step 2 copied them into Contents/MacOS/.

@@ -84,8 +84,68 @@ function openfemm(headless)
         end
     end
 
+    -- Last resort: every directory on PATH. An install puts femm_gui and
+    -- femm_headless there (symlinks in ~/.local/bin on Unix, {app}\bin on
+    -- Windows), so this is what lets a Lua script work with no FEMM_DIR set.
+    -- Last, so an explicit FEMM_DIR still wins. Lua 4 has no way to find out
+    -- where femm.lua itself lives, so unlike the other bindings this one has
+    -- no relative fallback to sit between the two.
     if not exe then
-        error("Cannot find " .. exename .. ". Set FEMM_DIR environment variable.")
+        local pathenv = getenv("PATH")
+        local sep = ":"
+        if iswin then sep = ";" end
+        if pathenv then
+            local i = 1
+            while i <= strlen(pathenv) and not exe do
+                local j = strfind(pathenv, sep, i, 1)
+                local dir
+                if j then
+                    dir = strsub(pathenv, i, j - 1)
+                    i = j + 1
+                else
+                    dir = strsub(pathenv, i)
+                    i = strlen(pathenv) + 1
+                end
+                if dir ~= "" then
+                    local forms = {
+                        dir .. "/femm_gui.app/Contents/MacOS/" .. exename,
+                        dir .. "/" .. exename,
+                        dir .. "/" .. exename .. ".exe",
+                    }
+                    local k = 1
+                    while k <= getn(forms) and not exe do
+                        local f = openfile(forms[k], "r")
+                        if f then closefile(f); exe = forms[k] end
+                        k = k + 1
+                    end
+                end
+            end
+        end
+    end
+
+    -- macOS keeps programs in /Applications, not on PATH, so the search
+    -- above cannot find an installed bundle -- which is where a Mac user puts
+    -- FEMM. Tried unconditionally: on Windows and Linux these simply do not
+    -- exist, so it costs two failed openfile calls.
+    if not exe then
+        local home = getenv("HOME")
+        local appdirs = {"/Applications"}
+        if home then appdirs[2] = home .. "/Applications" end
+        local i = 1
+        while i <= getn(appdirs) and not exe do
+            local f = openfile(appdirs[i] .. "/femm_gui.app/Contents/MacOS/" ..
+                               exename, "r")
+            if f then
+                closefile(f)
+                exe = appdirs[i] .. "/femm_gui.app/Contents/MacOS/" .. exename
+            end
+            i = i + 1
+        end
+    end
+
+    if not exe then
+        error("Cannot find " .. exename ..
+              ". Set FEMM_DIR, or put it on PATH.")
     end
 
     local cmd = '"' .. exe .. '" --port ' .. port

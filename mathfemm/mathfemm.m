@@ -3150,12 +3150,33 @@ OpenFEMM[bHide_:0, port_:48015] := Module[{exename, femmdir, found, candidates, 
 		(* so no OS branching is needed. The .app form is the macOS bundle -- *)
 		(* the GUI builds as <exename>.app, whose real executable is inside at *)
 		(* Contents/MacOS/<exename>; it only exists on macOS, skipped elsewhere. *)
+		searchdirs = {};
 		If[StringQ[femmdir] && femmdir =!= "",
-			AppendTo[candidates, FileNameJoin[{femmdir, exename <> ".exe"}]];
-			AppendTo[candidates, FileNameJoin[{femmdir, "femm_gui.app", "Contents", "MacOS", exename}]];
-			AppendTo[candidates, FileNameJoin[{femmdir, exename}]];
-			AppendTo[candidates, FileNameJoin[{femmdir, exename <> ".app", "Contents", "MacOS", exename}]];
-		];
+			AppendTo[searchdirs, femmdir]];
+		AppendTo[searchdirs, FileNameJoin[{PackDir, "..", "build", "bin"}]];
+		AppendTo[searchdirs, PackDir];
+		(* Last resort: every directory on PATH. An install puts femm_gui and *)
+		(* femm_headless there -- symlinks in ~/.local/bin on Unix, {app}\bin *)
+		(* on Windows -- so this is what lets the bindings work with no *)
+		(* FEMM_DIR set at all. LAST, so an explicit FEMM_DIR or a source *)
+		(* tree being worked in still wins. *)
+		syspath = Environment["PATH"];
+		If[StringQ[syspath],
+			Do[If[d =!= "", AppendTo[searchdirs, d]],
+				{d, StringSplit[syspath,
+					If[$OperatingSystem == "Windows", ";", ":"]]}]];
+		(* macOS keeps programs in /Applications, not on PATH, so the *)
+		(* search above cannot find an installed bundle -- which is where *)
+		(* a Mac user puts FEMM. The femm_gui.app/Contents/MacOS/ form *)
+		(* tried in every directory is what reaches inside it. *)
+		AppendTo[searchdirs, "/Applications"];
+		AppendTo[searchdirs, FileNameJoin[{$HomeDirectory, "Applications"}]];
+		Do[
+			AppendTo[candidates, FileNameJoin[{d, exename <> ".exe"}]];
+			AppendTo[candidates, FileNameJoin[{d, "femm_gui.app", "Contents", "MacOS", exename}]];
+			AppendTo[candidates, FileNameJoin[{d, exename}]];
+			AppendTo[candidates, FileNameJoin[{d, exename <> ".app", "Contents", "MacOS", exename}]],
+			{d, searchdirs}];
 		found = "";
 		Do[If[FileExistsQ[c], found = c; Break[]], {c, candidates}];
 		If[found == "",

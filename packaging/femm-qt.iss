@@ -27,10 +27,16 @@ PrivilegesRequiredOverridesAllowed= dialog
 
 [Tasks]
 ; Optional, OFF by default. Adds {app}\bin to PATH so femm-lua, the solvers,
-; and femm_gui can be run by bare name from any folder. FEMM_DIR (set
-; unconditionally in [Registry] below) is what the GUI and the language
-; bindings actually use to locate the executables -- this task is purely
-; command-line convenience, and it is removed again on uninstall (see [Code]).
+; and femm_gui can be run by bare name from any folder. Purely command-line
+; convenience, and it is removed again on uninstall (see [Code]).
+;
+; It is NOT how anything finds anything. femm_gui, femm_headless and the four
+; solvers resolve their own assets relative to their own executable (exeDir()
+; in libfemm/script_callbacks.cpp) and read no environment variable at all.
+; The LANGUAGE BINDINGS are the only thing that needs telling, and FEMM_DIR --
+; set unconditionally in [Registry] below -- is what tells them. They will
+; also search PATH as a last resort, but since this task is off by default
+; that is not something a Windows install can rely on; FEMM_DIR is.
 Name: "addtopath"; Description: "Add femm-qt to the PATH (run femm-lua and the CLI solvers from any folder)"; Flags: unchecked
 
 [Dirs]
@@ -161,10 +167,12 @@ Source: "..\examples\2horse_femm42.lua";                    DestDir: "{app}\exam
 Source: "..\examples\ACElec2.lua";                          DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "..\examples\2horse.fem";                           DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "..\examples\coil.fem";                             DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\coilgun.fem";                          DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "..\examples\my_SPM_motor_AGB.fem";                 DestDir: "{app}\examples"; Flags: ignoreversion
 
 ; OctaveFEMM / MATLAB interface
 Source: "..\octavefemm\manual\octavefemm.pdf";              DestDir: "{app}"; Flags: ignoreversion
+Source: "..\octavefemm\octavefemm.md";                     DestDir: "{app}"; Flags: ignoreversion
 Source: "..\octavefemm\examples\demo2.m";                   DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "..\octavefemm\examples\roters1b.m";                DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "..\octavefemm\examples\roters1b.fem";              DestDir: "{app}\examples"; Flags: ignoreversion
@@ -198,6 +206,16 @@ Source: "..\juliafemm\examples\strips.jl";            DestDir: "{app}\examples";
 Source: "..\juliafemm\examples\htutor.jl";            DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "..\juliafemm\examples\ACElec2.jl";           DestDir: "{app}\examples"; Flags: ignoreversion
 
+; Python interface. Windows shipped five of the six bindings; this was the
+; missing one, which also left pyfemm.md nothing to document -- it opens with
+; "install from a checkout" and names a directory that did not exist here.
+; femm.py is a single file with no dependencies, so `pip install -e` against
+; {app}\pyfemm works, as does simply putting it on sys.path. When pyfemm-qt
+; reaches PyPI that becomes the easier route, and this copy stops mattering.
+Source: "..\pyfemm\femm.py";                          DestDir: "{app}\pyfemm";  Flags: ignoreversion
+Source: "..\pyfemm\pyproject.toml";                   DestDir: "{app}\pyfemm";  Flags: ignoreversion skipifsourcedoesntexist
+Source: "..\pyfemm\pyfemm.md";                        DestDir: "{app}\pyfemm";  Flags: ignoreversion
+
 ; Lua 4 interface. The functional client (lua4.exe, femm.lua, femm-lua.bat)
 ; ships in {app}\bin above, because femm-lua.bat loads femm.lua / lua4.exe from
 ; its own directory and points FEMM_DIR there — so they must all sit together in
@@ -220,8 +238,11 @@ Name: "{group}\Lua Scripting Guide"; Filename: "{app}\luafemm\femm-lua.pdf"; Wor
 Name: "{group}\femm-lua (Lua console)"; Filename: "{app}\bin\femm-lua.bat"; WorkingDir: "{app}\examples"
 
 [Registry]
-; Set FEMM_DIR so octavefemm/mathfemm/pyfemm can find the executables.
-; Points to the bin directory where femm_headless.exe lives.
+; Set FEMM_DIR so the language bindings can find the executables -- all six
+; of them: octavefemm, mathfemm, scifemm, juliafemm, pyfemm and luafemm.
+; Points to the bin directory where femm_headless.exe lives. Unconditional,
+; because the PATH task above is off by default and each binding's other
+; fallbacks (beside itself, then PATH) reach nothing in this layout.
 ; "Install for all users" -> HKLM system environment (admin)
 ; "Install for me only"   -> HKCU user environment (no admin)
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \

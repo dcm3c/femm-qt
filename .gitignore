@@ -52,6 +52,14 @@ packaging/output/
 # but Windows -- which was the case until 2026-08-22.
 !manual/manual.pdf
 !octavefemm/manual/octavefemm.pdf
+# The four build guides, for the same reason one step earlier: they are how a
+# person builds this from source, and the source is exactly what they have.
+# Shipping only the .tex asks someone with no working build to install TeX
+# before they can read the instructions for getting a working build.
+!docs/windows-build.pdf
+!docs/linux-build.pdf
+!docs/freebsd-build.pdf
+!docs/macos-build.pdf
 *.png
 !gui/icons/*.png
 # The manual's figures are sources, not build products: since the manual moved

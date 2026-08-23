@@ -82,6 +82,19 @@ for doc in "$ROOT/readme.txt" \
     [ -f "$doc" ] && cp "$doc" "$DEST/"
 done
 
+# The per-binding guides. These are the documents that answer "how do I use
+# this from Octave / Python / Lua", and every one of them was sitting in the
+# binding's own source directory, which an installed user has no reason to
+# open and every reason not to find. luafemm's README is renamed on the way
+# out: in one flat directory beside five other guides, "README.md" says
+# nothing about which thing it is the readme for.
+for doc in "$ROOT/pyfemm/pyfemm.md" \
+           "$ROOT/octavefemm/octavefemm.md" \
+           "$ROOT/luafemm/femm-lua.md"; do
+    [ -f "$doc" ] && cp "$doc" "$DEST/"
+done
+[ -f "$ROOT/luafemm/README.md" ] && cp "$ROOT/luafemm/README.md" "$DEST/luafemm.md"
+
 if [ "$missing" -gt 0 ]; then
     echo "  examples: $n copied, $missing missing"
 else

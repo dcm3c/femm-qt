@@ -203,6 +203,41 @@ static std::string chdir_to_script_dir(const std::string &script)
 
 int main(int argc, char *argv[])
 {
+    // Line-buffer stdout, because this program writes DATA to stdout (every
+    // print() a script makes, via mp_hal_stdout_tx_strn) and STATUS to stderr,
+    // and a user who redirects both into one file -- femm_headless -run s.py
+    // > out.txt 2>&1, which is what testing/_verify_all.sh does -- must not
+    // get the two spliced together.
+    //
+    // C leaves stderr unbuffered but block-buffers stdout when it is not a
+    // terminal, so the two are written on completely different schedules. The
+    // 4 kB stdout buffer fills in the MIDDLE of a line and flushes there;
+    // "Script complete, exiting." then lands in the gap, and the file holds
+    //
+    //     torque = 0.38579Script complete, exiting.
+    //     47595 0
+    //
+    // -- a real case, on Ubuntu, out of MOGapIntegralTest.py. Silent: no
+    // error, no exit code, just a truncated number in a results file.
+    //
+    // Line buffering makes each line reach the descriptor whole, so it stops
+    // mattering WHEN a status line is written. That is cheaper and much more
+    // durable than an fflush(stdout) before each of the ~20 fprintf sites
+    // here and in tcp_server.cpp, which would need only one omission to come
+    // back. Nothing else can interleave: the solvers are spawned with their
+    // output discarded (script_callbacks.cpp -- > /dev/null 2>&1 on POSIX,
+    // DETACHED_PROCESS with no handle inheritance on Windows).
+    //
+    // POSIX-specific in effect. The Windows CRT documents _IOLBF as identical
+    // to _IOFBF, but Windows also buffers stderr, so its status lines flush as
+    // one block at exit and cannot land mid-line to begin with -- which is why
+    // this was invisible here for so long. The scripting layer has written
+    // stdout through fwrite since 4880a60; 684125e hid the splice for a few
+    // days by accidentally routing print() to a raw fd 1, and ff805af, in
+    // putting print() back on the sink where the GUI can see it, restored the
+    // original hazard along with it.
+    setvbuf(stdout, nullptr, _IOLBF, 0);
+
     fprintf(stderr, "FEMM headless engine v5.0\n");
 
     // Layer 1: initialize Python

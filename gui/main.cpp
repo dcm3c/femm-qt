@@ -635,6 +635,21 @@ int main(int argc, char *argv[])
     app.setOrganizationName("FEMM");
     app.setWindowIcon(QIcon(":/icons/femm.ico"));
 
+    // Which .desktop file this program IS. No-op on Windows and macOS; on
+    // Linux it is what lets the desktop shell put our icon on the dock.
+    //
+    // GNOME matches a window to a desktop entry by app_id, and Qt derives
+    // app_id from desktopFileName() when it is set and from applicationName()
+    // when it is not. Unset, that made the app_id "FEMM", so the shell looked
+    // for FEMM.desktop, did not find it -- the installed entry is
+    // femm-qt.desktop -- and fell back to the generic gear icon even though
+    // the icon itself was installed correctly. Wayland is the strict case,
+    // and Ubuntu defaults to it.
+    //
+    // The name must stay equal to the basename of the entry that
+    // packaging/unix_install.sh writes.
+    app.setDesktopFileName("femm-qt");
+
     // Parse command line for --port and a positional file argument. Use Qt's
     // Unicode-correct arguments (app.arguments()) rather than the narrow argv,
     // which is ANSI-mangled on Windows and would corrupt non-ASCII paths.

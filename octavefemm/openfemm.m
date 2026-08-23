@@ -103,6 +103,31 @@ function openfemm(varargin)
         thisdir = fileparts(mfilename('fullpath'));
         searchdirs{end+1} = fullfile(thisdir, '..', 'build', 'bin');
         searchdirs{end+1} = thisdir;
+        % Last resort: every directory on PATH. An install puts femm_gui
+        % and femm_headless there -- symlinks in ~/.local/bin on Unix,
+        % {app}\bin on Windows -- so this is what lets the bindings work
+        % with no FEMM_DIR set at all. It goes LAST so an explicit
+        % FEMM_DIR, or a source tree being worked in, still wins.
+        pathdirs = strsplit(getenv('PATH'), pathsep);
+        for i = 1:numel(pathdirs)
+            if ~isempty(pathdirs{i})
+                searchdirs{end+1} = pathdirs{i};
+            end
+        end
+        % macOS keeps programs in /Applications, not on PATH, so the PATH
+        % search above cannot find an installed bundle -- and the bundle
+        % is where a Mac user puts FEMM. These two directories are that
+        % platform's equivalent of a PATH entry; the
+        % femm_gui.app/Contents/MacOS/ form tried in every search
+        % directory is what reaches inside. Added unconditionally rather
+        % than behind an is-this-a-Mac test: on Windows and Linux they
+        % simply do not exist, so the check costs two failed lookups, and
+        % five languages means five chances to get five different platform
+        % tests wrong.
+        searchdirs{end+1} = '/Applications';
+        if ~isempty(getenv('HOME'))
+            searchdirs{end+1} = fullfile(getenv('HOME'), 'Applications');
+        end
 
         candidates = {};
         for i = 1:numel(searchdirs)

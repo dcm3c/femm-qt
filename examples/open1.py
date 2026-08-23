@@ -20,7 +20,14 @@ The separation between the two circles is the one quantity that carries no
 physics: the regions are joined by the periodic boundary conditions, not by
 proximity. 3.5" keeps them clear of each other and close to the figure.
 """
+import os
+
 import femm
+
+# This example runs under CPython through pyfemm, not inside femm-qt,
+# so nothing has chdir'd anywhere: a bare relative path would land
+# wherever python happened to be started. Write beside the script.
+HERE = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
 
 R = 1.5           # radius of each circular region, inches
 SEP = 3.5         # centre-to-centre spacing of the two regions
@@ -100,6 +107,6 @@ for x, y, mat in ((0.0, 0.0, "Iron"),        # centre leg
     femm.mi_setblockprop(mat, 1, 0, "<None>", 0, 0, 0)
     femm.mi_clearselected()
 
-femm.mi_saveas("C:/Claude/uPython/femm-qt/examples/open1.fem")
-print("wrote open1.fem")
+femm.mi_saveas(HERE + "/open1.fem")
+print("wrote " + HERE + "/open1.fem")
 femm.closefemm()

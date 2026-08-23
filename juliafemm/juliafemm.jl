@@ -113,6 +113,26 @@ function openfemm(; headless::Bool=false, port::Int=48015)
         moddir = @__DIR__
         push!(searchdirs, joinpath(moddir, "..", "build", "bin"))
         push!(searchdirs, moddir)
+        # Last resort: every directory on PATH. An install puts femm_gui
+        # and femm_headless there -- symlinks in ~/.local/bin on Unix,
+        # {app}\bin on Windows -- so this is what lets the bindings work
+        # with no FEMM_DIR set at all. It goes LAST so an explicit
+        # FEMM_DIR, or a source tree being worked in, still wins.
+        for d in split(get(ENV, "PATH", ""), Sys.iswindows() ? ';' : ':')
+            isempty(d) || push!(searchdirs, String(d))
+        end
+        # macOS keeps programs in /Applications, not on PATH, so the PATH
+        # search above cannot find an installed bundle -- and the bundle
+        # is where a Mac user puts FEMM. These two directories are that
+        # platform's equivalent of a PATH entry; the
+        # femm_gui.app/Contents/MacOS/ form tried in every search
+        # directory is what reaches inside. Added unconditionally rather
+        # than behind an is-this-a-Mac test: on Windows and Linux they
+        # simply do not exist, so the check costs two failed lookups, and
+        # five languages means five chances to get five different platform
+        # tests wrong.
+        push!(searchdirs, "/Applications")
+        push!(searchdirs, joinpath(homedir(), "Applications"))
 
         candidates = String[]
         for d in searchdirs

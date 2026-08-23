@@ -95,8 +95,102 @@ trap 'rm -rf "$STAGE"' EXIT
 echo "Staging..."
 cp -R "$APP" "$STAGE/"
 ln -s /Applications "$STAGE/Applications"
-cp -R "$APP/Contents/Resources/examples" "$STAGE/Examples"
-chmod -R u+w "$STAGE/Examples"
+
+# ---- One folder to drag, and it lands in the Linux layout ------------
+# Everything the user needs outside the bundle goes into a single FEMM/
+# directory, so the whole install is two drags: the app onto Applications,
+# and this onto Documents. Separate Examples, Bindings and Documentation
+# folders at the root would be three more things to drag and three more
+# things to forget.
+#
+# The result is deliberately identical to what ./linux_build.sh install
+# produces -- ~/Documents/FEMM/{examples,docs,bindings} -- so one set of
+# instructions covers both platforms, and the paths printed in the build
+# guides are true on either.
+#
+# Writable, because it has to be: an example script does open("model.fem")
+# then mi_saveas("temp.fem"), both relative to its own directory, and the
+# analysis writes the model back before solving. Inside the read-only
+# bundle none of that works, which is the whole reason this folder exists.
+FOLDER="$STAGE/FEMM"
+mkdir -p "$FOLDER/docs"
+cp -R "$APP/Contents/Resources/examples" "$FOLDER/examples"
+[ -d "$APP/Contents/Resources/bindings" ] &&
+    cp -R "$APP/Contents/Resources/bindings" "$FOLDER/bindings"
+
+# The documents, named explicitly rather than by wildcard: Resources also
+# holds the material-library seeds and the examples/bindings trees, none of
+# which belong here.
+for doc in manual.pdf octavefemm.pdf femm-lua.pdf usage.nb readme.txt \
+           pyfemm.md octavefemm.md femm-lua.md luafemm.md; do
+    [ -f "$APP/Contents/Resources/$doc" ] &&
+        cp "$APP/Contents/Resources/$doc" "$FOLDER/docs/"
+done
+
+chmod -R u+w "$FOLDER"
+
+# ---- Read Me ---------------------------------------------------------
+# A DMG that opens to an app and a folder does not say what to do with
+# either. This is the macOS stand-in for what the Linux installer prints
+# when it finishes.
+cat > "$STAGE/Read Me.txt" <<'READYME'
+FEMM 5.0
+========
+
+Two things to drag:
+
+  1. femm_gui.app  ->  Applications   (the alias is right there)
+  2. FEMM          ->  your Documents folder
+
+That second one matters. It holds the examples, and they have to live
+somewhere you can write: every example script opens a model and then saves
+it under another name, and running an analysis writes the model back before
+solving. Inside the application itself nothing is writable, so the examples
+cannot run there.
+
+Dropping FEMM into Documents gives you:
+
+  ~/Documents/FEMM/examples    models and scripts, for every language
+  ~/Documents/FEMM/docs        the manual and the per-binding guides
+  ~/Documents/FEMM/bindings    the client files for other programs
+
+which is the same layout FEMM uses on Linux.
+
+The manual is also in the Help menu (Help > Manual, or F1); you do not need
+to go looking for the PDF.
+
+Using FEMM from another program
+-------------------------------
+
+The bindings are client-side files loaded by Octave, MATLAB, Python, Julia,
+Scilab or Mathematica. Each finds FEMM by itself, so there is nothing to
+configure -- but each language has to be told where its own binding file is:
+
+  Octave/MATLAB  addpath('~/Documents/FEMM/bindings/mfiles')
+  Python         sys.path.append('~/Documents/FEMM/bindings/pyfemm')
+  Julia          include("~/Documents/FEMM/bindings/juliafemm/juliafemm.jl")
+  Scilab         exec('~/Documents/FEMM/bindings/scifemm/scifemm.sci')
+  Mathematica    Get["~/Documents/FEMM/bindings/mathfemm/mathfemm.m"]
+
+Set FEMM_DIR only if you keep more than one copy of FEMM and need to say
+which one they should talk to.
+
+Your materials
+--------------
+
+Materials you add in the material library editor are saved to
+
+  ~/Library/Application Support/FEMM/
+
+not inside the application, so they survive replacing FEMM with a newer
+version. Deleting that folder restores the materials FEMM shipped with.
+
+Uninstalling
+------------
+
+Drag femm_gui.app to the Trash. ~/Documents/FEMM and the materials folder
+are yours; delete them if you want them gone.
+READYME
 
 mkdir -p "$OUT_DIR"
 rm -f "$DMG"

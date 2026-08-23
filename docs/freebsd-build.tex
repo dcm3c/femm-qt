@@ -135,15 +135,55 @@ This installs what is already built --- it does not rebuild --- into your
 home directory:
 \begin{lstlisting}
 ~/.local/opt/femm-qt/   the program, its solvers, the material
-                        libraries, the examples and the bindings
-~/.local/bin/           femm_gui, femm_headless, femm-lua
+                        libraries, the bindings, and a pristine
+                        set of the examples
+~/.local/bin/           femm_gui, femm_headless, the four solvers
+                        (fkn, belasolv, hsolv, csolv), lua4, and
+                        femm-lua
 ~/.local/share/         menu entry and icon
+~/Documents/FEMM/
+       examples/        your copy of the examples
+       docs/            the manual and the scripting references
 \end{lstlisting}
 
-\texttt{\textasciitilde/.local/bin} is already on \texttt{PATH} on current
-distributions, so \texttt{femm\_gui} then works from anywhere and FEMM
-appears in the application menu.  Pass a different prefix if you would
-rather it went elsewhere:
+The solvers are linked as commands of their own because each is usable
+that way: \texttt{fkn model} solves \texttt{model.fem} and writes
+\texttt{model.ans}, with \texttt{belasolv}, \texttt{hsolv} and
+\texttt{csolv} doing the same for electrostatics, heat flow and current
+flow --- which is what you want from a Makefile or a batch queue.
+\texttt{lua4} is a stock Lua 4 interpreter and runs directly too.
+
+The examples are installed twice on purpose.  The program directory is out
+of the way --- and on Ubuntu worse than that, since the file manager hides
+\texttt{\textasciitilde/.local} outright --- so a second copy goes somewhere
+you can actually open, under whatever your desktop calls \emph{Documents}.
+The shipped examples in it are replaced on every install, so that a
+corrected example reaches you rather than only new users --- and because
+\emph{running} an example rewrites its \texttt{.fem} (analysis saves the
+document first), which makes any ``has this been edited?'' test useless
+here.  Anything else you keep in that directory is untouched: only the
+files femm-qt ships are written.  Work in a copy, which is what every
+example script does on its second line.
+
+FEMM then appears in the application menu, and \texttt{femm\_gui} works
+from any directory.  The installer sorts out \texttt{PATH} itself: on Debian
+and Ubuntu \texttt{\textasciitilde/.local/bin} is added by the stock
+\texttt{\textasciitilde/.profile}, but only if it exists when you log in ---
+which it may not have until now --- so the installer says so rather than
+adding a second copy of what the distribution already does.  Where nothing
+arranges it, as on FreeBSD or under a custom prefix, it appends one marked
+line to your login profile; \texttt{FEMM\_NO\_MODIFY\_PATH=1} asks to be told
+instead of edited.
+
+The one thing it cannot do is fix the shell you ran it from, since no program
+can change the environment of the shell that launched it.  Log out and back
+in, or run \texttt{. \textasciitilde/.profile} in the shell you are using.
+Opening a new terminal window is \emph{not} enough:
+\texttt{\textasciitilde/.profile} is read when you log in, and a terminal on
+the desktop is not a login shell, so it inherits the \texttt{PATH} the session
+already had.
+
+Pass a different prefix if you would rather it went elsewhere:
 \begin{lstlisting}
 ./freebsd_build.sh install /opt/femm
 \end{lstlisting}
@@ -157,8 +197,30 @@ saves the libraries, and every example script opens a model and then
 immediately saves it under another name.  In a system directory they
 would be read-only and neither would work.
 
-To uninstall, delete the three paths listed above; the installer prints
-the exact commands when it finishes.
+\subsection*{Uninstalling}
+
+\begin{lstlisting}
+./freebsd_build.sh uninstall
+\end{lstlisting}
+
+It removes the program directory, the commands, the menu entry, the icon
+and the documents, and takes out the \texttt{PATH} line if it was the one
+that added it.  Pass the same prefix you installed with if it was not the
+default, and \texttt{-y} to skip the confirmation.
+
+It works from a manifest the install leaves in the program directory
+rather than from a list of paths worked out afresh, because several of
+those paths are not reliably re-derivable later --- which solver
+commands were linked, whether a profile was edited, and above all where
+the documents went, since that comes from \texttt{xdg-user-dir} and can
+be reconfigured.  A program directory with no manifest is refused rather
+than guessed at, and a command in \texttt{\textasciitilde/.local/bin}
+that does not point into the program directory is left alone: a name
+like \texttt{lua4} could easily belong to something else.
+
+Your copy of the examples is never removed.  Those are yours, an install
+never overwrites them, and a script that deletes a directory somebody has
+been working in is not one to run casually.
 
 \section{Running}
 
@@ -194,11 +256,20 @@ For \texttt{csh}/\texttt{tcsh} (the default root shell; in
 \begin{lstlisting}
 setenv FEMM_DIR /path/to/femm-qt/build/bin
 \end{lstlisting}
-If you installed it, point at the program directory instead
-(\texttt{\textasciitilde/.local/opt/femm-qt}).  The binding files
-themselves are in \texttt{bindings/} under whichever of those you use ---
-\texttt{mfiles} for OctaveFEMM, and \texttt{mathfemm}, \texttt{scifemm},
-\texttt{juliafemm}, \texttt{pyfemm} and \texttt{luafemm} beside it.
+\textbf{If you installed, you can skip all of this.}  Each binding looks
+for \texttt{femm\_gui} and \texttt{femm\_headless} in three places, in
+order: \texttt{FEMM\_DIR}, then beside its own directory, then \emph{every
+directory on \texttt{PATH}} --- and the install puts them on
+\texttt{PATH}.  So the bindings work with nothing set at all.
+\texttt{FEMM\_DIR} is how you override that: when running from a build
+tree that was never installed, or when you have several builds and need to
+say which.  Being first in the list, it beats both the relative search and
+\texttt{PATH}.
+
+The binding files themselves are in \texttt{bindings/} under the program
+directory --- \texttt{mfiles} for OctaveFEMM, and \texttt{mathfemm},
+\texttt{scifemm}, \texttt{juliafemm}, \texttt{pyfemm} and
+\texttt{luafemm} beside it.
 
 \subsection{Desktop Integration (Optional)}
 
@@ -236,19 +307,31 @@ This usually points under \texttt{/usr/local/openjdk21}.  Set
 for \texttt{sh}/\texttt{bash}:
 \begin{lstlisting}
 export JAVA_HOME=/usr/local/openjdk21
-export FEMM_DIR=/path/to/femm-qt/build/bin
 \end{lstlisting}
+(\texttt{FEMM\_DIR} used to be needed here too.  It no longer is:
+\texttt{openfemm} searches \texttt{PATH} for \texttt{femm\_gui} and
+\texttt{femm\_headless}, and an install puts them there.  Set it only to
+choose between several builds.)
 Run Octave and confirm Java is available:
 \begin{lstlisting}
 version -java
 \end{lstlisting}
 Then add the OctaveFEMM mfiles to Octave's path:
 \begin{lstlisting}
-addpath("/path/to/femm-qt/octavefemm")
+addpath("~/.local/opt/femm-qt/bindings/mfiles")
 savepath
 \end{lstlisting}
-Now the \texttt{openfemm} function in the \texttt{octavefemm} directory should
-find and launch \texttt{femm\_gui} or \texttt{femm\_headless} automatically.
+or, working from the source tree instead of an install,
+\verb+addpath("/path/to/femm-qt/octavefemm")+.
+
+This is a \emph{different} search path from the one above, and the two are
+easy to confuse.  Octave's path is how Octave finds \texttt{openfemm.m};
+the system \texttt{PATH} is how \texttt{openfemm.m} then finds
+\texttt{femm\_gui}.  Only the second is automatic.  The install prints the
+\texttt{addpath} line for every language when it finishes.
+
+A fuller OctaveFEMM guide is installed at
+\texttt{\textasciitilde/Documents/FEMM/docs/octavefemm.md}.
 
 \section{Using with Python}
 
@@ -261,12 +344,17 @@ Then install pyfemm from PyPI:
 \begin{lstlisting}
 pip install pyfemm-qt
 \end{lstlisting}
-To install the version that ships with the source instead, change to the
-\texttt{pyfemm} directory and install in editable mode:
+To install the version that shipped with this source instead, change to the
+\texttt{pyfemm} directory --- in the source tree, or
+\verb+~/.local/opt/femm-qt/bindings/pyfemm+ after an install --- and install
+in editable mode:
 \begin{lstlisting}
 cd pyfemm
 pip install -e .
 \end{lstlisting}
+\texttt{-e} records the \emph{absolute path} of that directory, so an
+editable install breaks if the directory is later moved or deleted.  Point
+it at the installed copy, not at a build tree you might clean.
 Like recent Linux distributions, FreeBSD marks the system Python as
 externally managed (PEP~668), so pip may refuse to install into it.  The
 cleanest fix is a virtual environment:
@@ -280,6 +368,9 @@ also safe:
 \begin{lstlisting}
 pip install -e . --break-system-packages
 \end{lstlisting}
+A fuller pyFEMM guide --- multi-instance use, headless mode, connecting to
+an instance that is already running --- is installed at
+\texttt{\textasciitilde/Documents/FEMM/docs/pyfemm.md}.
 
 \section{Troubleshooting}
 

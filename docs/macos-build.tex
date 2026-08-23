@@ -147,32 +147,47 @@ bundle, beside the GUI:
 ./build/bin/femm_gui.app/Contents/MacOS/femm_headless
 \end{lstlisting}
 
-\subsection{Setting FEMM\_DIR}
+\subsection{How the bindings find FEMM}
 
-The language bindings (OctaveFEMM, MathFEMM, pyFEMM, JuliaFEMM) locate
-the FEMM executables via the \texttt{FEMM\_DIR} environment variable.
-Point it at \texttt{build/bin}:
+\textbf{Usually they need nothing set at all.}  All six bindings ---
+OctaveFEMM, MathFEMM, SciFEMM, JuliaFEMM, pyFEMM and luaFEMM --- look for
+\texttt{femm\_gui} and \texttt{femm\_headless} in four places, in order:
+
+\begin{enumerate}
+\item \texttt{FEMM\_DIR}, if it is set;
+\item beside the binding's own directory, which covers a source tree ---
+      CMake links \texttt{femm\_gui.app} into \texttt{build/bin}, and that
+      is what makes a checkout work with nothing configured;
+\item every directory on \texttt{PATH};
+\item \texttt{/Applications} and
+      \texttt{\textasciitilde/Applications}.
+\end{enumerate}
+
+The last of those is the macOS case: programs here live in
+\texttt{/Applications} rather than on \texttt{PATH}, so a bundle dragged
+there is found on its own.  In each directory the bindings try
+\texttt{femm\_gui.app/Contents/MacOS/}\emph{name} as well as the bare
+name, which is how they reach inside a bundle, and it is why one entry
+serves both a GUI session (\texttt{openfemm()}) and a headless one
+(\texttt{openfemm(1)}) --- both executables sit in there together.
+
+Set \texttt{FEMM\_DIR} only to say \emph{which} copy, when you keep more
+than one:
 \begin{lstlisting}
 export FEMM_DIR=/path/to/femm-qt/build/bin
 \end{lstlisting}
-Enter the \texttt{export} line exactly as shown --- a single line with no
-spaces around the \texttt{=}.  This one setting serves both a GUI session
-(\texttt{openfemm()} in OctaveFEMM) and a headless session
-(\texttt{openfemm(1)}): the bindings look inside
-\texttt{femm\_gui.app/Contents/MacOS} for both executables, so either
-\texttt{build/bin} or the bundle's own \texttt{Contents/MacOS} works and
-both reach the same binaries.  For an installed copy there is no
-\texttt{build/bin}, so use the bundle:
-\begin{lstlisting}
-export FEMM_DIR=/Applications/femm_gui.app/Contents/MacOS
-\end{lstlisting}
-Add it to your \texttt{\textasciitilde/.zshrc} (or
-\texttt{\textasciitilde/.bash\_profile}) to make it persistent.
+Enter it exactly as shown --- one line, no spaces around the \texttt{=}
+--- and put it in your \texttt{\textasciitilde/.zshrc} to make it
+persistent.  Being first in the list, it beats everything else.
 
-The binding files themselves are inside the bundle too, at
-\texttt{Contents/Resources/bindings} --- \texttt{mfiles} for OctaveFEMM,
-and \texttt{mathfemm}, \texttt{scifemm}, \texttt{juliafemm},
-\texttt{pyfemm} and \texttt{luafemm} beside it.
+The binding files themselves ship twice: read-only inside the bundle at
+\texttt{Contents/Resources/bindings}, and as a plain
+\texttt{\textasciitilde/Documents/FEMM/bindings} folder if you dragged
+\texttt{FEMM} out of the disk image.  Use the second --- Finder will not
+browse into a \texttt{.app}, and Octave and Julia need a real path.  Both
+hold \texttt{mfiles} for OctaveFEMM, with \texttt{mathfemm},
+\texttt{scifemm}, \texttt{juliafemm}, \texttt{pyfemm} and
+\texttt{luafemm} beside it.
 
 \section{Setting Up OctaveFEMM}
 
@@ -193,25 +208,33 @@ simply, install it with Homebrew:
 brew install --cask temurin
 \end{lstlisting}
 
-\item \textbf{Set \texttt{FEMM\_DIR} and \texttt{JAVA\_HOME}} in your
-\texttt{\textasciitilde/.zshrc}.  \texttt{FEMM\_DIR} points at
-\texttt{build/bin} (see ``Setting FEMM\_DIR'' above); \texttt{JAVA\_HOME}
-is best resolved dynamically with \texttt{java\_home}, so it survives JDK
-updates:
+\item \textbf{Set \texttt{JAVA\_HOME}} in your
+\texttt{\textasciitilde/.zshrc}, resolved dynamically with
+\texttt{java\_home} so it survives JDK updates:
 \begin{lstlisting}
-export FEMM_DIR="/path/to/femm-qt/build/bin"
 export JAVA_HOME="$(/usr/libexec/java_home)"
 \end{lstlisting}
 Open a new terminal (or run \texttt{source \textasciitilde/.zshrc})
-afterward so the variables take effect.
+afterward so it takes effect.  \texttt{FEMM\_DIR} is \emph{not} needed:
+OctaveFEMM finds the application by itself (see ``How the bindings find
+FEMM'' above).  Set it only if you keep several copies of FEMM and need
+to choose between them.
 
 \item \textbf{Add the m-files to Octave's path.}  Start Octave and run, once:
 \begin{lstlisting}
-addpath('/path/to/femm-qt/octavefemm');
+addpath('~/Documents/FEMM/bindings/mfiles');
 savepath;
 \end{lstlisting}
-\texttt{savepath} records the directory in your Octave preferences so you do
-not have to re-add it every session.
+or, working from a source tree,
+\verb+addpath('/path/to/femm-qt/octavefemm')+.  \texttt{savepath} records
+the directory in your Octave preferences so you do not have to re-add it
+every session.
+
+This is a \emph{different} search path from the one in the previous
+section, and the two are easy to confuse.  Octave's path is how Octave
+finds \texttt{openfemm.m}; the search described above is how
+\texttt{openfemm.m} then finds the FEMM application.  Only the second is
+automatic.
 \end{enumerate}
 
 To verify, run \texttt{openfemm} at the Octave prompt: the FEMM window should
@@ -233,9 +256,34 @@ missing, incomplete, or stale --- the last of those catches a
 \texttt{ninja} that relinked the GUI without reassembling the bundle
 around it.
 
-The image is written to \texttt{packaging/output/} and contains the
-application and a symlink to \texttt{/Applications}, so installing is
-the usual drag.  It also carries an \texttt{Examples} folder.
+The image is written to \texttt{packaging/output/} and opens to four
+things: the application, a symlink to \texttt{/Applications}, a
+\texttt{FEMM} folder, and a \texttt{Read Me}.  Installing is two drags ---
+the app onto \texttt{Applications}, and \texttt{FEMM} onto the user's
+\texttt{Documents} folder:
+\begin{lstlisting}
+~/Documents/FEMM/examples    models and scripts, every language
+~/Documents/FEMM/docs        the manual and the per-binding guides
+~/Documents/FEMM/bindings    the client files for other programs
+\end{lstlisting}
+
+That is deliberately the same tree \verb+./linux_build.sh install+
+produces, so one set of instructions describes both platforms and the
+paths quoted in the guides are true on either.
+
+It is one folder rather than three at the top level because three would
+be three things to drag and three things to forget.  It has to leave the
+bundle at all because the bundle is read-only once signed: an example
+script does \verb+open("model.fem")+ and then
+\verb+mi_saveas("temp.fem")+, both relative to its own directory, and an
+analysis writes the model back before solving.  None of that works inside
+the application.
+
+The \texttt{Read Me} is the macOS stand-in for what the Linux installer
+prints when it finishes: what to drag where, the \texttt{addpath} line for
+each language, where the material libraries are kept
+(\texttt{\textasciitilde/Library/Application Support/FEMM/}, so they
+survive an upgrade), and how to uninstall.
 
 That folder is not a duplicate of the copy inside the bundle, and the
 distinction matters.  Example scripts open a model and immediately save
