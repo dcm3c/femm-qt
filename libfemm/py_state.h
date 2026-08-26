@@ -16,6 +16,7 @@
 #define PY_STATE_H
 
 #include <string>
+#include <vector>
 
 // The wire-formatted return value(s) of the most recent exec_python() call
 // (tab-separated for multiple/tuple results, empty for statements or a None
@@ -116,6 +117,13 @@ void cleanup_global_femm_state();
 
 // Tear down the runtime (symmetric to init_py()).
 void close_py();
+
+// Populate sys.argv for a command-line script run. Following CPython (and the
+// `arg` table Lua 4 builds for femm-lua), argv[0] is the script's own path and
+// argv[1:] are the arguments after it. Call after init_py() and before
+// exec_python_file(); sys.argv is otherwise an empty list, so a script that
+// indexes it gets an IndexError rather than a diagnosis.
+void py_set_argv(const std::vector<std::string> &argv);
 
 // Execute a Python script file. Returns 0 on success.
 int exec_python_file(const char *path, char *errmsg = nullptr, int errmsg_size = 0);

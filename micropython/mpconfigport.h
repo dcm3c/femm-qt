@@ -14,11 +14,14 @@
 // Common embed definitions (alloca, mp_off_t, MICROPY_MPHALPORT_H).
 #include <port/mpconfigport_common.h>
 
-// MICROPY_GC_SPLIT_HEAP_AUTO uses MP_PLAT_ALLOC_HEAP/FREE_HEAP (malloc/free) in
-// gc.c, which doesn't include <stdlib.h> itself. This header is included by
-// every embed TU, so pull it in here to declare malloc/free (otherwise GCC/
-// Clang warn -Wimplicit-function-declaration / -Wbuiltin-declaration-mismatch).
+#ifdef FEMM_GC_MICROPYTHON
+// Fallback collector only (-DFEMM_GC_BDWGC=OFF). MICROPY_GC_SPLIT_HEAP_AUTO
+// uses MP_PLAT_ALLOC_HEAP/FREE_HEAP (malloc/free) in gc.c, which doesn't
+// include <stdlib.h> itself. This header is included by every embed TU, so
+// pull it in here to declare malloc/free (otherwise GCC/Clang warn
+// -Wimplicit-function-declaration / -Wbuiltin-declaration-mismatch).
 #include <stdlib.h>
+#endif
 
 // CORE_FEATURES is the baseline for a general-purpose desktop scripting
 // engine (upstream's own default). Over MINIMUM it turns on CPYTHON_COMPAT
@@ -37,13 +40,21 @@
 // mp_stack_set_limit() after mp_stack_ctrl_init() — the limit lives in
 // zero-initialised state, and a zero limit fails the very first check.
 #define MICROPY_STACK_CHECK                 (1)
-// Auto-growing GC heap: gc_init() gets a small initial segment and
-// gc_try_add_heap() mallocs further segments on demand (capped per split by
-// gc_get_max_new_split() in femm_port_hooks.c). Segments that empty out are
-// returned to the system during sweep. Big postprocessing scripts get memory
-// instead of MemoryError; idle sessions stay small.
+// The collector is bdwgc, not MicroPython's block allocator: py/gc.c is not
+// compiled, and micropython/femm_gc.c implements the same py/gc.h on top of
+// third_party/bdwgc. There is no fixed heap and no heap segments, so the
+// split-heap settings are OFF (their default) -- gc_init() ignores its
+// arguments and an allocation fails only when the machine is out of memory.
+// See docs/bdwgc-handoff-plan.md for why, and for the measurements.
+//
+// -DFEMM_GC_BDWGC=OFF restores the block allocator, which is what these two
+// settings configure: gc_init() gets a small initial segment and
+// gc_try_add_heap() mallocs further ones on demand, capped per split by
+// gc_get_max_new_split() in femm_port_hooks.c.
+#ifdef FEMM_GC_MICROPYTHON
 #define MICROPY_GC_SPLIT_HEAP               (1)
 #define MICROPY_GC_SPLIT_HEAP_AUTO          (1)
+#endif
 #define MICROPY_PY_GC                       (1)
 #define MICROPY_ENABLE_FINALISER            (1)
 #define MICROPY_HELPER_REPL                 (1)   // GUI console uses mp_repl_continue_with_input()
@@ -83,12 +94,34 @@ extern void (*femm_vm_hook_fn)(void);
 #ifdef __cplusplus
 }
 #endif
+// femm_gc_run_finalisers() drains bdwgc's queue of pending __del__ calls.
+// Under py/gc.c a finaliser runs inside the collection that an allocation
+// triggered; bdwgc only QUEUES finalisable objects (femm_gc.c sets
+// finalize_on_demand), so without a drain here a script that stops
+// allocating would never run them. It is one flag read when the queue is
+// empty. See docs/bdwgc-handoff-plan.md, "When finalisers run".
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern void femm_gc_run_finalisers(void);
+#ifdef __cplusplus
+}
+#endif
 #define MICROPY_VM_HOOK_INIT static unsigned int femm_vm_hook_div = 1024;
+#ifdef FEMM_GC_MICROPYTHON
 #define MICROPY_VM_HOOK_LOOP \
     if (--femm_vm_hook_div == 0) { \
         femm_vm_hook_div = 1024; \
         if (femm_vm_hook_fn) femm_vm_hook_fn(); \
     }
+#else
+#define MICROPY_VM_HOOK_LOOP \
+    if (--femm_vm_hook_div == 0) { \
+        femm_vm_hook_div = 1024; \
+        femm_gc_run_finalisers(); \
+        if (femm_vm_hook_fn) femm_vm_hook_fn(); \
+    }
+#endif
 
 // ---- Numerics ----
 #define MICROPY_FLOAT_IMPL                  (MICROPY_FLOAT_IMPL_DOUBLE)

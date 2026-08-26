@@ -108,7 +108,7 @@ folder.
 ## Usage
 
 ```
-femm-lua [-h] [script.lua [args...]]
+femm-lua [-h] [-p PORT] [script.lua [args...]]
 ```
 
 ### Options
@@ -116,6 +116,7 @@ femm-lua [-h] [script.lua [args...]]
 | Option | Meaning |
 |---|---|
 | `-h`, `--headless` | Drive the **headless** server (no GUI window) instead of the GUI. |
+| `-p`, `--port` *PORT* | Use TCP port *PORT* instead of the default 48015. Needed to run two or more at the same time — see [Running several at once](#running-several-at-once). |
 | `-?`, `--help` | Print a usage summary and exit. |
 | *(none)* | With no script argument, start an **interactive** Lua prompt. |
 
@@ -229,6 +230,50 @@ If the executable can't be found you get
 `Cannot find <exe>. Set FEMM_DIR environment variable.` — which under the
 launcher should never happen, because the binaries sit right next to it.
 
+## Running several at once
+
+One femm-qt serves **one client on one port**. The default port is 48015, so
+two `femm-lua` runs started at the same time both try to use it: both find
+nothing listening, both launch a server, and only one of them can bind the
+port. The other is turned away.
+
+Sequential runs in a batch file are fine — each one finishes and its femm-qt
+exits before the next starts. It is only *simultaneous* runs that collide.
+
+Give each run its own port with `-p`:
+
+```bat
+start "" femm-lua -h -p 48016 job1.lua
+start "" femm-lua -h -p 48017 job2.lua
+start "" femm-lua -h -p 48018 job3.lua
+```
+
+```bash
+femm-lua -h -p 48016 job1.lua &
+femm-lua -h -p 48017 job2.lua &
+femm-lua -h -p 48018 job3.lua &
+wait
+```
+
+Any free port works; the numbers above are simply the default plus one, two
+and three. Each run gets its own femm-qt, and they do not see each other's
+documents.
+
+If two do end up sharing a port, the one that loses says so and stops at
+`openfemm()`, before running any of your script:
+
+```
+error: cannot use FEMM on port 48015: femm-qt is already connected to
+another client
+Each FEMM running at the same time needs its own port.
+Start this one with:  femm-lua -p <port> ...  (e.g. -p 48016)
+```
+
+The port must be chosen on the **command line**, not inside the script: the
+launcher connects before your first line runs.
+
+---
+
 ## Session lifetime
 
 The femm-qt instance is tied to your Lua session. When the connection closes —
@@ -303,10 +348,16 @@ launcher was moved away from the `bin` directory. It must stay beside `lua4`,
 `femm.lua`, and the femm-qt executables. Run it from where the build placed it
 (or copy the whole set together).
 
-**`error:femm-qt is already connected to another client`** — something else is
-already connected to femm-qt on port 48015 (another binding session, or your
-own script calling `openfemm()` a second time). Close the other client, or
-remove the redundant `openfemm()` from your script.
+**`cannot use FEMM on port 48015: femm-qt is already connected to another
+client`** — something else is already connected to femm-qt on that port:
+another binding session, a second `femm-lua` started at the same time, or your
+own script calling `openfemm()` twice. Give this run its own port with `-p`
+(see [Running several at once](#running-several-at-once)), close the other
+client, or remove the redundant `openfemm()`.
+
+Before this was detected at connect time, the same situation surfaced one
+command later as `FEMM connection closed unexpectedly`, which pointed nowhere
+useful.
 
 **`femm-qt launched but TCP connection failed (timed out)`** — the executable
 started but never began listening within ~20 s. Usually a blocked port 48015,

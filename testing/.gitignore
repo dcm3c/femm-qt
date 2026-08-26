@@ -37,3 +37,4 @@ fq_copv_result.txt
 # fq_*.txt patterns above would otherwise ignore it at any depth).
 !fq_reference/
 !fq_reference/*
+gc_soak_phases.txt

@@ -39,13 +39,47 @@ function try_connect(port)
     return nil
 end
 
+-- The IPC server accepts exactly ONE client: a second one is answered with an
+-- error line and closed at once (ipc/tcp_server.cpp, acceptClient). So a
+-- socket that CONNECTS is not yet proof of a usable session, and taking it on
+-- trust is why a port collision used to surface, one command later, as the
+-- misleading "FEMM connection closed unexpectedly".
+--
+-- A healthy server says nothing until it is spoken to, so a brief read tells
+-- the two apart: a line back means we were turned away, a timeout means we are
+-- in. The wait is paid once per openfemm().
+function _femm_rejected(sock)
+    timeout(sock, 0.25)
+    local line, err = receive(sock)
+    timeout(sock, -1)                 -- back to blocking for normal traffic
+    if err == "timeout" then return nil end          -- silence: we are the client
+    if line and strsub(line, 1, 6) == "error:" then return strsub(line, 7) end
+    if err == "closed" then return "femm-qt closed the connection immediately" end
+    return nil
+end
+
+-- Attach to a socket we have just opened, or fail with something a user can
+-- act on. Ports are the whole story here: every simultaneous FEMM needs one of
+-- its own, which is what -p is for.
+function _femm_attach(sock, port)
+    local why = _femm_rejected(sock)
+    if why then
+        close(sock)
+        error("cannot use FEMM on port " .. port .. ": " .. why ..
+              "\nEach FEMM running at the same time needs its own port." ..
+              "\nStart this one with:  femm-lua -p <port> ...  (e.g. -p " ..
+              (port + 1) .. ")")
+    end
+    _femm_conn = sock
+end
+
 function openfemm(headless)
     local port = _femm_port
     if headless == nil then headless = 0 end
 
     local sock = try_connect(port)
     if sock then
-        _femm_conn = sock
+        _femm_attach(sock, port)
         return
     end
 
@@ -168,7 +202,10 @@ function openfemm(headless)
     while attempts < 1000 do
         sock = try_connect(port)
         if sock then
-            _femm_conn = sock
+            -- Not necessarily OUR server. Two launches racing for the same
+            -- port both spawn one; the loser's cannot bind and dies, and its
+            -- poll loop then reaches the winner's, which is already busy.
+            _femm_attach(sock, port)
             return
         end
         sleep(0.02)

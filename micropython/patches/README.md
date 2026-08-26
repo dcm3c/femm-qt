@@ -213,3 +213,29 @@ script stays portable; only Windows text mode has anything to stop doing.
 
 No mpconfigport.h change and no new qstr (`MP_QSTR_newline` was already in the
 generated header), so this needs no regen and no re-stamp.
+
+---
+
+## Not a patch: `py/gc.c` is not compiled at all
+
+Since 2026-08-25 the collector is bdwgc. `py/gc.c` stays in the regenerated
+tree — a regen will keep producing it — but `CMakeLists.txt` filters it out of
+the source list, and `micropython/femm_gc.c` implements the same `py/gc.h`
+interface on top of `third_party/bdwgc` instead. See
+`docs/bdwgc-handoff-plan.md`.
+
+There is nothing to re-apply after a regen. What there *is* to do, when bumping
+MicroPython:
+
+* **Re-read `py/gc.h` against `femm_gc.c`.** The shim implements that header;
+  a new entry point added upstream is a link error at best and a silently
+  missing behaviour at worst. The interface has been stable since the
+  split-heap work in 1.20, and the likely future delta is a weakref or
+  threading hook — `femm_gc.c` already stubs those under `#if`.
+* **Check the CMake exclusion still matches.** It fails the configure loudly if
+  `py/gc.c` moves, precisely so this cannot go unnoticed.
+
+`mpconfigport.h` keeps `MICROPY_GC_SPLIT_HEAP*` under `#ifdef
+FEMM_GC_MICROPYTHON`, which `-DFEMM_GC_BDWGC=OFF` sets. That fallback exists so
+a field problem can be bisected to the collector in one build; it is meant to
+be removed after a release without incident.

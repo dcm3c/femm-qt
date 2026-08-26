@@ -1,20 +1,20 @@
-cmake_minimum_required(VERSION 3.16)
-project(lua4cli CXX)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# Standalone: the patched Lua 4 and CComplex sources are vendored locally here
-# (copied from femm-qt/solvers/{liblua,common}) so lua4cli builds with no
-# dependency on the femm-qt tree.
+# The bundled Lua 4 interpreter: the legacy scripting client, built as lua4.
+# Added by the top-level CMakeLists, which supplies the C++ standard and the
+# output directory -- this is a subdirectory of the femm-qt build, not a
+# project of its own.
+#
+# liblua/ is the patched Lua 4.0, and the only copy of it in the tree. common/
+# holds what the interpreter needs from femm-qt: utf8_io (a copy of common/,
+# kept self-contained here exactly as tangle keeps its own) and a complex.cpp
+# that is NOT the one in common/ -- this one carries the display precision the
+# lua4 REPL prints with.
 set(LUA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/liblua")
 set(COMMON_DIR "${CMAKE_CURRENT_SOURCE_DIR}/common")
 set(SOCKET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/luasocket-1.0")
 
-# Lua 4 library (vendored copy of the femm-qt lua4 sources, now local).
-# utf8_io.cpp (vendored into common/ too) makes the interpreter's file I/O and
-# command line Unicode-aware on Windows; it is self-contained (std::filesystem +
-# a little Win32), so lua4cli keeps building with no femm-qt-tree dependency.
+# utf8_io.cpp makes the interpreter's file I/O and command line Unicode-aware
+# on Windows -- an umlaut in a script's path has to survive the ANSI argv the
+# CRT hands a narrow main().
 file(GLOB LUA_SOURCES "${LUA_DIR}/*.cpp")
 add_library(lua4 STATIC ${LUA_SOURCES} "${COMMON_DIR}/utf8_io.cpp")
 target_include_directories(lua4 PUBLIC "${LUA_DIR}" "${COMMON_DIR}")
@@ -34,7 +34,7 @@ target_compile_definitions(complex PRIVATE "I=CComplex(0,1)")
 # makes CMake invoke the C++ compiler, but Clang then warns that implicitly
 # "treating 'c' input as 'c++'" is deprecated. Pass -x c++ to state the input
 # language explicitly and silence that warning. The flag is understood by GCC
-# and Clang alike; skip it on MSVC, which never builds this subproject.
+# and Clang alike; skip it on MSVC, which is not used to build femm-qt.
 if(NOT MSVC)
     set(LUA_CXX_INPUT_FLAG "-x;c++")
 endif()
@@ -59,3 +59,40 @@ target_include_directories(lua PRIVATE "${LUA_DIR}" "${COMMON_DIR}" "${SOCKET_DI
 # colliding with the static-library target "lua4" (different artifact types,
 # so the .exe and the .a/.lib never clash on disk).
 set_target_properties(lua PROPERTIES OUTPUT_NAME lua4)
+
+# The client-side halves of the Lua interface -- the binding femm.lua and the
+# launcher -- staged beside the interpreter that runs them. lua4 alone is not
+# usable: femm-lua reads femm.lua from its own directory, and refuses to start
+# without it.
+#
+# The three Unix build scripts already copy these, so this is really what makes
+# a plain `ninja` on Windows equivalent. Doing it here rather than in one more
+# shell script keeps the one build system responsible for it on every platform;
+# the cp -u in linux/freebsd/macos_build.sh then finds them already current.
+#
+# Its own ALL target, not a POST_BUILD on lua: hung off the executable the copy
+# would only run when the C++ relinks, so editing femm.lua -- which never
+# triggers a relink, being data -- would leave a stale copy staged and the next
+# run would exercise the old binding. That is exactly how bin/femm.lua came to
+# be two months behind its source. A custom target is always considered out of
+# date, and copy_if_different makes that free when nothing changed. Same
+# reasoning, and the same shape, as libfemm's pybridge_python target.
+#
+# The launcher is platform-specific: .bat is what femm-qt.iss ships on Windows,
+# .sh is what the Unix installers ship. copy_if_different preserves the mode,
+# so femm-lua.sh keeps the executable bit it carries in git.
+if(WIN32)
+    set(FEMMLUA_LAUNCHER "femm-lua.bat")
+else()
+    set(FEMMLUA_LAUNCHER "femm-lua.sh")
+endif()
+
+add_custom_target(luafemm_client ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/luafemm/femm.lua"
+            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/luafemm/${FEMMLUA_LAUNCHER}"
+            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/"
+    COMMENT "Staging the Lua client files (femm.lua, ${FEMMLUA_LAUNCHER}) into bin/")
+add_dependencies(lua luafemm_client)

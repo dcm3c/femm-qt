@@ -167,7 +167,7 @@ directory.
 
 \vspace{1ex}
 \noindent{\bf Interactive shell:} \texttt{femm\_gui [-{}-port {\itshape N}] [{\itshape file}]}\\
-\phantom{{\bf Interactive shell:} }\texttt{femm\_gui -run {\itshape script.py}}
+\phantom{{\bf Interactive shell:} }\texttt{femm\_gui -run {\itshape script.py} [{\itshape args}\ldots]}
 
 \begin{itemize}
 \item{\itshape file} --- A file to open on startup.  A problem document
@@ -190,7 +190,7 @@ connections on TCP port {\itshape N} rather than the default, 48015.
 
 \vspace{1ex}
 \noindent{\bf Headless engine:} \texttt{femm\_headless [-{}-port {\itshape N}] [{\itshape script.py}]}\\
-\phantom{{\bf Headless engine:} }\texttt{femm\_headless -run {\itshape script.py}}\\
+\phantom{{\bf Headless engine:} }\texttt{femm\_headless -run {\itshape script.py} [{\itshape args}\ldots]}\\
 \phantom{{\bf Headless engine:} }\texttt{femm\_headless -i [{\itshape script.py}]}
 
 \begin{itemize}
@@ -211,15 +211,70 @@ than the default, 48015.
 \end{itemize}
 
 \vspace{1ex}
-\noindent{\bf Legacy Lua scripts:} \texttt{femm-lua [-h] [{\itshape script.lua} [{\itshape args}\ldots]]}
+\noindent{\bf Passing arguments to a script.}  Anything after the script name
+is passed to the script rather than interpreted by FEMM, and appears in the
+script as {\tt sys.argv}.  Following the usual Python convention,
+{\tt sys.argv[0]} is the script's own path and {\tt sys.argv[1:]} are the
+arguments that followed it:
+
+\begin{quote}
+\begin{verbatim}
+femm_headless -run sweep.py rotor.fem 250
+\end{verbatim}
+\end{quote}
+
+\noindent then, inside {\tt sweep.py},
+
+\begin{quote}
+\begin{verbatim}
+import sys
+model = sys.argv[1]
+turns = int(sys.argv[2])
+\end{verbatim}
+\end{quote}
+
+\noindent All arguments arrive as strings, so a numeric one must be converted
+with {\tt int()} or {\tt float()}.  The {\tt argparse} module is available if
+the script needs options rather than positional arguments.
+
+Naming the script ends FEMM's own argument list, so any switch intended for
+FEMM must be given \emph{before} the script.  In
+
+\begin{quote}
+\begin{verbatim}
+femm_headless --port 48020 -run sweep.py --port 5
+\end{verbatim}
+\end{quote}
+
+\noindent the first {\tt -{}-port} sets the TCP port and the second is passed
+to the script.  This is the same rule Python itself follows.
+
+\vspace{1ex}
+\noindent{\bf Legacy Lua scripts:} \texttt{femm-lua [-h] [-p {\itshape PORT}] [{\itshape script.lua} [{\itshape args}\ldots]]}
 
 Scripts written for the Lua scripting interface of the original FEMM can be run
 with the bundled Lua~4 client, {\tt femm-lua}.  It launches the interpreter and
 connects to {\tt femm\_gui} --- or, with {\tt -h} (equivalently
 {\tt -{}-headless}), to {\tt femm\_headlessw} --- over the same TCP interface used
 by the Python bindings.  Given no script argument, {\tt femm-lua} opens an
-interactive Lua prompt.  The available Lua commands are documented in the
-separate {\itshape Lua Scripting Guide} ({\tt femm-lua.pdf}).
+interactive Lua prompt.  Arguments given after {\itshape script.lua} are
+passed to it in the global {\tt arg} table, Lua~4's equivalent of
+{\tt sys.argv}.  The available Lua commands are documented in the separate
+{\itshape Lua Scripting Guide} ({\tt femm-lua.pdf}).
+
+A given FEMM serves one client on one TCP port, so two {\tt femm-lua} runs
+started \emph{at the same time} cannot both use the default port 48015.  Give
+each its own with {\tt -p}:
+
+\begin{quote}
+\begin{verbatim}
+start "" femm-lua -h -p 48016 job1.lua
+start "" femm-lua -h -p 48017 job2.lua
+\end{verbatim}
+\end{quote}
+
+\noindent Runs performed one after another need nothing: each finishes, and
+its FEMM exits, before the next begins.
 
 Lua support is provided only for compatibility with scripts written for the
 original FEMM; new scripting should use FEMM's integrated Python interface.

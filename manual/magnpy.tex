@@ -168,6 +168,38 @@ they need one (see the {\em Plotting with matplotlib} chapter, which also
 covers reaching any other Python package the same way).
 \end{itemize}
 
+\subsection*{Memory}
+
+There is no fixed script heap and no size limit of FEMM's own: an array is
+bounded only by the memory the machine will give it, so
+\verb+numpy.zeros(30000000)+ (240~MB) is an ordinary allocation.  Memory is
+reclaimed automatically and returned to the operating system once it has been
+unused for a while; nothing needs to be freed by hand.
+
+Two details, for scripts that ask:
+
+\begin{itemize}
+\item{\tt gc.mem\_free()} reports the free space {\em inside} the memory FEMM
+is currently holding, not the memory available on the machine.  A small number
+there does not mean the next allocation will fail --- FEMM simply asks the
+system for more.
+\item{\tt gc.threshold()} is accepted and ignored.  It configured a collection
+policy that no longer exists.
+\end{itemize}
+
+\noindent{\tt gc.collect()} still forces a collection if a script wants one at
+a particular moment, but it is rarely needed.  If the goal is specifically to
+hand a large block back to the operating system --- after finishing with a
+several-hundred-megabyte array, say --- call it a few times rather than once;
+a single collection does not always release everything.
+
+One case where it is worth knowing about: a file object that is dropped
+without being closed is closed for you, but only when a collection next runs
+--- which, now that memory is plentiful, may not be for a long time.  A script
+that opens many files in a loop and relies on that can run out of file handles.
+Use \verb+with open(...) as f:+, which closes at the end of the block, or call
+{\tt f.close()}.
+
 MicroPython's versions of these are subsets.  The differences are usually
 small but occasionally surprising: {\tt re} has no module-level
 {\tt split()}, for instance --- use \verb+re.compile(pattern).split(s)+.

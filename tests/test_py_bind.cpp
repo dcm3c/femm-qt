@@ -257,14 +257,20 @@ static void test_complex_args() {
     }
 }
 
-static char heap[128 * 1024];
+#if MICROPY_GC_SPLIT_HEAP
+static char heap[128 * 1024];   // fallback collector only (-DFEMM_GC_BDWGC=OFF)
+#endif
 
 int main() {
     mp_stack_ctrl_init();
     // Required with MICROPY_STACK_CHECK: an unset (zero) limit fails the
     // first check.
     mp_stack_set_limit(256 * 1024);
+#if MICROPY_GC_SPLIT_HEAP
     gc_init(heap, heap + sizeof(heap));
+#else
+    gc_init(nullptr, nullptr);   // bdwgc ignores the bounds; micropython/femm_gc.c
+#endif
     mp_init();
 
     test_scalars();

@@ -657,6 +657,7 @@ int main(int argc, char *argv[])
     int port = 48015;
     QString fileArg;   // positional arg: a document to open, or a .py script to run
     bool runAndExit = false;   // -run <script>: run the script, then exit (like femm_headless -run)
+    QStringList scriptArgs;   // becomes sys.argv[1:] when fileArg is a script
     for (int i = 1; i < qargs.size(); i++) {
         if ((qargs[i] == "-port" || qargs[i] == "--port") && i + 1 < qargs.size()) {
             port = qargs[++i].toInt();
@@ -665,6 +666,13 @@ int main(int argc, char *argv[])
             runAndExit = true;
         } else if (!qargs[i].startsWith('-') && fileArg.isEmpty()) {
             fileArg = qargs[i];
+        }
+        // Naming the file ends OUR argument list; the rest belongs to the
+        // script, as in femm_headless (and as CPython and Lua 4's -f do). Put
+        // engine switches before the script.
+        if (!fileArg.isEmpty()) {
+            scriptArgs = qargs.mid(i + 1);
+            break;
         }
     }
 
@@ -738,6 +746,12 @@ int main(int argc, char *argv[])
             scriptDir.replace('\\', '/');
             std::string chdirCmd = "setcurrentdirectory(\"" + scriptDir.toStdString() + "\")";
             exec_python(chdirCmd.c_str(), errmsg, sizeof(errmsg));
+            // sys.argv[0] is the absolute path, not what was typed: the chdir
+            // above would leave a relative one unresolvable from the script.
+            std::vector<std::string> pyArgv{absPath.toStdString()};
+            for (const QString &a : scriptArgs)
+                pyArgv.push_back(a.toStdString());
+            py_set_argv(pyArgv);
             if (exec_python_file(absPath.toStdString().c_str(), errmsg, sizeof(errmsg)) != 0) {
                 // Show errors in a dialog (handy while developing a script here
                 // to run under femm_headless later) and set a nonzero exit code.

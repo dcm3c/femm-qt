@@ -201,6 +201,19 @@ static std::string chdir_to_script_dir(const std::string &script)
     return femm_u8string(abs);
 }
 
+// sys.argv for a script run: [0] is the script itself, then its arguments.
+// argv[0] is the ABSOLUTE path rather than the string the user typed, because
+// the script runs after a chdir into its own directory -- a relative argv[0]
+// would no longer resolve from inside the script.
+static std::vector<std::string> build_argv(const std::string &script,
+                                           const std::vector<std::string> &rest)
+{
+    std::vector<std::string> v;
+    v.push_back(script);
+    v.insert(v.end(), rest.begin(), rest.end());
+    return v;
+}
+
 int main(int argc, char *argv[])
 {
     // Line-buffer stdout, because this program writes DATA to stdout (every
@@ -264,6 +277,7 @@ int main(int argc, char *argv[])
     // Decode argv to UTF-8 so a Unicode script path (e.g. an umlaut in a folder
     // name) survives the ANSI argv the CRT hands a narrow main() on Windows.
     std::vector<std::string> args = femm_utf8_args(argc, argv);
+    std::vector<std::string> scriptArgs;   // becomes sys.argv[1:]
     for (size_t i = 1; i < args.size(); i++) {
         if ((args[i] == "-port" || args[i] == "--port") && i + 1 < args.size()) {
             port = atoi(args[++i].c_str());
@@ -277,6 +291,16 @@ int main(int argc, char *argv[])
         } else if (!haveScript) {
             script = args[i];
             haveScript = true;
+        }
+        // Naming the script ends OUR argument list: everything after it is the
+        // script's, which is what CPython does and what Lua 4's -f does for
+        // femm-lua. So `-run s.py --port 5` hands --port to the script rather
+        // than moving the server -- switches meant for the engine go before the
+        // script. The bindings pass --port first and never pass a script, so
+        // they are unaffected.
+        if (haveScript) {
+            scriptArgs.assign(args.begin() + i + 1, args.end());
+            break;
         }
     }
 
@@ -292,6 +316,7 @@ int main(int argc, char *argv[])
             // chdir so the script's own relative paths resolve; run it by the
             // absolute path it hands back (the relative one dies with the cwd).
             const std::string absScript = chdir_to_script_dir(script);
+            py_set_argv(build_argv(absScript, scriptArgs));
             char errmsg[1024] = {};
             if (exec_python_file(absScript.c_str(), errmsg, sizeof(errmsg)) != 0)
                 fprintf(stderr, "Script error: %s\n", errmsg);
@@ -321,6 +346,7 @@ int main(int argc, char *argv[])
         // chdir so the script's own relative paths resolve; run it by the
         // absolute path it hands back (the relative one dies with the cwd).
         const std::string absScript = chdir_to_script_dir(script);
+        py_set_argv(build_argv(absScript, scriptArgs));
         char errmsg[1024] = {};
         int status = exec_python_file(absScript.c_str(), errmsg, sizeof(errmsg));
         if (status != 0) {

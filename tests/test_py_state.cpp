@@ -136,11 +136,22 @@ int main() {
     CHECK(exec_python("aw = AWG(0)", err, sizeof err) == 0 &&
               mp_obj_get_float(getg("aw")) > 8.25 && mp_obj_get_float(getg("aw")) < 8.26,
           "AWG(0)~=8.2514694");
-    CHECK(exec_python("mab = mi_makeABC", err, sizeof err) == 0, "mi_makeABC defined");
-    CHECK(exec_python("eab = ei_makeABC", err, sizeof err) == 0, "ei_makeABC defined");
-    CHECK(exec_python("cab = ci_makeABC", err, sizeof err) == 0, "ci_makeABC defined");
-    CHECK(exec_python("hab = hi_makeABC", err, sizeof err) == 0, "hi_makeABC defined");
+    // mi_drawline comes from the frozen init script, so it exists as soon as the
+    // interpreter does.
     CHECK(exec_python("dl = mi_drawline", err, sizeof err) == 0, "mi_drawline defined");
+    // There used to be four checks here for mi_/ei_/ci_/hi_makeABC. They were
+    // wrong, and not only in this harness: a physics command is registered when
+    // a document of that type is created, so mi_makeABC raises NameError until
+    // newdocument(0) has run. Verified against the full build, not inferred.
+    // (This is the same trap documented in docs/pyfemm-inprocess-compat.md,
+    // which an audit fell into twice.)
+    //
+    // Testing them properly needs a document, which needs the document model --
+    // 44 symbols and effectively all of libfemm, turning this deliberately
+    // lightweight binding-layer harness into a second copy of the CMake build.
+    // They are covered where they can actually run: testing/_verify_all.sh
+    // drives the real binaries, and MOBlockIntegralTest.py and friends call
+    // these commands against real documents.
 
     // ---- POSIX VFS: native Python file write/read round-trip ----
     CHECK(exec_python("f = open('vfs_rt.txt', 'w'); f.write('hello 42'); f.close()",

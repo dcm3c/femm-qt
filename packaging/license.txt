@@ -42,6 +42,10 @@ installed alongside the program in the bin\ directory:
   * MicroPython (MIT, Copyright (c) 2013-2026
     Damien P. George)                                     -- LICENSE-MicroPython.txt
   * ulab (MIT, Copyright (c) 2019 Zoltan Voros)           -- LICENSE-ulab.txt
+  * the Boehm-Demers-Weiser garbage collector (X11-style,
+    Copyright (c) 1988-2025 Hans-J. Boehm, Alan J. Demers,
+    Xerox, Silicon Graphics, Hewlett-Packard and
+    Ivan Maidanski)                                       -- LICENSE-bdwgc.txt
   * the pure-Python standard-library modules (datetime, itertools,
     operator, shutil, tempfile, copy, contextlib, fnmatch,
     functools, traceback, types), from micropython-lib

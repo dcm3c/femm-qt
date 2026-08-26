@@ -76,3 +76,53 @@ as doubles. That is invisible to inspection, so the check is behavioural:
 *every* callable in `dir(numpy)` with an int32 array and comparing against the
 identical float64 array. That sweep is how `sort`, `argsort`, `median` and
 `nonzero` were found. Re-run that sweep after any ulab update.
+
+---
+
+## 2026-08-25 — ndarray payloads are allocated pointer-free (atomic)
+
+### What
+
+One line in `code/ndarray.c`, in `ndarray_new_ndarray()`:
+
+```c
+array = m_new0(byte, len);        // was
+array = gc_alloc_atomic(len);     // is
+```
+
+with the `m_malloc_fail(len)` that `m_new0` used to do internally, and a new
+`#include "femm_gc.h"`.
+
+`gc_alloc_atomic()` is `GC_MALLOC_ATOMIC` plus a `memset` (see
+`micropython/femm_gc.c`). Atomic means the collector never scans the block for
+pointers. Under the fallback collector (`-DFEMM_GC_BDWGC=OFF`) the same name
+resolves to an ordinary allocation in `femm_port_hooks.c`, so this file
+compiles and behaves either way.
+
+### Why
+
+An ndarray payload is bulk numeric data. It never contains a pointer, and the
+old allocation left the collector scanning every byte of it. Two consequences,
+both measured (`docs/bdwgc-handoff-plan.md` §0):
+
+* **Scan cost.** `gc.collect()` with a 48 MB float64 array live took 28 ms; not
+  scanning it takes ~0. At 240 MB the difference is the whole collection.
+* **False retention.** 500 int32 pairs whose bit patterns happened to spell
+  heap addresses pinned ~520 KB of dead objects. Numeric data that a
+  conservative collector reads as pointers is not a hypothetical: an int32 pair
+  is exactly 64 bits, and mesh index arrays are full of small integers.
+
+### The re-verification rule, after any ulab update
+
+**Grep that `ndarray_new_ndarray()` is still the only payload allocation site.**
+It is the funnel today — `ndarray_new_dense_ndarray`, `_linear_array`,
+`copy_view`, `frombuffer` and all of `numpy/*.c` reach it — but an upstream
+change that adds a second `m_new(byte, ...)` for payloads would silently put
+those arrays back under the scanner, and nothing would fail. The remaining
+`m_new` calls in `linalg.c`, `poly.c` and `optimize.c` are small scratch
+buffers and are deliberately left alone.
+
+`ndarray_new_view()` and `frombuffer()` need no change: `origin` already points
+into the payload, and the collector runs with interior pointers enabled, so any
+pointer into a payload keeps it alive. `testing/GcTest.py` pins both cases —
+a view outliving its base, and `frombuffer(offset=8)` outliving its source.

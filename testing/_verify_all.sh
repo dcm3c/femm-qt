@@ -127,11 +127,13 @@ printf "%-26s " "FQReference:"; python3 FQReferenceCompare.py | tail -1
 inproc OsModuleTest.py OsModule
 inproc StdlibModuleTest.py StdlibModules
 inproc UlabInt32Test.py UlabInt32
+inproc GcTest.py GcTest
 inproc DateTimeTest.py DateTime
 inproc CsvTest.py Csv
 inproc PylibTest.py Pylib
 printf "%-26s " "RunScriptSize:"; python3 RunScriptSizeTest.py "$B" | tail -1
 printf "%-26s " "RedirectedOutput:"; python3 RedirectedOutputTest.py "$B" | tail -1
+printf "%-26s " "ScriptArgv:"; python3 ScriptArgvTest.py "$B" | tail -1
 inproc ProxyDunderTest.py ProxyDunders
 inproc PointLocationTest.py PointLocation
 inproc MagDirTransformTest.py MagDirTransform

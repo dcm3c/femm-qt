@@ -343,6 +343,7 @@ copy_license ../lua/liblua/COPYRIGHT             Lua-COPYRIGHT.txt
 copy_license ../lua/luasocket-1.0/COPYRIGHT      LuaSocket-COPYRIGHT.txt
 copy_license ../micropython/LICENSE.micropython  LICENSE-MicroPython.txt
 copy_license ../micropython/ulab/LICENSE         LICENSE-ulab.txt
+copy_license ../third_party/bdwgc/LICENSE       LICENSE-bdwgc.txt
 copy_license ../pylib/vendor/LICENSE.micropython-lib   LICENSE-micropython-lib.txt
 # macOS-only: macdeployqt copies Qt's transitive Homebrew dependencies into
 # Contents/Frameworks/, so the bundle redistributes them. Their notices are

@@ -36,11 +36,18 @@ extern "C" {
 #include <cstring>
 #include <optional>
 
-// Initial GC heap segment. MICROPY_GC_SPLIT_HEAP_AUTO grows the heap on
-// demand by malloc'ing further segments (capped per split by
-// gc_get_max_new_split() in femm_port_hooks.c) and returns empty segments
-// during sweep, so this only needs to cover a steady-state console session.
+#if MICROPY_GC_SPLIT_HEAP
+// Fallback collector only (-DFEMM_GC_BDWGC=OFF). Initial GC heap segment:
+// MICROPY_GC_SPLIT_HEAP_AUTO grows the heap on demand by malloc'ing further
+// segments (capped per split by gc_get_max_new_split() in femm_port_hooks.c)
+// and returns empty segments during sweep, so this only needs to cover a
+// steady-state console session.
+//
+// Under bdwgc there is no fixed heap at all -- see micropython/femm_gc.c and
+// docs/bdwgc-handoff-plan.md. That is what lifts the ceiling on array sizes:
+// np.zeros(30_000_000) used to be a MemoryError.
 static char s_heap[2 * 1024 * 1024];
+#endif
 
 // ---------------------------------------------------------------------------
 // Stdout routing. We provide mp_hal_stdout_tx_strn[_cooked] ourselves (the
@@ -275,7 +282,11 @@ void init_py() {
     // regardless of call depth (see femm_stack_guard.h). Must run on the thread
     // that will execute scripts — the GUI/main thread.
     femm_init_stack_guard();
+#if MICROPY_GC_SPLIT_HEAP
     gc_init(s_heap, s_heap + sizeof(s_heap));
+#else
+    gc_init(nullptr, nullptr);   // bdwgc: no fixed heap, see micropython/femm_gc.c
+#endif
     mp_init();
 
 #if MICROPY_VFS_POSIX
@@ -608,6 +619,16 @@ void close_py() {
     }
     MP_STATE_MEM(area).next = NULL;
 #endif
+}
+
+void py_set_argv(const std::vector<std::string> &argv) {
+    // sys.argv is a VM root pointer (MP_REGISTER_ROOT_POINTER in modsys.c), so
+    // the list and the strings appended to it are reachable by the collector --
+    // no rooting is needed here beyond building it in place.
+    // MP_OBJ_TO_PTR is a C-style void* cast; C++ needs the target type named.
+    mp_obj_list_init(static_cast<mp_obj_list_t *>(MP_OBJ_TO_PTR(mp_sys_argv)), 0);
+    for (const std::string &a : argv)
+        mp_obj_list_append(mp_sys_argv, mp_obj_new_str(a.c_str(), a.size()));
 }
 
 int exec_python_file(const char *path, char *errmsg, int errmsg_size) {

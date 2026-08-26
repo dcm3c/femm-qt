@@ -22,6 +22,12 @@
 // set_py_vm_hook); NULL when headless, so the hook is just a null check.
 void (*femm_vm_hook_fn)(void) = NULL;
 
+// ---------------------------------------------------------------------------
+// Fallback collector only (-DFEMM_GC_BDWGC=OFF). The default build replaces
+// py/gc.c with micropython/femm_gc.c on top of bdwgc, which has no heap
+// segments and no atomic-allocation gap to fill; both symbols below then come
+// from femm_gc.c or are not referenced at all.
+// ---------------------------------------------------------------------------
 #if MICROPY_GC_SPLIT_HEAP_AUTO
 // Cap on each additional heap segment gc_try_add_heap() may malloc. Growth
 // doubles the total heap per split, so this bounds the step size, not the
@@ -29,6 +35,18 @@ void (*femm_vm_hook_fn)(void) = NULL;
 // matching desktop interpreter semantics (CPython behaves the same way).
 size_t gc_get_max_new_split(void) {
     return 64u * 1024 * 1024;
+}
+#endif
+
+#ifdef FEMM_GC_MICROPYTHON
+#include "py/gc.h"
+#include "femm_gc.h"
+// ulab allocates ndarray payloads through gc_alloc_atomic() so that bulk
+// numeric data is never scanned for pointers. py/gc.c has no pointer-free
+// allocation, so here it is an ordinary zero-filled one: correct, just as
+// slow to collect as it was before bdwgc.
+void *gc_alloc_atomic(size_t n_bytes) {
+    return gc_alloc(n_bytes, 0);
 }
 #endif
 

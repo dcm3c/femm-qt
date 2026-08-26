@@ -3,6 +3,7 @@
 #include "script_callbacks.h"
 
 ViewCommandCallback get_view_command_callback() { return nullptr; }
+MessageBoxCallback get_message_box_callback() { return nullptr; }
 void register_global_femm_funcs() {}
 void cleanup_global_femm_state() {}
 std::string exeDir() { return ""; }

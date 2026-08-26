@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2026 David Meeker
+// SPDX-License-Identifier: MIT
+// Copyright (C) 2026 David Meeker and contributors
 
 #ifndef CCOMPLEX
 #define CCOMPLEX

@@ -22,6 +22,7 @@
 #include "py/objtuple.h"
 #include "py/objint.h"
 
+#include "femm_gc.h"       // femm-qt: gc_alloc_atomic for ndarray payloads
 #include "ulab_tools.h"
 #include "ndarray.h"
 #include "ndarray_operators.h"
@@ -550,7 +551,15 @@ ndarray_obj_t *ndarray_new_ndarray(uint8_t ndim, size_t *shape, int32_t *strides
     if(array == NULL) {
         // this should set all elements to 0, irrespective of the of the dtype (all bits are zero)
         // we could, perhaps, leave this step out, and initialise the array only, when needed
-        array = m_new0(byte, len);
+        // femm-qt: pointer-free (atomic) allocation. ndarray payloads are bulk
+        // numeric data, never pointers, so the collector must not scan them --
+        // scanning a 240 MB float64 array costs a full pass over it, and an
+        // int32 pair that happens to spell a heap address would pin garbage.
+        // See docs/bdwgc-handoff-plan.md and ulab/FEMM-MODIFICATIONS.md.
+        array = gc_alloc_atomic(len);
+        if(array == NULL) {
+            m_malloc_fail(len);
+        }
     }
     ndarray->array = array;
     ndarray->origin = array;

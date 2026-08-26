@@ -15,6 +15,38 @@ set(COMMON_DIR "${CMAKE_SOURCE_DIR}/common")        # MIT: shared math (complex/
 set(SOLVER_COMMON_DIR "${SOLVER_DIR}/common")       # GPL: solver-only (cspars/fullmatrix/expr_eval)
 set(MPY_DIR "${CMAKE_SOURCE_DIR}/micropython")      # MIT: embedded MicroPython engine (libfemm-only)
 
+# --- Collector: bdwgc replaces MicroPython's block allocator ---------------
+# py/gc.c is not compiled; micropython/femm_gc.c implements the same py/gc.h
+# on top of the Boehm-Demers-Weiser collector. Why, and the measurements:
+# docs/bdwgc-handoff-plan.md.
+#
+# The option exists so a field problem on one platform can be bisected to the
+# collector in a minute; it is meant to be removed after a release without
+# incident. OFF restores py/gc.c and the split-heap configuration.
+option(FEMM_GC_BDWGC "Use bdwgc instead of MicroPython's block allocator" ON)
+
+if(FEMM_GC_BDWGC)
+    set(BDWGC_DIR "${CMAKE_SOURCE_DIR}/third_party/bdwgc")
+    # One translation unit: extra/gc.c #includes every core source, which is
+    # upstream's supported way to build the collector as a single object. It
+    # keeps normal builds pure CMake -- no bdwgc subproject, no autotools.
+    add_library(bdwgc STATIC "${BDWGC_DIR}/extra/gc.c")
+    target_include_directories(bdwgc PUBLIC "${BDWGC_DIR}/include")
+    target_compile_definitions(bdwgc PRIVATE
+        GC_NOT_DLL              # static link (Windows); harmless elsewhere
+        LARGE_CONFIG            # heap tables sized for GB-scale heaps, not MB
+        ALL_INTERIOR_POINTERS   # ulab views/frombuffer hold interior pointers
+        USE_MUNMAP              # return empty heap sections to the OS
+        GC_DISABLE_INCREMENTAL  # no dirty-bit tracking, no SIGSEGV handler ever
+        NO_EXECUTE_PERMISSION   # heap pages are data, not code
+        GC_NO_THREADS_DISCOVERY
+    )
+    # No GC_THREADS: MICROPY_PY_THREAD is 0 and only the script thread touches
+    # the collector. Qt's threads and PyBridgeHost's socket loop never allocate
+    # from it and never hold the only reference to a GC object.
+    target_compile_options(bdwgc PRIVATE -w)   # vendored, unmodified: not our warnings
+endif()
+
 # --- MicroPython embed library (compiled as C, -std=gnu11) ---
 # The generated micropython_embed/ tree is vendored (committed), platform-
 # independent C pinned by micropython/MICROPYTHON_VERSION. Normal
@@ -30,6 +62,22 @@ list(FILTER MPY_SOURCES EXCLUDE REGEX "port/mphalport\\.c$")
 # every sha256_/re1.5 symbol twice.
 list(FILTER MPY_SOURCES EXCLUDE REGEX "crypto-algorithms/sha256\\.c$")
 list(FILTER MPY_SOURCES EXCLUDE REGEX "lib/re1\\.5/.*\\.c$")
+
+# The block allocator/collector in py/gc.c is replaced by micropython/femm_gc.c
+# on top of bdwgc. Refuse to configure if a version bump moves the file, rather
+# than silently linking two collectors: the duplicate-symbol error that would
+# follow is loud, but says nothing about why.
+if(FEMM_GC_BDWGC)
+    set(MPY_GC_FILE "${MPY_DIR}/micropython_embed/py/gc.c")
+    list(FIND MPY_SOURCES "${MPY_GC_FILE}" _mpy_gc_idx)
+    if(_mpy_gc_idx EQUAL -1)
+        message(FATAL_ERROR
+            "[micropython] ${MPY_GC_FILE} is not in the source list, so the "
+            "exclusion below matches nothing and femm_gc.c would be linked "
+            "alongside upstream gc.c. Find where the file moved to.")
+    endif()
+    list(FILTER MPY_SOURCES EXCLUDE REGEX "py/gc\\.c$")
+endif()
 
 # --- sys.stdout must go through the output sink, not through fd 1 ---
 # Two files define mp_sys_std{in,out,err}_obj: extmod/vfs_posix_file.c, which
@@ -80,8 +128,23 @@ file(GLOB_RECURSE ULAB_SOURCES "${MPY_DIR}/ulab/code/*.c")
 # femm_port_hooks.c provides symbols the core references under our
 # mpconfigport.h (femm_vm_hook_fn, gc_get_max_new_split). It lives outside
 # the generated tree so regen-micropython leaves it alone.
+if(FEMM_GC_BDWGC)
+    set(MPY_GC_SOURCE "${MPY_DIR}/femm_gc.c")
+else()
+    set(MPY_GC_SOURCE "")
+endif()
 add_library(micropython_embed STATIC ${MPY_SOURCES} ${ULAB_SOURCES}
-    "${MPY_DIR}/femm_port_hooks.c")
+    "${MPY_DIR}/femm_port_hooks.c" ${MPY_GC_SOURCE})
+if(FEMM_GC_BDWGC)
+    target_link_libraries(micropython_embed PUBLIC bdwgc)
+else()
+    # PUBLIC, not PRIVATE: this switches MICROPY_GC_SPLIT_HEAP in
+    # mpconfigport.h, which changes the layout of mp_state_mem_t. Every
+    # translation unit that includes a MicroPython header -- libfemm and the
+    # test executables included -- must agree, or the two halves disagree about
+    # where the interpreter's state lives and corrupt the heap.
+    target_compile_definitions(micropython_embed PUBLIC FEMM_GC_MICROPYTHON)
+endif()
 target_include_directories(micropython_embed PUBLIC
     "${MPY_DIR}"
     "${MPY_DIR}/micropython_embed"

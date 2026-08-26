@@ -123,6 +123,7 @@ Source: "..\NOTICE-Qt.txt";                 DestDir: "{app}\bin"; Flags: ignorev
 ; Third-party MIT notices (compiled into the binaries)
 Source: "..\micropython\LICENSE.micropython"; DestDir: "{app}\bin"; DestName: "LICENSE-MicroPython.txt"; Flags: ignoreversion
 Source: "..\micropython\ulab\LICENSE";      DestDir: "{app}\bin"; DestName: "LICENSE-ulab.txt"; Flags: ignoreversion
+Source: "..\third_party\bdwgc\LICENSE";   DestDir: "{app}\bin"; DestName: "LICENSE-bdwgc.txt"; Flags: ignoreversion
 ; The fullest of the copies (each pylib package carries one so that a stray
 ; copy of the directory is still a compliant copy); this is the one a user
 ; browsing bin\ should find.
