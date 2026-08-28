@@ -743,6 +743,171 @@ two such blocks resident after dropping them. The existing advice to reuse
 arrays rather than reallocating (scripting manual, "Keep bulk numbers in arrays,
 not lists") happens to avoid it.
 
+## 11.4d macOS (M1), 2026-08-26 — and it returns everything
+
+Builds clean, collector confirmed (`gc_which.py`: idle heap 256 KB,
+`np.zeros(30_000_000)` in **27 ms**, the fastest of the three; collect with it
+live 0 ms). Suite green apart from `FQReference`, which fails on macOS by
+design and by prior decision — see §11.6 and `FQReferenceCompare.py`'s header.
+
+The headless soak is the best result on any platform:
+
+| | Windows | Linux | **macOS** |
+|---|---|---|---|
+| steady plateau | 244 MB | 237 MB | **5.1 MB** |
+| peak | 473 MB | 466 MB | 234 MB |
+| arrays pinned at teardown | 1 | 1 | **0** |
+
+Windows and Linux each end holding one conservatively-pinned 240 MB array
+(§11.4b). macOS pins nothing: RSS returns to 5.1 MB after every cycle, and the
+peak is correspondingly one array lower. Whatever the mechanism — mach VM
+returning pages more eagerly, fewer stale words surviving in registers — the
+platform this change was most likely to disappoint is the one that behaves best.
+
+**It also exposed a defect in `gc_soak_report.py`.** The report flagged
+`list500k_0`, 3.6 → 5.1 MB, as x1.42 OVER. That is 1.5 MB of settling after half
+a million small objects — noise. A ratio with no absolute floor cries wolf
+precisely where the collector is doing best: the same 1.5 MB against Windows'
+240 MB plateau reads as x1.01. The reporter now requires BOTH the ratio and
+absolute growth over `FLOOR_MB = 16` before flagging, which is comfortably below
+the 80-240 MB blocks the soak allocates and comfortably above settling noise.
+Re-checked against the Windows trace (unchanged, PASS) and against a synthetic
+240 MB retention (still caught, x2.01 OVER).
+
+## 11.4e The GUI soak everywhere, and the criterion that finally works
+
+macOS GUI, against its own headless run in §11.4d:
+
+    array240_0   113.4 ->  374.1   +260.7   (cold start, excluded)
+    array80_0    374.1 ->  450.5    +76.4   STEP
+    list500k_0   450.4 ->  452.0     +1.6
+    array240_1   452.0 ->  681.3   +229.3   STEP
+    array80_1    681.3 ->  757.8    +76.5   STEP
+    list500k_1 .. bytes3M_1         +0.0    (six cycles, flat at 758.3)
+
+Bounded: three steps, then nothing for six consecutive cycles. But the size of
+the effect is worth stating plainly, because it is the one number from this
+whole exercise that might deserve action:
+
+| plateau after the run | headless | GUI |
+|---|---|---|
+| Windows | 244 MB | 322 MB |
+| Linux | 237 MB | 575 MB |
+| macOS | **5 MB** | **758 MB** |
+
+macOS headless pins nothing at all; macOS with Qt pins about 625 MB across four
+blocks. The soak is adversarial (repeated 80-240 MB allocations are not what
+real scripts do), and it is bounded, but a GUI session that touches large arrays
+can hold several hundred MB that `gc.mem_alloc()` agrees is dead.
+
+**An earlier draft of this section attributed the difference to the GUI's larger
+root set. FreeBSD disproved that** — see §11.4f. There the GUI pins *nothing*
+(74.7 MB plateau) while headless on the same machine pins one array (241 MB),
+the opposite way round. Retention count is not a monotonic function of root-set
+size; it is what happens to be lying in registers and stack slots when a
+collection runs.
+
+**DECIDED 2026-08-26: left as documented behaviour.** It is bounded,
+`gc.mem_alloc()` accounts for every byte of it, and the soak that produces it is
+adversarial in a way real scripts are not. The alternatives were considered and
+not taken: a second `GC_gcollect()` from the post-script hook (which cleared the
+analogous Windows case, but spends a collection on every script to fix a
+worst-case), and `GC_exclude_static_roots` over Qt's ranges (rejected outright —
+`py_state.cpp` keeps `mp_obj_t` in statics, those live in exactly such a
+segment, and wrong bounds free a live object). Revisit only if a user reports it.
+
+**The ratio test was wrong at BOTH ends, and both were measured.** It is now
+absolute growth over `FLOOR_MB = 16`, with the ratio printed only as context:
+
+  * **too strict where the collector does best.** macOS headless returns
+    everything, so its plateau is ~5 MB; 1.5 MB of settling after half a
+    million small objects reads x1.42 there and x1.01 against Windows' 240 MB
+    plateau. Same noise, opposite verdicts.
+  * **too lax once a plateau has grown.** `array80_1` above is a genuine 80 MB
+    pin and reads x1.11 — under a 20% gate — while the identical pin earlier in
+    the same run (`array80_0`, 374 -> 450) reads x1.20. The better the run had
+    been going, the more likely the test was to miss a real pin.
+
+And a step is no longer reported as a failure, because it is not one: a
+conservative collector pins a block whenever a stale word points at it. The
+verdict now encodes §11.4c directly — it looks at the LAST repetition of each
+cycle shape, and fails only if retention is still growing there. All four runs
+(Windows GUI, Linux GUI, macOS headless, macOS GUI) are PASS by that rule, and
+a synthetic still-growing trace is still caught.
+
+## 11.4f FreeBSD (GhostBSD), 2026-08-27
+
+Builds and the suite is green. `GcTest`, `UlabInt32` and `ProxyDunders` all
+pass, and `FQReference` reads 9.11e-10 against a 5e-6 budget — the same libm-tail
+story as Linux's 2.41e-11, since the committed reference was generated on
+Windows.
+
+Headless soak **PASS**, and it lands exactly where Windows and Linux did: first
+sample 7.1 MB, cold start to 238.9, steady plateau **241.0 MB**, peak 470.4, and
+every steady-state cycle at ×1.00 with +0.0 MB growth. One 240 MB array pinned,
+the same as Windows and Linux; macOS headless remains the only one that pins
+none.
+
+The corrected reporter also behaved as intended on real data for the first time
+on a fresh platform: it excluded the ×25.95 cold start, and `list500k_0`'s
++1.5 MB at ×1.01 passed under the 16 MB absolute floor rather than being flagged
+by a ratio.
+
+GUI soak **PASS**, and it is the most interesting single result of the whole
+pass: first sample 22.9 MB, steady plateau **74.7 MB**, peak 304.1 — and the
+cold-start cycle itself only ×1.01, so *nothing was pinned at all*, including at
+startup.
+
+**This is the run that disproves the tidy explanation.** Every plateau, all
+eight runs:
+
+| | headless | GUI |
+|---|---|---|
+| Windows | 244 MB (1 array) | 322 MB (1) |
+| Linux | 237 MB (1) | 575 MB (2) |
+| macOS | 5 MB (**0**) | 758 MB (4) |
+| FreeBSD | 241 MB (1) | **74.7 MB (0)** |
+
+Windows, Linux and macOS all pinned more under the GUI than headless, which
+made "the GUI has a larger root set, so it catches more stale pointers" look
+like the mechanism. FreeBSD is the other way round: its GUI pins nothing while
+its headless pins one array. macOS is the mirror image, 0 headless and 4 GUI.
+
+So the count is **not** a function of root-set size. It is whatever happens to
+be lying in registers and stack slots at the moment a collection runs — which
+is exactly what conservative collection means, and is why the acceptance
+criterion has to be bounded/non-cumulative/explainable (§11.4c) rather than any
+threshold on the amount retained.
+
+**Both failures it reported were defects in the tests, not the product**, and
+both were the same species: an assertion that measured its environment rather
+than the code.
+
+`Fft` failed in the suite and passed standalone — the signature of a timing
+assertion. Its fast-path check used `time.time()`, which is coarse enough on
+FreeBSD that 200 power-of-two transforms measured as **zero**, so the
+`if t_pow2 > 0` guard silently skipped the check; and it compared *means*, so
+under the suite's load one scheduling hiccup pushed the ratio under threshold
+and failed it. Now `ticks_us`, a batch grown until it clears 20 ms of clock,
+best-of-5 rather than a mean, and a loud failure instead of a silent skip if the
+transform still measures zero (38c9b95).
+
+`ConsolelessPrint` reported the GUI dying with **SIGABRT**, about a second in —
+but only when the test spawned it. `femm_gui -run /dev/null` from a shell was
+fine. The test's POSIX spawn closed fds 0/1/2 outright, which frees those
+descriptors for the first files the child opens; on FreeBSD the X11 socket
+plausibly lands on one and a later write to "stderr" corrupts it. Linux and
+macOS survived that by luck. It now uses `/dev/null`, which is what a desktop
+launcher actually gives, and loses nothing: the teeth of that test are the
+`stdout is not a file` probe, which pins which definition linked and does not
+care what fd 1 is. Windows still gets NULL std handles, which is where the EBADF
+failure it was built for lives (272ebff).
+
+Worth generalising: **the collector produced no product failures on any
+platform. Every failure in four platform passes was a test measuring its
+environment** — a ratio against a plateau, a mean under load, an emulation
+harsher than reality.
+
 ## 11.5 Acceptance status
 
 Done: `py/gc.c` absent from the archive (`ar t` shows only `femm_gc.c.obj`, and
@@ -754,10 +919,76 @@ equivalent — the four attribution places (`third_party/bdwgc/LICENSE`,
 written; the `-DFEMM_GC_BDWGC=OFF` fallback verified to build and to reproduce
 the old ceiling (`np.zeros(30_000_000)` → `MemoryError`).
 
-**Not done — needs the other machines:** Linux, macOS and FreeBSD builds and
-suites, and the RSS soak on each (§11.4a has the Windows result and the script,
-`testing/gc_soak.py`); the
-`PyBridgeBenchTest.py` heap-column update in `docs/pybridge-design.md` §8 (the
-bench passes, and its transfer times improved from 65/52 ms to 53/39 ms, but
-the documented heap figures should be re-taken deliberately rather than
-inferred from one run).
+**Linux: done** (2026-08-26) — build, full suite, headless and GUI soaks. See
+§11.4b and §11.4c.
+
+**macOS: done** (2026-08-26, M1) — builds clean, collector confirmed and the
+fastest of the three (`np.zeros(30_000_000)` in 27 ms), suite green apart from
+the by-design `FQReference` FMA failure, headless and GUI soaks both bounded.
+See §11.4d and §11.4e.
+
+**FreeBSD: done** (2026-08-27, GhostBSD) — build, suite, and both soaks. See
+§11.4f.
+
+**All four platforms are complete.** Remaining:  the `PyBridgeBenchTest.py` heap-column update in
+`docs/pybridge-design.md` §8 — the bench passes and its transfer times improved
+(Windows 65/52 → 53/39 ms, Linux 40/27 ms), but the documented heap figures
+should be re-taken deliberately rather than inferred from one run.
+
+## 11.6 Bringing up a new platform: what to run, and what "good" looks like
+
+Everything below is in the source tree; nothing external is needed.
+
+**1. Is bdwgc even in this binary?** Run this FIRST — it is the one failure that
+is otherwise invisible, because every ordinary script, including a heavy one
+like `examples/mySPMLossScriptAGB.py`, runs identically on either collector.
+
+    build/bin/femm_headless -run testing/gc_which.py
+
+Expect `VERDICT: bdwgc`, an idle heap near 250 KB, and `np.zeros(30_000_000)`
+succeeding. If it reports the block allocator, CMake configured
+`-DFEMM_GC_BDWGC=OFF` or the `py/gc.c` exclusion stopped matching after a
+MicroPython bump — nothing else is worth running until that is fixed.
+
+**2. The suite.** `bash testing/_verify_all.sh`. `GcTest` and `UlabInt32` are
+the rows that bear most directly on this change.
+
+`FQReference` needs its expectations set per platform, or it will look like this
+change broke something when it did not:
+
+  * **Linux/FreeBSD:** a tiny non-zero movement (Linux measured 2.41e-11 against
+    a 5e-6 budget) because the committed reference was generated on Windows.
+    That is libm's last bits, not the collector.
+  * **macOS: this test is EXPECTED TO FAIL, and has been since long before
+    bdwgc.** clang contracts on arm64 by default, FMA changes the MESH rather
+    than just the last digits (16277 vs 16357 nodes on one model, ~64% of
+    vertices existing in only one of the two meshes), and every budget in the
+    comparator assumes the same mesh. `FQReferenceCompare.py`'s own header
+    states this from line 60 and records the 2026-08-19 decision that FMA stays
+    on. Do not attribute an `FQReference` failure on macOS to the collector, and
+    do not turn FMA off to make it pass.
+
+What would genuinely implicate the collector is `GcTest`, `UlabInt32` or
+`ProxyDunders` failing, or an OF-comparison suite moving — those compare against
+Original FEMM at a tolerance far looser than FMA noise.
+
+**3. The RSS soak, headless and then GUI.** `testing/gc_soak.py`, sampled from
+outside the process; its header has the PowerShell and POSIX samplers. Read it
+with `python3 testing/gc_soak_report.py rss.csv gc_soak_phases.txt`.
+
+Judge it by §11.4c's criterion, not by the raw verdict line: bounded,
+non-cumulative, explainable. A single cycle stepping over 20% is expected
+whenever that cycle happens to pin a block; what matters is that repeated
+identical cycles then return to the new plateau exactly, and that `END heap` in
+the phase log accounts for the step as a whole number of pinned arrays.
+Observed so far: 1 array pinned headless on Linux and in the Windows GUI, 2 in
+the Linux GUI. A plateau that keeps climbing, or an `END heap` that does not
+correspond to whole arrays, would be the real thing.
+
+**macOS specifics** (§6.3): hardened runtime and notarisation are unaffected —
+no JIT, and `GC_DISABLE_INCREMENTAL` means no SIGSEGV or mach exception handler
+is ever installed, which is the part that would have been a problem. Check both
+slices of the universal binary. `USE_MUNMAP` is the platform code most likely
+to differ, as it did on Windows (§11.4a).
+
+**FreeBSD specifics:** `USE_MUNMAP` again; nothing else known.

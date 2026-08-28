@@ -289,19 +289,45 @@ if abs(got - amp) > 1e-9:
 # Bluestein transforms a length-M >= 2N-1 buffer, so it cannot be as quick as
 # the native transform of the same N.  If a change ever routed everything
 # through it the results would stay right and only the speed would tell.
-def timeit(n, reps):
+# BEST-of-N, not a mean, and ticks_us rather than time.time(). Both matter,
+# and GhostBSD demonstrated why: there time.time() is coarse enough that 200
+# power-of-two transforms measured as 0 s, so the `t_pow2 > 0` guard silently
+# skipped this check entirely -- while under the full suite's load the same
+# measurement came out non-zero, one scheduling hiccup inflated the MEAN, the
+# ratio fell under 1.5, and the row failed. Passing alone and failing in the
+# suite is the signature of a timing assertion, not of a bug.
+#
+# A minimum is the right statistic for "how fast can this go": noise only ever
+# adds. Batches are also sized to clear the clock rather than assumed to.
+def timeit(n, batches=5, floor_us=20000):
     x = np.array(sample(n))
-    t0 = time.time()
-    for _ in range(reps):
-        np.fft.fft(x)
-    return (time.time() - t0) / reps
+    reps = 50
+    while True:                       # grow until a batch clears the clock
+        t0 = time.ticks_us()
+        for _ in range(reps):
+            np.fft.fft(x)
+        if time.ticks_diff(time.ticks_us(), t0) >= floor_us or reps >= 12800:
+            break
+        reps *= 2
+    best = None
+    for _ in range(batches):
+        t0 = time.ticks_us()
+        for _ in range(reps):
+            np.fft.fft(x)
+        dt = time.ticks_diff(time.ticks_us(), t0)
+        if best is None or dt < best:
+            best = dt
+    return float(best) / reps          # microseconds per transform
 
-t_pow2 = timeit(256, 200)
-t_blue = timeit(250, 200)
-if t_pow2 > 0 and t_blue / t_pow2 < 1.5:
+t_pow2 = timeit(256)
+t_blue = timeit(250)
+if t_pow2 <= 0:
+    fails.append("cannot time the fft: 256-point transforms measured as zero "
+                 "even after growing the batch")
+elif t_blue / t_pow2 < 1.5:
     fails.append("n=256 (%.1f us) is not meaningfully faster than n=250 (%.1f us) "
                  "-- the power-of-two fast path may have been lost"
-                 % (t_pow2 * 1e6, t_blue * 1e6))
+                 % (t_pow2, t_blue))
 
 if fails:
     for m in fails:
@@ -312,4 +338,4 @@ else:
           "DFT (worst %.1e of scale); ifft inverts it, fft2/axis=0 agree, "
           "scaling is MATLAB's, and powers of two still take ulab's fast path "
           "(%.0f us vs %.0f us at n=256/250)"
-          % (worst, t_pow2 * 1e6, t_blue * 1e6))
+          % (worst, t_pow2, t_blue))

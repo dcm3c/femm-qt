@@ -23,10 +23,26 @@ CSV: "ms,mem[,mem2]" with a header line. Units are detected -- ps -o rss=
 gives kB, the PowerShell sampler above gives MB.
 """
 import io
+import os
 import sys
 
 HOLD_MS = 5000          # gc_soak.py's HOLD, in ms
 SETTLE = 1200           # ignore this much of each plateau
+
+# THE RATIO IS NOT THE TEST -- absolute growth is. Retention happens in whole
+# blocks, and this soak's blocks are 80-240 MB, so a real pin is always tens of
+# MB. A ratio gets it wrong at both ends, as both were measured:
+#
+#   * too strict where the collector does best. macOS headless returns
+#     everything, so its plateau is ~5 MB; 1.5 MB of settling after half a
+#     million small objects reads as x1.42 there and x1.01 against Windows'
+#     240 MB plateau. Same noise, opposite verdicts.
+#   * too lax once a plateau HAS grown. In the macOS GUI run a genuine 80 MB
+#     pin (681.3 -> 757.8) reads as only x1.11 and slips under a 20% gate,
+#     while the identical pin earlier in the same run (374 -> 450) reads x1.20.
+#
+# So flag on absolute growth alone. The ratio is still printed, as context.
+FLOOR_MB = 16.0
 
 
 def load(csv_path, phases_path):
@@ -52,6 +68,13 @@ def main(argv):
         return 2
     csv_path = argv[1]
     phases_path = argv[2] if len(argv) > 2 else "gc_soak_phases.txt"
+    for what, path in (("sample trace", csv_path), ("phase log", phases_path)):
+        if not os.path.exists(path):
+            print("no %s at %s" % (what, path))
+            if what == "phase log":
+                print("gc_soak.py writes gc_soak_phases.txt beside itself; "
+                      "run it from the same directory.")
+            return 2
     rows, phases = load(csv_path, phases_path)
     if not rows or not phases:
         print("nothing to read (%d samples, %d phases)" % (len(rows), len(phases)))
@@ -70,9 +93,10 @@ def main(argv):
         v = [v for (m, v) in rows if t + off + SETTLE <= m <= t + off + HOLD_MS - 400]
         return sum(v) / len(v) * scale if v else None
 
-    print("%-18s %9s %9s %9s   %s" % ("cycle", "before", "peak", "after", "ratio"))
-    print("-" * 60)
-    fails, first = [], True
+    print("%-18s %9s %9s %9s %8s   %s"
+          % ("cycle", "before", "peak", "after", "growth", "ratio"))
+    print("-" * 68)
+    steps, cycles, first = [], [], True
     for t, name in phases:
         if not name.endswith("rest_before"):
             continue
@@ -85,22 +109,42 @@ def main(argv):
         pk = max((v for (m, v) in rows if live + off <= m <= freed + off), default=0) * scale
         if b is None or a is None or b == 0:
             continue
-        note = ""
+        note, grew = "", a - b
         if first:
             note = "   (cold start, excluded)"
             first = False
-        elif a / b > 1.20:
-            note = "   OVER"
-            fails.append(tag)
-        print("%-18s %9.1f %9.1f %9.1f   x%.2f%s" % (tag, b, pk, a, a / b, note))
+        elif grew > FLOOR_MB:
+            note = "   STEP"
+            steps.append((tag, grew))
+        cycles.append((tag, grew))
+        print("%-18s %9.1f %9.1f %9.1f %+8.1f   x%.2f%s"
+              % (tag, b, pk, a, grew, a / b, note))
 
     print("\nmemory in %s   first sample %.1f, peak %.1f, last %.1f"
           % (unit, rows[0][1] * scale,
              max(v for _, v in rows) * scale, rows[-1][1] * scale))
-    if fails:
-        print("VERDICT: FAIL -- did not return within 20%% on: %s" % ", ".join(fails))
+    # A step is not a failure by itself: a conservative collector pins a block
+    # whenever a stale word happens to point at it, and the plateau steps up.
+    # What must hold (plan 11.4c) is that it is BOUNDED -- so look at the LAST
+    # repetition of each cycle shape. If those have stopped stepping, retention
+    # settled; if the last one still steps, it is still growing, which is the
+    # real failure.
+    last = {}
+    for tag, grew in cycles:
+        shape = tag.rsplit("_", 1)[0]
+        last[shape] = grew
+    unbounded = [k for k, g in last.items() if g > FLOOR_MB]
+
+    if steps:
+        print("\n%d cycle(s) stepped, totalling %+.1f MB: %s"
+              % (len(steps), sum(g for _, g in steps),
+                 ", ".join("%s %+.0f MB" % (t, g) for t, g in steps)))
+    if unbounded:
+        print("VERDICT: FAIL -- still growing at the last repetition of: %s"
+              % ", ".join(sorted(unbounded)))
         return 1
-    print("VERDICT: PASS -- every steady-state cycle returned within 20%")
+    print("VERDICT: PASS -- retention is bounded; the last repetition of every "
+          "cycle shape returned to its plateau")
     return 0
 
 

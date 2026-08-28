@@ -139,6 +139,41 @@ add_custom_target(femm_pylib ALL
             "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/python"
     COMMENT "Staging the pure-Python stdlib modules into bin/python/")
 add_dependencies(libfemm femm_pylib)
+# The four material libraries, staged beside the binaries that read them.
+# libfemm/material_lib_path.cpp resolves them relative to exeDir() on Windows
+# and Linux, so without these a build tree cannot open a material library at
+# all -- MaterialLibTest.py fails with "Couldn't open .../matlib.dat".
+#
+# All four build scripts copy them (win_build.bat:120, linux_build.sh:76,
+# freebsd_build.sh:103, and macos_build.sh:207 into the bundle's Resources/).
+# What this adds is that a plain `ninja` suffices, which is how the tree is
+# built during development and how a fresh build directory gets made.
+#
+# Its own ALL target for the same reason as pybridge_python above: hung off
+# libfemm the copy would only run when the C++ relinks, and a .dat is data --
+# editing one would never trigger it.
+#
+# macOS: this stages into bin/ as everywhere else, which makes a build tree
+# self-sufficient. It does NOT put them back in the app bundle, which
+# deliberately keeps its seeds in Contents/Resources/ (1effc98) -- macos_build.sh
+# copies named executables into Contents/MacOS/, never bin/*.dat, and
+# materialLibPath() tries ../Resources/ before exeDir() anyway.
+add_custom_target(femm_matlibs ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/matlibs/matlib.dat"
+            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/matlibs/statlib.dat"
+            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/matlibs/heatlib.dat"
+            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/matlibs/condlib.dat"
+            "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/"
+    COMMENT "Staging the material libraries into bin/")
+add_dependencies(libfemm femm_matlibs)
+
 target_compile_options(libfemm PRIVATE -Wall
     -Wno-unused-variable -Wno-sign-compare -Wno-write-strings
     -Wno-unused-result

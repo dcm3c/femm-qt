@@ -65,10 +65,12 @@ set_target_properties(lua PROPERTIES OUTPUT_NAME lua4)
 # usable: femm-lua reads femm.lua from its own directory, and refuses to start
 # without it.
 #
-# The three Unix build scripts already copy these, so this is really what makes
-# a plain `ninja` on Windows equivalent. Doing it here rather than in one more
-# shell script keeps the one build system responsible for it on every platform;
-# the cp -u in linux/freebsd/macos_build.sh then finds them already current.
+# All four build scripts already copy these -- win_build.bat:123,
+# linux_build.sh:91, freebsd_build.sh:119, macos_build.sh:215. What this adds is
+# that a plain `ninja`, which is how the tree is usually built during
+# development, is enough on its own. That is the case that went stale: bin/
+# femm.lua was two months behind because nobody had run a build script in
+# between. The copies in those scripts then find the file already current.
 #
 # Its own ALL target, not a POST_BUILD on lua: hung off the executable the copy
 # would only run when the C++ relinks, so editing femm.lua -- which never

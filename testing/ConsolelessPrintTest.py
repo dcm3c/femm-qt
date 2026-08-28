@@ -79,8 +79,22 @@ def spawn_without_stdio(argv):
         si.dwFlags |= subprocess.STARTF_USESTDHANDLES
         si.hStdInput = si.hStdOutput = si.hStdError = None
         return subprocess.Popen(argv, startupinfo=si, close_fds=True)
+    # POSIX: /dev/null on 0/1/2, NOT closed. Closing them is harsher than any
+    # desktop launcher does, and it is unsafe in a way that has nothing to do
+    # with what this test checks: with those descriptors free, the first files
+    # the child opens TAKE them, so anything later writing to "stderr" corrupts
+    # whatever now sits on fd 2. On GhostBSD that aborted the GUI with SIGABRT
+    # about a second in -- almost certainly the X11 socket landing on a low fd.
+    #
+    # Nothing is lost. The teeth of this test are the "stdout is not a file"
+    # probe, which pins WHICH definition linked (the raw-fd object is seekable,
+    # the mp_hal sink-backed one is not) and does not care what fd 1 is. The
+    # EBADF failure that motivated the test is a Windows one, and the Windows
+    # branch above still passes NULL handles, which is what Explorer gives.
     return subprocess.Popen(argv, close_fds=True,
-                            preexec_fn=lambda: [os.close(fd) for fd in (0, 1, 2)])
+                            stdin=subprocess.DEVNULL,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL)
 
 
 def main():
@@ -93,11 +107,36 @@ def main():
     try:
         result = os.path.join(d, "result.txt")
         deadline = time.time() + 90
+        t0 = time.time()
         while time.time() < deadline and not os.path.exists(result):
+            if proc.poll() is not None:
+                # It has exited. The probe writes result.txt and THEN lets the
+                # GUI close, so if it is not there a moment later it is not
+                # coming -- no reason to sit out the rest of the 90 s.
+                time.sleep(0.3)
+                break
             time.sleep(0.1)
         if not os.path.exists(result):
-            print("ConsolelessPrint FAIL: the script never reported "
-                  "(the GUI may have died before it could write)")
+            # Say WHICH failure this is. "May have died" is a guess, and the
+            # exit status that settles it is already in hand. The three cases
+            # look identical from the outside and need different fixes:
+            #   exited non-zero  -> the GUI could not start (platform plugin,
+            #                       display, missing file). Not this test.
+            #   exited zero      -> it ran and wrote nothing, or wrote
+            #                       elsewhere. See the leftovers below: with
+            #                       fds 0/1/2 closed, the first files the child
+            #                       opens TAKE those descriptors, so anything
+            #                       that writes to "stdout" lands in one of them.
+            #   still running    -> it hung, and 90 s was not enough.
+            rc = proc.poll()
+            where = ("still running after %.0f s" % (time.time() - t0) if rc is None
+                     else "exited with status %d after %.0f s" % (rc, time.time() - t0))
+            try:
+                leftovers = sorted(os.listdir(d))
+            except OSError:
+                leftovers = ["<unreadable>"]
+            print("ConsolelessPrint FAIL: the script never reported -- %s" % where)
+            print("   temp dir holds: %s" % (", ".join(leftovers) or "(nothing)"))
             return 1
         time.sleep(0.05)
         with open(result) as f:

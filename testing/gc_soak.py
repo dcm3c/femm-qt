@@ -14,22 +14,19 @@
 #         Start-Sleep -Milliseconds 250
 #     }
 #
-# On Linux, macOS or FreeBSD, run it in the background and sample by PID:
+# On Linux, macOS or FreeBSD, use the companion sampler -- it launches the
+# binary and samples it by PID:
 #
-#     ../build/bin/femm_headless -run gc_soak.py &          # or femm_gui
-#     pid=$!
-#     echo "ms,rss_kb" > rss.csv
-#     t0=$(date +%s%N)
-#     while kill -0 $pid 2>/dev/null; do
-#         echo "$(( ($(date +%s%N) - t0) / 1000000 )),$(ps -o rss= -p $pid)" >> rss.csv
-#         sleep 0.25
-#     done
+#     python3 gc_soak_sample.py ../build/bin/femm_headless
+#     python3 gc_soak_sample.py ../build/bin/femm_gui gc_soak.py rss_gui.csv
 #
-# `ps -o rss=` is in kB on all three (the reporter detects the unit).
+# Do NOT hand-roll the shell loop with `date +%s%N`: that is a GNU extension,
+# and BSD date (macOS, FreeBSD) prints a literal "N", so every sample lands
+# at the same timestamp and the plateaus cannot be aligned.
 #
-# Then read the result with the companion analyser, which lines the trace up
-# against the phase log, measures each plateau over its settled half, and
-# excludes the cold-start first cycle:
+# Then read the result with the analyser, which lines the trace up against the
+# phase log, measures each plateau over its settled half, and excludes the
+# cold-start first cycle:
 #
 #     python3 gc_soak_report.py rss.csv gc_soak_phases.txt
 #
