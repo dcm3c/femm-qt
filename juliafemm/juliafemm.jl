@@ -271,6 +271,18 @@ main_minimize() = callfemm("main_minimize()")
 main_resize(w, h) = callfemm("main_resize($(numc(w))$(num(h)))")
 main_restore() = callfemm("main_restore()")
 
+hideconsole() = callfemm("hideconsole()")
+showconsole() = callfemm("showconsole()")
+messagebox(msg) = callfemm("messagebox($(quote_str(msg)))")
+
+# In OF these toggle the floating "FEMM Properties" window that always
+# hangs over the preprocessor. femm-qt has no such persistent floating
+# window, so there is nothing to toggle -- kept as no-ops for
+# legacy-script compatibility.
+# Dropped in 0a5be31; restored for octavefemm and luafemm in c6fe935.
+showpointprops() = nothing
+hidepointprops() = nothing
+
 # ===================================================================
 #  MAGNETICS PRE-PROCESSOR (mi_)
 # ===================================================================
@@ -542,7 +554,7 @@ mi_setcomment(c) = callfemm("mi_setcomment($(quote_str(c)))")
 mi_getboundingbox() = callfemm("mi_getboundingbox()")
 mi_getprobleminfo() = callfemm("mi_getprobleminfo()")
 mi_gettitle() = callfemm("mi_gettitle()")
-mi_gridsnap(flag) = flag == 1 ? callfemm("mi_snapgridon()") : callfemm("mi_snapgridoff()")
+mi_gridsnap(flag) = callfemm("mi_gridsnap($(quote_str(flag)))")
 
 function mi_setprevious(fn, pt=nothing)
     if pt === nothing
@@ -643,7 +655,7 @@ mo_savemetafile(fn) = callfemm("mo_savemetafile($(quote_str(fn)))")
 mo_selectblock(x,y) = callfemm("mo_selectblock($(numc(x))$(num(y)))")
 mo_selectpoint(x,y) = callfemm("mo_selectpoint($(numc(x))$(num(y)))")
 mo_seteditmode(mode) = callfemm("mo_seteditmode($(quote_str(mode)))")
-mo_setweightingscheme(mode) = callfemm("mo_setweightingscheme($(quote_str(mode)))")
+mo_setweightingscheme(mode) = callfemm("mo_setweightingscheme($(num(mode)))")
 mo_setgrid(density,ptype) = callfemm("mo_setgrid($(numc(density))$(quote_str(ptype)))")
 
 mo_showcontourplot(numcontours,al,au,ptype) = callfemm("mo_showcontourplot($(numc(numcontours))$(numc(al))$(numc(au))$(quote_str(ptype)))")
@@ -662,6 +674,7 @@ mo_smoothon() = callfemm("mo_smooth(\"on\")")
 mo_snapgrid(flag) = callfemm("mo_gridsnap($(quote_str(flag)))")
 mo_snapgridoff() = callfemm("mo_gridsnap(\"off\")")
 mo_snapgridon() = callfemm("mo_gridsnap(\"on\")")
+mo_gridsnap(flag) = callfemm("mo_gridsnap($(quote_str(flag)))")
 
 mo_zoom(x1,y1,x2,y2) = callfemm("mo_zoom($(numc(x1))$(numc(y1))$(numc(x2))$(num(y2)))")
 mo_zoomin() = callfemm("mo_zoomin()")
@@ -672,8 +685,8 @@ mo_zoomout() = callfemm("mo_zoomout()")
 mo_getgapb(bdryname,angle) = callfemm("mo_getgapb($(quotec(bdryname))$(num(angle)))")
 mo_getgapa(bdryname,angle) = callfemm("mo_getgapa($(quotec(bdryname))$(num(angle)))")
 mo_gapintegral(bdryname,inttype) = callfemm("mo_gapintegral($(quotec(bdryname))$(num(inttype)))")
-mo_getgapharmonics(bdryname) = callfemm("mo_gapintegral($(quote_str(bdryname)))")
-mo_getgapharmonics(bdryname,n) = callfemm("mo_gapintegral($(quotec(bdryname))$(num(n)))")
+mo_getgapharmonics(bdryname) = callfemm("mo_getgapharmonics($(quote_str(bdryname)))")
+mo_getgapharmonics(bdryname,n) = callfemm("mo_getgapharmonics($(quotec(bdryname))$(num(n)))")
 
 # Bulk data retrieval
 function mo_getallelements()
@@ -856,7 +869,7 @@ ei_setcomment(c) = callfemm("ei_setcomment($(quote_str(c)))")
 ei_getboundingbox() = callfemm("ei_getboundingbox()")
 ei_getprobleminfo() = callfemm("ei_getprobleminfo()")
 ei_gettitle() = callfemm("ei_gettitle()")
-ei_gridsnap(flag) = flag == 1 ? callfemm("ei_snapgridon()") : callfemm("ei_snapgridoff()")
+ei_gridsnap(flag) = callfemm("ei_gridsnap($(quote_str(flag)))")
 
 function ei_makeABC(args...)
     n = length(args)
@@ -961,6 +974,7 @@ eo_smoothon() = callfemm("eo_smooth(\"on\")")
 eo_snapgrid(flag) = callfemm("eo_gridsnap($(quote_str(flag)))")
 eo_snapgridoff() = callfemm("eo_gridsnap(\"off\")")
 eo_snapgridon() = callfemm("eo_gridsnap(\"on\")")
+eo_gridsnap(flag) = callfemm("eo_gridsnap($(quote_str(flag)))")
 
 eo_zoom(x1,y1,x2,y2) = callfemm("eo_zoom($(numc(x1))$(numc(y1))$(numc(x2))$(num(y2)))")
 eo_zoomin() = callfemm("eo_zoomin()")
@@ -1189,7 +1203,7 @@ hi_setcomment(c) = callfemm("hi_setcomment($(quote_str(c)))")
 hi_getboundingbox() = callfemm("hi_getboundingbox()")
 hi_getprobleminfo() = callfemm("hi_getprobleminfo()")
 hi_gettitle() = callfemm("hi_gettitle()")
-hi_gridsnap(flag) = flag == 1 ? callfemm("hi_snapgridon()") : callfemm("hi_snapgridoff()")
+hi_gridsnap(flag) = callfemm("hi_gridsnap($(quote_str(flag)))")
 
 function hi_makeABC(args...)
     n = length(args)
@@ -1293,6 +1307,7 @@ ho_smoothon() = callfemm("ho_smooth(\"on\")")
 ho_snapgrid(flag) = callfemm("ho_gridsnap($(quote_str(flag)))")
 ho_snapgridoff() = callfemm("ho_gridsnap(\"off\")")
 ho_snapgridon() = callfemm("ho_gridsnap(\"on\")")
+ho_gridsnap(flag) = callfemm("ho_gridsnap($(quote_str(flag)))")
 
 ho_zoom(x1,y1,x2,y2) = callfemm("ho_zoom($(numc(x1))$(numc(y1))$(numc(x2))$(num(y2)))")
 ho_zoomin() = callfemm("ho_zoomin()")
@@ -1509,7 +1524,7 @@ ci_setcomment(c) = callfemm("ci_setcomment($(quote_str(c)))")
 ci_getboundingbox() = callfemm("ci_getboundingbox()")
 ci_getprobleminfo() = callfemm("ci_getprobleminfo()")
 ci_gettitle() = callfemm("ci_gettitle()")
-ci_gridsnap(flag) = flag == 1 ? callfemm("ci_snapgridon()") : callfemm("ci_snapgridoff()")
+ci_gridsnap(flag) = callfemm("ci_gridsnap($(quote_str(flag)))")
 
 function ci_makeABC(args...)
     n = length(args)
@@ -1613,6 +1628,7 @@ co_smoothon() = callfemm("co_smooth(\"on\")")
 co_snapgrid(flag) = callfemm("co_gridsnap($(quote_str(flag)))")
 co_snapgridoff() = callfemm("co_gridsnap(\"off\")")
 co_snapgridon() = callfemm("co_gridsnap(\"on\")")
+co_gridsnap(flag) = callfemm("co_gridsnap($(quote_str(flag)))")
 
 co_zoom(x1,y1,x2,y2) = callfemm("co_zoom($(numc(x1))$(numc(y1))$(numc(x2))$(num(y2)))")
 co_zoomin() = callfemm("co_zoomin()")
@@ -1634,6 +1650,11 @@ export num, numc, quote_str, quotec, complex2str
 # Global
 export opendocument, newdocument, smartmesh
 export main_maximize, main_minimize, main_resize, main_restore
+export hideconsole, showconsole, messagebox
+# The editor forms dispatched to *_snapgridon/off, which are binding
+# wrapper names rather than engine commands, so they always failed.
+export mo_gridsnap, eo_gridsnap, ho_gridsnap, co_gridsnap
+export showpointprops, hidepointprops
 # Magnetics pre-processor
 export mi_addarc, mi_addbhpoint, mi_addbhpoints, mi_addblocklabel
 export mi_addboundprop, mi_addcircprop, mi_addmaterial, mi_addnode

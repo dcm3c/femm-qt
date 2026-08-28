@@ -1313,7 +1313,7 @@ callfemm(['co_smooth(' , quote(flag) , ')' ]);
 endfunction
 
 function co_smoothoff()
-callfemm('co_smooth(""on"")');
+callfemm('co_smooth(""off"")');
 
 endfunction
 
@@ -1323,6 +1323,13 @@ callfemm('co_smooth(""on"")');
 endfunction
 
 function co_snapgrid(flag)
+callfemm(['co_gridsnap(' , quote(flag) , ')' ]);
+
+endfunction
+
+// The name the manual documents; co_snapgrid is the historical
+// wrapper name and appears nowhere in the documentation.
+function co_gridsnap(flag)
 callfemm(['co_gridsnap(' , quote(flag) , ')' ]);
 
 endfunction
@@ -2239,7 +2246,7 @@ callfemm(['eo_smooth(' , quote(flag) , ')' ]);
 endfunction
 
 function eo_smoothoff()
-callfemm('eo_smooth(""on"")');
+callfemm('eo_smooth(""off"")');
 
 endfunction
 
@@ -2249,6 +2256,13 @@ callfemm('eo_smooth(""on"")');
 endfunction
 
 function eo_snapgrid(flag)
+callfemm(['eo_gridsnap(' , quote(flag) , ')' ]);
+
+endfunction
+
+// The name the manual documents; eo_snapgrid is the historical
+// wrapper name and appears nowhere in the documentation.
+function eo_gridsnap(flag)
 callfemm(['eo_gridsnap(' , quote(flag) , ')' ]);
 
 endfunction
@@ -3253,7 +3267,7 @@ callfemm(['ho_smooth(' , quote(flag) , ')' ]);
 endfunction
 
 function ho_smoothoff()
-callfemm('ho_smooth(""on"")');
+callfemm('ho_smooth(""off"")');
 
 endfunction
 
@@ -3263,6 +3277,13 @@ callfemm('ho_smooth(""on"")');
 endfunction
 
 function ho_snapgrid(flag)
+callfemm(['ho_gridsnap(' , quote(flag) , ')' ]);
+
+endfunction
+
+// The name the manual documents; ho_snapgrid is the historical
+// wrapper name and appears nowhere in the documentation.
+function ho_gridsnap(flag)
 callfemm(['ho_gridsnap(' , quote(flag) , ')' ]);
 
 endfunction
@@ -3322,6 +3343,19 @@ endfunction
 
 function main_restore()
 	callfemm('main_restore()');
+
+endfunction
+
+// In OF these toggle the floating "FEMM Properties" window that always
+// hangs over the preprocessor. femm-qt has no such persistent floating
+// window, so there is nothing to toggle -- kept as no-ops for
+// legacy-script compatibility.
+// Dropped in 0a5be31; restored for octavefemm and luafemm in c6fe935.
+function showpointprops()
+
+endfunction
+
+function hidepointprops()
 
 endfunction
 
@@ -3920,7 +3954,7 @@ try
 catch
 	bStr=isreal(magdir);
 end
-if (bStr==1)
+if bStr then
 callfemm(['mi_setblockprop(' , quotec(blockname) , numc(automesh) , numc(meshsize) , quotec(incirc) , numc(magdir) , numc(group) , num(turns) , ')']);
 else
 callfemm(['mi_setblockprop(' , quotec(blockname) , numc(automesh) , numc(meshsize) , quotec(incirc) , quotec(magdir) , numc(group) , num(turns) , ')']);
@@ -4323,7 +4357,7 @@ callfemm(['mo_seteditmode(' , quote(mode) , ')' ]);
 endfunction
 
 function mo_setweightingscheme(mode)
-callfemm(['mo_setweightingscheme(' , quote(mode) , ')' ]);
+callfemm(['mo_setweightingscheme(' , num(mode) , ')' ]);
 
 endfunction
 
@@ -4377,7 +4411,7 @@ callfemm(['mo_smooth(' , quote(flag) , ')' ]);
 endfunction
 
 function mo_smoothoff()
-callfemm('mo_smooth(""on"")');
+callfemm('mo_smooth(""off"")');
 
 endfunction
 
@@ -4387,6 +4421,13 @@ callfemm('mo_smooth(""on"")');
 endfunction
 
 function mo_snapgrid(flag)
+callfemm(['mo_gridsnap(' , quote(flag) , ')' ]);
+
+endfunction
+
+// The name the manual documents; mo_snapgrid is the historical
+// wrapper name and appears nowhere in the documentation.
+function mo_gridsnap(flag)
 callfemm(['mo_gridsnap(' , quote(flag) , ')' ]);
 
 endfunction
@@ -4588,6 +4629,18 @@ else
 end
 endfunction
 
+function hideconsole()
+	callfemm('hideconsole()');
+endfunction
+
+function showconsole()
+	callfemm('showconsole()');
+endfunction
+
+function messagebox(msg)
+	callfemm(['messagebox(' , quote(msg) , ')' ]);
+endfunction
+
 function smartmesh(n)
 	callfemm(['smartmesh(' , num(n) , ')' ]);
 endfunction
@@ -4630,9 +4683,9 @@ endfunction
 
 function z=mo_getgapharmonics(bdryname,n)
 	if (argn(2)==1)
-		z=callfemm(['mo_gapintegral(' , quote(bdryname) , ')'])
+		z=callfemm(['mo_getgapharmonics(' , quote(bdryname) , ')'])
 	else
-		z=callfemm(['mo_gapintegral(' , quotec(bdryname) , num(n) , ')'])
+		z=callfemm(['mo_getgapharmonics(' , quotec(bdryname) , num(n) , ')'])
 	end
 endfunction
 
@@ -4702,36 +4755,36 @@ function z=ci_gettitle()
 z=callfemm('ci_gettitle()');
 endfunction
 
+// Was dispatching to mi_snapgridon/off, which are BINDING wrapper names,
+// not engine commands -- the engine has only mi_gridsnap, so this always
+// failed with "name 'mi_snapgridon' isn't defined". Now sends the
+// documented mi_gridsnap("on"/"off") directly.
 function mi_gridsnap(flag)
-if (flag==1) then
-	callfemm('mi_snapgridon()');
-else
-	callfemm('mi_snapgridoff()');
-end
+callfemm(['mi_gridsnap(' , quote(flag) , ')' ]);
 endfunction
 
+// Was dispatching to ei_snapgridon/off, which are BINDING wrapper names,
+// not engine commands -- the engine has only ei_gridsnap, so this always
+// failed with "name 'ei_snapgridon' isn't defined". Now sends the
+// documented ei_gridsnap("on"/"off") directly.
 function ei_gridsnap(flag)
-if (flag==1) then
-	callfemm('ei_snapgridon()');
-else
-	callfemm('ei_snapgridoff()');
-end
+callfemm(['ei_gridsnap(' , quote(flag) , ')' ]);
 endfunction
 
+// Was dispatching to hi_snapgridon/off, which are BINDING wrapper names,
+// not engine commands -- the engine has only hi_gridsnap, so this always
+// failed with "name 'hi_snapgridon' isn't defined". Now sends the
+// documented hi_gridsnap("on"/"off") directly.
 function hi_gridsnap(flag)
-if (flag==1) then
-	callfemm('hi_snapgridon()');
-else
-	callfemm('hi_snapgridoff()');
-end
+callfemm(['hi_gridsnap(' , quote(flag) , ')' ]);
 endfunction
 
+// Was dispatching to ci_snapgridon/off, which are BINDING wrapper names,
+// not engine commands -- the engine has only ci_gridsnap, so this always
+// failed with "name 'ci_snapgridon' isn't defined". Now sends the
+// documented ci_gridsnap("on"/"off") directly.
 function ci_gridsnap(flag)
-if (flag==1) then
-	callfemm('ci_snapgridon()');
-else
-	callfemm('ci_snapgridoff()');
-end
+callfemm(['ci_gridsnap(' , quote(flag) , ')' ]);
 endfunction
 
 // --- Bulk data retrieval (magnetics postprocessor) ---

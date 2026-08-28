@@ -17,6 +17,7 @@
 #include "py_editor_common.h"
 #include "py_postproc_common.h"
 #include "results_doc.h"
+#include "fastio.h"
 
 #include <cmath>
 #include <cstdio>
@@ -55,7 +56,11 @@ static int findAGE(const char *name) {
     return -1;
 }
 
-// Flat tab-separated serialization helpers (same %.17g / re+I*im format).
+// Flat tab-separated serialization helpers. Doubles go through fio_append_g
+// (common/fastio.h): the shortest digit string that strtod reads back to the
+// identical value, which is what "%.17g" was here for and what the rest of the
+// wire formatter (libfemm/py_state.cpp) now emits. Same format everywhere, ~10x
+// faster than snprintf on a whole-mesh readout.
 static void appendComplex(std::string &buf, CComplex z) {
     char c[80];
     z.ToString(c);
@@ -63,9 +68,7 @@ static void appendComplex(std::string &buf, CComplex z) {
     buf += '\t';
 }
 static void appendDouble(std::string &buf, double v) {
-    char c[32];
-    snprintf(c, sizeof(c), "%.17g", v);
-    buf += c;
+    fio_append_g(buf, v);
     buf += '\t';
 }
 static void appendInt(std::string &buf, int v) {
@@ -696,16 +699,10 @@ void register_mag_postproc_py(ResultsDoc *doc) {
     regv("mo_refreshview");
     regv("mo_showgrid");
     regv("mo_hidegrid");
-    // mo_gridsnap("on"/"off"): parse to a numeric flag (the view callback only
-    // carries doubles). Matches OF lua_gridsnap, incl. the bad-input error.
+    // The string flag this used to parse inline is now gridSnapFlag in
+    // py_editor_common.h, shared with the seven commands that lacked it.
     m.def("mo_gridsnap", [](const std::string &flag) {
-        std::string s = flag;
-        for (auto &c : s) if (c >= 'A' && c <= 'Z') c = (char)(c + 32);
-        double on;
-        if (s == "on") on = 1;
-        else if (s == "off") on = 0;
-        else throw std::runtime_error("Unknown option for grid snap");
-        double a[1] = {on};
+        double a[1] = {gridSnapFlag(flag)};
         ppViewCmd("mo_gridsnap", 1, a);
     });
     registerSetGrid(m, "mo", s_rdoc, MOERR);

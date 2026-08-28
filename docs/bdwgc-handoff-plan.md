@@ -520,10 +520,12 @@ Allocate inside a function and rebind to `None`, as `GcTest.py` does.
   edits. The file gained a fallback `gc_alloc_atomic()` for the same reason, so
   ulab has one code path rather than an `#ifdef`.
 * **The `FEMM_GC_BDWGC` option was taken** (§4.5 called it optional). Its
-  `FEMM_GC_MICROPYTHON` define is deliberately **PUBLIC** on
-  `micropython_embed`: it switches `MICROPY_GC_SPLIT_HEAP`, which changes the
-  layout of `mp_state_mem_t`, so libfemm and the test executables must see the
-  same value. PRIVATE would give a silent ABI split.
+  `FEMM_GC_MICROPYTHON` define **must be PUBLIC** on `micropython_embed` — a
+  requirement, not a preference. It switches `MICROPY_GC_SPLIT_HEAP`, which
+  changes the layout of `mp_state_mem_t`, so libfemm and the test executables
+  must see the same value. PRIVATE compiles perfectly cleanly and fails at
+  runtime, with the two halves disagreeing about where the interpreter's state
+  lives.
 * **`tests/test_stubs.cpp` gained `get_message_box_callback()`** rather than
   the harness linking `script_callbacks.cpp` — that file pulls in the document
   model and tangle, which is exactly what the stub file exists to avoid.
@@ -800,12 +802,38 @@ blocks. The soak is adversarial (repeated 80-240 MB allocations are not what
 real scripts do), and it is bounded, but a GUI session that touches large arrays
 can hold several hundred MB that `gc.mem_alloc()` agrees is dead.
 
-**An earlier draft of this section attributed the difference to the GUI's larger
-root set. FreeBSD disproved that** — see §11.4f. There the GUI pins *nothing*
-(74.7 MB plateau) while headless on the same machine pins one array (241 MB),
-the opposite way round. Retention count is not a monotonic function of root-set
-size; it is what happens to be lying in registers and stack slots when a
-collection runs.
+**An earlier draft attributed the difference to the GUI's larger root set.
+FreeBSD is a counterexample** — see §11.4f. There the GUI pins *nothing*
+(74.7 MB) while headless on the same machine pins one array (241 MB), the
+opposite way round, and macOS is the mirror image. Root-set size may well raise
+the probability of a pin; it plainly does not determine the count, and eight
+runs cannot separate a weak effect from noise.
+
+**And the pinned object is probably not the payload.** A 240 MB region is 2^28
+bytes in a 2^64 address space, so a *random* stale word landing inside one is
+vanishingly unlikely. The likely mechanism is that the small, non-atomic
+`ndarray_obj_t` header is pinned — by a VM stack slot, a register live across
+the `setjmp`, or a static — and its `array` field then keeps the payload alive
+entirely legitimately. That is not false retention of the payload at all; it is
+correct retention following one falsely-retained header.
+
+The distinction decides what any fix would look like, which is why it is worth
+stating even though the answer is "do nothing":
+`GC_MALLOC_ATOMIC_IGNORE_OFF_PAGE` addresses interior pointers into a payload,
+not a pinned header, so it would not help — and it is unsafe here regardless,
+because a sliced ulab view's only handle on its buffer IS an interior pointer
+(which is why `gc_init` sets `GC_set_all_interior_pointers(1)`).
+
+If the macOS GUI's 758 MB ever becomes a real complaint, the diagnostic is a
+debug build with `KEEP_BACK_PTRS` and `GC_print_backtrace()` from
+`third_party/bdwgc/include/gc_backptr.h` on the pinned header. That answers
+*which root* rather than *how many blocks* — and whether it is a `py_state.cpp`
+static, the console's last-result handle, or a genuine stack slot is exactly
+what would decide whether anything can be done.
+
+**SUPERSEDED 2026-08-27 — a collection now runs at the end of every script.**
+See §11.7. The decision below was taken on a weaker framing of the option than
+it deserved, and is kept for the reasoning it records about what was rejected.
 
 **DECIDED 2026-08-26: left as documented behaviour.** It is bounded,
 `gc.mem_alloc()` accounts for every byte of it, and the soak that produces it is
@@ -873,11 +901,17 @@ made "the GUI has a larger root set, so it catches more stale pointers" look
 like the mechanism. FreeBSD is the other way round: its GUI pins nothing while
 its headless pins one array. macOS is the mirror image, 0 headless and 4 GUI.
 
-So the count is **not** a function of root-set size. It is whatever happens to
-be lying in registers and stack slots at the moment a collection runs — which
-is exactly what conservative collection means, and is why the acceptance
-criterion has to be bounded/non-cumulative/explainable (§11.4c) rather than any
-threshold on the amount retained.
+So root-set size does not **determine** the count. Eight runs is a small sample
+of a high-variance process, and two counterexamples against a three-to-one trend
+are equally consistent with a weak real effect swamped by noise — a larger
+scanned region plausibly raises the *probability* that a stale word lands
+somewhere live without setting the outcome of any single run. Saying it is "not
+a function of root-set size" overstates what eight samples can show.
+
+What matters is that this cuts the same way either way: the amount retained is
+not a property of the build, so **no threshold on it can be a correct test**.
+That is why the criterion is bounded/non-cumulative/explainable (§11.4c), and it
+is a criterion that does not depend on knowing the mechanism at all.
 
 **Both failures it reported were defects in the tests, not the product**, and
 both were the same species: an assertion that measured its environment rather
@@ -907,6 +941,50 @@ Worth generalising: **the collector produced no product failures on any
 platform. Every failure in four platform passes was a test measuring its
 environment** — a ratio against a plateau, a mean under load, an emulation
 harsher than reality.
+
+## 11.7 A collection at the end of every script (2026-08-27)
+
+`exec_python_file()` runs **one** collection when the outermost script finishes.
+It buys a semantic contract, and deliberately not a memory number.
+
+**What it is for.** Under bdwgc a collection happens only when the allocator
+needs one, so a script that never exhausts memory could finish with a dropped
+file still open (§11.3). Now `__del__` runs when the script ends — a stronger
+statement than "whenever a collection happens", and one a teardown-sensitive
+script can rely on. `gc_collect_end()` drains the finaliser queue immediately
+after the collection, so collect and drain are atomic; a `__del__` that releases
+something else has it collected on the next collection, exactly as `py/gc.c`
+behaved. Verified on both exit paths: a script that ends normally and one that
+raises both get their dropped file closed.
+
+**What it is NOT for, and why.** Repeating the collection releases more memory —
+a script dropping a 240 MB array measured 242.7 MB retained with no collect,
+238.0 with one, 9.0 with three. It is tempting to ship the three. It was
+shipped, briefly, and then withdrawn:
+
+* three is a constant fitted to one script on one platform, and §11.4e is the
+  argument against trusting such a number elsewhere. The pin counts behind it
+  ranged 0 to 4 across eight platform runs for no reason more principled than
+  what happened to be in a register;
+* an adaptive "collect until it stops helping" loop is not an improvement but
+  the same mistake in a worse form — its termination condition is the soak's
+  number promoted into the code, and it would be re-tuned by the next machine.
+  It was written, measured, and discarded;
+* and the property actually worth guaranteeing is already true without any of
+  it. Retention is bounded and non-cumulative (§11.4c): the block is reused by
+  the next script rather than accumulating. RSS reading 9 MB instead of 238 MB
+  between scripts is cosmetics on a machine with virtual memory.
+
+If someone reports "FEMM holds 240 MB after my script", the answer is §11.4c —
+bounded, non-cumulative, accounted for by `gc.mem_alloc()` — not another
+collect.
+
+**Deliberately in `exec_python_file()`, not `exec_python()`.** The latter runs
+once per command over the TCP interface, where round trips are 0.05–0.5 ms and
+a collection is 0.4–1.5 ms: a 2–30× throughput regression, and it would put
+finaliser runs back at arbitrary mid-protocol moments, which is §11.3's problem
+in a new place. Guarded on `s_running_depth == 0` so a script that `dofile()`s
+another does not collect halfway through its caller.
 
 ## 11.5 Acceptance status
 

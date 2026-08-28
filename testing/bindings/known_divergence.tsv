@@ -1,0 +1,105 @@
+# Accepted differences between bindings, so the comparison can go green on a
+# clean tree and any NEW disagreement stands out.
+#
+#   wrapper <TAB> binding <TAB> reason        (binding `*` = all of them)
+#
+# Only add a row here with a reason that says why the difference is CORRECT.
+# "It has always been like that" is not one -- num.m had always been like that
+# too, and it was a bug for five months.
+#
+# --- inherited from Original FEMM, verified against femm42src ---
+ci_readdxf	*	octavefemm wraps the call as print(ci_readdxf(...)), byte-identical to FEMM 4.2's mfile. Under OF's Lua that echoed the result to the console; here it means the wire returns nothing instead of the result. Inherited, not introduced -- but worth revisiting, since the other four bindings return the value.
+ei_readdxf	*	as ci_readdxf
+hi_readdxf	*	as ci_readdxf
+mi_readdxf	*	as ci_readdxf
+#
+# --- different but equivalent implementations of a composite operation ---
+ci_drawrectangle	pyfemm	octavefemm draws one polygon, pyfemm draws four lines. Same geometry, different command sequence.
+ei_drawrectangle	pyfemm	as ci_drawrectangle
+hi_drawrectangle	pyfemm	as ci_drawrectangle
+mi_drawrectangle	pyfemm	as ci_drawrectangle
+#
+# --- octavefemm-only convenience aliases, absent elsewhere by design ---
+# The `2` suffix forms take a point pair where the base form takes coordinates.
+# They are octavefemm idiom and were never ported; the base command is present
+# in every binding.
+ci_copyrotate2	*	octavefemm-only alias for ci_copyrotate
+ci_copytranslate2	*	octavefemm-only alias for ci_copytranslate
+ci_mirror2	*	octavefemm-only alias for ci_mirror
+ci_movetranslate2	*	octavefemm-only alias for ci_movetranslate
+ci_scale2	*	octavefemm-only alias for ci_scale
+ei_copyrotate2	*	octavefemm-only alias for ei_copyrotate
+ei_copytranslate2	*	octavefemm-only alias for ei_copytranslate
+ei_mirror2	*	octavefemm-only alias for ei_mirror
+ei_movetranslate2	*	octavefemm-only alias for ei_movetranslate
+ei_scale2	*	octavefemm-only alias for ei_scale
+hi_copyrotate2	*	octavefemm-only alias for hi_copyrotate
+hi_copytranslate2	*	octavefemm-only alias for hi_copytranslate
+hi_mirror2	*	octavefemm-only alias for hi_mirror
+hi_movetranslate2	*	octavefemm-only alias for hi_movetranslate
+hi_scale2	*	octavefemm-only alias for hi_scale
+mi_copyrotate2	*	octavefemm-only alias for mi_copyrotate
+mi_copytranslate2	*	octavefemm-only alias for mi_copytranslate
+mi_mirror2	*	octavefemm-only alias for mi_mirror
+mi_movetranslate2	*	octavefemm-only alias for mi_movetranslate
+mi_scale2	*	octavefemm-only alias for mi_scale
+#
+# --- nondeterministic by construction ---
+# *_getview renders the view to a temporary file and reads it back, so each
+# binding invents its own random filename. The argument can never match, and
+# octavefemm additionally implements the whole thing via *_savebitmap.
+ci_getview	*	temp filename is randomly generated per call; octavefemm routes via ci_savebitmap
+co_getview	*	as ci_getview
+ei_getview	*	as ci_getview
+eo_getview	*	as ci_getview
+hi_getview	*	as ci_getview
+ho_getview	*	as ci_getview
+mi_getview	*	as ci_getview
+mo_getview	*	as ci_getview
+#
+# --- wrappers whose arguments are ARRAYS, which the contract cannot express ---
+# The contract derives arity and string-vs-number from octavefemm's sentinels;
+# it has no way to say "this argument is a vector". juliafemm types its
+# signatures, so it rejects the scalar sentinels outright rather than emitting
+# something wrong. Layer 2 is what will cover these.
+mi_addbhpoints	juliafemm	takes vectors (a B-H table); the contract cannot express an array argument
+hi_addtkpoints	juliafemm	takes vectors (a T-k table); as mi_addbhpoints
+#
+# --- benign alias ---
+# The engine accepts create() and newdocument() as the same command; verified
+# against a live engine. octavefemm sends create, pyfemm sends newdocument.
+newdocument	pyfemm	create() and newdocument() are engine aliases; both accepted
+#
+# --- benign: the engine treats a missing flag as "show" ---
+# octavefemm's *_shownames() takes no arguments and hardcodes the flag as 1;
+# pyfemm's takes *arg and passes through, so with no arguments it sends
+# *_shownames() with no flag. gui/main.cpp:386 and :431 both read
+# `nargs == 0 || args[0] != 0`, so no flag means show -- identical behaviour.
+ci_shownames	pyfemm	engine reads nargs==0 as show (gui/main.cpp:386,431)
+co_shownames	pyfemm	as ci_shownames
+ei_shownames	pyfemm	as ci_shownames
+eo_shownames	pyfemm	as ci_shownames
+hi_shownames	pyfemm	as ci_shownames
+ho_shownames	pyfemm	as ci_shownames
+mi_shownames	pyfemm	as ci_shownames
+mo_shownames	pyfemm	as ci_shownames
+#
+# --- bulk getters, implemented differently by design ---
+# octavefemm builds eo_getallelements client-side from straccum/strappend over
+# the scalar getter (4 commands); everyone else calls a single C++ bulk getter.
+# Same data, different number of commands. See docs/bulk-getters-design.md.
+eo_getallelements	*	octavefemm composes it from 4 commands; the others send one
+#
+# --- array-argument wrappers, in the bindings that type-check ---
+mi_addbhpoints	mathfemm	takes vectors (a B-H table); the contract cannot express an array argument
+hi_addtkpoints	mathfemm	takes vectors (a T-k table); as mi_addbhpoints
+mi_addbhpoints	pyfemm	takes vectors (a B-H table); the contract cannot express an array argument
+hi_addtkpoints	pyfemm	takes vectors (a T-k table); as mi_addbhpoints
+#
+# --- create: deliberately not added ---
+# create() and newdocument() are engine aliases, and these three bindings all
+# expose newdocument, whose wrapper sends create(...). Adding a second name for
+# the same thing would be surface without capability.
+create	pyfemm	engine alias for newdocument, which this binding has
+create	scifemm	as above
+create	juliafemm	as above

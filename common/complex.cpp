@@ -5,6 +5,7 @@
 #include "math.h"
 #include "stdio.h"
 #include "complex.h"
+#include <charconv>
 
 CComplex::CComplex(double x)
 {
@@ -127,28 +128,49 @@ char* CComplex::ToString(char *s)
 	return ToString(s, 256);
 }
 
+// One component as the SHORTEST digit string that strtod reads back to the
+// identical double (std::to_chars), rather than "%.17g". Losslessness was
+// %.17g's only purpose here and to_chars keeps it, while being ~10x faster --
+// the same swap common/fastio.h made for the .ans hot loops. (Size barely
+// moves on computed values: 2-4%, not fastio.h's 30-40% for .ans input.)
+//
+// This matters beyond speed: ToString feeds the IPC wire (via appendComplex in
+// libfemm/py_mag_postproc.cpp), and libfemm/py_state.cpp's format_complex --
+// which formats every OTHER wire result -- moved to to_chars in 2026-08. The
+// two must agree, or one command returns "0.1" while the next returns
+// "0.10000000000000001" for the same value. The I / -I / I* STRUCTURE below is
+// the contract and is unchanged; only the digits are.
+static void cx_g(char *b, size_t n, double v)
+{
+	std::to_chars_result r = std::to_chars(b, b + n - 1, v);
+	*(r.ec == std::errc() ? r.ptr : b) = 0;
+}
+
 char* CComplex::ToString(char *s, size_t n)
 {
-	if (im==0) snprintf(s, n,"%.17g",re);
+	char a[40], c[40];
+	if (im==0) { cx_g(a,sizeof a,re); snprintf(s, n,"%s",a); }
 	else if (im==1)
 	{
 		if (re==0) snprintf(s, n,"I");
-		else snprintf(s, n,"%.17g+I",re);
+		else { cx_g(a,sizeof a,re); snprintf(s, n,"%s+I",a); }
 	}
 	else if (im==-1)
 	{
 		if (re==0) snprintf(s, n,"-I");
-		else snprintf(s, n,"%.17g-I",re);
+		else { cx_g(a,sizeof a,re); snprintf(s, n,"%s-I",a); }
 	}
 	else if (im<0)
 	{
-		if (re!=0) snprintf(s, n,"%.17g-I*%.17g",re,fabs(im));
-		else  snprintf(s, n,"-I*%.17g",fabs(im));
+		cx_g(c,sizeof c,fabs(im));
+		if (re!=0) { cx_g(a,sizeof a,re); snprintf(s, n,"%s-I*%s",a,c); }
+		else  snprintf(s, n,"-I*%s",c);
 	}
 	else if (im>0)
 	{
-		if (re!=0) snprintf(s, n,"%.17g+I*%.17g",re,im);
-		else snprintf(s, n,"I*%.17g",im);
+		cx_g(c,sizeof c,im);
+		if (re!=0) { cx_g(a,sizeof a,re); snprintf(s, n,"%s+I*%s",a,c); }
+		else snprintf(s, n,"I*%s",c);
 	}
 	else s[0]=0;
 

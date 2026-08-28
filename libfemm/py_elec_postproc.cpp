@@ -9,6 +9,7 @@
 #include "py_editor_common.h"
 #include "py_postproc_common.h"
 #include "elec_results_doc.h"
+#include "fastio.h"
 
 #include <cmath>
 #include <cstdio>
@@ -25,10 +26,13 @@ static const char *EOERR = "No current electrostatics output in focus";
 static ElecResultsDoc *s_doc = nullptr;
 ElecResultsDoc *active_elec_results() { return s_doc; }
 
+// Flat tab-separated serialization helpers. Doubles go through fio_append_g
+// (common/fastio.h): the shortest digit string that strtod reads back to the
+// identical value, which is what "%.17g" was here for and what the rest of the
+// wire formatter (libfemm/py_state.cpp) now emits. Same format everywhere, ~10x
+// faster than snprintf on a whole-mesh readout.
 static void appendDouble(std::string &buf, double v) {
-    char c[32];
-    snprintf(c, sizeof(c), "%.17g", v);
-    buf += c;
+    fio_append_g(buf, v);
     buf += '\t';
 }
 static void appendInt(std::string &buf, int v) {
@@ -273,7 +277,12 @@ void register_elec_postproc_py(ElecResultsDoc *doc) {
     regv("eo_refreshview");
     regv("eo_showgrid");
     regv("eo_hidegrid");
-    regv("eo_gridsnap");
+    // Takes the documented string flag, not a double -- see
+    // gridSnapFlag in py_editor_common.h.
+    m.def("eo_gridsnap", [](const std::string &flag) {
+        double a[1] = {gridSnapFlag(flag)};
+        ppViewCmd("eo_gridsnap", 1, a);
+    });
     registerSetGrid(m, "eo", s_doc, EOERR);
     regv("eo_resize");
     regv("eo_minimize");

@@ -1,3 +1,16 @@
+// NOTE on this harness's numbers, added 2026-08-27 after the real-build pass.
+// Its np.zeros(30_000_000) figure was 595 ms; the same allocation in
+// femm_headless is 27-142 ms depending on platform. Do not tune against the
+// harness figure -- docs/bdwgc-handoff-plan.md 7.2 nearly prescribed a
+// GC_expand_hp workaround on the strength of it.
+//
+// The likely cause, unverified: if this was linked against a distribution
+// libgc, that build has threads enabled, so every allocation takes a lock and
+// every collection stops the world with signals. femm-qt builds bdwgc as a
+// single translation unit with no GC_THREADS at all, and does none of that.
+// If you resurrect this harness, link it the way CMakeLists.txt builds bdwgc
+// before believing any timing it produces.
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

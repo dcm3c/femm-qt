@@ -201,7 +201,12 @@ void register_heat_postproc_py(HeatResultsDoc *doc) {
     regv("ho_refreshview");
     regv("ho_showgrid");
     regv("ho_hidegrid");
-    regv("ho_gridsnap");
+    // Takes the documented string flag, not a double -- see
+    // gridSnapFlag in py_editor_common.h.
+    m.def("ho_gridsnap", [](const std::string &flag) {
+        double a[1] = {gridSnapFlag(flag)};
+        ppViewCmd("ho_gridsnap", 1, a);
+    });
     registerSetGrid(m, "ho", s_doc, HOERR);
     regv("ho_resize");
     regv("ho_minimize");

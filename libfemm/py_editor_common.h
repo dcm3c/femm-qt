@@ -54,6 +54,20 @@ inline std::string viewcmd(const std::string &cmd, int nargs = 0, double *args =
 
 // Forward up-to-4 optional numeric args to a view command, passing the count
 // of leading present args (replacement for sol::variadic_args forwarding).
+// *_gridsnap("on"/"off") -> the numeric flag the view callback carries.
+// The manual documents the STRING form for every physics, editor and
+// postprocessor alike (magnpy.tex:639 and :1166 and the equivalents), and every
+// binding sends it -- octavefemm's *_snapgridon.m emits mi_gridsnap("on").
+// Only mo_gridsnap parsed it; the other seven took doubles and rejected the
+// documented call outright. Shared here so all eight agree.
+inline double gridSnapFlag(const std::string &flag) {
+    std::string s = flag;
+    for (auto &c : s) if (c >= 'A' && c <= 'Z') c = (char)(c + 32);
+    if (s == "on") return 1;
+    if (s == "off") return 0;
+    throw std::runtime_error("Unknown option for grid snap");
+}
+
 inline void viewcmd_fwd(const std::string &cmd,
                         std::optional<double> a0 = std::nullopt,
                         std::optional<double> a1 = std::nullopt,
@@ -344,9 +358,8 @@ void register_common_editor(femm_py::Module &m, const std::string &P,
     });
     m.def(P + "_showgrid", [P]() { viewcmd(P + "_showgrid"); });
     m.def(P + "_hidegrid", [P]() { viewcmd(P + "_hidegrid"); });
-    m.def(P + "_gridsnap", [P](std::optional<double> a0, std::optional<double> a1,
-                              std::optional<double> a2, std::optional<double> a3) {
-        viewcmd_fwd(P + "_gridsnap", a0, a1, a2, a3);
+    m.def(P + "_gridsnap", [P](const std::string &flag) {
+        viewcmd_fwd(P + "_gridsnap", gridSnapFlag(flag));
     });
     // *_setgrid(density, "cart"|"polar"). The coordinate mode is document state
     // -- it is written to the .fem/.fee/.feh/.fec header and the solver reads it

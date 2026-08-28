@@ -268,7 +268,12 @@ void register_curr_postproc_py(CurrResultsDoc *doc) {
     regv("co_refreshview");
     regv("co_showgrid");
     regv("co_hidegrid");
-    regv("co_gridsnap");
+    // Takes the documented string flag, not a double -- see
+    // gridSnapFlag in py_editor_common.h.
+    m.def("co_gridsnap", [](const std::string &flag) {
+        double a[1] = {gridSnapFlag(flag)};
+        ppViewCmd("co_gridsnap", 1, a);
+    });
     registerSetGrid(m, "co", s_doc, COERR);
     regv("co_resize");
     regv("co_minimize");

@@ -193,11 +193,11 @@ hand a large block back to the operating system --- after finishing with a
 several-hundred-megabyte array, say --- call it a few times rather than once;
 a single collection does not always release everything.
 
-One case where it is worth knowing about: a file object that is dropped
-without being closed is closed for you, but only when a collection next runs
---- which, now that memory is plentiful, may not be for a long time.  A script
-that opens many files in a loop and relies on that can run out of file handles.
-Use \verb+with open(...) as f:+, which closes at the end of the block, or call
+A file object that is dropped without being closed is closed for you when the
+script ends, whether it ended normally or with an error.  What is not promised
+is that it happens any sooner: a script that opens many files in a loop and
+drops them can run out of handles before it finishes.  Use
+\verb+with open(...) as f:+, which closes at the end of the block, or call
 {\tt f.close()}.
 
 MicroPython's versions of these are subsets.  The differences are usually

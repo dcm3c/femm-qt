@@ -1,0 +1,14 @@
+# Per-host recordings. Regenerate with the emit_* scripts; they differ by which
+# hosts are installed, so committing them would make the tree depend on this
+# machine.
+probe_octavefemm.tsv
+emitted_*.tsv
+mathfemm_unlocked.m
+
+# contract.tsv is deliberately NOT ignored. It is small, it is derived from
+# octavefemm, and a change to it means the wire contract moved -- which is
+# exactly the thing you want to see in a review diff rather than regenerate
+# silently.
+
+# Layer 2 driver output, one file per host that is installed here.
+l2_*.txt

@@ -1,0 +1,633 @@
+# wrapper	arity	kinds   (s = quoted string, n = number)
+ci_addarc	6	nnnnnn
+ci_addblocklabel	2	nn
+ci_addboundprop	6	snnnnn
+ci_addconductorprop	4	snnn
+ci_addmaterial	7	snnnnnn
+ci_addnode	2	nn
+ci_addpointprop	3	snn
+ci_addsegment	4	nnnn
+ci_analyse	1	n
+ci_analyze	1	n
+ci_attachdefault	0	
+ci_clearselected	0	
+ci_close	0	
+ci_copyrotate	4	nnnn
+ci_copyrotate2	5	nnnnn
+ci_copytranslate	3	nnn
+ci_copytranslate2	4	nnnn
+ci_createmesh	0	
+ci_createradius	3	nnn
+ci_deleteboundprop	1	s
+ci_deleteconductor	1	s
+ci_deletematerial	1	s
+ci_deletepointprop	1	s
+ci_deleteselected	0	
+ci_deleteselectedarcsegments	0	
+ci_deleteselectedlabels	0	
+ci_deleteselectednodes	0	
+ci_deleteselectedsegments	0	
+ci_detachdefault	0	
+ci_drawarc	6	nnnnnn
+ci_drawline	4	nnnn
+ci_drawrectangle	4	nnnn
+ci_getmaterial	1	s
+ci_gettitle	0	
+ci_getview	0	
+ci_gridsnap	1	s
+ci_hidegrid	0	
+ci_hidenames	0	
+ci_loadsolution	0	
+ci_makeABC	5	nnnnn
+ci_maximize	0	
+ci_minimize	0	
+ci_mirror	4	nnnn
+ci_mirror2	5	nnnnn
+ci_modifyboundprop	3	snn
+ci_modifyconductorprop	3	snn
+ci_modifymaterial	3	snn
+ci_modifypointprop	3	snn
+ci_moverotate	3	nnn
+ci_movetranslate	2	nn
+ci_movetranslate2	3	nnn
+ci_probdef	6	ssnnnn
+ci_purgemesh	0	
+ci_readdxf	1	n
+ci_refreshview	0	
+ci_resize	2	nn
+ci_restore	0	
+ci_saveas	1	s
+ci_savebitmap	1	s
+ci_savedxf	1	s
+ci_savemetafile	1	s
+ci_scale	3	nnn
+ci_scale2	4	nnnn
+ci_selectarcsegment	2	nn
+ci_selectcircle	4	nnnn
+ci_selectgroup	1	n
+ci_selectlabel	2	nn
+ci_selectnode	2	nn
+ci_selectrectangle	5	nnnnn
+ci_selectsegment	2	nn
+ci_setarcsegmentprop	5	nsnns
+ci_setblockprop	4	snnn
+ci_setcomment	1	s
+ci_seteditmode	1	s
+ci_setfocus	1	s
+ci_setgrid	2	ns
+ci_setgroup	1	n
+ci_setnodeprop	3	sns
+ci_setsegmentprop	6	snnnns
+ci_showgrid	0	
+ci_showmesh	0	
+ci_shownames	0	
+ci_smartmesh	1	n
+ci_snapgridoff	0	
+ci_snapgridon	0	
+ci_zoom	4	nnnn
+ci_zoomin	0	
+ci_zoomnatural	0	
+ci_zoomout	0	
+co_addcontour	2	nn
+co_bendcontour	2	nn
+co_blockintegral	1	n
+co_clearblock	0	
+co_clearcontour	0	
+co_close	0	
+co_getconductorproperties	1	s
+co_gete	2	nn
+co_getelement	1	n
+co_getj	2	nn
+co_getk	2	nn
+co_getnode	1	n
+co_getpointvalues	2	nn
+co_getprobleminfo	0	
+co_gettitle	0	
+co_getv	2	nn
+co_getview	0	
+co_gridsnap	1	s
+co_groupselectblock	1	n
+co_hidecontourplot	0	
+co_hidedensityplot	0	
+co_hidegrid	0	
+co_hidemesh	0	
+co_hidenames	0	
+co_hidepoints	0	
+co_lineintegral	1	n
+co_makeplot	4	nnsn
+co_maximize	0	
+co_minimize	0	
+co_numelements	0	
+co_numnodes	0	
+co_refreshview	0	
+co_reload	0	
+co_resize	2	nn
+co_restore	0	
+co_savebitmap	1	s
+co_savemetafile	1	s
+co_selectblock	2	nn
+co_selectpoint	2	nn
+co_seteditmode	1	s
+co_setgrid	2	ns
+co_showcontourplot	3	nnn
+co_showdensityplot	5	nnnnn
+co_showgrid	0	
+co_showmesh	0	
+co_shownames	0	
+co_showpoints	0	
+co_showvectorplot	2	nn
+co_smooth	1	s
+co_smoothoff	0	
+co_smoothon	0	
+co_snapgrid	1	s
+co_snapgridoff	0	
+co_snapgridon	0	
+co_zoom	4	nnnn
+co_zoomin	0	
+co_zoomnatural	0	
+co_zoomout	0	
+create	1	n
+ei_addarc	6	nnnnnn
+ei_addblocklabel	2	nn
+ei_addboundprop	6	snnnnn
+ei_addconductorprop	4	snnn
+ei_addmaterial	4	snnn
+ei_addnode	2	nn
+ei_addpointprop	3	snn
+ei_addsegment	4	nnnn
+ei_analyse	1	n
+ei_analyze	1	n
+ei_attachdefault	0	
+ei_attachouterspace	0	
+ei_clearselected	0	
+ei_close	0	
+ei_copyrotate	4	nnnn
+ei_copyrotate2	5	nnnnn
+ei_copytranslate	3	nnn
+ei_copytranslate2	4	nnnn
+ei_createmesh	0	
+ei_createradius	3	nnn
+ei_defineouterspace	3	nnn
+ei_deleteboundprop	1	s
+ei_deleteconductor	1	s
+ei_deletematerial	1	s
+ei_deletepointprop	1	s
+ei_deleteselected	0	
+ei_deleteselectedarcsegments	0	
+ei_deleteselectedlabels	0	
+ei_deleteselectednodes	0	
+ei_deleteselectedsegments	0	
+ei_detachdefault	0	
+ei_detachouterspace	0	
+ei_drawarc	6	nnnnnn
+ei_drawline	4	nnnn
+ei_drawrectangle	4	nnnn
+ei_getmaterial	1	s
+ei_gettitle	0	
+ei_gridsnap	1	s
+ei_hidegrid	0	
+ei_hidenames	0	
+ei_loadsolution	0	
+ei_makeABC	5	nnnnn
+ei_maximize	0	
+ei_minimize	0	
+ei_mirror	4	nnnn
+ei_mirror2	5	nnnnn
+ei_modifyboundprop	3	snn
+ei_modifyconductorprop	3	snn
+ei_modifymaterial	3	snn
+ei_modifypointprop	3	snn
+ei_moverotate	3	nnn
+ei_movetranslate	2	nn
+ei_movetranslate2	3	nnn
+ei_probdef	5	ssnnn
+ei_purgemesh	0	
+ei_readdxf	1	n
+ei_refreshview	0	
+ei_resize	2	nn
+ei_restore	0	
+ei_saveas	1	s
+ei_savebitmap	1	s
+ei_savedxf	1	s
+ei_savemetafile	1	s
+ei_scale	3	nnn
+ei_scale2	4	nnnn
+ei_selectarcsegment	2	nn
+ei_selectcircle	4	nnnn
+ei_selectgroup	1	n
+ei_selectlabel	2	nn
+ei_selectnode	2	nn
+ei_selectrectangle	5	nnnnn
+ei_selectsegment	2	nn
+ei_setarcsegmentprop	5	nsnns
+ei_setblockprop	4	snnn
+ei_setcomment	1	s
+ei_seteditmode	1	s
+ei_setfocus	1	s
+ei_setgrid	2	ns
+ei_setgroup	1	n
+ei_setnodeprop	3	sns
+ei_setsegmentprop	6	snnnns
+ei_showgrid	0	
+ei_showmesh	0	
+ei_shownames	0	
+ei_smartmesh	1	n
+ei_snapgridoff	0	
+ei_snapgridon	0	
+ei_zoom	4	nnnn
+ei_zoomin	0	
+ei_zoomnatural	0	
+ei_zoomout	0	
+eo_addcontour	2	nn
+eo_bendcontour	2	nn
+eo_blockintegral	1	n
+eo_clearblock	0	
+eo_clearcontour	0	
+eo_close	0	
+eo_getallelements	0	
+eo_getconductorproperties	1	s
+eo_getd	2	nn
+eo_gete	2	nn
+eo_getelement	1	n
+eo_getenergydensity	2	nn
+eo_getnode	1	n
+eo_getperm	2	nn
+eo_getpointvalues	2	nn
+eo_getprobleminfo	0	
+eo_gettitle	0	
+eo_getv	2	nn
+eo_gridsnap	1	s
+eo_groupselectblock	1	n
+eo_hidecontourplot	0	
+eo_hidedensityplot	0	
+eo_hidegrid	0	
+eo_hidemesh	0	
+eo_hidenames	0	
+eo_hidepoints	0	
+eo_lineintegral	1	n
+eo_makeplot	4	nnsn
+eo_maximize	0	
+eo_minimize	0	
+eo_numelements	0	
+eo_numnodes	0	
+eo_refreshview	0	
+eo_reload	0	
+eo_resize	2	nn
+eo_restore	0	
+eo_savebitmap	1	s
+eo_savemetafile	1	s
+eo_selectblock	2	nn
+eo_selectpoint	2	nn
+eo_seteditmode	1	s
+eo_setgrid	2	ns
+eo_showcontourplot	3	nnn
+eo_showdensityplot	5	nnnnn
+eo_showgrid	0	
+eo_showmesh	0	
+eo_shownames	0	
+eo_showpoints	0	
+eo_showvectorplot	2	nn
+eo_smooth	1	s
+eo_smoothoff	0	
+eo_smoothon	0	
+eo_snapgrid	1	s
+eo_snapgridoff	0	
+eo_snapgridon	0	
+eo_zoom	4	nnnn
+eo_zoomin	0	
+eo_zoomnatural	0	
+eo_zoomout	0	
+hi_addarc	6	nnnnnn
+hi_addblocklabel	2	nn
+hi_addboundprop	8	snnnnnnn
+hi_addconductorprop	4	snnn
+hi_addmaterial	5	snnnn
+hi_addnode	2	nn
+hi_addpointprop	3	snn
+hi_addsegment	4	nnnn
+hi_addtkpoint	3	snn
+hi_addtkpoints	3	snn
+hi_analyse	1	n
+hi_analyze	1	n
+hi_attachdefault	0	
+hi_attachouterspace	0	
+hi_clearselected	0	
+hi_cleartkpoints	1	s
+hi_close	0	
+hi_copyrotate	4	nnnn
+hi_copyrotate2	5	nnnnn
+hi_copytranslate	3	nnn
+hi_copytranslate2	4	nnnn
+hi_createmesh	0	
+hi_createradius	3	nnn
+hi_defineouterspace	3	nnn
+hi_deleteboundprop	1	s
+hi_deleteconductor	1	s
+hi_deletematerial	1	s
+hi_deletepointprop	1	s
+hi_deleteselected	0	
+hi_deleteselectedarcsegments	0	
+hi_deleteselectedlabels	0	
+hi_deleteselectednodes	0	
+hi_deleteselectedsegments	0	
+hi_detachdefault	0	
+hi_detachouterspace	0	
+hi_drawarc	6	nnnnnn
+hi_drawline	4	nnnn
+hi_drawrectangle	4	nnnn
+hi_getmaterial	1	s
+hi_gettitle	0	
+hi_getview	0	
+hi_gridsnap	1	s
+hi_hidegrid	0	
+hi_hidenames	0	
+hi_loadsolution	0	
+hi_makeABC	5	nnnnn
+hi_maximize	0	
+hi_minimize	0	
+hi_mirror	4	nnnn
+hi_mirror2	5	nnnnn
+hi_modifyboundprop	3	snn
+hi_modifyconductorprop	3	snn
+hi_modifymaterial	3	snn
+hi_modifypointprop	3	snn
+hi_moverotate	3	nnn
+hi_movetranslate	2	nn
+hi_movetranslate2	3	nnn
+hi_probdef	7	ssnnnsn
+hi_purgemesh	0	
+hi_readdxf	1	n
+hi_refreshview	0	
+hi_resize	2	nn
+hi_restore	0	
+hi_saveas	1	s
+hi_savebitmap	1	s
+hi_savedxf	1	s
+hi_savemetafile	1	s
+hi_scale	3	nnn
+hi_scale2	4	nnnn
+hi_selectarcsegment	2	nn
+hi_selectcircle	4	nnnn
+hi_selectgroup	1	n
+hi_selectlabel	2	nn
+hi_selectnode	2	nn
+hi_selectrectangle	5	nnnnn
+hi_selectsegment	2	nn
+hi_setarcsegmentprop	5	nsnns
+hi_setblockprop	4	snnn
+hi_setcomment	1	s
+hi_seteditmode	1	s
+hi_setfocus	1	s
+hi_setgrid	2	ns
+hi_setgroup	1	n
+hi_setnodeprop	3	sns
+hi_setsegmentprop	6	snnnns
+hi_showgrid	0	
+hi_showmesh	0	
+hi_shownames	0	
+hi_smartmesh	1	n
+hi_snapgridoff	0	
+hi_snapgridon	0	
+hi_zoom	4	nnnn
+hi_zoomin	0	
+hi_zoomnatural	0	
+hi_zoomout	0	
+hideconsole	0	
+ho_addcontour	2	nn
+ho_bendcontour	2	nn
+ho_blockintegral	1	n
+ho_clearblock	0	
+ho_clearcontour	0	
+ho_close	0	
+ho_getconductorproperties	1	s
+ho_getelement	1	n
+ho_getf	2	nn
+ho_getg	2	nn
+ho_getk	2	nn
+ho_getnode	1	n
+ho_getpointvalues	2	nn
+ho_getprobleminfo	0	
+ho_gett	2	nn
+ho_gettitle	0	
+ho_getview	0	
+ho_gridsnap	1	s
+ho_groupselectblock	1	n
+ho_hidecontourplot	0	
+ho_hidedensityplot	0	
+ho_hidegrid	0	
+ho_hidemesh	0	
+ho_hidenames	0	
+ho_hidepoints	0	
+ho_lineintegral	1	n
+ho_makeplot	4	nnsn
+ho_maximize	0	
+ho_minimize	0	
+ho_numelements	0	
+ho_numnodes	0	
+ho_refreshview	0	
+ho_reload	0	
+ho_resize	2	nn
+ho_restore	0	
+ho_savebitmap	1	s
+ho_savemetafile	1	s
+ho_selectblock	2	nn
+ho_selectpoint	2	nn
+ho_seteditmode	1	s
+ho_setgrid	2	ns
+ho_showcontourplot	3	nnn
+ho_showdensityplot	5	nnnnn
+ho_showgrid	0	
+ho_showmesh	0	
+ho_shownames	0	
+ho_showpoints	0	
+ho_showvectorplot	2	nn
+ho_smooth	1	s
+ho_smoothoff	0	
+ho_smoothon	0	
+ho_snapgrid	1	s
+ho_snapgridoff	0	
+ho_snapgridon	0	
+ho_zoom	4	nnnn
+ho_zoomin	0	
+ho_zoomnatural	0	
+ho_zoomout	0	
+main_maximize	0	
+main_minimize	0	
+main_resize	2	nn
+main_restore	0	
+messagebox	1	s
+mi_addarc	6	nnnnnn
+mi_addbhpoint	3	snn
+mi_addbhpoints	3	snn
+mi_addblocklabel	2	nn
+mi_addboundprop	12	snnnnnnnnnnn
+mi_addcircprop	3	snn
+mi_addmaterial	14	snnnnnnnnnnnnn
+mi_addnode	2	nn
+mi_addpointprop	3	snn
+mi_addsegment	4	nnnn
+mi_analyse	1	n
+mi_analyze	1	n
+mi_attachdefault	0	
+mi_attachouterspace	0	
+mi_clearbhpoints	1	s
+mi_clearselected	0	
+mi_close	0	
+mi_copyrotate	4	nnnn
+mi_copyrotate2	5	nnnnn
+mi_copytranslate	3	nnn
+mi_copytranslate2	4	nnnn
+mi_createmesh	0	
+mi_createradius	3	nnn
+mi_defineouterspace	3	nnn
+mi_deleteboundprop	1	s
+mi_deletecircuit	1	s
+mi_deletematerial	1	s
+mi_deletepointprop	1	s
+mi_deleteselected	0	
+mi_deleteselectedarcsegments	0	
+mi_deleteselectedlabels	0	
+mi_deleteselectednodes	0	
+mi_deleteselectedsegments	0	
+mi_detachdefault	0	
+mi_detachouterspace	0	
+mi_drawarc	6	nnnnnn
+mi_drawline	4	nnnn
+mi_drawrectangle	4	nnnn
+mi_getmaterial	1	s
+mi_gettitle	0	
+mi_gridsnap	1	s
+mi_hidegrid	0	
+mi_hidenames	0	
+mi_loadsolution	0	
+mi_makeABC	5	nnnnn
+mi_maximize	0	
+mi_minimize	0	
+mi_mirror	4	nnnn
+mi_mirror2	5	nnnnn
+mi_modifyboundprop	3	snn
+mi_modifycircprop	3	snn
+mi_modifymaterial	3	snn
+mi_modifypointprop	3	snn
+mi_moverotate	3	nnn
+mi_movetranslate	2	nn
+mi_movetranslate2	3	nnn
+mi_probdef	7	nssnnnn
+mi_purgemesh	0	
+mi_readdxf	1	n
+mi_refreshview	0	
+mi_resize	2	nn
+mi_restore	0	
+mi_saveas	1	s
+mi_savebitmap	1	s
+mi_savedxf	1	s
+mi_savemetafile	1	s
+mi_scale	3	nnn
+mi_scale2	4	nnnn
+mi_selectarcsegment	2	nn
+mi_selectcircle	4	nnnn
+mi_selectgroup	1	n
+mi_selectlabel	2	nn
+mi_selectnode	2	nn
+mi_selectrectangle	5	nnnnn
+mi_selectsegment	2	nn
+mi_setarcsegmentprop	4	nsnn
+mi_setblockprop	7	snnsnnn
+mi_setcomment	1	s
+mi_setcurrent	2	sn
+mi_seteditmode	1	s
+mi_setfocus	1	s
+mi_setgrid	2	ns
+mi_setgroup	1	n
+mi_setnodeprop	2	sn
+mi_setprevious	2	sn
+mi_setsegmentprop	5	snnnn
+mi_showgrid	0	
+mi_showmesh	0	
+mi_shownames	0	
+mi_smartmesh	1	n
+mi_snapgridoff	0	
+mi_snapgridon	0	
+mi_zoom	4	nnnn
+mi_zoomin	0	
+mi_zoomnatural	0	
+mi_zoomout	0	
+mo_addcontour	2	nn
+mo_bendcontour	2	nn
+mo_blockintegral	1	n
+mo_clearblock	0	
+mo_clearcontour	0	
+mo_close	0	
+mo_gapintegral	2	sn
+mo_geta	2	nn
+mo_getalla	0	
+mo_getallb	0	
+mo_getallelements	0	
+mo_getallgapa	2	sn
+mo_getallgapb	2	sn
+mo_getallgapharmonics	1	s
+mo_getallnodes	0	
+mo_getb	2	nn
+mo_getcircuitproperties	1	s
+mo_getconductivity	2	nn
+mo_getelement	1	n
+mo_getenergydensity	2	nn
+mo_getfill	2	nn
+mo_getgapa	2	sn
+mo_getgapb	2	sn
+mo_getgapharmonics	2	sn
+mo_geth	2	nn
+mo_getj	2	nn
+mo_getmu	2	nn
+mo_getnode	1	n
+mo_getpe	2	nn
+mo_getph	2	nn
+mo_getpointvalues	2	nn
+mo_getprobleminfo	0	
+mo_gettitle	0	
+mo_gridsnap	1	s
+mo_groupselectblock	1	n
+mo_hidecontourplot	0	
+mo_hidedensityplot	0	
+mo_hidegrid	0	
+mo_hidemesh	0	
+mo_hidenames	0	
+mo_hidepoints	0	
+mo_lineintegral	1	n
+mo_makeplot	4	nnsn
+mo_maximize	0	
+mo_minimize	0	
+mo_numelements	0	
+mo_numnodes	0	
+mo_refreshview	0	
+mo_reload	0	
+mo_resize	2	nn
+mo_restore	0	
+mo_savebitmap	1	s
+mo_savemetafile	1	s
+mo_selectblock	2	nn
+mo_selectpoint	2	nn
+mo_seteditmode	1	s
+mo_setgrid	2	ns
+mo_setweightingscheme	1	n
+mo_showcontourplot	4	nnns
+mo_showdensityplot	5	nnnns
+mo_showgrid	0	
+mo_showmesh	0	
+mo_shownames	0	
+mo_showpoints	0	
+mo_showvectorplot	2	nn
+mo_smooth	1	s
+mo_smoothoff	0	
+mo_smoothon	0	
+mo_snapgrid	1	s
+mo_snapgridoff	0	
+mo_snapgridon	0	
+mo_zoom	4	nnnn
+mo_zoomin	0	
+mo_zoomnatural	0	
+mo_zoomout	0	
+newdocument	1	n
+opendocument	1	s
+showconsole	0	
+smartmesh	1	n

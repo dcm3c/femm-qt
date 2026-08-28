@@ -37,10 +37,13 @@ the compositions leaves the user writing the Python loop anyway.
 
 ## 1. The missing piece: bulk mesh getters that return arrays
 
-`mo_getallelements` exists, and is **wire-only by design**: it builds a
-tab-separated string (`py_mag_postproc.cpp:244`, `buf.reserve(ne * 70)`) and
-hands it to `py_set_result`, so in-process it returns `None`. That is correct
-for what it is — the IPC contract — and should not change.
+`mo_getallelements` exists, and is wire-only: it builds a tab-separated string
+(`py_mag_postproc.cpp:244`, `buf.reserve(ne * 70)`) and hands it to
+`py_set_result`, so in-process it returns `None`. **`bulk-getters-design.md` now
+proposes deleting it** and the other three, moving the wire loop into each
+binding as electrostatics already does -- measured at 2.4x, because the cost is
+the `%.17g` formatting rather than the iteration -- which frees the name for the
+array version below.
 
 What does not exist is an in-process equivalent. So a script loops:
 
@@ -136,9 +139,10 @@ Step 1 is the one with standalone value. Steps 2–4 are only worth doing if the
 transient noise-spectrum work is actually going to be written in Python against
 these arrays — which is the question to answer before starting any of it.
 
-## What is deliberately not here
+## A note on `mo_getall*`
 
-Making `mo_getall*` return arrays in-process. They are the wire contract, they
-are correct as they are, and `project_bulk_getters` (memory) records that
-returning `None` in-process is by design rather than an oversight. New names,
-not changed ones.
+An earlier draft here ruled out touching them, on the grounds that they are the
+wire contract. `bulk-getters-design.md` (2026-08-28) reaches the opposite
+conclusion: the *contract* is the text on the wire, which a binding-side loop
+reproduces byte-for-byte, so the C++ functions are an implementation detail and
+deleting them frees their names for the array versions.

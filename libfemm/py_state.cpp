@@ -31,6 +31,7 @@ extern "C" {
 
 #include "femm_stack_guard.h"
 
+#include <charconv>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -127,9 +128,10 @@ extern "C" uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
 // Wire-compatible result formatting.
 //
 // Wire-format result capture. exec_python formats the return value into
-// s_last_result. Byte-for-byte formatting rules (%.17g precision):
-//   complex -> CComplex::ToString format (%.17g, with im==0/+-1 / re==0 cases)
-//   float   -> "%.17g"
+// s_last_result. Byte-for-byte formatting rules:
+//   complex -> CComplex::ToString STRUCTURE (im==0/+-1 / re==0 cases), with
+//              shortest round-trip digits rather than %.17g
+//   float   -> shortest round-trip digits (std::to_chars)
 //   bool    -> "true"/"false"  (wire compat, NOT Python "True"/"False")
 //   int     -> integer digits        (MicroPython repr; handles big ints)
 //   str     -> the string, unquoted
@@ -145,43 +147,72 @@ const std::string &py_last_result() { return s_last_result; }
 const std::string &py_last_display() { return s_last_display; }
 void py_set_result(std::string &&result) { s_last_result = std::move(result); }
 
-// Replicates CComplex::ToString(s, n) exactly.
+// Append one double as the SHORTEST digit string that strtod reads back to the
+// identical value (std::to_chars). This is common/fastio.h's technique, applied
+// here for the same reason it was applied to the .ans hot loops: snprintf
+// re-parses its format string and goes through the locale machinery on every
+// call. Measured on a bulk mesh readout -- 126k values, the mix
+// mo_getallelements emits -- 26.8 ms for snprintf("%.17g") against 2.6 ms here,
+// with zero round-trip mismatches.
+//
+// The BYTES therefore differ from %.17g: "0.1" rather than "0.10000000000000001".
+// Measured 2-4% shorter on real solver output -- do NOT expect fastio.h's
+// 30-40%, which is for .ans files, mostly round INPUT values; computed field
+// values carry full mantissas and barely shrink. Speed is the win here, not
+// size. Every value still round-trips bit-exactly, and
+// every binding parses with strtod / str2num / float(), so this is invisible to
+// them -- what it moves is any baseline that compares wire text literally.
+// inf, nan, -0 and the exponent form ("6.02214076e+23") are unchanged.
+static void append_g(std::string &out, double v) {
+    char b[40];   // longest shortest-form double is 24 chars
+    auto r = std::to_chars(b, b + sizeof b, v);
+    out.append(b, (size_t)(r.ptr - b));
+}
+
+// Replicates CComplex::ToString(s, n)'s STRUCTURE -- the im==0, im==+-1 and
+// re==0 special cases -- with append_g digits in place of its %.17g. Note that
+// common/complex.cpp still writes %.17g, so the two no longer agree byte for
+// byte; they agree on every value, which is what the wire contract needs.
 static void format_complex(std::string &out, double re, double im) {
-    char b[96];
-    if (im == 0)
-        snprintf(b, sizeof b, "%.17g", re);
-    else if (im == 1)
-        re == 0 ? snprintf(b, sizeof b, "I") : snprintf(b, sizeof b, "%.17g+I", re);
-    else if (im == -1)
-        re == 0 ? snprintf(b, sizeof b, "-I") : snprintf(b, sizeof b, "%.17g-I", re);
-    else if (im < 0)
-        re != 0 ? snprintf(b, sizeof b, "%.17g-I*%.17g", re, fabs(im))
-                : snprintf(b, sizeof b, "-I*%.17g", fabs(im));
-    else  // im > 0
-        re != 0 ? snprintf(b, sizeof b, "%.17g+I*%.17g", re, im)
-                : snprintf(b, sizeof b, "I*%.17g", im);
-    out += b;
+    if (im == 0) {
+        append_g(out, re);
+    } else if (im == 1) {
+        if (re == 0) out += "I";
+        else { append_g(out, re); out += "+I"; }
+    } else if (im == -1) {
+        if (re == 0) out += "-I";
+        else { append_g(out, re); out += "-I"; }
+    } else if (im < 0) {
+        if (re != 0) append_g(out, re);
+        out += "-I*";
+        append_g(out, fabs(im));
+    } else {  // im > 0
+        if (re != 0) { append_g(out, re); out += "+I*"; }
+        else           out += "I*";
+        append_g(out, im);
+    }
 }
 
 // Human-facing complex rendering for the console and line-edit: Python "j"
 // notation (e.g. "1.5+2j", no parentheses), with a real-valued complex (im==0)
-// collapsed to a bare real so genuinely-real results read cleanly. Full %.17g
-// precision (shows the exact value). The TCP wire uses format_complex() above
-// (I* notation) instead — that format is the IPC contract and must not change.
+// collapsed to a bare real so genuinely-real results read cleanly. Shortest
+// round-trip precision: the exact value, in the fewest digits that mean it.
+// The TCP wire uses format_complex() above (I* notation) instead. The I*
+// NOTATION is the IPC contract and must not change; the digit count is not,
+// and became shortest-round-trip in 2026-08 (see append_g).
 static void format_complex_display(std::string &out, double re, double im) {
-    char b[96];
     // Complex stays complex, matching _femm_fmt in the init script -- one rule,
     // two places it has to be written. The zero-imaginary collapse that used to
     // live here existed because the DC getters returned complex-typed reals;
     // they return real numbers now, so a complex result means a phasor and its
     // zero imaginary part is information.
-    if (re == 0 && im != 0)   // pure imaginary: "0.5j", "-3j", "1j"
-        snprintf(b, sizeof b, "%.17gj", im);
-    else if (im < 0)
-        snprintf(b, sizeof b, "%.17g-%.17gj", re, -im);
-    else
-        snprintf(b, sizeof b, "%.17g+%.17gj", re, im);
-    out += b;
+    if (re == 0 && im != 0) {         // pure imaginary: "0.5j", "-3j", "1j"
+        append_g(out, im); out += 'j';
+    } else if (im < 0) {
+        append_g(out, re); out += '-'; append_g(out, -im); out += 'j';
+    } else {
+        append_g(out, re); out += '+'; append_g(out, im); out += 'j';
+    }
 }
 
 // Buffer-backed mp_print_t (for int/str rendering and exception messages).
@@ -220,9 +251,7 @@ static void format_value(std::string &out, mp_obj_t o, bool display) {
     } else if (o == mp_const_false) {
         out += "false";
     } else if (mp_obj_is_float(o)) {
-        char b[40];
-        snprintf(b, sizeof b, "%.17g", (double)mp_obj_get_float(o));
-        out += b;
+        append_g(out, (double)mp_obj_get_float(o));
     } else if (mp_obj_is_str(o)) {
         size_t n = 0;
         const char *s = mp_obj_str_get_data(o, &n);
@@ -270,6 +299,22 @@ static int format_exception(mp_obj_t exc, char *errmsg, int errmsg_size) {
 // ---------------------------------------------------------------------------
 // Lifecycle
 // ---------------------------------------------------------------------------
+// Where an mp_obj_t may live, and why it is load-bearing under bdwgc.
+//
+// The collector finds roots by scanning the C stack, registers and STATIC data
+// segments. It does NOT scan memory obtained from C++ new/malloc, so an
+// mp_obj_t held in a std::vector, a std::string, a Qt container or a
+// heap-allocated context object is invisible and its object can be collected
+// while still referenced. Keep such references in the Python globals dict (via
+// this function), or in static storage.
+//
+// This is now doubly load-bearing: the root policy in micropython/femm_gc.c
+// deliberately does NOT call GC_set_no_dls or GC_exclude_static_roots, on the
+// grounds that the static data segments must stay scanned precisely because we
+// keep mp_obj_t there. A refactor that moves interpreter state out of statics
+// and into a heap-allocated struct would silently break that bargain -- clean
+// compile, and a use-after-free under memory pressure. Carry this comment along
+// if that ever happens.
 static void store_global(const char *name, mp_obj_t v) {
     mp_obj_dict_store(MP_OBJ_FROM_PTR(mp_globals_get()),
                       MP_OBJ_NEW_QSTR(qstr_from_strn(name, std::strlen(name))), v);
@@ -670,5 +715,53 @@ int exec_python_file(const char *path, char *errmsg, int errmsg_size) {
                           "%s is not a text file (contains a NUL byte)", path);
         return -1;
     }
-    return exec_python(buf.c_str(), errmsg, errmsg_size);
+    const int status = exec_python(buf.c_str(), errmsg, errmsg_size);
+
+    // Collect once the script is done, if this was the OUTERMOST one (a script
+    // that dofile()s another must not collect halfway through the caller).
+    //
+    // Two things happen here that cannot happen anywhere else. bdwgc only
+    // queues a finaliser when a collection finds the object unreachable, and
+    // with free_space_divisor(2) a script that never exhausts memory may
+    // trigger no collection at all -- so a file dropped without close() would
+    // otherwise stay open until something else forced one. And this is the
+    // moment when the C stack is shallowest and the registers least likely to
+    // still hold a dead pointer, so a block that is genuinely garbage has its
+    // best chance of being seen as garbage. A conservative collector cannot
+    // guarantee that; it can only be asked at the most favourable moment.
+    //
+    // Deliberately here and NOT in exec_python(): that runs once per command
+    // over the TCP interface, where round trips are 0.05-0.5 ms and a
+    // collection is 0.4-1.5 ms. Per command it would be a throughput
+    // regression of 2-30x. Per script it is unmeasurable.
+    // ONE collection, for a semantic contract and not for a memory number:
+    // finalisers get a predictable home. Under bdwgc a collection only happens
+    // when the allocator needs one, so a script that never exhausts memory
+    // could otherwise finish with a dropped file still open. Now __del__ runs
+    // when the script ends. gc_collect_end() drains the finaliser queue
+    // immediately after the collection (micropython/femm_gc.c), so the two are
+    // atomic and a __del__ that frees something else has it collected on the
+    // next collection, exactly as py/gc.c behaved.
+    //
+    // It is deliberately NOT tuned to release memory promptly. Repeating the
+    // collection does release more -- 240 MB dropped by a script measured
+    // 238 MB retained after one pass and 9 MB after three -- but the count that
+    // achieves that is a property of one script on one platform, and the pin
+    // counts behind it varied 0 to 4 across eight platform runs for no reason
+    // more principled than what happened to be in a register. A constant fitted
+    // to that would be re-tuned by the next machine. Retention is bounded and
+    // non-cumulative (docs/bdwgc-handoff-plan.md 11.4c) -- the block is reused
+    // by the next script rather than accumulating -- and that is the property
+    // worth guaranteeing.
+    //
+    // Deliberately here and NOT in exec_python(): that runs once per command
+    // over the TCP interface, where round trips are 0.05-0.5 ms and a
+    // collection is 0.4-1.5 ms. Per command it would be a throughput
+    // regression of 2-30x, and it would put finaliser runs back at arbitrary
+    // mid-protocol moments. Per script it is unmeasurable.
+    //
+    // Guarded on depth so a script that dofile()s another does not collect
+    // halfway through the caller.
+    if (s_running_depth == 0) gc_collect();
+    return status;
 }

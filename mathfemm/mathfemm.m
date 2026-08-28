@@ -2915,6 +2915,9 @@ MainMaximize::usage = "MainMaximize[] maximizes the main FEMM window."
 MainRestore::usage  = "MainRestore[] restores the main FEMM window from a minimized or maximized state."
 MainResize::usage   = "MainResize[width,height] resizes the main FEMM window client area to width X height."
 
+ShowPointProps::usage = "ShowPointProps[] is a no-op retained for legacy-script compatibility. In OF it showed the floating FEMM Properties window; femm-qt has no such window."
+HidePointProps::usage = "HidePointProps[] is a no-op retained for legacy-script compatibility. In OF it hid the floating FEMM Properties window; femm-qt has no such window."
+
 MIMinimize::usage = "MIMinimize[] minimizes the active magnetics input view."
 MIMaximize::usage = "MIMaximize[] maximizes the active magnetics input view."
 MIRestore::usage  = "MIRestore[] restores the active magnetics input view from a minimized or maximized state."
@@ -3038,6 +3041,38 @@ CISetComment::usage = "CISetComment[n] sets the comment field in the problem def
 (****************************************************)
 (****** Beginning of actual function definitions ****)
 (****************************************************)
+
+(* Added in femm-qt: these commands are documented and server-supported
+   but had no mathfemm wrapper. *)
+MOGetTitle::usage = "MOGetTitle[] returns the name of the document currently in focus."
+EOGetTitle::usage = "EOGetTitle[] returns the name of the document currently in focus."
+HOGetTitle::usage = "HOGetTitle[] returns the name of the document currently in focus."
+COGetTitle::usage = "COGetTitle[] returns the name of the document currently in focus."
+MIGetTitle::usage = "MIGetTitle[] returns the name of the document currently in focus."
+EIGetTitle::usage = "EIGetTitle[] returns the name of the document currently in focus."
+HIGetTitle::usage = "HIGetTitle[] returns the name of the document currently in focus."
+CIGetTitle::usage = "CIGetTitle[] returns the name of the document currently in focus."
+MOSmooth::usage = "MOSmooth[\"flag\"] turns smoothing of the field on or off; flag is \"on\" or \"off\"."
+MOSnapGrid::usage = "MOSnapGrid[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
+EOSmooth::usage = "EOSmooth[\"flag\"] turns smoothing of the field on or off; flag is \"on\" or \"off\"."
+EOSnapGrid::usage = "EOSnapGrid[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
+HOSmooth::usage = "HOSmooth[\"flag\"] turns smoothing of the field on or off; flag is \"on\" or \"off\"."
+HOSnapGrid::usage = "HOSnapGrid[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
+COSmooth::usage = "COSmooth[\"flag\"] turns smoothing of the field on or off; flag is \"on\" or \"off\"."
+COSnapGrid::usage = "COSnapGrid[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
+
+
+(* The name the manual documents for every physics; the historical
+   wrapper name is *SnapGrid, which the manual never mentions. *)
+MIGridSnap::usage = "MIGridSnap[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
+EIGridSnap::usage = "EIGridSnap[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
+HIGridSnap::usage = "HIGridSnap[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
+CIGridSnap::usage = "CIGridSnap[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
+MOGridSnap::usage = "MOGridSnap[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
+EOGridSnap::usage = "EOGridSnap[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
+HOGridSnap::usage = "HOGridSnap[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
+COGridSnap::usage = "COGridSnap[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
+
 Begin["`Private`"]
 
 PackDir = DirectoryName[StringReplace[$Input, "/" -> "\\"]];
@@ -3406,6 +3441,15 @@ MainRestore[]:=MLPut["main_restore()"]
 MainResize[nWidth_,nHeight_]:=
         MLPut["main_resize(" <> NumC[nWidth] <> NumC[nHeight] <> ")"]
 
+(* In OF these toggle the floating "FEMM Properties" window that always
+   hangs over the preprocessor. femm-qt has no such persistent floating
+   window, so there is nothing to toggle -- kept as no-ops for
+   legacy-script compatibility.
+   Dropped in 0a5be31; restored for octavefemm and luafemm in c6fe935. *)
+ShowPointProps[]:=Null
+
+HidePointProps[]:=Null
+
 MIMinimize[]:=MLPut["mi_minimize()"]
 
 MIMaximize[]:=MLPut["mi_maximize()"]
@@ -3467,7 +3511,7 @@ COMaximize[]:=MLPut["co_maximize()"]
 CORestore[]:=MLPut["co_restore()"]
 
 COResize[nWidth_,nHeight_]:=
-        MLPut["ho_resize(" <> NumC[nWidth] <> Num[nHeight] <> ")"]
+        MLPut["co_resize(" <> NumC[nWidth] <> Num[nHeight] <> ")"]
 
 CIMinimize[]:=MLPut["ci_minimize()"]
 
@@ -3476,7 +3520,7 @@ CIMaximize[]:=MLPut["ci_maximize()"]
 CIRestore[]:=MLPut["ci_restore()"]
 
 CIResize[nWidth_,nHeight_]:=
-        MLPut["hi_resize(" <> NumC[nWidth] <> Num[nHeight] <> ")"]
+        MLPut["ci_resize(" <> NumC[nWidth] <> Num[nHeight] <> ")"]
 
 MIZoomNatural[]:=MLPut["mi_zoomnatural()"]
 
@@ -3610,7 +3654,50 @@ MIProbDef[freq_, units_, type_, precision_, depth_, minangle_] :=
 MIProbDef[freq_, units_, type_, precision_, depth_, minangle_,acsolver_] :=
         MLPut["mi_probdef(" <> NumC[freq] <> QuoteC[units] <>
                 QuoteC[type] <> NumC[precision] <> NumC[depth] <>
-                NumC[minangle] <> Num[acsolver] ")"]
+                NumC[minangle] <> Num[acsolver] <> ")"]
+
+(* The intermediate ProbDef arities. mathfemm shipped only the maximal forms
+   (plus MIProbDef[freq]), so a call such as MIProbDef[60, "inches", "planar"]
+   matched NO pattern, stayed unevaluated, and sent nothing at all -- the
+   analysis then ran at whatever frequency the file already had, with no error.
+   Found by testing/bindings Layer 2: the AC cases came back with DC values.
+   Argument order and the arity range follow octavefemm, which supports
+   mi 1-7, ei 3-5, hi 3-7 and ci 4-6. *)
+MIProbDef[freq_, units_] :=
+        MLPut["mi_probdef(" <> NumC[freq] <> Quote[units] <> ")"]
+MIProbDef[freq_, units_, type_] :=
+        MLPut["mi_probdef(" <> NumC[freq] <> QuoteC[units] <> Quote[type] <> ")"]
+MIProbDef[freq_, units_, type_, precision_] :=
+        MLPut["mi_probdef(" <> NumC[freq] <> QuoteC[units] <> QuoteC[type] <>
+                Num[precision] <> ")"]
+MIProbDef[freq_, units_, type_, precision_, depth_] :=
+        MLPut["mi_probdef(" <> NumC[freq] <> QuoteC[units] <> QuoteC[type] <>
+                NumC[precision] <> Num[depth] <> ")"]
+
+EIProbDef[units_, type_, precision_] :=
+        MLPut["ei_probdef(" <> QuoteC[units] <> QuoteC[type] <>
+                Num[precision] <> ")"]
+EIProbDef[units_, type_, precision_, depth_] :=
+        MLPut["ei_probdef(" <> QuoteC[units] <> QuoteC[type] <>
+                NumC[precision] <> Num[depth] <> ")"]
+
+HIProbDef[units_, type_, precision_] :=
+        MLPut["hi_probdef(" <> QuoteC[units] <> QuoteC[type] <>
+                Num[precision] <> ")"]
+HIProbDef[units_, type_, precision_, depth_] :=
+        MLPut["hi_probdef(" <> QuoteC[units] <> QuoteC[type] <>
+                NumC[precision] <> Num[depth] <> ")"]
+HIProbDef[units_, type_, precision_, depth_, minangle_, prevsoln_] :=
+        MLPut["hi_probdef(" <> QuoteC[units] <> QuoteC[type] <>
+                NumC[precision] <> NumC[depth] <> NumC[minangle] <>
+                Quote[prevsoln] <> ")"]
+
+CIProbDef[units_, type_, frequency_, precision_] :=
+        MLPut["ci_probdef(" <> QuoteC[units] <> QuoteC[type] <>
+                NumC[frequency] <> Num[precision] <> ")"]
+CIProbDef[units_, type_, frequency_, precision_, depth_] :=
+        MLPut["ci_probdef(" <> QuoteC[units] <> QuoteC[type] <>
+                NumC[frequency] <> NumC[precision] <> Num[depth] <> ")"]
 
 MIAnalyze[]:=MLPutWait["mi_analyze()"];
 
@@ -3761,8 +3848,9 @@ MIAddPointProp[name_,a_,j_]:=
 MIAddPointProp[name_]:=
         MLPut["mi_addpointprop(" <> Quote[name] <> ")"]
 
-MIAddPointProp[name_,a_,j_]:=
+MIAddPointProp[name_,a_]:=
         MLPut["mi_addpointprop(" <> QuoteC[name] <> Num[a] <> ")"]
+
 
 MIAddCircProp[name_,i_,type_]:=
         MLPut["mi_addcircprop(" <> QuoteC[name] <> NumC[i] <> Num[type] <> ")" ];
@@ -4055,7 +4143,7 @@ MOGetCircuitProperties[name_]:=Module[{z},
 
 MOSetEditMode[mode_]:=MLPut["mo_seteditmode(" <> Quote[mode] <> ")" ]
 
-MOSetWeightingScheme[mode_]:=MLPut["mo_setweightingscheme(" <> Quote[mode] <> ")" ]
+MOSetWeightingScheme[mode_]:=MLPut["mo_setweightingscheme(" <> Num[mode] <> ")" ]
 
 MOSelectBlock[x_,y_]:=MLPut["mo_selectblock(" <> NumC[x] <> Num[y] <> ")" ]
 MOSelectBlock[{x_,y_}]:=MOSelectBlock[x,y]
@@ -4066,7 +4154,7 @@ MOGroupSelectBlock[]:=MLPut["mo_groupselectblock()" ]
 MOAddContour[x_,y_]:=MLPut["mo_addcontour(" <> NumC[x] <> Num[y] <> ")" ]
 MOAddContour[{x_,y_}]:=MOAddContour[x,y]
 
-MOBendContour[tta_,dtta_]:=MLPut["mo_selectblock(" <> NumC[tta] <> Num[dtta] <> ")" ]
+MOBendContour[tta_,dtta_]:=MLPut["mo_bendcontour(" <> NumC[tta] <> Num[dtta] <> ")" ]
 
 MOSelectPoint[x_,y_]:=MLPut["mo_selectpoint(" <> NumC[x] <> Num[y] <> ")" ]
 MOSelectPoint[{x_,y_}]:=MOSelectPoint[x,y]
@@ -4097,6 +4185,34 @@ MOSnapGrid[flag]:=MLPut["mo_gridsnap(" <> Quote[flag] <> ")" ]
 
 MOSnapGridOn[]:=MLPut["mo_gridsnap(\"on\")"]
 
+(* femm-qt: the documented spelling. *)
+MIGridSnap[flag_]:=MLPut["mi_gridsnap(" <> Quote[flag] <> ")"]
+EIGridSnap[flag_]:=MLPut["ei_gridsnap(" <> Quote[flag] <> ")"]
+HIGridSnap[flag_]:=MLPut["hi_gridsnap(" <> Quote[flag] <> ")"]
+CIGridSnap[flag_]:=MLPut["ci_gridsnap(" <> Quote[flag] <> ")"]
+MOGridSnap[flag_]:=MLPut["mo_gridsnap(" <> Quote[flag] <> ")"]
+EOGridSnap[flag_]:=MLPut["eo_gridsnap(" <> Quote[flag] <> ")"]
+HOGridSnap[flag_]:=MLPut["ho_gridsnap(" <> Quote[flag] <> ")"]
+COGridSnap[flag_]:=MLPut["co_gridsnap(" <> Quote[flag] <> ")"]
+
+(* femm-qt additions -- see the usage messages above. *)
+MOGetTitle[]:=MLPutWait["mo_gettitle()"]
+EOGetTitle[]:=MLPutWait["eo_gettitle()"]
+HOGetTitle[]:=MLPutWait["ho_gettitle()"]
+COGetTitle[]:=MLPutWait["co_gettitle()"]
+MIGetTitle[]:=MLPutWait["mi_gettitle()"]
+EIGetTitle[]:=MLPutWait["ei_gettitle()"]
+HIGetTitle[]:=MLPutWait["hi_gettitle()"]
+CIGetTitle[]:=MLPutWait["ci_gettitle()"]
+MOSmooth[flag_]:=MLPut["mo_smooth(" <> Quote[flag] <> ")"]
+MOSnapGrid[flag_]:=MLPut["mo_gridsnap(" <> Quote[flag] <> ")"]
+EOSmooth[flag_]:=MLPut["eo_smooth(" <> Quote[flag] <> ")"]
+EOSnapGrid[flag_]:=MLPut["eo_gridsnap(" <> Quote[flag] <> ")"]
+HOSmooth[flag_]:=MLPut["ho_smooth(" <> Quote[flag] <> ")"]
+HOSnapGrid[flag_]:=MLPut["ho_gridsnap(" <> Quote[flag] <> ")"]
+COSmooth[flag_]:=MLPut["co_smooth(" <> Quote[flag] <> ")"]
+COSnapGrid[flag_]:=MLPut["co_gridsnap(" <> Quote[flag] <> ")"]
+
 MOSnapGridOff[]:=MLPut["mo_gridsnap(\"off\")"]
 
 MOSetGrid[density_,type_]:=
@@ -4110,7 +4226,7 @@ MOShowDensityPlot[legend_,gscale_,bu_,bl_,type_]:=
 
 MOHideContourPlot[]:=MLPut["mo_hidecontourplot()"]
 
-MOShowContourPlot[numcontours_,Al,Au,type]:=
+MOShowContourPlot[numcontours_,Al_,Au_,type_]:=
         MLPut["mo_showcontourplot(" <> NumC[numcontours] <> NumC[Al] <>
                 NumC[Au] <> Quote[type] <> ")" ]
 
@@ -4495,7 +4611,7 @@ EOGroupSelectBlock[]:=MLPut["eo_groupselectblock()" ]
 EOAddContour[x_,y_]:=MLPut["eo_addcontour(" <> NumC[x] <> Num[y] <> ")" ]
 EOAddContour[{x_,y_}]:=EOAddContour[x,y]
 
-EOBendContour[tta_,dtta_]:=MLPut["eo_selectblock(" <> NumC[tta] <> Num[dtta] <> ")" ]
+EOBendContour[tta_,dtta_]:=MLPut["eo_bendcontour(" <> NumC[tta] <> Num[dtta] <> ")" ]
 
 EOSelectPoint[x_,y_]:=MLPut["eo_selectpoint(" <> NumC[x] <> Num[y] <> ")" ]
 EOSelectPoint[{x_,y_}]:=EOSelectPoint[x,y]
@@ -4539,7 +4655,7 @@ EOShowDensityPlot[legend_,gscale_,type_,bu_,bl_]:=
 
 EOHideContourPlot[]:=MLPut["eo_hidecontourplot()"]
 
-EOShowContourPlot[numcontours_,Al,Au]:=
+EOShowContourPlot[numcontours_,Al_,Au_]:=
         MLPut["eo_showcontourplot(" <> NumC[numcontours] <> NumC[Al] <>
                 Num[Au] <> ")" ]
 
@@ -4949,7 +5065,7 @@ HOGroupSelectBlock[]:=MLPut["ho_groupselectblock()" ]
 HOAddContour[x_,y_]:=MLPut["ho_addcontour(" <> NumC[x] <> Num[y] <> ")" ]
 HOAddContour[{x_,y_}]:=HOAddContour[x,y]
 
-HOBendContour[tta_,dtta_]:=MLPut["ho_selectblock(" <> NumC[tta] <> Num[dtta] <> ")" ]
+HOBendContour[tta_,dtta_]:=MLPut["ho_bendcontour(" <> NumC[tta] <> Num[dtta] <> ")" ]
 
 HOSelectPoint[x_,y_]:=MLPut["ho_selectpoint(" <> NumC[x] <> Num[y] <> ")" ]
 HOSelectPoint[{x_,y_}]:=HOSelectPoint[x,y]
@@ -4993,7 +5109,7 @@ HOShowDensityPlot[legend_,gscale_,type_,bu_,bl_]:=
 
 HOHideContourPlot[]:=MLPut["ho_hidecontourplot()"]
 
-HOShowContourPlot[numcontours_,Al,Au]:=
+HOShowContourPlot[numcontours_,Al_,Au_]:=
         MLPut["ho_showcontourplot(" <> NumC[numcontours] <> NumC[Al] <>
                 Num[Au] <> ")" ]
 
@@ -5085,7 +5201,7 @@ CISetBlockProp[blockname_,automesh_,meshsize_,group_]:=
 
 CISetSegmentProp[pn_,es_,am_,ci_,gr_, inconductor_]:=
         MLPut["ci_setsegmentprop(" <> QuoteC[pn] <> NumC[es] <>
-                NumC[am] <> NumC[hi] <> NumC[gr] <> Quote[inconductor] <> ")"];
+                NumC[am] <> NumC[ci] <> NumC[gr] <> Quote[inconductor] <> ")"];
 
 CISetArcSegmentProp[maxsegdeg_,propname_,hide_,group_,incond_]:=
         MLPut["ci_setarcsegmentprop(" <> NumC[maxsegdeg] <> QuoteC[propname]
@@ -5385,7 +5501,7 @@ COGroupSelectBlock[]:=MLPut["co_groupselectblock()" ]
 COAddContour[x_,y_]:=MLPut["co_addcontour(" <> NumC[x] <> Num[y] <> ")" ]
 COAddContour[{x_,y_}]:=COAddContour[x,y]
 
-COBendContour[tta_,dtta_]:=MLPut["co_selectblock(" <> NumC[tta] <> Num[dtta] <> ")" ]
+COBendContour[tta_,dtta_]:=MLPut["co_bendcontour(" <> NumC[tta] <> Num[dtta] <> ")" ]
 
 COSelectPoint[x_,y_]:=MLPut["co_selectpoint(" <> NumC[x] <> Num[y] <> ")" ]
 COSelectPoint[{x_,y_}]:=COSelectPoint[x,y]
@@ -5429,7 +5545,7 @@ COShowDensityPlot[legend_,gscale_,type_,bu_,bl_]:=
 
 COHideContourPlot[]:=MLPut["co_hidecontourplot()"]
 
-COShowContourPlot[numcontours_,Al,Au]:=
+COShowContourPlot[numcontours_,Al_,Au_]:=
         MLPut["co_showcontourplot(" <> NumC[numcontours] <> NumC[Al] <>
                 Num[Au] <> ")" ]
 
