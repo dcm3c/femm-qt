@@ -48,19 +48,46 @@ For example, `mo_getb(x,y)` is `z = mo_getpointvalues(x,y); return [z[1], z[2]]`
 | `mo_ eo_ ho_ co_ _snapgrid(...)` | `*_gridsnap(...)` |
 | `mi_setcurrent(name, x)` | `mi_modifycircprop(name, 1, x)` |
 
-**Genuinely absent (2)**
+**Genuinely absent — REMOVED 2026-08-29**
 
-`mo_getnodeindex` and `mo_getelementindex` are implemented nowhere in femm-qt —
+`*_getnodeindex` and `*_getelementindex` were implemented nowhere in femm-qt —
 not in-process and therefore not over the wire either, since the wire server
-executes the same command set. pyFEMM declares two functions that have never
-worked against this program.
+executes the same command set.
 
-## Fixing it
+It was **eight** names, not the two this audit first reported: counting pyFEMM's
+name list alone missed that scifemm and juliafemm each declared all four
+physics, juliafemm `export`ing them. All eighteen declarations are now deleted.
 
-The first 60 are Python one-liners and belong in the same compat block in
-`py_init_script.cpp`; no C++ binding work is involved. The remaining two are a
-real feature decision: implement them, or delete them from `pyfemm/femm.py` so
-the binding stops advertising what it cannot do.
+**Provenance, settled by search rather than assumed.** They are in no engine
+command, in neither manual, and in no upstream: checked all four legacy pyFEMM
+variants in `OneDrive/femm43src` (`pyfemm`, `pyfemm_ctypes`, `pyfemm_dev_013`,
+`pyfemm_dev_014` — including the newest 2129-line `femm/__init__.py`), upstream
+`octavefemm`, `mathfemm`, `scifemm`, and the FEMM 4.3 engine sources. Zero hits,
+against a control of `getpointvalues` that hits in every one of them. Note that
+`femm42src/pyfemm/` is only a packaging skeleton — its MANIFEST lists a
+`femm/__init__.py` that is not there — so searching THAT tree proves nothing;
+femm43src is where the actual binding source lives.
+
+So they were invented during this port. Git agrees: pyfemm's pair arrived in the
+first pyfemm commit (`c323b05`, 2026-03-26), and `1900c10` (2026-04-04), *"Add
+missing functions to scifemm and juliafemm from pyfemm cross-check"*, propagated
+them into two more bindings and from 2 names to 8 — **a consistency sweep that
+took one binding as ground truth and copied a phantom outward.**
+
+Why no test caught them: every recorder is driven by `contract.tsv`, which is
+derived from octavefemm. octavefemm never had these, so they were never in the
+contract and never called, and nothing reports a name present in a binding but
+absent from the contract. The suite answers "does every octavefemm wrapper have
+a correct counterpart elsewhere", not "does every binding's exported surface
+work".
+
+## Fixing the rest
+
+The 60 are Python one-liners and belong in the same compat block in
+`py_init_script.cpp`; no C++ binding work is involved. Note the tail: putting
+them there makes them ENGINE commands, so `testing/DocDriftTest.py` will then
+require an entry for each in the femm-qt manual, which today documents them
+only in the octavefemm manual.
 
 ## Two traps for whoever audits this again
 

@@ -72,8 +72,9 @@ class CBigLinProb
 		// indefinite circuit-constraint case that QMRSolve exists for -- D
 		// simply carries the sign, and no square roots are taken. Factored
 		// once per assembly and reused across every inner solve until a
-		// value mutation resets icState; the per-pivot rescue in FactorPC
-		// keeps the factor finite unconditionally, so this is the ONLY
+		// value mutation resets icState; FactorPC retries under a growing
+		// diagonal shift and falls back to the diagonal itself, so it
+		// always yields a usable factor and this is the ONLY
 		// preconditioner. icPtr/icCol/icVal store L by COLUMN k with row
 		// indices r>k ascending; L's unit diagonal is implicit.
 		std::vector<int> icPtr, icCol;
@@ -84,6 +85,9 @@ class CBigLinProb
 		// being consumed half-built.
 		int icState = 0;
 		void FactorPC();
+		bool FactorPCOnce(double alpha);
+		double DominanceShift();
+		double RowNorm(int k);
 		void MultIC(double *X, double *Y);
 
 		CBigLinProb();
@@ -172,9 +176,9 @@ class CBigComplexLinProb
 		// state machine). The harmonic matrix is complex-symmetric, NOT
 		// Hermitian, so the factorization is the unconjugated M = L D L^T
 		// with complex D -- root-free, so no complex square roots with
-		// arbitrary phase are ever taken; a near-zero complex pivot is the
-		// only breakdown mode and is caught by the same magnitude guard as
-		// the real case.
+		// arbitrary phase are ever taken. A near-zero complex pivot is the
+		// only breakdown mode; FactorPC handles it by refactoring under a
+		// growing diagonal shift, exactly as the real twin does.
 		std::vector<int> icPtr, icCol;
 		std::vector<CComplex> icVal, icD;
 		// 0 = stale, 1 = factored, 2 = build in progress. Readers test
@@ -183,6 +187,9 @@ class CBigComplexLinProb
 		// being consumed half-built.
 		int icState = 0;
 		void FactorPC();
+		bool FactorPCOnce(double alpha);
+		double DominanceShift();
+		double RowNorm(int k);
 		void MultIC(CComplex *X, CComplex *Y);
 
 		CBigComplexLinProb();

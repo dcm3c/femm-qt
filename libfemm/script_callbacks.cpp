@@ -30,6 +30,10 @@
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
 #endif
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#endif
 #endif
 
 // ---------------------------------------------------------------------------
@@ -311,10 +315,29 @@ std::string exeDir()
     }
 #else
     char buf[4096];
-    ssize_t n = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
-    if (n > 0) {
-        buf[n] = '\0';
-        dir = buf;
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+    // FreeBSD does NOT mount /proc by default, so readlink("/proc/self/exe")
+    // fails and exeDir() returns "" -- taking the solvers, python/, the
+    // PyBridge worker, the manual and the material libraries with it. The
+    // symptom is "solvers not found" with every file present, which points
+    // nowhere near the cause. sysctl is the portable answer and needs no
+    // filesystem mounted.
+    {
+        int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+        size_t cb = sizeof(buf);
+        if (sysctl(mib, 4, buf, &cb, nullptr, 0) == 0 && cb > 0)
+            dir.assign(buf, strnlen(buf, cb));
+    }
+#endif
+    if (dir.empty()) {
+        // Linux, and a FreeBSD host that does have linprocfs mounted.
+        ssize_t n = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
+        if (n > 0) {
+            buf[n] = '\0';
+            dir = buf;
+        }
+    }
+    if (!dir.empty()) {
         auto slash = dir.rfind('/');
         if (slash != std::string::npos)
             dir = dir.substr(0, slash + 1);

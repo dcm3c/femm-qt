@@ -331,6 +331,10 @@ specified by \texttt{(x2,y2)}.
 \item \texttt{ei\_gridsnap('flag')} Setting flag to ''on'' turns on snap to grid,
 setting flag to 'off'turns off snap to grid.
 
+\item{\tt ei\_snapgridon} turns on snap-to-grid. Equivalent to {\tt ei\_gridsnap('on')}.
+
+\item{\tt ei\_snapgridoff} turns off snap-to-grid. Equivalent to {\tt ei\_gridsnap('off')}.
+
 \item \texttt{ei\_setgrid(density,'type')} Change the grid spacing. The density
 parameter specifies the space between grid points, and the type
 parameter is set to \texttt{'cart'} for Cartesian coordinates or
@@ -344,7 +348,8 @@ parameter is set to \texttt{'cart'} for Cartesian coordinates or
  minimized or maximized state.
 \item{\tt ei\_resize(width,height)} resizes the active electrostatics input
  window client area to width $\times$ height.
-%\item{\tt ei\_getview} grabs the currently displayed electrostatics output view and imports it into Octave.
+\item{\tt ei\_getview} grabs the currently displayed electrostatics input view and
+ returns it as an image matrix, in the form \texttt{imread} would return.
 \end{itemize}
 
 
@@ -506,6 +511,12 @@ destroys the current document.
 block label names on screen. To hide the block label names,
 \texttt{flag} should be 0. To display the names, the parameter
 should be set to 1.
+
+\item{\tt ei\_hidenames} hides the block label names. Equivalent to {\tt ei\_shownames(0)}.
+
+\item{\tt ei\_gettitle} returns the file path of the current document as a string.
+
+\item{\tt ei\_setcomment('comment')} sets the comment/description string associated with the current problem.
 
 \item{\tt ei\_readdxf('filename')} This function imports a dxf file specified by {\tt 'filename'}.
 
@@ -756,6 +767,10 @@ constant over each element. Setting flag equal to \texttt{'on'}
 turns on smoothing, and setting flag to \texttt{'off'} turns off
 smoothing.
 
+\item{\tt eo\_smoothon} turns on smoothing of the $D$ and $E$ fields, which are naturally piece-wise constant over each element. Equivalent to {\tt eo\_smooth('on')}.
+
+\item{\tt eo\_smoothoff} turns off smoothing. Equivalent to {\tt eo\_smooth('off')}.
+
 \item \texttt{eo\_showgrid} Show the grid points.
 
 \item \texttt{eo\_hidegrid} Hide the grid points points.
@@ -814,7 +829,8 @@ current grid size setting.
 \item{\tt eo\_resize(width,height)} resizes the active electrostatics output
  window client area to width $\times$ height.
 
-%\item{\tt eo\_getview} grabs the currently displayed electrostatics output view and imports it into Octave.
+\item{\tt eo\_getview} grabs the currently displayed electrostatics output view and
+ returns it as an image matrix, in the form \texttt{imread} would return.
 
 \end{itemize}
 
@@ -840,6 +856,16 @@ block label names on screen. To hide the block label names,
 should be set to 1.
 
 
+\item{\tt eo\_hidenames} hides the block label names. Equivalent to {\tt eo\_shownames(0)}.
+
+\item{\tt eo\_gettitle} returns the file path of the current document as a string.
+
+\item{\tt eo\_snapgrid('flag')} setting {\tt flag} to {\tt 'on'} turns on snap to grid, setting it to {\tt 'off'} turns it off.
+
+\item{\tt eo\_snapgridon} turns on snap-to-grid. Equivalent to {\tt eo\_snapgrid('on')}.
+
+\item{\tt eo\_snapgridoff} turns off snap-to-grid. Equivalent to {\tt eo\_snapgrid('off')}.
+
 \item{\tt eo\_numnodes} Returns the number of nodes in the in focus electrostatics output mesh.
 \item{\tt eo\_numelements} Returns the number of elements in the in focus electrostatics output mesh.
 \item{\tt eo\_getnode(n)} Returns the (x,y) or (r,z) position of the nth mesh node.
@@ -853,5 +879,15 @@ should be set to 1.
         \item element area using the length unit defined for the problem
         \item group number associated with the element
     \end{enumerate}
+
+
+\item {\bf Bulk getters.}  These fetch the whole mesh in one call instead of one item at a time, which is much faster than looping the per-item getters.  Mesh node indices are {\bf 1-based}, matching {\tt eo\_getnode} and {\tt eo\_getelement}.  Each returns:
+
+\begin{itemize}
+\item{\tt eo\_getallnodes} an $N \times 2$ matrix of the coordinates of every mesh node.
+\item{\tt eo\_getallelements} an $N \times 7$ matrix with one row per mesh element, as {\tt eo\_getelement}.
+\item{\tt eo\_getalld} an $N \times 2$ matrix of the electric displacement $D_x, D_y$ at every element. The value is constant over each element; no smoothing is applied and no point search is performed.
+\item{\tt eo\_getallv} the voltage at every mesh node. Note that this is per {\em node}, whereas {\tt eo\_getalld} is per {\em element}.
+\end{itemize}
 
 \end{itemize}

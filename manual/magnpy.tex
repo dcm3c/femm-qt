@@ -41,24 +41,49 @@ complex, that seemed the wrong trade to inherit.
 \section{Importing Python Modules}
 
 FEMM scripts can import user-written Python modules using the standard
-\verb+import+ statement.  Modules are searched for in two locations:
+\verb+import+ statement.  Modules are searched for in three locations, in
+this order:
 
 \begin{enumerate}
 \item The current working directory (set automatically when a script is
       opened via the toolbar, or manually via \verb+setcurrentdirectory()+).
-\item A \verb+python/+ folder located next to the FEMM executables.
+\item A \verb+python/+ folder located next to the FEMM executables.  This
+      is where FEMM's own bundled modules live.
+\item A \verb+python/+ folder in your personal FEMM directory:
+
+      \begin{tabular}{ll}
+      Windows          & \verb+%APPDATA%\FEMM\python+ \\
+      macOS            & \verb+~/Library/Application Support/FEMM/python+ \\
+      Linux, FreeBSD   & \verb+~/.local/share/FEMM/python+ \\
+      \end{tabular}
+
+      \noindent(on Linux and FreeBSD, \verb+$XDG_DATA_HOME/FEMM/python+ if
+      you have set that variable).  The folder is not created for you;
+      make it if you want to use it.
 \end{enumerate}
 
-To use a custom module, simply place a \verb+.py+ file in either location.
-For example, if you create \verb+python/myutils.py+ containing helper
-functions, any FEMM script can use them with \verb+import myutils+.
+{\bf Put your own modules in the third location.}  It is the only one of
+the three that belongs to you: the \verb+python/+ folder beside the
+executables holds the modules FEMM ships, and installing a new version of
+FEMM replaces its entire contents, so anything you add there is lost on
+the next upgrade.  On a system where FEMM has been installed for all users
+it may not be writable at all.
+
+The search order means FEMM's own modules take precedence.  A file of your
+own named, say, \verb+csv.py+ will not override the \verb+csv+ that FEMM
+provides --- which is deliberate, since a shadowed standard module
+produces errors that look like faults in FEMM itself.  Choose a name that
+is not already taken.
+
+For example, creating \verb+myutils.py+ in your personal \verb+python/+
+folder lets any FEMM script use it with \verb+import myutils+.
 
 Additional pure-Python modules compatible with MicroPython can be obtained
 from the MicroPython standard library repository at
 \href{https://github.com/micropython/micropython-lib}%
 {\tt https://github.com/micropython/micropython-lib}.
-Download the desired \verb+.py+ file and place it in the \verb+python/+
-folder.
+Download the desired \verb+.py+ file and place it in your personal
+\verb+python/+ folder.
 
 Note: only pure-Python modules can be added this way; CPython C-extension
 modules are not compatible with MicroPython.
@@ -398,6 +423,12 @@ closest to (x1,y1) to node closest to (x2,y2)
 \item{\tt mi\_addarc(x1,y1,x2,y2,angle,maxseg)} Add a new arc segment
 from the nearest node to (x1,y1) to the nearest node to (x2,y2)
 with angle `angle' divided into `maxseg' segments.
+
+\item{\tt mi\_drawline(x1,y1,x2,y2)} Adds nodes at (x1,y1) and (x2,y2) and adds a line segment between them. Unlike {\tt mi\_addsegment}, which connects the nearest EXISTING nodes, this creates the nodes it needs.
+
+\item{\tt mi\_drawarc(x1,y1,x2,y2,angle,maxseg)} Adds nodes at (x1,y1) and (x2,y2) and adds an arc segment of the specified angle and discretization between them.
+
+\item{\tt mi\_drawrectangle(x1,y1,x2,y2)} Adds nodes at the corners of the rectangle with opposite corners (x1,y1) and (x2,y2), then adds the four segments connecting them.
 
 \item{\tt mi\_deleteselected} Delete all selected objects.
 
@@ -1161,6 +1192,8 @@ is applied to the $B$ and $H$ fields, which are naturally
 piece-wise constant over each element.  Setting {\tt flag} equal to
 {\tt "on"} turns on smoothing, and setting {\tt flag} to {\tt
 "off"} turns off smoothing.
+\item{\tt mo\_setweightingscheme(n)} Changes the weighting method used for Weighted Stress Tensor force and torque integrals. Type 0, the default, is recommended: it generates a line of elements in the middle of the air gap between components, minimizing error. Type 1 weights all elements equally and uses all elements in the gap. Types 2, 3 and 4 select alternative element weightings and mask transition profiles.
+
 \item{\verb+mo_showgrid()+} Show the grid points.
 \item{\verb+mo_hidegrid()+} Hide the grid points.
 \item{\verb+mo_gridsnap("flag")+}
@@ -1266,12 +1299,26 @@ names, the parameter should be set to 1.
         \item group number associated with the element
     \end{enumerate}
 
+
+\medskip\noindent
+{\bf About the bulk getters.}  The {\tt *\_getall...} functions return the whole
+mesh in one call instead of one item at a time.  What you get back depends on
+where the script runs.  Called from a language binding over the IPC connection,
+the values arrive as a single flat array and the binding wrapper reshapes them
+into the matrix described below.  Called from a script running inside FEMM
+itself, the function returns that matrix directly, as a numpy array --- there is
+nothing to reshape.  Either way the values, their order and their units are the
+same.  Mesh node indices are {\bf 1-based}, matching {\tt *\_getnode} and
+{\tt *\_getelement}.  (Note that the element records inside a solution file are
+0-based; the scripting interface adds one on the way out.)  Quantities that can
+have a phase --- magnetics and current flow at a nonzero frequency --- come back
+complex; everything else comes back real.
+\medskip
+
 \item{\tt mo\_getallnodes()} Returns the coordinates of {\em all} mesh
-nodes as a single flat array of $N \times 2$ values: $x_1, y_1, x_2, y_2,
-\ldots$  In the language bindings (MATLAB, Octave, Python, etc.), the
-wrapper function reshapes this into an $N \times 2$ matrix.  Approximately
+nodes as an $N \times 2$ matrix, one row per node: $x_k, y_k$.  Approximately
 50$\times$ faster than calling {\tt mo\_getnode} in a loop, because all data
-is transferred in a single IPC call.
+is obtained in a single call.
 
 \item{\tt mo\_getallelements()} Returns data for {\em all} mesh elements as
 a flat array of $N \times 7$ values.  Each group of 7 contains the same

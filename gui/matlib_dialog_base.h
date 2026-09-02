@@ -102,7 +102,13 @@ private:
     void editFolderItem(QTreeWidgetItem *folderItem);
     void visitVendor(const QString &url, const QString &name);
     void importMaterials(MatLibTree *targetTree, QTreeWidgetItem *targetFolder);
+    void offerShippedLibraryUpdate();
 
+    // Two of them on purpose: m_libPath is where this library is currently READ
+    // from (the shipped original until the user has a copy of their own), while
+    // m_libFilename is the bare "matlib.dat" the resolver needs to work out
+    // where a WRITE should go. See material_lib_path.h.
+    QString m_libFilename;
     std::string m_libPath;
     MatLibTree *m_activeTree;  // last tree to gain focus / be right-clicked
 };

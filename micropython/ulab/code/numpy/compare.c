@@ -548,7 +548,16 @@ mp_obj_t compare_nonzero(mp_obj_t x) {
     uint8_t *origin = (uint8_t *)ndarray->array;
 
     // First, count the number of Trues:
-    uint16_t count = 0;
+    // femm-qt: size_t, not uint16_t. Upstream counts hits in a uint16 and
+    // returns the indices in a uint16 array, so on an input longer than 65535
+    // BOTH wrap -- the result comes back the wrong length AND holds indices
+    // reduced mod 65536, with no error. np.take then gathers the wrong
+    // elements. A finite-element mesh passes 65535 routinely (this tree ships
+    // a 156k-node example), and nonzero() over a group mask is the natural way
+    // to select part of one. Note that upstream's argsort() guards the same
+    // limit explicitly ("axis too long"), which is what marks this as an
+    // oversight rather than a design decision. Indices are int32 below.
+    size_t count = 0;
     size_t indices[ULAB_MAX_DIMS];
 
     #if ULAB_MAX_DIMS > 3
@@ -591,11 +600,16 @@ mp_obj_t compare_nonzero(mp_obj_t x) {
     #endif
 
     mp_obj_t *items = m_new(mp_obj_t, ndarray->ndim);
-    uint16_t *arrays[ULAB_MAX_DIMS];
+    // femm-qt: int32 indices, not uint16 -- see the count above. SIGNED,
+    // matching numpy, whose nonzero() returns signed intp: an index array is
+    // routinely used as `idx - 1` (1-based connectivity to 0-based), and on an
+    // unsigned type that turns element 0 into a huge positive number instead
+    // of -1.
+    int32_t *arrays[ULAB_MAX_DIMS];
 
     for(uint8_t i = 0; i < ndarray->ndim; i++) {
-        ndarray_obj_t *item_array = ndarray_new_linear_array(count, NDARRAY_UINT16);
-        uint16_t *iarray = (uint16_t *)item_array->array;
+        ndarray_obj_t *item_array = ndarray_new_linear_array(count, NDARRAY_INT32);
+        int32_t *iarray = (int32_t *)item_array->array;
         arrays[ULAB_MAX_DIMS - 1 - i] = iarray;
         items[ndarray->ndim - 1 - i] = MP_OBJ_FROM_PTR(item_array);
     }

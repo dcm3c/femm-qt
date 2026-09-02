@@ -256,6 +256,25 @@ check("pathlib name/stem/suffix",
 check("string constants", (string.digits, string.ascii_lowercase[:3]),
       ("0123456789", "abc"))
 check("pprint.pformat", pprint.pformat({"a": 1}), "{'a': 1}")
+# Two DELIBERATE divergences from CPython, asserted so they stay deliberate.
+#
+# 1. micropython-lib's pprint has no `width`: it breaks any multi-element
+#    container across lines, where CPython keeps it on one until 80 columns.
+#    Nothing to tune -- the parameter does not exist.
+# 2. It sorts dict keys by default, and that is an IMPROVEMENT here rather
+#    than a compromise: MicroPython dicts are not insertion-ordered
+#    ({"b":1,"a":2,"c":3} iterates c,b,a), so unsorted output would be hash
+#    order. sort_dicts=False therefore cannot reproduce CPython either.
+check("pprint wraps short containers", pprint.pformat([1, 2, 3]), "[1,\n 2,\n 3]")
+check("pprint sorts dict keys", pprint.pformat({"b": 1, "a": 2}),
+      "{'a': 2,\n 'b': 1}")
+check("pprint scalars are plain", (pprint.pformat(42), pprint.pformat("hi")),
+      ("42", "'hi'"))
+check("pprint empty containers", (pprint.pformat([]), pprint.pformat({})),
+      ("[]", "{}"))
+check("pprint.pp exists", callable(pprint.pp), True)
+check("pprint.PrettyPrinter", pprint.PrettyPrinter().pformat({"a": 1}),
+      "{'a': 1}")
 check("stat", (stat.S_ISDIR(0o040755), stat.S_ISREG(0o100644)), (True, True))
 check("bisect", (bisect.bisect_left([1, 3, 5, 7], 5),
                  bisect.bisect_right([1, 3, 5, 7], 5)), (2, 3))

@@ -139,9 +139,16 @@ inproc PointLocationTest.py PointLocation
 inproc MagDirTransformTest.py MagDirTransform
 inproc FftTest.py Fft
 inproc NumpyProxyTest.py NumpyProxy
+inproc NumpyComplexTest.py NumpyComplex
+inproc BulkGetterTest.py BulkGetters
 inproc MaterialLibTest.py MaterialLib
 inproc SaveBeforeRunTest.py SaveBeforeRun
 inproc CreateMeshTest.py CreateMesh
+# Documentation drift, both manuals against the shipped wrappers and against
+# the engine. Driven from outside because it asks the ENGINE which commands
+# exist -- which manual should document a wrapper is not decidable from its
+# name, and guessing put ~30 commands in the wrong bucket.
+printf "%-26s " "DocDrift:"; python3 DocDriftTest.py "$B" | tail -1
 # The matplotlib bridge. All three SKIP cleanly when no usable CPython is
 # installed -- it is an optional capability, not a build requirement.
 inproc PyBridgeHostTest.py PyBridgeHost

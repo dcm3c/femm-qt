@@ -26,6 +26,59 @@
 #define PI 3.141592653589793238462643383279
 #endif
 
+// ---------------------------------------------------------------------------
+// Bulk getters: array construction, shared by all four physics
+// ---------------------------------------------------------------------------
+// A bulk getter returns typed ulab arrays rather than building wire text. The
+// in-process caller gets something it can compute with; the IPC caller gets the
+// same bytes as before, because py_state.cpp's format_value flattens an ndarray
+// through the very same per-value formatter every scalar result already uses.
+//
+// Values are written straight into the payload, which ulab allocates pointer-
+// free (gc_alloc_atomic), so there is no intermediate string and nothing for the
+// collector to scan.
+//
+// The DC/AC dtype rule lives here too, because getting it wrong is silent:
+//   magnetics and current flow   have a Frequency -> f8 at DC, c16 at AC
+//   electrostatics and heat flow have none        -> f8 always
+// Byte-identity holds either way (CComplex::ToString and format_complex both
+// collapse a zero imaginary part), so this is a choice made for the script side.
+extern "C" {
+#include "ndarray.h"   // ulab — header is not extern-"C" guarded, so wrap it
+}
+
+// (rows, cols) -> a dense ndarray; cols == 0 makes it 1-D of length rows.
+//
+// ulab indexes shape[] RIGHT-ALIGNED -- the last axis is shape[ULAB_MAX_DIMS-1],
+// and ndarray_new_ndarray() reads the top `ndim` slots. So a 1-D array cannot be
+// built from a one-element shape array: it would read shape[ULAB_MAX_DIMS-1]
+// past the end. Use ulab's own linear-array helper for that, and fill the 2-D
+// case right-aligned so it stays correct if ULAB_MAX_DIMS is ever raised.
+// (This is the left-vs-right-aligned trap documented in docs/ulab-max-dims.md,
+// which coincidentally works out for 2-D at the current ULAB_MAX_DIMS of 2.)
+inline ndarray_obj_t *bulkArray(size_t rows, size_t cols, uint8_t dtype) {
+    if (cols == 0) return ndarray_new_linear_array(rows, dtype);
+    size_t sh[ULAB_MAX_DIMS] = {};
+    sh[ULAB_MAX_DIMS - 2] = rows;
+    sh[ULAB_MAX_DIMS - 1] = cols;
+    return ndarray_new_dense_ndarray(2, sh, dtype);
+}
+
+inline mp_float_t *bulkF8(ndarray_obj_t *a) { return (mp_float_t *)a->array; }
+inline int32_t *bulkI4(ndarray_obj_t *a) { return (int32_t *)a->array; }
+
+// One complex element: ulab stores c16 as two contiguous mp_float_t, which is
+// also CComplex's layout — see py_clinalg.cpp, which relies on the same thing.
+inline void bulkPutC(mp_float_t *p, size_t i, const CComplex &z) {
+    p[2 * i] = (mp_float_t)z.re;
+    p[2 * i + 1] = (mp_float_t)z.im;
+}
+
+// The dtype a field quantity takes for a document at this frequency.
+inline uint8_t bulkFieldDtype(double frequency) {
+    return (frequency != 0) ? NDARRAY_COMPLEX : NDARRAY_FLOAT;
+}
+
 // Dispatch a view command with numeric args; returns the result string (empty
 // if there is no callback / no result).
 inline std::string ppViewCmd(const std::string &cmd, int nargs, double *args) {

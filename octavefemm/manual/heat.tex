@@ -18,6 +18,24 @@ underscores.
 nearest node to (x1,y1) to the nearest node to (x2,y2) with angle `angle'
 divided into `maxseg' segments.
 
+\item{\tt hi\_drawline(x1,y1,x2,y2)} Adds nodes at (x1,y1) and
+(x2,y2) and adds a line between the nodes.
+
+\item{\tt hi\_drawpolyline([x1,y1;x2,y2'...])} Adds nodes at each
+of the specified points and connects them with segments.
+
+\item{\tt hi\_drawpolygon([x1,y1;x2,y2'...])} Adds nodes at each
+of the specified points and connects them with segments to form a
+closed contour.
+
+\item{\tt hi\_drawarc(x1,y1,x2,y2,angle,maxseg)} Adds nodes at
+(x1,y1) and (x2,y2) and adds an arc of the specified angle and
+discretization connecting the nodes.
+
+\item{\tt hi\_drawrectangle(x1,y1,x2,y2)} Adds nodes at the
+corners of a rectangle defined by the points (x1,y1) and (x2,y2),
+then adds segments connecting the corners of the rectangle.
+
 \item {\tt hi\_deleteselected} Delete all selected objects.
 
 \item {\tt hi\_deleteselectednodes} Delete selected nodes.
@@ -187,64 +205,94 @@ back onto the lua stack.
 \subsection{Editing Commands}
 \begin{itemize}
 
-\item \texttt{hi\_copyrotate(bx, by, angle, copies, (editaction) )}
+\item{\tt hi\_copyrotate(bx, by, angle, copies )}
+        \begin{itemize}
+        \item{\tt bx, by} -- base point for rotation
+        \item{\tt angle} -- angle by which the selected objects are incrementally
+        shifted to make each copy.  {\tt angle} is measured in degrees.
+        \item{\tt copies} -- number of copies to be produced from
+        the selected objects.
+        \end{itemize}
 
-\texttt{bx, by} -- base point for rotation
+\item{\tt hi\_copyrotate2(bx, by, angle, copies, editaction )}
+        \begin{itemize}
+        \item{\tt bx, by} -- base point for rotation
+        \item{\tt angle} -- angle by which the selected objects are incrementally
+        shifted to make each copy.  {\tt angle} is measured in degrees.
+        \item{\tt copies} -- number of copies to be produced from
+        the selected objects.
+        \item{\tt editaction}  0 --nodes, 1 -- lines (segments), 2 --block labels, 3 -- arc
+                segments, 4- group
+        \end{itemize}
 
-\texttt{angle} -- angle by which the selected objects are incrementally
-shifted to make each copy. \texttt{angle} is measured in degrees.
+\item{\tt hi\_copytranslate(dx, dy, copies)}
+        \begin{itemize}
+        \item{\tt dx,dy} -- distance by which the selected objects are incrementally shifted.
+        \item{\tt copies} -- number of copies to be produced from the selected objects.
+        \end{itemize}
 
-\texttt{copies} -- number of copies to be produced from the selected
-objects.
+\item{\tt hi\_copytranslate2(dx, dy, copies, editaction)}
+        \begin{itemize}
+        \item{\tt dx,dy} -- distance by which the selected objects are incrementally shifted.
+        \item{\tt copies} -- number of copies to be produced from the selected objects.
+        \item{\tt editaction}  0 --nodes, 1 -- lines (segments), 2 --block labels, 3 -- arc
+                segments, 4- group
+        \end{itemize}
 
-\texttt{editaction} 0 --nodes, 1 -- lines (segments), 2 --block labels, 3 --
-arc segments, 4- group
+\item{\tt hi\_createradius(x, y, r)} turns a corner located at {\tt (x,y)} into a curve of radius {\tt r}.
 
-\item \texttt{hi\_copytranslate(dx, dy, copies, (editaction))}
+\item{\tt hi\_moverotate(bx,by,shiftangle)}
+        \begin{itemize}
+        \item{\tt bx, by} -- base point for rotation
+        \item{\tt shiftangle} -- angle in degrees by which the selected objects are rotated.
+        \end{itemize}
 
-\texttt{dx,dy} -- distance by which the selected objects are incrementally
-shifted.
+\item{\tt hi\_moverotate2(bx,by,shiftangle, editaction)}
+        \begin{itemize}
+        \item{\tt bx, by} -- base point for rotation
+        \item{\tt shiftangle} -- angle in degrees by which the selected objects are rotated.
+        \item{\tt editaction}  0 --nodes, 1 -- lines (segments), 2 --block labels, 3 -- arc
+                segments, 4- group
+        \end{itemize}
 
-\texttt{copies} -- number of copies to be produced from the selected
-objects.
+\item{\tt hi\_movetranslate(dx,dy)}
+        \begin{itemize}
+        \item{\tt dx,dy} -- distance by which the selected objects are shifted.
+        \end{itemize}
 
-\texttt{editaction} 0 --nodes, 1 -- lines (segments), 2 --block labels, 3 --
-arc segments, 4- group
+\item{\tt hi\_movetranslate2(dx,dy,editaction)}
+        \begin{itemize}
+        \item{\tt dx,dy} -- distance by which the selected objects are shifted.
+        \item{\tt editaction}  0 --nodes, 1 -- lines (segments), 2 --block labels, 3 -- arc
+                segments, 4- group
+        \end{itemize}
 
-\item{\tt hi\_createradius(x,y,r)} turns a corner located at {\tt (x,y)} into a curve of radius {\tt r}.
+\item{\tt hi\_scale(bx,by,scalefactor)}
+        \begin{itemize}
+        \item{\tt bx, by} -- base point for scaling
+        \item{\tt scalefactor} -- a multiplier that determines how
+        much the selected objects are scaled
+        \end{itemize}
 
-\item \texttt{hi\_moverotate(bx,by,shiftangle (editaction))}
+\item{\tt hi\_scale2(bx,by,scalefactor,editaction)}
+        \begin{itemize}
+        \item{\tt bx, by} -- base point for scaling
+        \item{\tt scalefactor} -- a multiplier that determines how
+        much the selected objects are scaled
+        \item{\tt editaction}  0 --nodes, 1 -- lines (segments), 2 --block labels, 3 -- arc
+                segments, 4- group
+        \end{itemize}
 
-\texttt{bx, by} -- base point for rotation
+\item{\tt hi\_mirror(x1,y1,x2,y2)}
+mirror the selected objects about a line passing through the points
+{\tt (x1,y1)} and {\tt (x2,y2)}.
 
-\texttt{shiftangle} -- angle in degrees by which the selected objects are
-rotated.
-
-\texttt{editaction} 0 --nodes, 1 -- lines (segments), 2 --block labels, 3 --
-arc segments, 4- group
-
-\item \texttt{hi\_movetranslate(dx,dy,(editaction))}
-
-\texttt{dx,dy} -- distance by which the selected objects are shifted.
-
-\texttt{editaction} 0 --nodes, 1 -- lines (segments), 2 --block labels, 3 --
-arc segments, 4- group
-
-\item \texttt{hi\_scale(bx,by,scalefactor,(editaction))}
-
-\texttt{bx, by} -- base point for scaling
-
-\texttt{scalefactor} -- a multiplier that determines how much the selected
-objects are scaled
-
-\texttt{editaction} 0 --nodes, 1 -- lines (segments), 2 --block labels, 3 --
-arc segments, 4- group
-
-\item \texttt{hi\_mirror(x1,y1,x2,y2,(editaction))} mirror the selected objects about
-a line passing through the points \texttt{(x1,y1)} and
-\texttt{(x2,y2)}. Valid \texttt{editaction} entries are 0 for
-nodes, 1 for lines (segments), 2 for block labels, 3 for arc
+\item{\tt hi\_mirror2(x1,y1,x2,y2,editaction)}
+mirror the selected objects about a line passing through the points
+{\tt (x1,y1)} and {\tt (x2,y2)}. Valid {\tt editaction} entries are
+0 for nodes, 1 for lines (segments), 2 for block labels, 3 for arc
 segments, and 4 for groups.
+
 
 \item \texttt{hi\_seteditmode(editmode)} Sets the current editmode to:
 
@@ -286,6 +334,10 @@ specified by \texttt{(x2,y2)}.
 \item \texttt{hi\_gridsnap("flag")} Setting flag to ''on'' turns on snap to grid,
 setting flag to "off"turns off snap to grid.
 
+\item{\tt hi\_snapgridon} turns on snap-to-grid. Equivalent to {\tt hi\_gridsnap('on')}.
+
+\item{\tt hi\_snapgridoff} turns off snap-to-grid. Equivalent to {\tt hi\_gridsnap('off')}.
+
 \item \texttt{hi\_setgrid(density,"type")} Change the grid spacing. The density
 parameter specifies the space between grid points, and the type
 parameter is set to \texttt{"cart"} for Cartesian coordinates or
@@ -302,6 +354,8 @@ parameter is set to \texttt{"cart"} for Cartesian coordinates or
 
 \item{\tt hi\_resize(width,height)} resizes the active heat flow input
  window client area to width $\times$ height.
+\item{\tt hi\_getview} grabs the currently displayed heat flow input view and
+ returns it as an image matrix, in the form \texttt{imread} would return.
 
 \end{itemize}
 
@@ -442,6 +496,8 @@ The various properties that can be modified are listed below:
 the point {\tt (T,k)} to the thermal conductivity vs. temperature curve for the material specified by
 {\tt "materialname"}.
 
+\item{\tt hi\_addtkpoints('blockname',points)} adds a whole thermal-conductivity curve to the material named {\tt 'blockname'}, where {\tt points} is an $n$-by-2 matrix of temperature and conductivity pairs. The three-argument form takes the two columns separately. Calls {\tt hi\_addtkpoint} once per row.
+
 \item \texttt{hi\_cleartkpoints("materialname")} erases
 all of the thermal conductivity points that have been defined for the material named
 {\tt "materialname"}.
@@ -470,6 +526,12 @@ destroys the current document.
 block label names on screen. To hide the block label names,
 \texttt{flag} should be 0. To display the names, the parameter
 should be set to 1.
+
+\item{\tt hi\_hidenames} hides the block label names. Equivalent to {\tt hi\_shownames(0)}.
+
+\item{\tt hi\_gettitle} returns the file path of the current document as a string.
+
+\item{\tt hi\_setcomment('comment')} sets the comment/description string associated with the current problem.
 
 \item{\tt hi\_readdxf("filename")} This function imports a dxf file specified by {\tt "filename"}.
 
@@ -571,6 +633,14 @@ The return values, in order, are:
 Example: To catch all values at (0.01,0) use
 
 \texttt{T,Fx,Fy,Gx,Gy,kx,ky= ho\_getpointvalues(0.01,0) }
+
+\item{\tt ho\_gett(x,y)} returns the temperature at {\tt (x,y)} -- column 1 of {\tt ho\_getpointvalues}. An equivalent form is {\tt ho\_gett([x,y])}.
+
+\item{\tt ho\_getf(x,y)} returns the two components of heat flux density {\tt Fx, Fy} at {\tt (x,y)} -- columns 2 and 3 of {\tt ho\_getpointvalues}. An equivalent form is {\tt ho\_getf([x,y])}.
+
+\item{\tt ho\_getg(x,y)} returns the two components of temperature gradient {\tt Gx, Gy} at {\tt (x,y)} -- columns 4 and 5 of {\tt ho\_getpointvalues}. An equivalent form is {\tt ho\_getg([x,y])}.
+
+\item{\tt ho\_getk(x,y)} returns the two components of thermal conductivity {\tt kx, ky} at {\tt (x,y)} -- columns 6 and 7 of {\tt ho\_getpointvalues}. An equivalent form is {\tt ho\_getk([x,y])}.
 
 \item \texttt{ho\_makeplot(PlotType,NumPoints,Filename,FileFormat) }Allows Lua access
 to the X-Y plot routines. If only PlotType or only PlotType and NumPoints
@@ -707,6 +777,10 @@ constant over each element. Setting flag equal to \texttt{"on"}
 turns on smoothing, and setting flag to \texttt{"off"} turns off
 smoothing.
 
+\item{\tt ho\_smoothon} turns on smoothing of the temperature gradient and heat flux density fields, which are naturally piece-wise constant over each element. Equivalent to {\tt ho\_smooth('on')}.
+
+\item{\tt ho\_smoothoff} turns off smoothing. Equivalent to {\tt ho\_smooth('off')}.
+
 \item \texttt{ho\_showgrid()} Show the grid points.
 
 \item \texttt{ho\_hidegrid()} Hide the grid points points.
@@ -770,6 +844,8 @@ current grid size setting.
 
 \item{\tt ho\_resize(width,height)} resizes the active heat flow input
  window client area to width $\times$ height.
+\item{\tt ho\_getview} grabs the currently displayed heat flow output view and
+ returns it as an image matrix, in the form \texttt{imread} would return.
 
 \end{itemize}
 
@@ -806,6 +882,16 @@ block label names on screen. To hide the block label names,
 should be set to 1.
 
 
+\item{\tt ho\_hidenames} hides the block label names. Equivalent to {\tt ho\_shownames(0)}.
+
+\item{\tt ho\_gettitle} returns the file path of the current document as a string.
+
+\item{\tt ho\_snapgrid('flag')} setting {\tt flag} to {\tt 'on'} turns on snap to grid, setting it to {\tt 'off'} turns it off.
+
+\item{\tt ho\_snapgridon} turns on snap-to-grid. Equivalent to {\tt ho\_snapgrid('on')}.
+
+\item{\tt ho\_snapgridoff} turns off snap-to-grid. Equivalent to {\tt ho\_snapgrid('off')}.
+
 \item{\tt ho\_numnodes} Returns the number of nodes in the in focus heat flow output mesh.
 \item{\tt ho\_numelements} Returns the number of elements in the in focus heat flow output mesh.
 \item{\tt ho\_getnode(n)} Returns the (x,y) or (r,z) position of the nth mesh node.
@@ -819,5 +905,15 @@ should be set to 1.
         \item element area using the length unit defined for the problem
         \item group number associated with the element
     \end{enumerate}
+
+
+\item {\bf Bulk getters.}  These fetch the whole mesh in one call instead of one item at a time, which is much faster than looping the per-item getters.  Mesh node indices are {\bf 1-based}, matching {\tt ho\_getnode} and {\tt ho\_getelement}.  Each returns:
+
+\begin{itemize}
+\item{\tt ho\_getallnodes} an $N \times 2$ matrix of the coordinates of every mesh node.
+\item{\tt ho\_getallelements} an $N \times 7$ matrix with one row per mesh element, as {\tt ho\_getelement}.
+\item{\tt ho\_getallf} an $N \times 2$ matrix of the heat flux density $F_x, F_y$ at every element. The value is constant over each element; no smoothing is applied and no point search is performed.
+\item{\tt ho\_getallt} the temperature at every mesh node. Note that this is per {\em node}, whereas {\tt ho\_getallf} is per {\em element}.
+\end{itemize}
 
 \end{itemize}

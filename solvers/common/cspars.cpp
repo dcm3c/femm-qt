@@ -329,17 +329,30 @@ CComplex CBigComplexLinProb::ConjDot(CComplex *x, CComplex *y)
 // Complex-symmetric specifics: M is symmetric, NOT Hermitian, so this is
 // the UNCONJUGATED M = L D L^T with complex D -- no conjugates appear, and
 // being root-free it never takes the square root of a complex number with
-// arbitrary phase. The one breakdown mode is a near-zero complex pivot;
-// the magnitude guard rescues it with the row's diagonal (nonzero here --
-// PCGSQStart trips a singular flag otherwise), and the per-pivot rescue
-// keeps the factor finite, degrading toward Jacobi as rescues accumulate.
-// Definiteness never enters: PBCGSolve's unconjugated BiCG needs only a
-// complex-symmetric preconditioner, which LDL^T with complex D is.
-// Correctness is never at stake: the Krylov loops measure the true
-// residual against the true operator, so a degraded factor costs
-// iterations, not accuracy. There is no fallback
-// preconditioner -- an SSOR one existed until telemetry across the whole
-// regression corpus showed not a single pivot ever rescued.
+// arbitrary phase. Definiteness never enters: PBCGSolve's unconjugated
+// BiCG needs only a complex-symmetric preconditioner, which LDL^T with
+// complex D is. Correctness is never at stake: the Krylov loops measure
+// the true residual against the true operator, so a degraded factor costs
+// iterations, not accuracy.
+//
+// BREAKDOWN, and why this twin has LESS to work with than the real one.
+// There is no positive-definiteness here and no inertia -- nothing whose
+// violation flags trouble early. The real twin can call a nonpositive
+// pivot on its SPD path and stop at once; complex-symmetric LDL^T has no
+// such invariant, and a pivot can vanish through cancellation between real
+// and imaginary parts with nothing wrong with the matrix at all (the real
+// symmetric [[0,1],[1,0]] is the textbook case: nonsingular, yet
+// unpivoted LDL^T dies on its first pivot). So the only signals available
+// are a VANISHING pivot and a NON-FINITE one, and both are treated as
+// breakdown by FactorPCOnce: it returns false and FactorPC refactors under
+// a larger diagonal shift.
+//
+// The old code instead patched a vanishing pivot in place and carried on.
+// That is what the real twin used to do, and it is how a saturated PM
+// motor's DC solve reached PCG with a NaN preconditioner in Aug 2026 --
+// the patched pivot leaves the factor silently no longer approximating M,
+// and the error compounds column over column to overflow. The AC path has
+// never been seen to do it, but the mechanism is identical.
 //
 // The Crout ordering computes one column of L at a time: column k is A's
 // lower column k (read from upper-triangle row k, by symmetry) minus
@@ -363,10 +376,13 @@ CComplex CBigComplexLinProb::ConjDot(CComplex *x, CComplex *y)
 // Algorithms are not copyrightable and neither is under any license that
 // would reach an independent implementation; the citations are here because
 // attribution is owed to the authors, not because a license requires it.
-void CBigComplexLinProb::FactorPC()
+// One factorization attempt against M + alpha*diag(M). Returns false on
+// breakdown, having left the factor in a partial state the caller is
+// expected to overwrite by retrying. alpha == 0 is the ordinary case and
+// reproduces the unshifted factorization exactly.
+bool CBigComplexLinProb::FactorPCOnce(double alpha)
 {
 	if(!finalized) Finalize();
-	icState = 2;
 
 	// Tuned on the nonlinear-harmonic fixture (ThrustBearingHyst): looser
 	// dropping loses iterations, tighter dropping buys iterations more
@@ -401,7 +417,22 @@ void CBigComplexLinProb::FactorPC()
 	touch.reserve(256); keep.reserve(256);
 
 	for(int k=0;k<n;k++){
-		CComplex dk = M[k][0].x;
+		// Manteuffel's shift, complex form: multiplying by the REAL factor
+		// (1+alpha) scales each diagonal's magnitude and leaves its PHASE
+		// alone. That is the complex analogue of the real twin preserving
+		// the sign, and the reason the shift is alpha*diag(M) rather than
+		// the textbook alpha*I -- alpha*I would rotate every diagonal
+		// toward the positive real axis, turning a complex-symmetric
+		// operator into something the harmonic problem never posed.
+		//
+		// A ZERO diagonal has no phase to preserve and no magnitude to
+		// scale, so those rows shift on the row's 1-norm, real and
+		// positive -- the same stand-in the pivot guard below uses. At
+		// alpha == 0 they stay exactly zero.
+		CComplex akk = M[k][0].x;   // non-const: CComplex::operator!= is not const-qualified
+		const CComplex dkk = (akk != 0) ? akk*(1.0+alpha)
+		                                : CComplex(alpha*RowNorm(k), 0);
+		CComplex dk = dkk;
 		double cnorm = abs(dk);
 
 		// load A's lower column k from upper-triangle row k
@@ -427,16 +458,11 @@ void CBigComplexLinProb::FactorPC()
 		// row k is spent; release it rather than hold all n to the end
 		std::vector<int>().swap(rowsOfL[k]);
 
-		// pivot guard; negated comparison so a NaN pivot is also rescued
-		double scale = abs(M[k][0].x);
-		if(scale==0){
-			// zero diagonal (constraint row): fall back to the row's
-			// magnitude, as the real twin does
-			for(int idx=mfPtr[k];idx<mfPtr[k+1];idx++) scale += abs(mfVal[idx]);
-			if(scale==0) scale=1;
-		}
-		if(!(abs(dk) > 1e-8*scale))
-			dk = (M[k][0].x!=0) ? M[k][0].x : CComplex(scale,0);
+		// pivot guard; negated comparisons so a NaN pivot is also caught
+		double scale = abs(dkk);
+		if(scale==0) scale = RowNorm(k);   // zero diagonal (constraint row)
+		if(!std::isfinite(dk.re) || !std::isfinite(dk.im)) return false;
+		if(!(abs(dk) > 1e-8*scale)) return false;
 		icD[k]=dk;
 
 		// drop small entries, cap the survivors at ICFILL largest
@@ -456,6 +482,7 @@ void CBigComplexLinProb::FactorPC()
 
 		for(int r : keep){
 			CComplex lrk = w[r]/dk;
+			if(!std::isfinite(lrk.re) || !std::isfinite(lrk.im)) return false;
 			icCol.push_back(r);
 			icVal.push_back(lrk);
 			rowsOfL[r].push_back(k);
@@ -464,6 +491,87 @@ void CBigComplexLinProb::FactorPC()
 		colStart[k]=icPtr[k];
 	}
 
+	return true;
+}
+
+// Row k's 1-norm, never zero. The stand-in for a diagonal that is zero and
+// so carries neither magnitude nor phase of its own.
+double CBigComplexLinProb::RowNorm(int k)
+{
+	double s = 0;
+	for(int idx=mfPtr[k];idx<mfPtr[k+1];idx++) s += abs(mfVal[idx]);
+	return (s>0) ? s : 1.0;
+}
+
+// The smallest alpha at which the shifted matrix FactorPCOnce builds is
+// diagonally dominant, or -1 if some diagonal is non-finite. See the real
+// twin for the reasoning; it carries over to complex matrices unchanged,
+// because an H-matrix is defined through the COMPARISON matrix, which
+// carries only |a_ij|. Phases drop out of it entirely, which is what makes
+// a definiteness-free guarantee possible here at all: for an H-matrix an
+// incomplete factorization exists with pivots bounded away from zero
+// whatever is dropped (Meijerink & van der Vorst 1977; Manteuffel 1980),
+// and "bounded away from zero" is precisely the property this twin lacks
+// any other way of securing.
+double CBigComplexLinProb::DominanceShift()
+{
+	if(!finalized) Finalize();
+	const double DOMFAC = 2.0;   // strict, not weak -- see the real twin
+	double worst = 0;
+	for(int i=0;i<n;i++){
+		CComplex a = M[i][0].x;
+		if(!std::isfinite(a.re) || !std::isfinite(a.im)) return -1;
+		double off = 0;
+		for(int idx=mfPtr[i];idx<mfPtr[i+1];idx++)
+			if(mfCol[idx]!=i) off += abs(mfVal[idx]);
+		// (1+alpha)*|a| >= DOMFAC*off, or alpha*RowNorm >= DOMFAC*off at a == 0
+		const double need = (a != 0) ? (DOMFAC*off/abs(a) - 1.0)
+		                             : (off>0 ? DOMFAC*off/RowNorm(i) : 0.0);
+		if(need>worst) worst = need;
+	}
+	return worst;
+}
+
+// Build the preconditioner, retrying under a growing diagonal shift if the
+// incomplete factorization breaks down. Structurally identical to the real
+// twin's FactorPC -- read that one for the full rationale -- with the ramp
+// ending at DominanceShift(), where success stops being a hope.
+//
+// Breakdown has never been observed on this path: across the regression
+// suite and the harmonic fixtures (ThrustBearingHyst,
+// RadialMagneticBearingAC and its _SR twin) not one pivot has ever needed
+// rescuing, which is why an unshifted first attempt stays the fast path and
+// reproduces earlier results bit for bit. It is here because the real twin
+// had the same clean telemetry right up until a user's motor produced the
+// matrix that broke it.
+void CBigComplexLinProb::FactorPC()
+{
+	if(!finalized) Finalize();
+	icState = 2;
+
+	// Unshifted first, and nothing else is computed unless that fails.
+	if(FactorPCOnce(0.0)){ icState = 1; return; }
+
+	const double guaranteed = DominanceShift();
+	static const double ramp[] = { 1e-3, 1e-2, 1e-1, 1.0 };
+	for(double alpha : ramp){
+		if(guaranteed >= 0 && alpha >= guaranteed) break;
+		if(FactorPCOnce(alpha)){ icState = 1; return; }
+	}
+	if(guaranteed >= 0 && FactorPCOnce(guaranteed)){ icState = 1; return; }
+
+	// Belt and braces: the diagonal itself, which MultIC applies as a plain
+	// complex scale. Reachable only through a non-finite diagonal or if
+	// rounding defeated the theorem.
+	icPtr.assign(n+1, 0);
+	icCol.clear();
+	icVal.clear();
+	icD.resize(n);
+	for(int k=0;k<n;k++){
+		CComplex d = M[k][0].x;
+		icD[k] = (d!=0 && std::isfinite(d.re) && std::isfinite(d.im))
+		         ? d : CComplex(RowNorm(k), 0);
+	}
 	icState = 1;
 }
 

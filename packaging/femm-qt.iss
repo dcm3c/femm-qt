@@ -25,6 +25,22 @@ ChangesEnvironment= yes
 PrivilegesRequired= lowest
 PrivilegesRequiredOverridesAllowed= dialog
 
+; -- Authenticode signing (Azure Trusted Signing), OFF unless asked for ------
+; pack.bat passes /DSIGN together with /Ssigntool=<command> when the signing
+; environment variables are set. Without them ISCC runs exactly as before and
+; produces an unsigned installer, so a build needs no Azure account.
+;
+; SignTool names the command registered on the ISCC command line -- it is NOT
+; a path to signtool.exe. Keep the name in step with pack.bat.
+;
+; SignedUninstaller signs the uninstaller Inno generates at install time.
+; Without it the installer is signed and the uninstaller it writes is not,
+; which is the more confusing half to leave unsigned.
+#ifdef SIGN
+SignTool          = signtool
+SignedUninstaller = yes
+#endif
+
 [Tasks]
 ; Optional, OFF by default. Adds {app}\bin to PATH so femm-lua, the solvers,
 ; and femm_gui can be run by bare name from any folder. Purely command-line
@@ -90,7 +106,20 @@ Source: "C:\Qt\6.10.3\mingw_64\plugins\imageformats\qsvg.dll";          DestDir:
 Source: "C:\Qt\6.10.3\mingw_64\plugins\iconengines\qsvgicon.dll";       DestDir: "{app}\bin\iconengines"; Flags: ignoreversion
 Source: "C:\Qt\6.10.3\mingw_64\bin\Qt6Svg.dll";                         DestDir: "{app}\bin"; Flags: ignoreversion
 
-; Material libraries (don't overwrite user-modified copies)
+; Material libraries. These are now read-only SEEDS: the copy FEMM reads and
+; writes lives per-user in %APPDATA%\FEMM (libfemm/material_lib_path.h), and it
+; is created the first time the user presses OK in the Material Library dialog.
+;
+; confirmoverwrite stays anyway, for the UPGRADE from a version that kept the
+; live library here. Such a user has edits in {app}\bin and no %APPDATA% copy
+; yet, so a silent overwrite would destroy them before they had ever forked.
+; Declining keeps the edited file, reads still resolve to it, and the next
+; dialog OK migrates those edits into %APPDATA% intact.
+;
+; The cost of declining is that {app}\bin keeps the OLD shipped library, so FEMM
+; sees nothing new to offer and that user will not be told about new stock
+; materials until an install they accept. Once everyone has migrated these can
+; become plain ignoreversion, which is what a pure seed wants.
 Source: "..\matlibs\matlib.dat";                   DestDir: "{app}\bin"; Flags: confirmoverwrite
 Source: "..\matlibs\statlib.dat";                  DestDir: "{app}\bin"; Flags: confirmoverwrite
 Source: "..\matlibs\heatlib.dat";                  DestDir: "{app}\bin"; Flags: confirmoverwrite
@@ -124,6 +153,7 @@ Source: "..\NOTICE-Qt.txt";                 DestDir: "{app}\bin"; Flags: ignorev
 Source: "..\micropython\LICENSE.micropython"; DestDir: "{app}\bin"; DestName: "LICENSE-MicroPython.txt"; Flags: ignoreversion
 Source: "..\micropython\ulab\LICENSE";      DestDir: "{app}\bin"; DestName: "LICENSE-ulab.txt"; Flags: ignoreversion
 Source: "..\third_party\bdwgc\LICENSE";   DestDir: "{app}\bin"; DestName: "LICENSE-bdwgc.txt"; Flags: ignoreversion
+Source: "..\QT-THIRD-PARTY-NOTICES.txt"; DestDir: "{app}\bin"; DestName: "QT-THIRD-PARTY-NOTICES.txt"; Flags: ignoreversion
 ; The fullest of the copies (each pylib package carries one so that a stray
 ; copy of the directory is still a compliant copy); this is the one a user
 ; browsing bin\ should find.

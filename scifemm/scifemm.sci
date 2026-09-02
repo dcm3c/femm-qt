@@ -522,6 +522,10 @@ end
 
 endfunction
 
+function ci_attachouterspace()
+callfemm('ci_attachouterspace()');
+endfunction
+
 function ci_clearselected()
 callfemm('ci_clearselected()');
 
@@ -582,6 +586,10 @@ callfemm(['ci_createradius(' , numc(x) , numc(y), num(r) , ')' ]);
 
 endfunction
 
+function ci_defineouterspace(Zo,Ro,Ri)
+callfemm(['ci_defineouterspace(' , numc(Zo) , numc(Ro) , num(Ri) , ')' ]);
+endfunction
+
 function ci_deleteboundprop(n)
 callfemm(['ci_deleteboundprop(' , quote(n) , ')' ]);
 
@@ -625,6 +633,10 @@ endfunction
 function ci_deleteselectedsegments()
 callfemm('ci_deleteselectedsegments()');
 
+endfunction
+
+function ci_detachouterspace()
+callfemm('ci_detachouterspace()');
 endfunction
 
 function ci_drawarc(p1,p2,p3,p4,p5,p6)
@@ -689,11 +701,24 @@ callfemm(['ci_getmaterial(' , quote(matname) , ')' ]);
 endfunction
 
 function vu=ci_getview()
-    fname=tempname;
+    // tempname NEEDS the parentheses here: in Scilab a bare function
+    // name binds the function pointer, not its result. It also CREATES
+    // the file, so the base path has to be cleaned up as well.
+    base=tempname();
+    fname=base+".png";
     callfemm(['ci_savebitmap(', quote(fname), ')']);
-    vu=imread(fname,'bmp');
-    system(['del ',rawquote(fname)]);
-
+    // Stock Scilab has no imread; it comes from an image module on
+    // ATOMS. Say so, rather than dying on "Undefined variable: imread".
+    if ~isdef('imread') then
+        mdelete(fname); mdelete(base);
+        error('ci_getview needs imread, which stock Scilab does not provide. Install an image module such as IPCV or SIVP from ATOMS.');
+    end
+    // No format argument: femm-qt writes PNG, and IPCV ignores the
+    // argument anyway, so naming a format there only misleads.
+    vu=imread(fname);
+    // mdelete, not a shell "del": the toolbox also runs on Linux and
+    // macOS. It is silent on a path that does not exist.
+    mdelete(fname); mdelete(base);
 endfunction
 
 function ci_hidegrid()
@@ -789,6 +814,10 @@ elseif (argn(2)==2)
 end
 callfemm(['ci_moverotate(' , numc(bx) , numc(by) , num(shiftangle) , ')' ]);
 
+endfunction
+
+function ci_moverotate2(bx,by,shiftangle,editaction)
+callfemm(['ci_moverotate(' , numc(bx) , numc(by) , numc(shiftangle) , num(editaction) , ')' ]);
 endfunction
 
 function ci_movetranslate(bx,by)
@@ -1126,11 +1155,24 @@ end
 endfunction
 
 function vu=co_getview()
-    fname=tempname;
+    // tempname NEEDS the parentheses here: in Scilab a bare function
+    // name binds the function pointer, not its result. It also CREATES
+    // the file, so the base path has to be cleaned up as well.
+    base=tempname();
+    fname=base+".png";
     callfemm(['co_savebitmap(', quote(fname), ')']);
-    vu=imread(fname,'bmp');
-    system(['del ',rawquote(fname)]);
-
+    // Stock Scilab has no imread; it comes from an image module on
+    // ATOMS. Say so, rather than dying on "Undefined variable: imread".
+    if ~isdef('imread') then
+        mdelete(fname); mdelete(base);
+        error('co_getview needs imread, which stock Scilab does not provide. Install an image module such as IPCV or SIVP from ATOMS.');
+    end
+    // No format argument: femm-qt writes PNG, and IPCV ignores the
+    // argument anyway, so naming a format there only misleads.
+    vu=imread(fname);
+    // mdelete, not a shell "del": the toolbox also runs on Linux and
+    // macOS. It is silent on a path that does not exist.
+    mdelete(fname); mdelete(base);
 endfunction
 
 function co_groupselectblock(n)
@@ -1247,6 +1289,10 @@ elseif (argn(2)==1)
 	callfemm(['co_selectblock(' , numc(x(1)) , num(x(2)) , ')' ]);
 end
 
+endfunction
+
+function co_selectconductor(pname)
+callfemm(['co_selectconductor(' , quote(pname) , ')' ]);
 endfunction
 
 function co_selectpoint(x,y)
@@ -1630,6 +1676,27 @@ callfemm(['ei_getmaterial(' , quote(matname) , ')' ]);
 
 endfunction
 
+function vu=ei_getview()
+    // tempname NEEDS the parentheses here: in Scilab a bare function
+    // name binds the function pointer, not its result. It also CREATES
+    // the file, so the base path has to be cleaned up as well.
+    base=tempname();
+    fname=base+".png";
+    callfemm(['ei_savebitmap(', quote(fname), ')']);
+    // Stock Scilab has no imread; it comes from an image module on
+    // ATOMS. Say so, rather than dying on "Undefined variable: imread".
+    if ~isdef('imread') then
+        mdelete(fname); mdelete(base);
+        error('ei_getview needs imread, which stock Scilab does not provide. Install an image module such as IPCV or SIVP from ATOMS.');
+    end
+    // No format argument: femm-qt writes PNG, and IPCV ignores the
+    // argument anyway, so naming a format there only misleads.
+    vu=imread(fname);
+    // mdelete, not a shell "del": the toolbox also runs on Linux and
+    // macOS. It is silent on a path that does not exist.
+    mdelete(fname); mdelete(base);
+endfunction
+
 function ei_hidegrid()
 callfemm('ei_hidegrid()');
 
@@ -1723,6 +1790,10 @@ elseif (argn(2)==2)
 end
 callfemm(['ei_moverotate(' , numc(bx) , numc(by) , num(shiftangle) , ')' ]);
 
+endfunction
+
+function ei_moverotate2(bx,by,shiftangle,editaction)
+callfemm(['ei_moverotate(' , numc(bx) , numc(by) , numc(shiftangle) , num(editaction) , ')' ]);
 endfunction
 
 function ei_movetranslate(bx,by)
@@ -2065,6 +2136,27 @@ end
 
 endfunction
 
+function vu=eo_getview()
+    // tempname NEEDS the parentheses here: in Scilab a bare function
+    // name binds the function pointer, not its result. It also CREATES
+    // the file, so the base path has to be cleaned up as well.
+    base=tempname();
+    fname=base+".png";
+    callfemm(['eo_savebitmap(', quote(fname), ')']);
+    // Stock Scilab has no imread; it comes from an image module on
+    // ATOMS. Say so, rather than dying on "Undefined variable: imread".
+    if ~isdef('imread') then
+        mdelete(fname); mdelete(base);
+        error('eo_getview needs imread, which stock Scilab does not provide. Install an image module such as IPCV or SIVP from ATOMS.');
+    end
+    // No format argument: femm-qt writes PNG, and IPCV ignores the
+    // argument anyway, so naming a format there only misleads.
+    vu=imread(fname);
+    // mdelete, not a shell "del": the toolbox also runs on Linux and
+    // macOS. It is silent on a path that does not exist.
+    mdelete(fname); mdelete(base);
+endfunction
+
 function eo_groupselectblock(n)
 if(argn(2)==1)
 callfemm(['eo_groupselectblock(' , num(n) , ')' ]);
@@ -2180,6 +2272,10 @@ elseif (argn(2)==1)
 	callfemm(['eo_selectblock(' , numc(x(1)) , num(x(2)) , ')' ]);
 end
 
+endfunction
+
+function eo_selectconductor(pname)
+callfemm(['eo_selectconductor(' , quote(pname) , ')' ]);
 endfunction
 
 function eo_selectpoint(x,y)
@@ -2641,11 +2737,24 @@ callfemm(['hi_getmaterial(' , quote(matname) , ')' ]);
 endfunction
 
 function vu=hi_getview()
-    fname=tempname;
+    // tempname NEEDS the parentheses here: in Scilab a bare function
+    // name binds the function pointer, not its result. It also CREATES
+    // the file, so the base path has to be cleaned up as well.
+    base=tempname();
+    fname=base+".png";
     callfemm(['hi_savebitmap(', quote(fname), ')']);
-    vu=imread(fname,'bmp');
-    system(['del ',rawquote(fname)]);
-
+    // Stock Scilab has no imread; it comes from an image module on
+    // ATOMS. Say so, rather than dying on "Undefined variable: imread".
+    if ~isdef('imread') then
+        mdelete(fname); mdelete(base);
+        error('hi_getview needs imread, which stock Scilab does not provide. Install an image module such as IPCV or SIVP from ATOMS.');
+    end
+    // No format argument: femm-qt writes PNG, and IPCV ignores the
+    // argument anyway, so naming a format there only misleads.
+    vu=imread(fname);
+    // mdelete, not a shell "del": the toolbox also runs on Linux and
+    // macOS. It is silent on a path that does not exist.
+    mdelete(fname); mdelete(base);
 endfunction
 
 function hi_hidegrid()
@@ -2741,6 +2850,10 @@ elseif (argn(2)==2)
 end
 callfemm(['hi_moverotate(' , numc(bx) , numc(by) , num(shiftangle) , ')' ]);
 
+endfunction
+
+function hi_moverotate2(bx,by,shiftangle,editaction)
+callfemm(['hi_moverotate(' , numc(bx) , numc(by) , numc(shiftangle) , num(editaction) , ')' ]);
 endfunction
 
 function hi_movetranslate(bx,by)
@@ -3079,11 +3192,24 @@ end
 endfunction
 
 function vu=ho_getview()
-    fname=tempname;
+    // tempname NEEDS the parentheses here: in Scilab a bare function
+    // name binds the function pointer, not its result. It also CREATES
+    // the file, so the base path has to be cleaned up as well.
+    base=tempname();
+    fname=base+".png";
     callfemm(['ho_savebitmap(', quote(fname), ')']);
-    vu=imread(fname,'bmp');
-    system(['del ',rawquote(fname)]);
-
+    // Stock Scilab has no imread; it comes from an image module on
+    // ATOMS. Say so, rather than dying on "Undefined variable: imread".
+    if ~isdef('imread') then
+        mdelete(fname); mdelete(base);
+        error('ho_getview needs imread, which stock Scilab does not provide. Install an image module such as IPCV or SIVP from ATOMS.');
+    end
+    // No format argument: femm-qt writes PNG, and IPCV ignores the
+    // argument anyway, so naming a format there only misleads.
+    vu=imread(fname);
+    // mdelete, not a shell "del": the toolbox also runs on Linux and
+    // macOS. It is silent on a path that does not exist.
+    mdelete(fname); mdelete(base);
 endfunction
 
 function ho_groupselectblock(n)
@@ -3201,6 +3327,10 @@ elseif (argn(2)==1)
 	callfemm(['ho_selectblock(' , numc(x(1)) , num(x(2)) , ')' ]);
 end
 
+endfunction
+
+function ho_selectconductor(pname)
+callfemm(['ho_selectconductor(' , quote(pname) , ')' ]);
 endfunction
 
 function ho_selectpoint(x,y)
@@ -3703,6 +3833,27 @@ callfemm(['mi_getmaterial(' , quote(matname) , ')' ]);
 
 endfunction
 
+function vu=mi_getview()
+    // tempname NEEDS the parentheses here: in Scilab a bare function
+    // name binds the function pointer, not its result. It also CREATES
+    // the file, so the base path has to be cleaned up as well.
+    base=tempname();
+    fname=base+".png";
+    callfemm(['mi_savebitmap(', quote(fname), ')']);
+    // Stock Scilab has no imread; it comes from an image module on
+    // ATOMS. Say so, rather than dying on "Undefined variable: imread".
+    if ~isdef('imread') then
+        mdelete(fname); mdelete(base);
+        error('mi_getview needs imread, which stock Scilab does not provide. Install an image module such as IPCV or SIVP from ATOMS.');
+    end
+    // No format argument: femm-qt writes PNG, and IPCV ignores the
+    // argument anyway, so naming a format there only misleads.
+    vu=imread(fname);
+    // mdelete, not a shell "del": the toolbox also runs on Linux and
+    // macOS. It is silent on a path that does not exist.
+    mdelete(fname); mdelete(base);
+endfunction
+
 function mi_hidegrid()
 callfemm('mi_hidegrid()');
 
@@ -3797,6 +3948,10 @@ elseif (argn(2)==2)
 end
 callfemm(['mi_moverotate(' , numc(bx) , numc(by) , num(shiftangle) , ')' ]);
 
+endfunction
+
+function mi_moverotate2(bx,by,shiftangle,editaction)
+callfemm(['mi_moverotate(' , numc(bx) , numc(by) , numc(shiftangle) , num(editaction) , ')' ]);
 endfunction
 
 function mi_movetranslate(bx,by)
@@ -4224,6 +4379,27 @@ endfunction
 function z=mo_getprobleminfo()
 	z=callfemm('mo_getprobleminfo()');
 
+endfunction
+
+function vu=mo_getview()
+    // tempname NEEDS the parentheses here: in Scilab a bare function
+    // name binds the function pointer, not its result. It also CREATES
+    // the file, so the base path has to be cleaned up as well.
+    base=tempname();
+    fname=base+".png";
+    callfemm(['mo_savebitmap(', quote(fname), ')']);
+    // Stock Scilab has no imread; it comes from an image module on
+    // ATOMS. Say so, rather than dying on "Undefined variable: imread".
+    if ~isdef('imread') then
+        mdelete(fname); mdelete(base);
+        error('mo_getview needs imread, which stock Scilab does not provide. Install an image module such as IPCV or SIVP from ATOMS.');
+    end
+    // No format argument: femm-qt writes PNG, and IPCV ignores the
+    // argument anyway, so naming a format there only misleads.
+    vu=imread(fname);
+    // mdelete, not a shell "del": the toolbox also runs on Linux and
+    // macOS. It is silent on a path that does not exist.
+    mdelete(fname); mdelete(base);
 endfunction
 
 function mo_groupselectblock(n)
@@ -4809,6 +4985,66 @@ function z=mo_getalla()
     z = raw(:);
 endfunction
 
+function z=eo_getallelements()
+    raw = callfemm('eo_getallelements()');
+    z = matrix(raw, 7, -1)';
+endfunction
+
+function z=eo_getallnodes()
+    raw = callfemm('eo_getallnodes()');
+    z = matrix(raw, 2, -1)';
+endfunction
+
+function z=eo_getalld()
+    raw = callfemm('eo_getalld()');
+    z = matrix(raw, 2, -1)';
+endfunction
+
+function z=eo_getallv()
+    raw = callfemm('eo_getallv()');
+    z = raw(:);
+endfunction
+
+function z=ho_getallnodes()
+    raw = callfemm('ho_getallnodes()');
+    z = matrix(raw, 2, -1)';
+endfunction
+
+function z=ho_getallelements()
+    raw = callfemm('ho_getallelements()');
+    z = matrix(raw, 7, -1)';
+endfunction
+
+function z=ho_getallf()
+    raw = callfemm('ho_getallf()');
+    z = matrix(raw, 2, -1)';
+endfunction
+
+function z=ho_getallt()
+    raw = callfemm('ho_getallt()');
+    z = raw(:);
+endfunction
+
+function z=co_getallnodes()
+    raw = callfemm('co_getallnodes()');
+    z = matrix(raw, 2, -1)';
+endfunction
+
+function z=co_getallelements()
+    raw = callfemm('co_getallelements()');
+    z = matrix(raw, 7, -1)';
+endfunction
+
+function z=co_getallj()
+    raw = callfemm('co_getallj()');
+    z = matrix(raw, 2, -1)';
+endfunction
+
+function z=co_getallv()
+    raw = callfemm('co_getallv()');
+    z = raw(:);
+endfunction
+
 function z=mo_getallgapb(agename, npts)
     if argn(2) < 2 then
         raw = callfemm(['mo_getallgapb(' , quote(agename) , ')']);
@@ -4832,7 +5068,7 @@ function z=mo_getallgapharmonics(agename)
     z = matrix(raw, 6, -1)';
 endfunction
 
-// --- Postprocessor: gettitle, getnodeindex, getelementindex ---
+// --- Postprocessor: gettitle ---
 
 function z=mo_gettitle()
 z=callfemm('mo_gettitle()');
@@ -4850,34 +5086,3 @@ function z=co_gettitle()
 z=callfemm('co_gettitle()');
 endfunction
 
-function z=mo_getnodeindex(x,y)
-z=callfemm(['mo_getnodeindex(' , numc(x) , num(y) , ')']);
-endfunction
-
-function z=eo_getnodeindex(x,y)
-z=callfemm(['eo_getnodeindex(' , numc(x) , num(y) , ')']);
-endfunction
-
-function z=ho_getnodeindex(x,y)
-z=callfemm(['ho_getnodeindex(' , numc(x) , num(y) , ')']);
-endfunction
-
-function z=co_getnodeindex(x,y)
-z=callfemm(['co_getnodeindex(' , numc(x) , num(y) , ')']);
-endfunction
-
-function z=mo_getelementindex(x,y)
-z=callfemm(['mo_getelementindex(' , numc(x) , num(y) , ')']);
-endfunction
-
-function z=eo_getelementindex(x,y)
-z=callfemm(['eo_getelementindex(' , numc(x) , num(y) , ')']);
-endfunction
-
-function z=ho_getelementindex(x,y)
-z=callfemm(['ho_getelementindex(' , numc(x) , num(y) , ')']);
-endfunction
-
-function z=co_getelementindex(x,y)
-z=callfemm(['co_getelementindex(' , numc(x) , num(y) , ')']);
-endfunction

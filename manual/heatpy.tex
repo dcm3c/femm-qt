@@ -19,6 +19,12 @@ underscores; that spelling is not supported.
 nearest node to (x1,y1) to the nearest node to (x2,y2) with angle `angle'
 divided into `maxseg' segments.
 
+\item{\tt hi\_drawline(x1,y1,x2,y2)} Adds nodes at (x1,y1) and (x2,y2) and adds a line segment between them. Unlike {\tt hi\_addsegment}, which connects the nearest EXISTING nodes, this creates the nodes it needs.
+
+\item{\tt hi\_drawarc(x1,y1,x2,y2,angle,maxseg)} Adds nodes at (x1,y1) and (x2,y2) and adds an arc segment of the specified angle and discretization between them.
+
+\item{\tt hi\_drawrectangle(x1,y1,x2,y2)} Adds nodes at the corners of the rectangle with opposite corners (x1,y1) and (x2,y2), then adds the four segments connecting them.
+
 \item {\tt hi\_deleteselected} Delete all selected objects.
 
 \item {\tt hi\_deleteselectednodes} Delete selected nodes.
@@ -815,6 +821,39 @@ should be set to 1.
         \item element area using the length unit defined for the problem
         \item group number associated with the element
     \end{enumerate}
+\medskip\noindent
+{\bf About the bulk getters.}  The {\tt *\_getall...} functions return the whole
+mesh in one call instead of one item at a time.  What you get back depends on
+where the script runs.  Called from a language binding over the IPC connection,
+the values arrive as a single flat array and the binding wrapper reshapes them
+into the matrix described below.  Called from a script running inside FEMM
+itself, the function returns that matrix directly, as a numpy array --- there is
+nothing to reshape.  Either way the values, their order and their units are the
+same.  Mesh node indices are {\bf 1-based}, matching {\tt *\_getnode} and
+{\tt *\_getelement}.  (Note that the element records inside a solution file are
+0-based; the scripting interface adds one on the way out.)  Quantities that can
+have a phase --- magnetics and current flow at a nonzero frequency --- come back
+complex; everything else comes back real.
+\medskip
+
+\item{\tt ho\_getallnodes()} Returns the coordinates of {\em all} mesh nodes as
+an $N \times 2$ matrix, one row per node: $x_k, y_k$.  Much faster than calling
+{\tt ho\_getnode} in a loop.
+
+\item{\tt ho\_getallelements()} Returns data for {\em all} mesh elements as an
+$N \times 7$ matrix.  Each row holds the same seven fields, in the same order,
+as {\tt ho\_getelement}: the three node indices, the centroid coordinates, the
+element area and the group number.
+
+\item{\tt ho\_getallf()} Returns the heat flux density $F$ for {\em all} mesh
+elements as an $N \times 2$ matrix, one row per element: $F_x, F_y$.  The value
+is constant over each element.  Unlike {\tt ho\_getpointvalues}, no smoothing is
+applied and no point search is performed.
+
+\item{\tt ho\_getallt()} Returns the temperature at {\em all} mesh nodes as a
+vector of $N$ values.  Note that this is per {\em node}, whereas
+{\tt ho\_getallf} is per {\em element}.
+
 
 \item{\tt ho\_gettitle()} Returns the file path of the current output document as a string.
 

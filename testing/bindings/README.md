@@ -57,6 +57,27 @@ bugs are: `int` (1, 2, 3...), `real` (-1.25, -2.75...) and `cplx`
 
 ### Per-host notes
 
+* **octavefemm runs on two hosts.** MATLAB and Octave both drive the same
+  binding, and the Layer 2 drivers are ONE file each rather than two, which
+  takes some care: MATLAB requires a script's local functions to come LAST,
+  Octave requires them to be defined BEFORE use, and those cannot both be
+  satisfied. So `*_octave.m` has no local functions at all -- helpers are
+  anonymous functions and per-case bodies are inlined in loops. Both hosts then
+  produce byte-identical output. (A stale `~/.octaverc` here adds a path from
+  another tree; harmless, but it is why Octave prints a warning first.)
+* **octavefemm, Layer 1, on both hosts.** The probe and the recorder run
+  unchanged under Octave as well as MATLAB. `BIND_EMIT_SUFFIX` appends to the
+  output name so one host does not clobber the other:
+
+      matlab -batch "emit_octavefemm"                            -> emitted_octavefemm.tsv
+      BIND_EMIT_SUFFIX=_octave octave-cli -q emit_octavefemm.m   -> emitted_octavefemm_octave.tsv
+
+  Measured 2026-08-28: **632 wrappers, byte-identical except the four
+  `*_getview`**, which embed a `tempname` -- MATLAB's `tp<hex>`, Octave's
+  `oct-<rand>`. Zero non-tempname differences. The derived contract is identical
+  too, so `nargin()` agrees between the hosts. Both were assumptions until now,
+  and using Octave's recording as the reference gives the cross-binding
+  comparison exactly the same result as MATLAB's.
 * **octavefemm** -- the recorder shadows `callfemm.m` by putting
   `stub_octavefemm/` later on the path. Runs under MATLAB or Octave.
 * **pyfemm** -- the session is built with `__new__`, so no engine is launched
@@ -291,8 +312,22 @@ Confirmed real so far:
 * `*_readdxf` -- octavefemm sends `print(mi_readdxf(...))`, so the wire returns
   nothing where the other four return the result. Byte-identical to FEMM 4.2, so
   inherited rather than introduced, but still a divergence.
-* `*_getview` -- octavefemm implements it via `*_savebitmap`; pyfemm and
-  juliafemm do not have it at all.
+* `*_getview` -- octavefemm and scifemm implement it via `*_savebitmap`; pyfemm
+  and juliafemm do not have it at all. **All sixteen were broken, and no layer
+  of this suite could have seen it**, because `*_savebitmap` does nothing
+  without a view callback -- it needs the GUI, and every layer here runs
+  stubbed or headless. mathfemm's `GetView` was the only correct one and is the
+  model: `.png` name, read as PNG, delete both temp paths.
+  * both: `imread(fname,'bmp')` on the PNG the engine writes. MATLAB errors
+    outright (`Unrecognized BMP format signature 'P'`); IPCV silently ignores
+    the argument, so the same line was fatal in one host and merely misleading
+    in the other.
+  * scifemm also: `fname=tempname` is MATLAB idiom that binds a function
+    POINTER in Scilab, and the cleanup shelled out to a Windows `del` that was
+    unreachable anyway since `imread` threw first.
+  Fixed and verified end-to-end against a running GUI in both hosts, which
+  agree: `uint8` 665x997x3, no temp files left behind. scifemm also went from
+  24 refusals to 0 (24 = 8 wrappers x 3 passes).
 * SIX mathfemm wrappers sent the wrong command outright, all byte-identical to
   FEMM 4.2 and so inherited rather than introduced -- **fixed**: `CIResize` sent
   `hi_resize`, `COResize` sent `ho_resize`, and all four of

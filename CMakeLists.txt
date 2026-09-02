@@ -338,3 +338,127 @@ add_solver(csolv "${SOLVER_DIR}/csolv"
     "${SOLVER_DIR}/csolv/prob1big.cpp"
     "${SOLVER_COMMON_DIR}/cspars.cpp"      # CBigComplexLinProb (AC current flow)
 )
+
+# =====================================================================
+#  install() rules -- for a SPLIT (FHS) layout, which is what a distro
+#  packager needs. Nothing else uses them: the Windows installer packages
+#  build/bin directly (packaging/femm-qt.iss), packaging/unix_install.sh
+#  lays down a self-contained ~/.local/opt/femm-qt, and macos_build.sh
+#  assembles the bundle. Those three are unaffected by anything here.
+#
+#  The layout deliberately matches what femmResource() searches
+#  (libfemm/femm_resource.h): executables in bin/, everything read-only in
+#  share/femm/, so /usr/bin/femm_gui finds /usr/share/femm/python via
+#  exeDir() + "../share/femm/". No compiled-in prefix is needed, which is
+#  why this works for /usr, /usr/local and ~/.local without recompiling.
+#
+#  DESTDIR comes free with install() and is what every packaging tool
+#  stages into; nothing here defeats it by writing absolute paths.
+#
+#  NOT installed, on purpose:
+#    * the four .dat material libraries go to share/femm as READ-ONLY
+#      seeds. They are the one thing femm-qt writes, and it writes them
+#      per-user now (libfemm/material_lib_path.h), so a root-owned copy
+#      under share/ is correct rather than a problem.
+#    * examples are installed read-only for the same reason; every example
+#      script writes temp.fem beside itself, so a user needs their own
+#      copy. unix_install.sh puts one in ~/Documents/FEMM; a package
+#      should leave that to the application or to the user.
+# =====================================================================
+include(GNUInstallDirs)
+set(FEMM_DATADIR "${CMAKE_INSTALL_DATADIR}/femm")
+
+# Seven executables on Linux/BSD, eight on Windows. `lua` installs as lua4
+# (OUTPUT_NAME, lua/CMakeLists.txt).
+install(TARGETS femm_headless fkn belasolv hsolv csolv lua
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+if(TARGET femm_gui)
+    install(TARGETS femm_gui RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+endif()
+if(TARGET femm_headlessw)
+    # Windows only, and ipc/CMakeLists.txt builds it only there: it is
+    # femm_headless linked -mwindows, so a GUI-spawned run raises no console
+    # window. Linux and BSD have neither problem -- no console flashes, and
+    # SIGINT already works in a terminal -- so there is nothing to install.
+    install(TARGETS femm_headlessw RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+endif()
+
+# The in-process stdlib and the PyBridge worker are STAGED into bin/ by
+# custom targets that assemble them from three source trees (pybridge/mpy,
+# pybridge/mpy/shims, pylib/). Installing the staged result rather than the
+# sources is what guarantees an installed tree contains exactly what the
+# test suite ran against.
+install(DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/python/"
+        DESTINATION "${FEMM_DATADIR}/python")
+install(DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/pybridge-worker/"
+        DESTINATION "${FEMM_DATADIR}/pybridge-worker")
+
+install(FILES
+        "${CMAKE_SOURCE_DIR}/matlibs/matlib.dat"
+        "${CMAKE_SOURCE_DIR}/matlibs/statlib.dat"
+        "${CMAKE_SOURCE_DIR}/matlibs/heatlib.dat"
+        "${CMAKE_SOURCE_DIR}/matlibs/condlib.dat"
+        DESTINATION "${FEMM_DATADIR}")
+
+# Built by manual/doit.bat rather than by CMake, so it may legitimately be
+# absent in a source tree that has never built it. OPTIONAL keeps `install`
+# working in that case instead of failing at the last step.
+install(FILES "${CMAKE_SOURCE_DIR}/manual/manual.pdf"
+        DESTINATION "${FEMM_DATADIR}" OPTIONAL)
+
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/examples/"
+        DESTINATION "${FEMM_DATADIR}/examples")
+
+# License texts. Not optional: the solvers are GPL-3.0-or-later, whose section
+# 4 requires conveying the license with the program, and every vendored MIT/X11
+# component requires its notice to be included in distributions. A package that
+# omits these is not a lawfully distributable package.
+#
+# Into share/doc/femm rather than share/femm, which is where a packager and
+# every distro policy expect to find them.
+install(FILES
+        "${CMAKE_SOURCE_DIR}/LICENSE-MIT"
+        "${CMAKE_SOURCE_DIR}/LICENSE-GPL"
+        DESTINATION "${CMAKE_INSTALL_DOCDIR}")
+foreach(_lic
+        "NOTICE-Qt.txt"
+        "QT-THIRD-PARTY-NOTICES.txt"
+        "LICENSE-melihaltun.txt"
+        # NOT THIRD-PARTY-NOTICES.txt: it is generated from the macOS .app's
+        # Contents/Frameworks and documents the Homebrew dylibs macdeployqt
+        # copies in. A packaged build links the system Qt and ships none of
+        # them, so including it would attribute libraries that are not there.
+        "lua/liblua/COPYRIGHT"
+        "lua/luasocket-1.0/COPYRIGHT"
+        "micropython/LICENSE.micropython"
+        "micropython/ulab/LICENSE"
+        "third_party/bdwgc/LICENSE"
+        "pylib/vendor/LICENSE.micropython-lib")
+    # Flatten to a distinct name: four of these are called COPYRIGHT or
+    # LICENSE, so copying them without renaming would silently leave one.
+    string(REPLACE "/" "-" _name "${_lic}")
+    install(FILES "${CMAKE_SOURCE_DIR}/${_lic}"
+            DESTINATION "${CMAKE_INSTALL_DOCDIR}" RENAME "${_name}" OPTIONAL)
+endforeach()
+
+# The language bindings. Clients find these themselves -- they are not
+# resolved through femmResource -- but a package that omits them ships an
+# engine nobody can drive from Octave, Python, Scilab, Julia or Lua.
+foreach(_b octavefemm mathfemm scifemm juliafemm luafemm pyfemm)
+    install(DIRECTORY "${CMAKE_SOURCE_DIR}/${_b}/"
+            DESTINATION "${FEMM_DATADIR}/${_b}"
+            PATTERN "__pycache__" EXCLUDE
+            PATTERN "examples" EXCLUDE)
+endforeach()
+
+# Desktop integration, Linux/BSD only -- a .desktop file is meaningless on
+# Windows and macOS. Exec is the INSTALLED bin/, not a build path.
+if(UNIX AND NOT APPLE)
+    install(FILES "${CMAKE_SOURCE_DIR}/gui/icons/femm.png"
+            DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps"
+            RENAME femm-qt.png OPTIONAL)
+    configure_file("${CMAKE_SOURCE_DIR}/packaging/femm-qt.desktop.in"
+                   "${CMAKE_CURRENT_BINARY_DIR}/femm-qt.desktop" @ONLY)
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/femm-qt.desktop"
+            DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
+endif()

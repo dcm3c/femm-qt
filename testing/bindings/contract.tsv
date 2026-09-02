@@ -10,6 +10,7 @@ ci_addsegment	4	nnnn
 ci_analyse	1	n
 ci_analyze	1	n
 ci_attachdefault	0	
+ci_attachouterspace	0	
 ci_clearselected	0	
 ci_close	0	
 ci_copyrotate	4	nnnn
@@ -18,6 +19,7 @@ ci_copytranslate	3	nnn
 ci_copytranslate2	4	nnnn
 ci_createmesh	0	
 ci_createradius	3	nnn
+ci_defineouterspace	3	nnn
 ci_deleteboundprop	1	s
 ci_deleteconductor	1	s
 ci_deletematerial	1	s
@@ -28,6 +30,7 @@ ci_deleteselectedlabels	0
 ci_deleteselectednodes	0	
 ci_deleteselectedsegments	0	
 ci_detachdefault	0	
+ci_detachouterspace	0	
 ci_drawarc	6	nnnnnn
 ci_drawline	4	nnnn
 ci_drawrectangle	4	nnnn
@@ -48,6 +51,7 @@ ci_modifyconductorprop	3	snn
 ci_modifymaterial	3	snn
 ci_modifypointprop	3	snn
 ci_moverotate	3	nnn
+ci_moverotate2	4	nnnn
 ci_movetranslate	2	nn
 ci_movetranslate2	3	nnn
 ci_probdef	6	ssnnnn
@@ -94,6 +98,10 @@ co_blockintegral	1	n
 co_clearblock	0	
 co_clearcontour	0	
 co_close	0	
+co_getallelements	0	
+co_getallj	0	
+co_getallnodes	0	
+co_getallv	0	
 co_getconductorproperties	1	s
 co_gete	2	nn
 co_getelement	1	n
@@ -126,6 +134,7 @@ co_restore	0
 co_savebitmap	1	s
 co_savemetafile	1	s
 co_selectblock	2	nn
+co_selectconductor	1	s
 co_selectpoint	2	nn
 co_seteditmode	1	s
 co_setgrid	2	ns
@@ -184,6 +193,7 @@ ei_drawline	4	nnnn
 ei_drawrectangle	4	nnnn
 ei_getmaterial	1	s
 ei_gettitle	0	
+ei_getview	0	
 ei_gridsnap	1	s
 ei_hidegrid	0	
 ei_hidenames	0	
@@ -198,6 +208,7 @@ ei_modifyconductorprop	3	snn
 ei_modifymaterial	3	snn
 ei_modifypointprop	3	snn
 ei_moverotate	3	nnn
+ei_moverotate2	4	nnnn
 ei_movetranslate	2	nn
 ei_movetranslate2	3	nnn
 ei_probdef	5	ssnnn
@@ -244,7 +255,10 @@ eo_blockintegral	1	n
 eo_clearblock	0	
 eo_clearcontour	0	
 eo_close	0	
+eo_getalld	0	
 eo_getallelements	0	
+eo_getallnodes	0	
+eo_getallv	0	
 eo_getconductorproperties	1	s
 eo_getd	2	nn
 eo_gete	2	nn
@@ -256,6 +270,7 @@ eo_getpointvalues	2	nn
 eo_getprobleminfo	0	
 eo_gettitle	0	
 eo_getv	2	nn
+eo_getview	0	
 eo_gridsnap	1	s
 eo_groupselectblock	1	n
 eo_hidecontourplot	0	
@@ -277,6 +292,7 @@ eo_restore	0
 eo_savebitmap	1	s
 eo_savemetafile	1	s
 eo_selectblock	2	nn
+eo_selectconductor	1	s
 eo_selectpoint	2	nn
 eo_seteditmode	1	s
 eo_setgrid	2	ns
@@ -352,6 +368,7 @@ hi_modifyconductorprop	3	snn
 hi_modifymaterial	3	snn
 hi_modifypointprop	3	snn
 hi_moverotate	3	nnn
+hi_moverotate2	4	nnnn
 hi_movetranslate	2	nn
 hi_movetranslate2	3	nnn
 hi_probdef	7	ssnnnsn
@@ -399,6 +416,10 @@ ho_blockintegral	1	n
 ho_clearblock	0	
 ho_clearcontour	0	
 ho_close	0	
+ho_getallelements	0	
+ho_getallf	0	
+ho_getallnodes	0	
+ho_getallt	0	
 ho_getconductorproperties	1	s
 ho_getelement	1	n
 ho_getf	2	nn
@@ -431,6 +452,7 @@ ho_restore	0
 ho_savebitmap	1	s
 ho_savemetafile	1	s
 ho_selectblock	2	nn
+ho_selectconductor	1	s
 ho_selectpoint	2	nn
 ho_seteditmode	1	s
 ho_setgrid	2	ns
@@ -496,6 +518,7 @@ mi_drawline	4	nnnn
 mi_drawrectangle	4	nnnn
 mi_getmaterial	1	s
 mi_gettitle	0	
+mi_getview	0	
 mi_gridsnap	1	s
 mi_hidegrid	0	
 mi_hidenames	0	
@@ -510,6 +533,7 @@ mi_modifycircprop	3	snn
 mi_modifymaterial	3	snn
 mi_modifypointprop	3	snn
 mi_moverotate	3	nnn
+mi_moverotate2	4	nnnn
 mi_movetranslate	2	nn
 mi_movetranslate2	3	nnn
 mi_probdef	7	nssnnnn
@@ -585,6 +609,7 @@ mo_getph	2	nn
 mo_getpointvalues	2	nn
 mo_getprobleminfo	0	
 mo_gettitle	0	
+mo_getview	0	
 mo_gridsnap	1	s
 mo_groupselectblock	1	n
 mo_hidecontourplot	0	

@@ -206,14 +206,28 @@ Pass a different prefix if you would rather it went elsewhere:
 ./freebsd_build.sh install /opt/femm
 \end{lstlisting}
 
-It installs into your home rather than \texttt{/usr/local} on purpose.
-FEMM finds its solvers, scripting assets and material libraries beside
-its own executable, so a single self-contained directory needs no
-special handling --- and, more importantly, the material libraries and
-the examples stay \emph{writable}.  Both need to be: the material editor
-saves the libraries, and every example script opens a model and then
-immediately saves it under another name.  In a system directory they
-would be read-only and neither would work.
+It installs into your home rather than \texttt{/usr/local} on purpose,
+and it \emph{refuses to run as root}.  This script sets up one user's
+environment: besides the program directory it puts examples and documents
+in your home folder and can edit your shell profile.  Run under
+\texttt{doas} or \texttt{sudo} those would land in \texttt{/root} while
+the program itself was shared, so every other user on the machine would
+get a program with no examples and no documents --- and it would look as
+though it had worked.
+
+For a system-wide install, or to build a port or package, use the CMake
+install rules instead:
+\begin{lstlisting}
+cmake --install build --prefix /usr/local
+\end{lstlisting}
+
+\noindent That produces an ordinary \texttt{bin/} and
+\texttt{share/femm/} layout and honours \texttt{DESTDIR}.  It is safe
+where this script is not because nothing FEMM writes lives in the
+installation any more: your material libraries and your own Python
+modules are kept per-user, under
+\texttt{\textasciitilde/.local/share/FEMM/}, and are found there at run
+time.
 
 \subsection*{Uninstalling}
 

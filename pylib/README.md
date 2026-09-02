@@ -146,6 +146,19 @@ module takes is decided by whether femm-qt had to change anything:
 | written here | `csv`, `glob`, `textwrap` | no usable MicroPython implementation exists |
 | a wrapper over a built-in | `re` | the C engine is sound but has one silent-wrong-answer bug |
 
+Two verbatim modules diverge from CPython in ways worth knowing, both asserted
+in `PylibTest.py` so they stay deliberate:
+
+- **`pprint`** has no `width` parameter, so it breaks any multi-element
+  container across lines where CPython keeps it on one until 80 columns. It
+  also sorts dict keys by default, which is an improvement rather than a
+  compromise here: MicroPython dicts are not insertion-ordered
+  (`{"b":1,"a":2,"c":3}` iterates `c,b,a`), so unsorted output would be hash
+  order, and `sort_dicts=False` cannot reproduce CPython either way. Until
+  2026-08-29 this shipped as upstream's two-line `repr()` stub.
+- **`string`** is the constants plus `translate()`, with no `Template` or
+  `Formatter`.
+
 `vendor/` is copied wholesale into `bin/python/`, so adding another verbatim
 module needs no CMake edit. The package shapes are listed one by one on
 purpose: each has a femm-qt half that a careless re-vendor could drop.
@@ -157,10 +170,15 @@ What the packages add, and why each was necessary rather than nice:
   sweep becomes per-parameter runs, plus `product`, `permutations`,
   `combinations`, `compress`, `filterfalse`, `takewhile`, `dropwhile`,
   `zip_longest`.
-- **`operator`** — upstream is `attrgetter` plus nine comparison/arithmetic
-  functions. Not even `add`. Added `itemgetter` (the spelling people reach for:
-  `sorted(rows, key=itemgetter(1))`), `methodcaller`, and the everyday
-  arithmetic/logic/sequence set.
+- **`operator`** — upstream was `attrgetter` plus nine comparison/division
+  functions, not even `add`, and `__init__.py` made up the difference. It has
+  since gained the arithmetic and bitwise pairs (`add`, `sub`, `mul`, `pow`,
+  `neg`, `and_`, `or_`, `xor`), so those eight were dropped from `__init__.py`
+  when `_core.py` was refreshed (2026-08-29) — identical implementations, now
+  arriving through `import *`. Still added here: `itemgetter` (the spelling
+  people reach for: `sorted(rows, key=itemgetter(1))`), `methodcaller`,
+  `getitem`/`setitem`/`delitem`, `contains`, `is_`/`is_not`, `not_`/`truth`,
+  the shifts, and the rest of the sequence set.
 - **`shutil`** — upstream's `rmtree` walks with `os.ilistdir` and `disk_usage`
   wants `os.statvfs`; femm-qt's `os` has neither. `rmtree` is replaced with a
   `listdir`-based one, and `copyfile`/`copy`/`copy2`/`copytree`/`move` added —

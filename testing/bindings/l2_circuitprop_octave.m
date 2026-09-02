@@ -1,113 +1,85 @@
 % Layer 2, octavefemm: MOCircuitPropTest driven through the binding.
-% A line-for-line translation of testing/MOCircuitPropTest.py, checked by
+%
+%   matlab     -batch "l2_circuitprop_octave"
+%   octave-cli --no-gui -q l2_circuitprop_octave.m
+%
+% A translation of testing/MOCircuitPropTest.py, checked by
 % MOCircuitPropCompare.py against the same Original FEMM golden.
 %
-% Paths are absolute: the in-process test relies on -run having chdir'd into
-% testing/, which a binding does not do.
+% No local functions: MATLAB wants them last in a script, Octave wants them
+% defined before use, and those cannot both be satisfied. So the 17 cases are a
+% data table and the body is written once. That is arguably clearer than the
+% original's helper calls anyway -- the incremental cases differ only by having
+% a bias solve, which is now visible as a field rather than as extra statements.
 
 here = fileparts(mfilename('fullpath'));
 addpath(fullfile(here, '..', '..', 'octavefemm'));
 tests = fullfile(here, '..');
 tmp = getenv('TEMP'); if isempty(tmp), tmp = 'C:/temp'; end
 
-openfemm(1);
-cleaner = onCleanup(@() closefemm());
+fmt = @(z) sprintf('%.10g %.10g', real(z), imag(z));
+T = @(n) strrep(fullfile(tests, n), '\', '/');
+W = @(n) strrep(fullfile(tmp, n), '\', '/');
 
 RMBC = {'i1', 'i2', 'i3', 'i4'};
 TQC = {'i1', 'i2'};
 ROTC = {'Coil Current'};
 
-% ---- RadialMagneticBearing (i1-i4) ----
-for k = 1:4
-    switch k
-        case 1, cur = [12 6 0 6]; f = 0;  tag = 'RMB (x, DC) i=(12,6,0,6)';
-        case 2, cur = [12 6 0 6]; f = 60; tag = 'RMB (x, AC 60Hz) i=(12,6,0,6)';
-        case 3, cur = [6 12 6 0]; f = 0;  tag = 'RMB (y, DC) i=(6,12,6,0)';
-        case 4, cur = [6 12 6 0]; f = 60; tag = 'RMB (y, AC 60Hz) i=(6,12,6,0)';
+% {model, bias currents ({} = none), currents, freq, ptype, circuits, tag}
+% A non-empty bias set means: solve it at DC first, then set it as the previous
+% solution -- the incremental-permeability cases.
+C = {
+ {'RadialMagneticBearing.fem', {}, {12,6,0,6}, 0, 'planar', RMBC, 'RMB (x, DC) i=(12,6,0,6)'}
+ {'RadialMagneticBearing.fem', {}, {12,6,0,6}, 60, 'planar', RMBC, 'RMB (x, AC 60Hz) i=(12,6,0,6)'}
+ {'RadialMagneticBearing.fem', {}, {6,12,6,0}, 0, 'planar', RMBC, 'RMB (y, DC) i=(6,12,6,0)'}
+ {'RadialMagneticBearing.fem', {}, {6,12,6,0}, 60, 'planar', RMBC, 'RMB (y, AC 60Hz) i=(6,12,6,0)'}
+ {'RadialMagneticBearing.fem', {6,6,6,6}, {1,0,-1,0}, 60, 'planar', RMBC, 'RMB (x-incremental) bias 6A; AC i=(1,0,-1,0)'}
+ {'roters1b.fem', {}, {0.8}, 0, 'axi', ROTC, 'roters1b (DC) 0.8A'}
+ {'roters1b.fem', {}, {0.8}, 60, 'axi', ROTC, 'roters1b (AC 60Hz) 0.8A'}
+ {'roters1b.fem', {0.8}, {0.1}, 60, 'axi', ROTC, 'roters1b (incremental) bias 0.8A; AC 0.1A'}
+ {'torque.fem', {}, {2,0}, 0, 'planar', TQC, 'torque (DC) i=(2,0)'}
+ {'torque.fem', {}, {2,0}, 60, 'planar', TQC, 'torque (AC 60Hz) i=(2,0)'}
+ {'torque.fem', {1,1}, {1,-1}, 60, 'planar', TQC, 'torque (incremental) bias i=(1,1); AC i=(1,-1)'}
+ {'AxisymmetricLorentzForce.fem', {}, {16}, 0, 'axi', {'i1'}, 'AxiLorentz (DC) 16A'}
+ {'AxisymmetricLorentzForce.fem', {}, {16}, 60, 'axi', {'i1'}, 'AxiLorentz (AC 60Hz) 16A'}
+ {'PlanarLorentzForce.fem', {}, {16}, 0, 'planar', {'i1'}, 'PlanarLorentz-y (DC) 16A'}
+ {'PlanarLorentzForce.fem', {}, {16}, 60, 'planar', {'i1'}, 'PlanarLorentz-y (AC 60Hz) 16A'}
+ {'PlanarLorentzForceAlt.fem', {}, {16}, 0, 'planar', {'i1'}, 'PlanarLorentz-x (DC) 16A'}
+ {'PlanarLorentzForceAlt.fem', {}, {16}, 60, 'planar', {'i1'}, 'PlanarLorentz-x (AC 60Hz) 16A'}
+};
+
+openfemm(1);
+for k = 1:numel(C)
+    model = C{k}{1}; bias = C{k}{2}; cur = C{k}{3};
+    freq = C{k}{4}; ptype = C{k}{5}; circs = C{k}{6}; tag = C{k}{7};
+
+    opendocument(T(model));
+    if isempty(bias)
+        mi_saveas(W('temp.fem'));
+    else
+        mi_saveas(W('bias.fem'));
+        for j = 1:numel(bias)
+            mi_modifycircprop(circs{j}, 1, bias{j});
+        end
+        mi_probdef(0, 'inches', ptype);
+        mi_analyze();
+        mi_saveas(W('incr.fem'));
+        mi_setprevious(W('bias.ans'), 1);
     end
-    opendocument(T(tests, 'RadialMagneticBearing.fem'));
-    mi_saveas(W(tmp, 'temp.fem'));
-    setrmb(cur); mi_probdef(f, 'inches', 'planar');
-    report(RMBC, tag);
-end
-opendocument(T(tests, 'RadialMagneticBearing.fem')); mi_saveas(W(tmp, 'bias.fem'));
-setrmb([6 6 6 6]); mi_probdef(0, 'inches', 'planar'); mi_analyze();
-mi_saveas(W(tmp, 'incr.fem')); mi_setprevious(W(tmp, 'bias.ans'), 1);
-setrmb([1 0 -1 0]); mi_probdef(60, 'inches', 'planar');
-report(RMBC, 'RMB (x-incremental) bias 6A; AC i=(1,0,-1,0)');
-
-% ---- roters1b (Coil Current) ----
-opendocument(T(tests, 'roters1b.fem')); mi_saveas(W(tmp, 'rtemp.fem'));
-mi_modifycircprop('Coil Current', 1, 0.8); mi_probdef(0, 'inches', 'axi');
-report(ROTC, 'roters1b (DC) 0.8A');
-opendocument(T(tests, 'roters1b.fem')); mi_saveas(W(tmp, 'rtemp.fem'));
-mi_modifycircprop('Coil Current', 1, 0.8); mi_probdef(60, 'inches', 'axi');
-report(ROTC, 'roters1b (AC 60Hz) 0.8A');
-opendocument(T(tests, 'roters1b.fem')); mi_saveas(W(tmp, 'rbias.fem'));
-mi_modifycircprop('Coil Current', 1, 0.8); mi_probdef(0, 'inches', 'axi'); mi_analyze();
-mi_saveas(W(tmp, 'rincr.fem')); mi_setprevious(W(tmp, 'rbias.ans'), 1);
-mi_modifycircprop('Coil Current', 1, 0.1); mi_probdef(60, 'inches', 'axi');
-report(ROTC, 'roters1b (incremental) bias 0.8A; AC 0.1A');
-
-% ---- torque (i1, i2) ----
-opendocument(T(tests, 'torque.fem')); mi_saveas(W(tmp, 'temp.fem'));
-settorq(2, 0); mi_probdef(0, 'inches', 'planar');
-report(TQC, 'torque (DC) i=(2,0)');
-opendocument(T(tests, 'torque.fem')); mi_saveas(W(tmp, 'temp.fem'));
-settorq(2, 0); mi_probdef(60, 'inches', 'planar');
-report(TQC, 'torque (AC 60Hz) i=(2,0)');
-opendocument(T(tests, 'torque.fem')); mi_saveas(W(tmp, 'bias.fem'));
-settorq(1, 1); mi_probdef(0, 'inches', 'planar'); mi_analyze();
-mi_saveas(W(tmp, 'incr.fem')); mi_setprevious(W(tmp, 'bias.ans'), 1);
-settorq(1, -1); mi_probdef(60, 'inches', 'planar');
-report(TQC, 'torque (incremental) bias i=(1,1); AC i=(1,-1)');
-
-% ---- Lorentz coils (i1) ----
-lor = {{'AxisymmetricLorentzForce.fem', 'axi', 'AxiLorentz'}, ...
-       {'PlanarLorentzForce.fem', 'planar', 'PlanarLorentz-y'}, ...
-       {'PlanarLorentzForceAlt.fem', 'planar', 'PlanarLorentz-x'}};
-for k = 1:numel(lor)
-    fem = lor{k}{1}; ptype = lor{k}{2}; tag = lor{k}{3};
-    opendocument(T(tests, fem)); mi_saveas(W(tmp, 'temp.fem'));
-    mi_modifycircprop('i1', 1, 16); mi_probdef(0, 'inches', ptype);
-    report({'i1'}, [tag ' (DC) 16A']);
-    opendocument(T(tests, fem)); mi_saveas(W(tmp, 'temp.fem'));
-    mi_modifycircprop('i1', 1, 16); mi_probdef(60, 'inches', ptype);
-    report({'i1'}, [tag ' (AC 60Hz) 16A']);
-end
-
-fprintf('\nDone.\n');
-
-function p = T(tests, name)
-    p = strrep(fullfile(tests, name), '\', '/');
-end
-
-function p = W(tmp, name)
-    p = strrep(fullfile(tmp, name), '\', '/');
-end
-
-function s = fmt(z)
-    s = sprintf('%.10g %.10g', real(z), imag(z));
-end
-
-function setrmb(cur)
-    for j = 1:4
-        mi_modifycircprop(sprintf('i%d', j), 1, cur(j));
+    for j = 1:numel(cur)
+        mi_modifycircprop(circs{j}, 1, cur{j});
     end
-end
+    mi_probdef(freq, 'inches', ptype);
 
-function settorq(a, b)
-    mi_modifycircprop('i1', 1, a);
-    mi_modifycircprop('i2', 1, b);
-end
-
-function report(circuits, tag)
-    mi_analyze(); mi_loadsolution();
+    mi_analyze();
+    mi_loadsolution();
     fprintf('===  %s  ===\n', tag);
-    for j = 1:numel(circuits)
-        c = circuits{j};
-        z = mo_getcircuitproperties(c);
-        fprintf('  %-14s = %s | %s | %s\n', c, fmt(z(1)), fmt(z(2)), fmt(z(3)));
+    for j = 1:numel(circs)
+        z = mo_getcircuitproperties(circs{j});
+        fprintf('  %-14s = %s | %s | %s\n', circs{j}, ...
+                fmt(z(1)), fmt(z(2)), fmt(z(3)));
     end
     mo_close();
 end
+fprintf('\nDone.\n');
+closefemm();

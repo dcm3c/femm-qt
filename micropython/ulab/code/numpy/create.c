@@ -148,8 +148,28 @@ mp_obj_t create_arange(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_arg
     } else {
         mp_raise_TypeError(MP_ERROR_TEXT("wrong number of arguments"));
     }
-    if((MICROPY_FLOAT_C_FUN(fabs)(stop) > 32768) || (MICROPY_FLOAT_C_FUN(fabs)(start) > 32768) || (MICROPY_FLOAT_C_FUN(fabs)(step) > 32768)) {
-        dtype = NDARRAY_FLOAT;
+    // femm-qt: integer arguments too large for int16 escape to INT32, not to
+    // float. Upstream jumps to float because 16 bits is as wide as its integer
+    // types go; with NDARRAY_INT32 available there is no reason to leave the
+    // integers, and leaving them is visible: np.take() refuses a float index
+    // array, so `np.take(x, np.arange(n))` used to succeed for n <= 32768 and
+    // fail for n = 32769 -- the same line, deciding on length alone.
+    //
+    // The dtype == NDARRAY_INT16 guard is load-bearing. This test also fires
+    // for FLOAT arguments, harmlessly upstream because float is both the
+    // default and the escape; retarget it without the guard and
+    // arange(100000.5) starts returning integers.
+    if(dtype == NDARRAY_INT16) {
+        if((MICROPY_FLOAT_C_FUN(fabs)(stop) > 32768) || (MICROPY_FLOAT_C_FUN(fabs)(start) > 32768) || (MICROPY_FLOAT_C_FUN(fabs)(step) > 32768)) {
+            dtype = NDARRAY_INT32;
+        }
+        // Past int32 there is nowhere left to go but float: int64 is
+        // deliberately absent (see ndarray.h). The bound mirrors upstream's
+        // 32768 -- one past the largest magnitude the type holds, which is
+        // safe because the last value produced is strictly inside the range.
+        if((MICROPY_FLOAT_C_FUN(fabs)(stop) > 2147483648.0) || (MICROPY_FLOAT_C_FUN(fabs)(start) > 2147483648.0) || (MICROPY_FLOAT_C_FUN(fabs)(step) > 2147483648.0)) {
+            dtype = NDARRAY_FLOAT;
+        }
     }
     if(args[3].u_obj != mp_const_none) {
         dtype = (uint8_t)mp_obj_get_int(args[3].u_obj);

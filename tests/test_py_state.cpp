@@ -226,7 +226,13 @@ int main() {
     }
     {
         std::string s;
-        CHECK(py_eval_string("25.4/2", &s) && s == "12.699999999999999", "eval_string arith");
+        // Shortest round-trip digits since 6a7097d ("wire: shortest round-trip
+        // digits instead of %.17g"): 12.7 parses back to the identical double
+        // as 25.4/2, so that is what append_g emits. This expectation was left
+        // at the old %.17g spelling by that commit, and nothing caught it --
+        // these tests build only through micropython/build_test.sh, never
+        // through CMake.
+        CHECK(py_eval_string("25.4/2", &s) && s == "12.7", "eval_string arith");
         s.clear();
         CHECK(py_eval_string("3+4*I", &s) && s == "3+4j", "eval_string complex (j display)");
         s.clear();

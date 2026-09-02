@@ -243,6 +243,18 @@ static mp_obj_t transform_delete(size_t n_args, const mp_obj_t *pos_args, mp_map
         }
     }
 
+    // femm-qt: rewind BEFORE sorting. The fill loops above advance
+    // index_array as they write (`*index_array++ = ...`), so on arrival here it
+    // points one past the end of the buffer. Upstream does rewind it -- but not
+    // until after the sort below, so HEAPSORT1 reads and WRITES index_len
+    // elements starting at the end of the allocation. That is a heap overrun on
+    // every np.delete() call with more than one index, for every dtype; it
+    // corrupts whatever follows and takes the process down at some unrelated
+    // allocation later. Found by the dir(numpy) sweep in
+    // testing/UlabInt32Test.py, which is the first thing here to call delete
+    // with an index array.
+    index_array -= index_len;
+
     // sort the array, since it is not guaranteed that the input is sorted
     HEAPSORT1(size_t, index_array, 1, index_len);
 
@@ -277,7 +289,8 @@ static mp_obj_t transform_delete(size_t n_args, const mp_obj_t *pos_args, mp_map
     }
 
     uint8_t *rarray = (uint8_t *)result->array;
-    index_array -= index_len;
+    // femm-qt: the rewind that used to be here now happens before HEAPSORT1
+    // above -- see the note there.
     size_t count = 0;
 
     #if ULAB_MAX_DIMS > 3

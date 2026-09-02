@@ -20,28 +20,34 @@ hi_drawrectangle	pyfemm	as ci_drawrectangle
 mi_drawrectangle	pyfemm	as ci_drawrectangle
 #
 # --- octavefemm-only convenience aliases, absent elsewhere by design ---
-# The `2` suffix forms take a point pair where the base form takes coordinates.
-# They are octavefemm idiom and were never ported; the base command is present
-# in every binding.
+# The `2` suffix forms take a point pair where the base form takes coordinates,
+# and carry the trailing editaction. octavefemm, scifemm and juliafemm all
+# define them; pyfemm and mathfemm take editaction inline on the base command
+# instead, so for those two the `2` form is genuinely absent. The base command
+# is present in every binding either way.
 ci_copyrotate2	*	octavefemm-only alias for ci_copyrotate
 ci_copytranslate2	*	octavefemm-only alias for ci_copytranslate
 ci_mirror2	*	octavefemm-only alias for ci_mirror
 ci_movetranslate2	*	octavefemm-only alias for ci_movetranslate
+ci_moverotate2	*	point-pair/editaction form of ci_moverotate; absent in pyfemm and mathfemm, which pass editaction to ci_moverotate directly
 ci_scale2	*	octavefemm-only alias for ci_scale
 ei_copyrotate2	*	octavefemm-only alias for ei_copyrotate
 ei_copytranslate2	*	octavefemm-only alias for ei_copytranslate
 ei_mirror2	*	octavefemm-only alias for ei_mirror
 ei_movetranslate2	*	octavefemm-only alias for ei_movetranslate
+ei_moverotate2	*	point-pair/editaction form of ei_moverotate; absent in pyfemm and mathfemm, which pass editaction to ei_moverotate directly
 ei_scale2	*	octavefemm-only alias for ei_scale
 hi_copyrotate2	*	octavefemm-only alias for hi_copyrotate
 hi_copytranslate2	*	octavefemm-only alias for hi_copytranslate
 hi_mirror2	*	octavefemm-only alias for hi_mirror
 hi_movetranslate2	*	octavefemm-only alias for hi_movetranslate
+hi_moverotate2	*	point-pair/editaction form of hi_moverotate; absent in pyfemm and mathfemm, which pass editaction to hi_moverotate directly
 hi_scale2	*	octavefemm-only alias for hi_scale
 mi_copyrotate2	*	octavefemm-only alias for mi_copyrotate
 mi_copytranslate2	*	octavefemm-only alias for mi_copytranslate
 mi_mirror2	*	octavefemm-only alias for mi_mirror
 mi_movetranslate2	*	octavefemm-only alias for mi_movetranslate
+mi_moverotate2	*	point-pair/editaction form of mi_moverotate; absent in pyfemm and mathfemm, which pass editaction to mi_moverotate directly
 mi_scale2	*	octavefemm-only alias for mi_scale
 #
 # --- nondeterministic by construction ---
@@ -84,11 +90,6 @@ ho_shownames	pyfemm	as ci_shownames
 mi_shownames	pyfemm	as ci_shownames
 mo_shownames	pyfemm	as ci_shownames
 #
-# --- bulk getters, implemented differently by design ---
-# octavefemm builds eo_getallelements client-side from straccum/strappend over
-# the scalar getter (4 commands); everyone else calls a single C++ bulk getter.
-# Same data, different number of commands. See docs/bulk-getters-design.md.
-eo_getallelements	*	octavefemm composes it from 4 commands; the others send one
 #
 # --- array-argument wrappers, in the bindings that type-check ---
 mi_addbhpoints	mathfemm	takes vectors (a B-H table); the contract cannot express an array argument

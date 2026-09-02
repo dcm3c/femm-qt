@@ -6,10 +6,25 @@ cd "$(dirname "$0")"
 export PATH="/c/Qt/Tools/mingw1310_64/bin:/usr/bin:$PATH"
 BD=build-test
 mkdir -p "$BD"
-MPYINC="-I. -Imicropython_embed -Imicropython_embed/port"
+# ulab/code is on the list because py_state.cpp includes ndarray.h directly:
+# format_value() flattens an ndarray to the wire, which is what makes the bulk
+# getters byte-identical between a local caller and IPC. Adding that include to
+# py_state.cpp without adding it here broke this script and nothing said so,
+# because CMake builds py_state.cpp with a different include path and this is
+# the only place tests/test_py_*.cpp are compiled at all.
+MPYINC="-I. -Imicropython_embed -Imicropython_embed/port -Iulab/code -DMODULE_ULAB_ENABLED=1"
 BDWGCINC="-I../third_party/bdwgc/include"
 OURINC="-I../libfemm -I../common -I../tangle"
 
+# The archive is CACHED -- it is only built when absent, because compiling the
+# whole embed tree takes minutes and it almost never changes. It does change
+# when ulab/code/ is edited, and then a stale archive fails at the LINK with an
+# undefined reference that points at the caller rather than the edit (it was
+# `ndarray_matmul_complex_hook', referenced from py_clinalg.o, when the @
+# operator landed). Rebuild it after any ulab change:
+#
+#     rm micropython/build-test/libmpyembed.a
+#
 if [ ! -f "$BD/libmpyembed.a" ]; then
   echo "Compiling MicroPython embed sources..."
   OBJS=""
@@ -103,10 +118,12 @@ for f in py_mag_editor py_mag_postproc py_elec_editor py_elec_postproc py_heat_e
   g++ -c -std=c++17 $MPYINC $OURINC -o "$BD/$f.o" "../libfemm/$f.cpp" && echo "$f.cpp OK"
 done
 
-echo "=== Phase 10: compile-check py_state_globals + script_callbacks + fkn_py ==="
+echo "=== Phase 10: compile-check py_state_globals + script_callbacks ==="
 g++ -c -std=c++17 $MPYINC $OURINC -o "$BD/py_state_globals.o" "../libfemm/py_state_globals.cpp" && echo "py_state_globals.cpp OK"
 g++ -c -std=c++17 $OURINC -o "$BD/script_callbacks.o" "../libfemm/script_callbacks.cpp" && echo "script_callbacks.cpp OK"
-g++ -c -std=c++17 $MPYINC -I../common -I../solvers/fkn -o "$BD/fkn_py.o" "../solvers/fkn/fkn_py.cpp" && echo "fkn_py.cpp OK"
+# fkn_py.cpp was removed in 1edc420, when MagDirFctn moved to a native
+# expression evaluator and the solver stopped embedding MicroPython. The
+# compile-check line for it stayed behind and has been failing ever since.
 
 echo "=== Phase 7: syntax-check tcp_server (exec_python wire path) ==="
 g++ -fsyntax-only -std=c++17 -I../ipc -I../libfemm ../ipc/tcp_server.cpp \
@@ -122,7 +139,40 @@ if [ -d "$QTINC/QtWidgets" ]; then
       -I"$QTINC/QtWidgets" $OURINC -I../common ../gui/py_line_edit.cpp && echo "py_line_edit.cpp OK"
 fi
 
+# The material-library seed state machine. Links nothing from MicroPython --
+# material_lib_path.cpp needs only utf8_io and an exeDir(), and the test brings
+# its own exeDir() so it can point at a scratch directory rather than wherever
+# the test binary happens to live.
+echo "=== Phase 11: material library seed logic ==="
+g++ -std=c++17 -O1 $OURINC -I../common -o "$BD/test_material_lib" \
+    ../tests/test_material_lib.cpp ../libfemm/material_lib_path.cpp \
+    ../common/utf8_io.cpp
+
+# The sparse preconditioner's breakdown handling. spars.cpp needs only the
+# console-dialog stub, the CString/MsgBox shims in StdAfx.cpp and utf8_io --
+# no document layer, no MicroPython.
+echo "=== Phase 12: sparse preconditioner breakdown ==="
+g++ -std=c++17 -O1 $OURINC -o "$BD/test_spars_pc" \
+    ../tests/test_spars_pc.cpp ../common/spars.cpp ../common/StdAfx.cpp \
+    ../common/utf8_io.cpp
+
+# The complex twin of the above. cspars.cpp is the GPL half of the tree, so
+# its test lives in solvers/tests/ rather than tests/ -- see
+# reference_license_split: `grep -rl GPL-3.0-or-later` must match solvers/
+# and nothing else. complex.cpp needs the per-TU imaginary unit.
+echo "=== Phase 13: complex sparse preconditioner breakdown ==="
+g++ -std=c++17 -O1 $OURINC -I../solvers/common -I../solvers/fkn \
+    -D'I=CComplex(0,1)' -o "$BD/test_cspars_pc" \
+    ../solvers/tests/test_cspars_pc.cpp ../solvers/common/cspars.cpp \
+    ../common/StdAfx.cpp ../common/complex.cpp ../common/utf8_io.cpp
+
 echo "=== running test_py_bind ==="
 "./$BD/test_py_bind"
 echo "=== running test_py_state ==="
 "./$BD/test_py_state"
+echo "=== running test_material_lib ==="
+"./$BD/test_material_lib"
+echo "=== running test_spars_pc ==="
+"./$BD/test_spars_pc"
+echo "=== running test_cspars_pc ==="
+"./$BD/test_cspars_pc"

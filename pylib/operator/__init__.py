@@ -4,12 +4,25 @@
 # operator -- micropython-lib's, plus itemgetter.
 #
 # `_core.py` is micropython-lib's operator, copied VERBATIM (see
-# pylib/README.md), and it is thinner than the name suggests: attrgetter plus
-# nine functions (lt le gt ge eq ne mod truediv floordiv). Not even `add`.
+# pylib/README.md). It used to be thinner than the name suggests -- attrgetter
+# plus nine comparison and division functions, not even `add` -- and this file
+# was written to make up the difference. Upstream has since added the
+# arithmetic and bitwise pair-functions (add, sub, mul, pow, neg, and_, or_,
+# xor), so those eight came out of here when _core.py was refreshed on
+# 2026-08-29; they arrive through `import *` instead.
 #
-# So this file supplies the rest of the everyday surface, and itemgetter above
-# all -- `sorted(rows, key=itemgetter(1))` is how a table of results gets
-# sorted by a column, and it is the spelling people reach for first.
+# Seven of the eight upstream bodies are character-for-character what was here
+# (`def add(a, b): return a + b` has one spelling -- the name and the parameter
+# names are fixed by CPython's API and the body is one expression). The eighth,
+# pow, differs only in spacing: `a**b` upstream against `a ** b` here. That
+# lone difference is the useful evidence -- the single place style COULD vary
+# is the single place the two did, which is what convergence looks like rather
+# than copying.
+#
+# Seventeen still have no upstream, and itemgetter above all --
+# `sorted(rows, key=itemgetter(1))` is how a table of results gets sorted by a
+# column, and it is the spelling people reach for first. So the two-file shape
+# stays; only its size changed.
 #
 # Same two-file split as datetime: a re-vendor stays a plain copy of _core.py
 # and cannot silently drop these.
@@ -20,44 +33,12 @@ _abs = abs          # the builtin, captured before the name is shadowed below
 
 # -- arithmetic and bitwise, the forms reduce()/map() are given ---------------
 
-def add(a, b):
-    return a + b
-
-
-def sub(a, b):
-    return a - b
-
-
-def mul(a, b):
-    return a * b
-
-
-def pow(a, b):
-    return a ** b
-
-
-def neg(a):
-    return -a
-
-
 def pos(a):
     return +a
 
 
 def abs(a):
     return _abs(a)
-
-
-def and_(a, b):
-    return a & b
-
-
-def or_(a, b):
-    return a | b
-
-
-def xor(a, b):
-    return a ^ b
 
 
 def invert(a):

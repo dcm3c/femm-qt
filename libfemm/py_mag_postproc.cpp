@@ -244,73 +244,85 @@ void register_mag_postproc_py(ResultsDoc *doc) {
     // than returning a std::string through the MicroPython GC heap.  A 1M-
     // element mesh produces ~80 MB of text, which would exceed any reasonable
     // GC heap size.
-    m.def("mo_getallelements", []() {
+    // Returns FOUR typed columns rather than one float64 matrix: connectivity and
+    // group are integers, and an all-double (ne,7) would both waste half its
+    // memory on indices and hand back a float array that np.take refuses as a
+    // gather index. capture_result() emits the tuple row-major, so the wire text
+    // is unchanged. NODE INDICES ARE 1-BASED, as everywhere else in the API.
+    m.def("mo_getallelements", []() -> mp_obj_t {
         check_doc(s_rdoc, MOERR);
-        int ne = (int)s_rdoc->meshelem.size();
-        std::string buf;
-        buf.reserve(ne * 70);
-        for (int k = 0; k < ne; k++) {
+        size_t ne = s_rdoc->meshelem.size();
+        ndarray_obj_t *conn = bulkArray(ne, 3, NDARRAY_INT32);
+        ndarray_obj_t *ctr  = bulkArray(ne, 2, NDARRAY_FLOAT);
+        ndarray_obj_t *area = bulkArray(ne, 0, NDARRAY_FLOAT);
+        ndarray_obj_t *grp  = bulkArray(ne, 0, NDARRAY_INT32);
+        int32_t *pc = bulkI4(conn), *pg = bulkI4(grp);
+        mp_float_t *pt = bulkF8(ctr), *pa = bulkF8(area);
+        for (size_t k = 0; k < ne; k++) {
             auto &el = s_rdoc->meshelem[k];
-            int grp = (el.lbl >= 0 && el.lbl < (int)s_rdoc->labellist.size())
-                          ? s_rdoc->labellist[el.lbl].InGroup : 0;
-            appendInt(buf, el.p[0] + 1);
-            appendInt(buf, el.p[1] + 1);
-            appendInt(buf, el.p[2] + 1);
-            appendDouble(buf, el.ctr.re);
-            appendDouble(buf, el.ctr.im);
-            appendDouble(buf, s_rdoc->ElmArea(k));
-            appendInt(buf, grp);
+            pc[3 * k]     = el.p[0] + 1;
+            pc[3 * k + 1] = el.p[1] + 1;
+            pc[3 * k + 2] = el.p[2] + 1;
+            pt[2 * k]     = (mp_float_t)el.ctr.re;
+            pt[2 * k + 1] = (mp_float_t)el.ctr.im;
+            pa[k] = (mp_float_t)s_rdoc->ElmArea((int)k);
+            pg[k] = (el.lbl >= 0 && el.lbl < (int)s_rdoc->labellist.size())
+                        ? s_rdoc->labellist[el.lbl].InGroup : 0;
         }
-        if (!buf.empty()) buf.pop_back();
-        py_set_result(std::move(buf));
+        mp_obj_t items[4] = {MP_OBJ_FROM_PTR(conn), MP_OBJ_FROM_PTR(ctr),
+                             MP_OBJ_FROM_PTR(area), MP_OBJ_FROM_PTR(grp)};
+        return mp_obj_new_tuple(4, items);
     });
-    m.def("mo_getallnodes", []() {
+    m.def("mo_getallnodes", []() -> mp_obj_t {
         check_doc(s_rdoc, MOERR);
-        int nn = (int)s_rdoc->meshnode.size();
-        std::string buf;
-        buf.reserve(nn * 50);
-        for (int k = 0; k < nn; k++) {
-            appendDouble(buf, s_rdoc->meshnode[k].x);
-            appendDouble(buf, s_rdoc->meshnode[k].y);
+        size_t nn = s_rdoc->meshnode.size();
+        ndarray_obj_t *a = bulkArray(nn, 2, NDARRAY_FLOAT);
+        mp_float_t *d = bulkF8(a);
+        for (size_t k = 0; k < nn; k++) {
+            d[2 * k]     = (mp_float_t)s_rdoc->meshnode[k].x;
+            d[2 * k + 1] = (mp_float_t)s_rdoc->meshnode[k].y;
         }
-        if (!buf.empty()) buf.pop_back();
-        py_set_result(std::move(buf));
+        return MP_OBJ_FROM_PTR(a);
     });
-    m.def("mo_getallb", []() {
+    // B1 and B2 are each a PHASOR, so the array is real at DC and complex at AC.
+    m.def("mo_getallb", []() -> mp_obj_t {
         check_doc(s_rdoc, MOERR);
-        int ne = (int)s_rdoc->meshelem.size();
-        std::string buf;
-        buf.reserve(ne * 50);
-        for (int k = 0; k < ne; k++) {
-            appendComplex(buf, s_rdoc->meshelem[k].B1);
-            appendComplex(buf, s_rdoc->meshelem[k].B2);
+        size_t ne = s_rdoc->meshelem.size();
+        bool ac = (s_rdoc->Frequency != 0);
+        ndarray_obj_t *a = bulkArray(ne, 2, bulkFieldDtype(s_rdoc->Frequency));
+        mp_float_t *d = bulkF8(a);
+        for (size_t k = 0; k < ne; k++) {
+            auto &el = s_rdoc->meshelem[k];
+            if (ac) { bulkPutC(d, 2 * k, el.B1); bulkPutC(d, 2 * k + 1, el.B2); }
+            else    { d[2 * k] = (mp_float_t)el.B1.re; d[2 * k + 1] = (mp_float_t)el.B2.re; }
         }
-        if (!buf.empty()) buf.pop_back();
-        py_set_result(std::move(buf));
+        return MP_OBJ_FROM_PTR(a);
     });
-    m.def("mo_getalla", []() {
+    m.def("mo_getalla", []() -> mp_obj_t {
         check_doc(s_rdoc, MOERR);
-        int ne = (int)s_rdoc->meshelem.size();
-        std::string buf;
-        buf.reserve(ne * 30);
-        for (int k = 0; k < ne; k++) {
+        size_t ne = s_rdoc->meshelem.size();
+        bool ac = (s_rdoc->Frequency != 0);
+        ndarray_obj_t *a = bulkArray(ne, 0, bulkFieldDtype(s_rdoc->Frequency));
+        mp_float_t *d = bulkF8(a);
+        for (size_t k = 0; k < ne; k++) {
             auto &el = s_rdoc->meshelem[k];
             CComplex Actr = (s_rdoc->meshnode[el.p[0]].A + s_rdoc->meshnode[el.p[1]].A +
                              s_rdoc->meshnode[el.p[2]].A) / 3.0;
-            appendComplex(buf, Actr);
+            if (ac) bulkPutC(d, k, Actr);
+            else    d[k] = (mp_float_t)Actr.re;
         }
-        if (!buf.empty()) buf.pop_back();
-        py_set_result(std::move(buf));
+        return MP_OBJ_FROM_PTR(a);
     });
-    m.def("mo_getallgapb", [](const std::string &name, optional<int> opt_npts) {
+    m.def("mo_getallgapb", [](const std::string &name, optional<int> opt_npts) -> mp_obj_t {
         check_doc(s_rdoc, MOERR);
         int idx = findAGE(name.c_str());
-        if (idx < 0) { py_set_result(""); return; }
+        if (idx < 0) return MP_OBJ_FROM_PTR(bulkArray(0, 2, NDARRAY_FLOAT));
         auto &age = s_rdoc->agelist[idx];
         int npts = opt_npts.value_or(360);
         if (npts < 1) npts = 1;
-        std::string buf;
-        buf.reserve(npts * 60);
+        bool ac = (s_rdoc->Frequency != 0);
+        ndarray_obj_t *a = bulkArray((size_t)npts, 2, bulkFieldDtype(s_rdoc->Frequency));
+        mp_float_t *d = bulkF8(a);
         for (int i = 0; i < npts; i++) {
             double tta = 2.0 * PI * i / npts;
             CComplex br(0, 0), bt(0, 0);
@@ -319,22 +331,22 @@ void register_mag_postproc_py(ResultsDoc *doc) {
                 br = br + age.brc[k] * cos(n * tta) + age.brs[k] * sin(n * tta);
                 bt = bt + age.btc[k] * cos(n * tta) + age.bts[k] * sin(n * tta);
             }
-            appendComplex(buf, br);
-            appendComplex(buf, bt);
+            if (ac) { bulkPutC(d, 2 * i, br); bulkPutC(d, 2 * i + 1, bt); }
+            else    { d[2 * i] = (mp_float_t)br.re; d[2 * i + 1] = (mp_float_t)bt.re; }
         }
-        if (!buf.empty()) buf.pop_back();
-        py_set_result(std::move(buf));
+        return MP_OBJ_FROM_PTR(a);
     });
-    m.def("mo_getallgapa", [](const std::string &name, optional<int> opt_npts) {
+    m.def("mo_getallgapa", [](const std::string &name, optional<int> opt_npts) -> mp_obj_t {
         check_doc(s_rdoc, MOERR);
         int idx = findAGE(name.c_str());
-        if (idx < 0) { py_set_result(""); return; }
+        if (idx < 0) return MP_OBJ_FROM_PTR(bulkArray(0, 0, NDARRAY_FLOAT));
         auto &age = s_rdoc->agelist[idx];
         double R = (age.ri + age.ro) / 2.0;
         int npts = opt_npts.value_or(360);
         if (npts < 1) npts = 1;
-        std::string buf;
-        buf.reserve(npts * 30);
+        bool isAC = (s_rdoc->Frequency != 0);
+        ndarray_obj_t *arr = bulkArray((size_t)npts, 0, bulkFieldDtype(s_rdoc->Frequency));
+        mp_float_t *d = bulkF8(arr);
         for (int i = 0; i < npts; i++) {
             double tta = 2.0 * PI * i / npts;
             CComplex ac(0, 0);
@@ -343,19 +355,20 @@ void register_mag_postproc_py(ResultsDoc *doc) {
                 if (n == 0) ac = ac + age.aco;
                 else ac = ac + (R / n) * (-age.brs[k] * cos(n * tta) + age.brc[k] * sin(n * tta));
             }
-            appendComplex(buf, ac);
+            if (isAC) bulkPutC(d, (size_t)i, ac);
+            else      d[i] = (mp_float_t)ac.re;
         }
-        if (!buf.empty()) buf.pop_back();
-        py_set_result(std::move(buf));
+        return MP_OBJ_FROM_PTR(arr);
     });
-    m.def("mo_getallgapharmonics", [](const std::string &name) {
+    m.def("mo_getallgapharmonics", [](const std::string &name) -> mp_obj_t {
         check_doc(s_rdoc, MOERR);
         int idx = findAGE(name.c_str());
-        if (idx < 0) { py_set_result(""); return; }
+        if (idx < 0) return MP_OBJ_FROM_PTR(bulkArray(0, 6, NDARRAY_FLOAT));
         auto &age = s_rdoc->agelist[idx];
         double R = (age.ri + age.ro) / 2.0;
-        std::string buf;
-        buf.reserve(age.nn * 150);
+        bool ac = (s_rdoc->Frequency != 0);
+        ndarray_obj_t *arr = bulkArray((size_t)age.nn, 6, bulkFieldDtype(s_rdoc->Frequency));
+        mp_float_t *d = bulkF8(arr);
         for (int k = 0; k < age.nn; k++) {
             double n = age.nh[k];
             CComplex acc(0, 0), acs(0, 0);
@@ -365,15 +378,13 @@ void register_mag_postproc_py(ResultsDoc *doc) {
                 acc = -(R / n) * age.brs[k];
                 acs = (R / n) * age.brc[k];
             }
-            appendComplex(buf, acc);
-            appendComplex(buf, acs);
-            appendComplex(buf, age.brc[k]);
-            appendComplex(buf, age.brs[k]);
-            appendComplex(buf, age.btc[k]);
-            appendComplex(buf, age.bts[k]);
+            CComplex row[6] = {acc, acs, age.brc[k], age.brs[k], age.btc[k], age.bts[k]};
+            for (int c = 0; c < 6; c++) {
+                if (ac) bulkPutC(d, (size_t)k * 6 + c, row[c]);
+                else    d[(size_t)k * 6 + c] = (mp_float_t)row[c].re;
+            }
         }
-        if (!buf.empty()) buf.pop_back();
-        py_set_result(std::move(buf));
+        return MP_OBJ_FROM_PTR(arr);
     });
 
     // ---- Display control ----

@@ -17,6 +17,7 @@
 #include "py/runtime.h"
 
 #include "bitwise.h"
+#include "../ndarray_operators.h"   // femm-qt: ndarray_binary_int32()
 
 
 #if ULAB_NUMPY_HAS_BITWISE_AND
@@ -351,8 +352,31 @@ mp_obj_t *bitwise_binary_operators(mp_obj_t x1, mp_obj_t x2, uint8_t optype) {
         mp_raise_ValueError(MP_ERROR_TEXT("operands could not be broadcast together"));
     }
 
+    // femm-qt: this file has its own dtype chains, separate from the ones in
+    // ndarray_operators.c, and they were never taught about int32 -- so every
+    // loop below leaves `results` NULL for an int32 operand and the caller gets
+    // MP_OBJ_NULL, which MicroPython reports as the thoroughly misleading
+    // "local variable referenced before assignment". Route int32 to the same
+    // kernel the operators use. (Found by the dir(numpy) sweep in
+    // testing/UlabInt32Test.py, not by inspection.)
+    if((lhs->dtype == NDARRAY_INT32) || (rhs->dtype == NDARRAY_INT32)) {
+        mp_binary_op_t op;
+        switch(optype) {
+            case BITWISE_AND:         op = MP_BINARY_OP_AND; break;
+            case BITWISE_OR:          op = MP_BINARY_OP_OR; break;
+            case BITWISE_XOR:         op = MP_BINARY_OP_XOR; break;
+            case BITWISE_LEFT_SHIFT:  op = MP_BINARY_OP_LSHIFT; break;
+            default:                  op = MP_BINARY_OP_RSHIFT; break;
+        }
+        mp_obj_t out = ndarray_binary_int32(op, lhs, rhs, ndim, shape, lstrides, rstrides);
+        m_del(size_t, shape, ULAB_MAX_DIMS);
+        m_del(int32_t, lstrides, ULAB_MAX_DIMS);
+        m_del(int32_t, rstrides, ULAB_MAX_DIMS);
+        return (mp_obj_t *)out;
+    }
+
     ndarray_obj_t *results = NULL;
-    
+
     switch(optype) {
         #if ULAB_NUMPY_HAS_BITWISE_AND
         case BITWISE_AND:
@@ -386,6 +410,14 @@ mp_obj_t *bitwise_binary_operators(mp_obj_t x1, mp_obj_t x2, uint8_t optype) {
     m_del(size_t, shape, ULAB_MAX_DIMS);
     m_del(int32_t, lstrides, ULAB_MAX_DIMS);
     m_del(int32_t, rstrides, ULAB_MAX_DIMS);
+
+    // femm-qt: a dtype combination none of the loops covered leaves this NULL,
+    // and returning MP_OBJ_NULL surfaces as "local variable referenced before
+    // assignment" -- an error that points nowhere near the cause. Say what
+    // actually happened instead.
+    if(results == NULL) {
+        mp_raise_TypeError(MP_ERROR_TEXT("not supported for input types"));
+    }
 
     return MP_OBJ_FROM_PTR(results);
 }

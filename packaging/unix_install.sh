@@ -30,8 +30,9 @@
 #
 #  An FHS install (/usr/local/bin plus /usr/local/share/femm) is a
 #  reasonable thing to want, and it is what a distribution packager
-#  would need -- but it needs those resolvers, and sudo.  This is the
-#  smaller thing that works today.
+#  would need.  It now exists, as CMake install() rules -- see the top of
+#  CMakeLists.txt -- so this script no longer has to try to be that too,
+#  and refuses to (see the root check below).
 # ======================================================================
 set -eu
 
@@ -58,6 +59,31 @@ for arg in "$@"; do
         *)  PREFIX="$arg" ;;
     esac
 done
+
+# This installs for exactly ONE user. Besides the program directory it writes
+# documents and examples into $HOME, and optionally edits a login profile --
+# all of which belong to whoever runs it. Run under sudo those land in ROOT's
+# home while the program itself is shared, so every other user on the machine
+# gets a program with no examples and no documents, and the uninstall manifest
+# records one user's personal paths for everybody.
+#
+# That is not a warning worth printing and continuing past, because the result
+# looks like it worked. CMake's install() rules do the shared case properly.
+if [ "$(id -u)" = "0" ]; then
+    echo "unix_install.sh: refusing to run as root." >&2
+    echo >&2
+    echo "This installer sets up ONE user's environment: it writes examples and" >&2
+    echo "documents into \$HOME and may edit your shell profile. As root those go" >&2
+    echo "to /root while the program is shared, which is not what you want." >&2
+    echo >&2
+    echo "For a system-wide or packaged install, use the CMake rules instead:" >&2
+    echo "    cmake --install build --prefix /usr/local" >&2
+    echo "(DESTDIR is honoured, for building a package.)" >&2
+    echo >&2
+    echo "For a single user, run this WITHOUT sudo -- the default prefix is" >&2
+    echo "~/.local and needs no privileges." >&2
+    exit 1
+fi
 
 BIN="$BUILD/bin"
 APPDIR="$PREFIX/opt/femm-qt"

@@ -3,8 +3,13 @@
 % ActiveFEMM (C)2006 David Meeker, dmeeker@ieee.org
 
 function vu=ci_getview()
-    fname=tempname;
+    % femm-qt writes PNG whatever the extension, so ask for .png.
+    fname=[tempname '.png'];
     callfemm(['ci_savebitmap(', quote(fname), ')']);
-    vu=imread(fname,'bmp');
-    system(['del ',rawquote(fname)]);
-
+    % No format argument. imread(fname,'bmp') FORCED the BMP reader and
+    % failed on the PNG the engine writes: "Unrecognized BMP format
+    % signature 'P'".
+    vu=imread(fname);
+    % delete() rather than a shell "del": the toolbox also runs on
+    % Linux and macOS.
+    delete(fname);

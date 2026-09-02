@@ -199,17 +199,15 @@ double CBigLinProb::Dot(double *X, double *Y)
 // Root-free LDL^T rather than LL^T so one kernel serves both the SPD case
 // and the symmetric-indefinite circuit-constraint case that QMRSolve
 // exists for -- D simply carries the sign, and no square roots are taken.
-// When M's diagonal is entirely positive (the SPD problems PCGSolve
-// serves) a nonpositive pivot is treated as breakdown and rescued with the
-// row's diagonal scale, so the factor stays SPD as PCG requires;
-// otherwise D is allowed to go negative -- QMR needs a symmetric
-// preconditioner, not a definite one, and LDL^T with signed D is exactly
-// that. Correctness is never at stake: the per-pivot rescue below keeps
-// the factor finite (degrading toward Jacobi as rescues accumulate), and
-// the Krylov loops measure the true residual against the true operator,
-// so a degraded factor costs iterations, never accuracy. There is no
-// fallback preconditioner -- an SSOR one existed until telemetry across
-// the whole regression corpus showed not a single pivot ever rescued.
+// On the SPD path (M's diagonal entirely positive, which is what PCGSolve
+// serves) a nonpositive pivot is BREAKDOWN, and is handled by refactoring
+// with a diagonal shift; see FactorPC below. On the indefinite path D is
+// allowed to go negative -- QMR needs a symmetric preconditioner, not a
+// definite one, and LDL^T with signed D is exactly that -- so there a
+// nonpositive pivot is expected and only a non-finite one is breakdown.
+// Correctness is never at stake either way: the Krylov loops measure the
+// true residual against the true operator, so a degraded factor costs
+// iterations, never accuracy.
 //
 // The Crout ordering computes one column of L at a time: column k is A's
 // lower column k (read from upper-triangle row k, by symmetry) minus
@@ -233,10 +231,14 @@ double CBigLinProb::Dot(double *X, double *Y)
 // Algorithms are not copyrightable and neither is under any license that
 // would reach an independent implementation; the citations are here because
 // attribution is owed to the authors, not because a license requires it.
-void CBigLinProb::FactorPC()
+
+// One factorization attempt against M + alpha*diag(M). Returns false on
+// breakdown, having left icPtr/icCol/icVal/icD in a partial state the
+// caller is expected to overwrite by retrying. alpha == 0 is the ordinary
+// case and reproduces the unshifted factorization exactly.
+bool CBigLinProb::FactorPCOnce(double alpha)
 {
 	if(!finalized) Finalize();
-	icState = 2;
 
 	// Tuning shared with the complex twin (see its FactorPC); the wall-
 	// clock optimum is flat within roughly a factor of 3 around these.
@@ -272,7 +274,22 @@ void CBigLinProb::FactorPC()
 	touch.reserve(256); keep.reserve(256);
 
 	for(int k=0;k<n;k++){
-		double dk = M[k][0].x;
+		// The shift is Manteuffel's: factor M + alpha*diag(M) rather than M
+		// itself. Only the diagonal moves, so the sparsity pattern, the
+		// dropping rule and (at alpha == 0) every stored value are unchanged.
+		//
+		// A ZERO diagonal is the exception, and it is not academic: a flux
+		// constraint whose CircuitMatrix has no self term is a pure Lagrange
+		// multiplier, and its row arrives here with a_kk == 0. No multiple of
+		// zero strengthens anything, so those rows shift on the row's 1-norm
+		// instead -- the same substitute the pivot guard below already uses
+		// for them, so nothing new is being invented, and alpha == 0 still
+		// leaves the diagonal at exactly zero. Sign: there is none to
+		// preserve at zero, and positive matches what the guard picks.
+		const double akk = M[k][0].x;
+		const double dkk = (akk != 0) ? akk*(1.0+alpha)
+		                              : alpha*RowNorm(k);
+		double dk = dkk;
 		double cnorm = fabs(dk);
 
 		// load A's lower column k from upper-triangle row k
@@ -298,22 +315,36 @@ void CBigLinProb::FactorPC()
 		// row k is spent; release it rather than hold all n to the end
 		std::vector<int>().swap(rowsOfL[k]);
 
-		// pivot guard; negated comparisons so a NaN pivot is also rescued
-		double scale = fabs(M[k][0].x);
-		if(scale==0){
-			// zero diagonal (constraint row): fall back to the row's
-			// magnitude
-			for(int idx=mfPtr[k];idx<mfPtr[k+1];idx++) scale += fabs(mfVal[idx]);
-			if(scale==0) scale=1;
+		// pivot guard; negated comparisons so a NaN pivot is also caught
+		double scale = fabs(dkk);
+		if(scale==0) scale = RowNorm(k);   // zero diagonal (constraint row)
+		if(!std::isfinite(dk)) return false;
+		if(posDiag){
+			// SPD path. Exact Cholesky of an SPD matrix cannot produce a
+			// nonpositive pivot, so one here means the DISCARDED fill has
+			// pushed the incomplete Schur complement indefinite -- classic
+			// incomplete-factorization breakdown. Patching the pivot in place
+			// keeps D positive but leaves L's already-computed column divided
+			// by a value inconsistent with it, and the error compounds
+			// column over column: on the motor case that first exposed this,
+			// the pivots ran -1.9e-3, -2.0, -43, -5.4e8, -4.2e18 ... to
+			// overflow within ten columns, and the NaN reached PCG as
+			// "Couldn't solve the problem" on a problem that is perfectly
+			// well posed. Refactor with a larger shift instead.
+			if(!(dk > 1e-8*scale)) return false;
 		}
-		// Rescue with the ORIGINAL diagonal, not its magnitude: on the
-		// indefinite path a negative diagonal must stay negative, or the
-		// factor claims the wrong inertia at that pivot. Identical to the
-		// old dk=scale whenever posDiag holds, since then the diagonal is
-		// already positive; scale still covers the zero-diagonal
-		// constraint rows, where it is the row's 1-norm.
-		if(posDiag ? !(dk > 1e-8*scale) : !(fabs(dk) > 1e-8*scale))
-			dk = (M[k][0].x != 0) ? M[k][0].x : scale;
+		else{
+			// Indefinite path (constraint rows): a NEGATIVE pivot is
+			// legitimate here and carries the inertia, so it is not a
+			// breakdown. A VANISHING one is -- dividing L's column by it
+			// means the factor has stopped approximating M in a way nothing
+			// downstream can see. The old code patched such a pivot in place
+			// and carried on; refactoring under a shift is the better
+			// answer, and costs nothing, because across the entire
+			// regression corpus (51 suite rows plus the harmonic fixtures)
+			// this branch has never once been reached.
+			if(!(fabs(dk) > 1e-8*scale)) return false;
+		}
 		icD[k]=dk;
 
 		// drop small entries, cap the survivors at ICFILL largest
@@ -333,6 +364,7 @@ void CBigLinProb::FactorPC()
 
 		for(int r : keep){
 			double lrk = w[r]/dk;
+			if(!std::isfinite(lrk)) return false;
 			icCol.push_back(r);
 			icVal.push_back(lrk);
 			rowsOfL[r].push_back(k);
@@ -341,6 +373,127 @@ void CBigLinProb::FactorPC()
 		colStart[k]=icPtr[k];
 	}
 
+	return true;
+}
+
+// Row k's 1-norm, never zero. The stand-in for a diagonal that is zero and
+// so carries no scale of its own -- used both as the pivot guard's yardstick
+// and, in FactorPCOnce, as what such a row shifts on.
+double CBigLinProb::RowNorm(int k)
+{
+	double s = 0;
+	for(int idx=mfPtr[k];idx<mfPtr[k+1];idx++) s += fabs(mfVal[idx]);
+	return (s>0) ? s : 1.0;
+}
+
+// The smallest alpha at which the shifted matrix FactorPCOnce builds is
+// diagonally dominant, or -1 if some diagonal is non-finite.
+//
+// This is the shift at which breakdown becomes impossible rather than
+// merely unlikely. A matrix diagonally dominant in MAGNITUDE is an
+// H-matrix -- the definition runs through the comparison matrix, which
+// carries |a_ii|, so the SIGNS of the diagonal are irrelevant -- and for an
+// H-matrix an incomplete factorization exists with pivots bounded away
+// from zero WHATEVER is dropped (Meijerink & van der Vorst 1977;
+// Manteuffel 1980). That covers the quasi-definite (+,...,+,-) matrix the
+// circuit constraints produce just as it covers the SPD one, which is why
+// the test is on fabs and not on positivity.
+//
+// It has to mirror FactorPCOnce's shift exactly, including the zero-
+// diagonal rows a pure Lagrange multiplier produces: those shift on the
+// row's 1-norm. Every row therefore has a finite answer and the guarantee
+// is available for EVERY matrix -- the reason this returns -1 only for a
+// non-finite diagonal, which is not a shift problem but a broken matrix.
+//
+// DOMINANCE FACTOR. What is targeted is |a_kk| >= DOMFAC * (off-diagonal
+// sum), not mere equality. Equality is weak dominance, and weak dominance
+// does not carry the theorem: the comparison matrix is then a SINGULAR
+// M-matrix and a pivot may still vanish. That is not a hypothetical -- for
+// the textbook [[0,c],[c,0]], the alpha that achieves equality drives the
+// SECOND pivot exactly to zero. With a factor of 2 the standard bound
+// |d_k| >= |a_kk| * (1 - 1/DOMFAC) applies, so pivots are held at half the
+// shifted diagonal. 2 is a choice, but it is a choice with a stated
+// consequence rather than a number tuned to a case, and it is paid for only
+// on the rung nothing has yet reached.
+//
+// Computing this beats guessing a ceiling: one pass over the CSR, and the
+// answer is a property of this matrix rather than a constant fitted to
+// whichever model happened to be on the bench.
+double CBigLinProb::DominanceShift()
+{
+	if(!finalized) Finalize();
+	const double DOMFAC = 2.0;
+	double worst = 0;
+	for(int i=0;i<n;i++){
+		const double a = M[i][0].x;
+		if(!std::isfinite(a)) return -1;
+		double off = 0;
+		for(int idx=mfPtr[i];idx<mfPtr[i+1];idx++)
+			if(mfCol[idx]!=i) off += fabs(mfVal[idx]);
+		// (1+alpha)*|a| >= DOMFAC*off, or alpha*RowNorm >= DOMFAC*off at a == 0
+		const double need = (a != 0) ? (DOMFAC*off/fabs(a) - 1.0)
+		                             : (off>0 ? DOMFAC*off/RowNorm(i) : 0.0);
+		if(need>worst) worst = need;
+	}
+	return worst;
+}
+
+// Build the preconditioner, retrying with a growing diagonal shift if the
+// incomplete factorization breaks down.
+//
+// Breakdown is rare -- across the whole regression corpus not one problem
+// took a shift, which is why an unshifted first attempt stays the fast path
+// and reproduces earlier results bit for bit. It is not, however, hypo-
+// thetical: a saturated PM motor stepped from a previous solution across a
+// sliding band drove the SPD path to a negative pivot at Newton step 7 and
+// overflowed the factor within ten columns.
+//
+// Manteuffel's cure: refactor M + alpha*diag(M). The ramp below is a search
+// for the WEAKEST sufficient shift, since every bit of alpha costs
+// preconditioner strength -- but it ends at DominanceShift(), where success
+// is a theorem rather than a hope, so the search cannot run out. A shifted
+// factor costs iterations and nothing else -- the Krylov loops measure the
+// true residual against the true operator -- so this trades a slower solve
+// for a solve, where before there was none.
+//
+// Measured: the motor case that prompted all this succeeds at 1e-3, the
+// deliberately adversarial matrix in tests/test_spars_pc.cpp at 1e-1.
+// Nothing yet observed has needed the guaranteed rung, let alone the
+// diagonal below it.
+void CBigLinProb::FactorPC()
+{
+	if(!finalized) Finalize();
+	icState = 2;
+
+	// Unshifted first, and nothing else is computed unless that fails --
+	// which is the overwhelmingly common case, so the fast path pays
+	// nothing at all for any of what follows.
+	if(FactorPCOnce(0.0)){ icState = 1; return; }
+
+	// A geometric ramp, then the shift that makes breakdown impossible.
+	// Ramp entries at or past that one are skipped: it is guaranteed and
+	// they are not.
+	const double guaranteed = DominanceShift();
+	static const double ramp[] = { 1e-3, 1e-2, 1e-1, 1.0 };
+	for(double alpha : ramp){
+		if(guaranteed >= 0 && alpha >= guaranteed) break;
+		if(FactorPCOnce(alpha)){ icState = 1; return; }
+	}
+	if(guaranteed >= 0 && FactorPCOnce(guaranteed)){ icState = 1; return; }
+
+	// Belt and braces: reachable only through a non-finite diagonal (a
+	// broken matrix, not a shift the ladder failed to find) or if rounding
+	// defeated the theorem. The diagonal itself: L is empty, so MultIC
+	// reduces to a diagonal scale, and a nonzero diagonal is all it needs.
+	// Rows with a zero diagonal take the row's 1-norm, as above.
+	icPtr.assign(n+1, 0);
+	icCol.clear();
+	icVal.clear();
+	icD.resize(n);
+	for(int k=0;k<n;k++){
+		const double d = M[k][0].x;
+		icD[k] = (d!=0 && std::isfinite(d)) ? d : RowNorm(k);
+	}
 	icState = 1;
 }
 

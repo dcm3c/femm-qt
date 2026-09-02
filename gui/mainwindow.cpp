@@ -5,6 +5,7 @@
 // Switches between preprocessor and postprocessor menus/toolbars
 // based on the active MDI tab type.
 #include "mainwindow.h"
+#include "femm_resource.h"
 #include "py_console.h"
 #include "pre_prefs_dialog.h"
 #include "script_prefs_dialog.h"
@@ -2309,17 +2310,13 @@ void MainWindow::createLeftToolbars()
     QMenu *help = menuBar()->addMenu(tr("&Help"));
     help->addAction(tr("&Manual"), QKeySequence(Qt::Key_F1), [this]() {
         // Beside the executable on Windows and Linux, where the installer and
-        // the build scripts put it. A macOS bundle cannot do that: a document
-        // in Contents/MacOS/ is sealed as nested code by codesign, so the
-        // manual ships in Contents/Resources/ like every other bundled
-        // document -- see macos_build.sh and
-        // docs/macos-appsupport-material-libs.md for the same rule applied to
-        // the material libraries.
-        QString pdfPath = QApplication::applicationDirPath() + "/manual.pdf";
-#ifdef Q_OS_MAC
-        if (!QFile::exists(pdfPath))
-            pdfPath = QApplication::applicationDirPath() + "/../Resources/manual.pdf";
-#endif
+        // the build scripts put it; Contents/Resources/ in a macOS bundle,
+        // because a document in Contents/MacOS/ is sealed as nested code by
+        // codesign; and ../share/femm for a split (FHS) install. femmResource
+        // knows all three, and is the same search python/, the PyBridge worker
+        // and the material-library originals use.
+        const QString pdfPath =
+            QString::fromStdString(femmResource("manual.pdf"));
         if (QFile::exists(pdfPath))
             QDesktopServices::openUrl(QUrl::fromLocalFile(pdfPath));
         else
@@ -2346,9 +2343,20 @@ void MainWindow::createLeftToolbars()
             "Zoltán Vörös and contributors), both under the MIT License. See "
             "micropython/LICENSE.micropython and "
             "micropython/ulab/LICENSE for details.\n\n"
+            "MicroPython's memory is managed by the Boehm-Demers-Weiser "
+            "garbage collector (Copyright © 1988-2025 Hans-J. Boehm, Alan J. "
+            "Demers, Xerox Corporation, Silicon Graphics, Hewlett-Packard and "
+            "Ivan Maidanski), under an X11-style license. See "
+            "LICENSE-bdwgc.txt for details.\n\n"
+            "The pure-Python standard-library modules are from micropython-lib "
+            "(Copyright © 2013-2026 micropython-lib contributors), under the "
+            "MIT License. See LICENSE-micropython-lib.txt for details.\n\n"
             "It also uses a general complex eigen-decomposition adapted from "
             "melihaltun/complexEigenPairSolver (Copyright © 2018 melihaltun), "
-            "under the MIT License. See LICENSE-melihaltun.txt for details.");
+            "under the MIT License. See LICENSE-melihaltun.txt for details.\n\n"
+            "The bundled Lua 4 client uses Lua (Copyright © 1994-2026 Lua.org, "
+            "PUC-Rio) and LuaSocket (Copyright © 2004-2007 Diego Nehab). See "
+            "Lua-COPYRIGHT.txt and LuaSocket-COPYRIGHT.txt for details.");
     });
     help->addAction(tr("About &Qt"), QKeySequence(), []() {
         QApplication::aboutQt();

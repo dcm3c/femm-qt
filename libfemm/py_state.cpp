@@ -11,7 +11,9 @@
 #include "py_os.h"
 #include "py_pybridge.h"
 #include "pybridge_host.h"
+#include "femm_resource.h"
 #include "script_callbacks.h"
+#include "user_paths.h"
 
 #include <cstdio>
 
@@ -27,6 +29,7 @@ extern "C" {
 #include "py/stream.h"   // MP_STREAM_POLL_WR, for mp_hal_stdio_poll below
 #include "extmod/vfs.h"
 #include "extmod/vfs_posix.h"
+#include "ndarray.h"   // ulab — header is not extern-"C" guarded, so wrap it
 }
 
 #include "femm_stack_guard.h"
@@ -141,7 +144,6 @@ extern "C" uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
 // ---------------------------------------------------------------------------
 static std::string s_last_result;   // wire format (I* notation) — for IPC
 static std::string s_last_display;  // human display (j notation) — for the console
-static std::string s_accum;
 
 const std::string &py_last_result() { return s_last_result; }
 const std::string &py_last_display() { return s_last_display; }
@@ -228,6 +230,112 @@ static void buf_sink_strn(void *data, const char *str, size_t len) {
     if (b->size) b->buf[b->pos] = '\0';
 }
 
+// ---------------------------------------------------------------------------
+// ndarray -> wire text
+// ---------------------------------------------------------------------------
+// A bulk getter returns typed arrays; the wire wants the same tab-separated text
+// it has always sent. Flattening here is what lets ONE implementation serve
+// both: the in-process caller gets arrays, and the IPC caller gets bytes
+// identical to what the hand-written string builders used to produce.
+//
+// Every value goes through the SAME per-value formatter as every scalar result,
+// which is what makes that byte-identity hold rather than merely look likely.
+// Note in particular that append_g emits "1" for 1.0, exactly as the old
+// appendInt did for an integer field -- so a float64 array carrying node indices
+// reproduces the old text without needing an integer dtype.
+//
+// The dtype is dispatched ONCE, outside the loop. Doing it per value (the shape
+// format_value uses for scalars) costs more than the formatting does.
+//
+// Walks with strides rather than assuming dense, so a view or a slice of a
+// larger array formats correctly. ULAB_MAX_DIMS is 2 here; the #error fires
+// rather than silently mis-walking if that is ever raised.
+#if ULAB_MAX_DIMS > 2
+#error "femm-qt: extend append_ndarray() before raising ULAB_MAX_DIMS"
+#endif
+
+template <class Emit>
+static void walk_ndarray(ndarray_obj_t *a, Emit emit) {
+    // A 1-D array leaves shape[MAX-2] at zero, so the row count has to come from
+    // ndim, not from the shape slot -- reading it would run the loop zero times.
+    size_t rows = (a->ndim >= 2) ? a->shape[ULAB_MAX_DIMS - 2] : 1;
+    size_t cols = a->shape[ULAB_MAX_DIMS - 1];
+    int32_t rstride = a->strides[ULAB_MAX_DIMS - 2];
+    int32_t cstride = a->strides[ULAB_MAX_DIMS - 1];
+    uint8_t *row = (uint8_t *)a->array;
+    for (size_t r = 0; r < rows; r++) {
+        uint8_t *p = row;
+        for (size_t c = 0; c < cols; c++) { emit(p); p += cstride; }
+        row += rstride;
+    }
+}
+
+// Row/column geometry, treating a 1-D array as a single column so it can sit
+// beside 2-D ones in a table (see append_ndarray_table).
+static size_t nd_rows(ndarray_obj_t *a) {
+    return (a->ndim >= 2) ? a->shape[ULAB_MAX_DIMS - 2] : a->shape[ULAB_MAX_DIMS - 1];
+}
+static size_t nd_cols(ndarray_obj_t *a) {
+    return (a->ndim >= 2) ? a->shape[ULAB_MAX_DIMS - 1] : 1;
+}
+static int32_t nd_rstride(ndarray_obj_t *a) {
+    return a->strides[(a->ndim >= 2) ? ULAB_MAX_DIMS - 2 : ULAB_MAX_DIMS - 1];
+}
+
+static void append_cell(std::string &out, uint8_t dtype, const uint8_t *p) {
+    switch (dtype) {
+        case NDARRAY_FLOAT:   append_g(out, (double)*(const mp_float_t *)p); break;
+        case NDARRAY_COMPLEX: {
+            const mp_float_t *z = (const mp_float_t *)p;
+            format_complex(out, (double)z[0], (double)z[1]);
+            break;
+        }
+        case NDARRAY_INT32:   out += std::to_string(*(const int32_t *)p); break;
+        case NDARRAY_INT16:   out += std::to_string(*(const int16_t *)p); break;
+        case NDARRAY_UINT16:  out += std::to_string(*(const uint16_t *)p); break;
+        case NDARRAY_INT8:    out += std::to_string((int)*(const int8_t *)p); break;
+        case NDARRAY_UINT8:   out += std::to_string((unsigned)*p); break;
+        default:              out += "<unknown dtype>"; break;
+    }
+}
+
+static void append_ndarray(std::string &out, ndarray_obj_t *a) {
+    bool first = out.empty();
+    auto sep = [&out, &first]() { if (!first) out += '\t'; first = false; };
+    switch (a->dtype) {
+        case NDARRAY_FLOAT:
+            walk_ndarray(a, [&](uint8_t *p) { sep(); append_g(out, (double)*(mp_float_t *)p); });
+            break;
+        case NDARRAY_COMPLEX:
+            walk_ndarray(a, [&](uint8_t *p) {
+                sep();
+                mp_float_t *z = (mp_float_t *)p;
+                format_complex(out, (double)z[0], (double)z[1]);
+            });
+            break;
+        case NDARRAY_INT32:
+            walk_ndarray(a, [&](uint8_t *p) { sep(); out += std::to_string(*(int32_t *)p); });
+            break;
+        case NDARRAY_INT16:
+            walk_ndarray(a, [&](uint8_t *p) { sep(); out += std::to_string(*(int16_t *)p); });
+            break;
+        case NDARRAY_UINT16:
+            walk_ndarray(a, [&](uint8_t *p) { sep(); out += std::to_string(*(uint16_t *)p); });
+            break;
+        case NDARRAY_INT8:
+            walk_ndarray(a, [&](uint8_t *p) { sep(); out += std::to_string((int)*(int8_t *)p); });
+            break;
+        case NDARRAY_UINT8:   // also the storage for a boolean array
+            walk_ndarray(a, [&](uint8_t *p) { sep(); out += std::to_string((unsigned)*p); });
+            break;
+        default:
+            // Unreachable: dtype is validated at construction (ndarray.c). Say so
+            // rather than emit nothing, which would look like an empty result.
+            out += "<unknown dtype>";
+            break;
+    }
+}
+
 // Append one value to out, using str()-style rendering via mp_obj_print_helper.
 static void append_via_print(std::string &out, mp_obj_t o) {
     char tmp[256];
@@ -256,15 +364,82 @@ static void format_value(std::string &out, mp_obj_t o, bool display) {
         size_t n = 0;
         const char *s = mp_obj_str_get_data(o, &n);
         out.append(s, n);
+    } else if (!display && mp_obj_is_type(o, &ulab_ndarray_type)) {
+        // Wire: the full array, flattened. Display: deliberately NOT flattened --
+        // it falls through to append_via_print below and gets ulab's own repr,
+        // which abbreviates to a few elements. Building the console copy of a
+        // bulk result would double both the time and the memory of every such
+        // call (74 MB of text at a million elements) to produce something no
+        // console can show.
+        append_ndarray(out, (ndarray_obj_t *)MP_OBJ_TO_PTR(o));
     } else {
         // int (incl. big ints), and any other object -> str() rendering.
         append_via_print(out, o);
     }
 }
 
+// A tuple whose items are ALL ndarrays sharing a leading dimension is a TABLE:
+// the wire gets it ROW-MAJOR, each row contributing every array's row-k slice in
+// tuple order. That is what lets mo_getallelements return int32 connectivity and
+// float64 centroids as separate typed columns while still producing the
+// record-ordered text the wire has always carried.
+//
+// Flattening the arrays one after another instead would emit
+// [all connectivity][all centroids][all areas][all groups] -- column-block
+// order, which parses without complaint into a completely wrong mesh.
+//
+// A 1-D array counts as one column, so it can sit beside 2-D ones.
+static bool is_ndarray_table(mp_obj_t res, size_t &n, mp_obj_t *&items) {
+    if (!mp_obj_is_type(res, &mp_type_tuple)) return false;
+    mp_obj_get_array(res, &n, &items);
+    if (n == 0) return false;
+    size_t rows = 0;
+    for (size_t k = 0; k < n; k++) {
+        if (!mp_obj_is_type(items[k], &ulab_ndarray_type)) return false;
+        size_t r = nd_rows((ndarray_obj_t *)MP_OBJ_TO_PTR(items[k]));
+        if (k == 0) rows = r;
+        else if (r != rows) return false;
+    }
+    return true;
+}
+
+static void append_ndarray_table(std::string &out, size_t n, mp_obj_t *items) {
+    ndarray_obj_t *a[8];
+    size_t cols[8], count = (n < 8) ? n : 8;
+    for (size_t k = 0; k < count; k++) {
+        a[k] = (ndarray_obj_t *)MP_OBJ_TO_PTR(items[k]);
+        cols[k] = nd_cols(a[k]);
+    }
+    size_t rows = nd_rows(a[0]);
+    bool first = true;
+    for (size_t r = 0; r < rows; r++) {
+        for (size_t k = 0; k < count; k++) {
+            const uint8_t *p = (const uint8_t *)a[k]->array + (size_t)nd_rstride(a[k]) * r;
+            int32_t cs = a[k]->strides[ULAB_MAX_DIMS - 1];
+            for (size_t c = 0; c < cols[k]; c++) {
+                if (!first) out += '\t';
+                first = false;
+                append_cell(out, a[k]->dtype, p + (size_t)cs * c);
+            }
+        }
+    }
+}
+
 // Capture a command's return value into both s_last_result (wire, for IPC) and
 // s_last_display (human, for the console), tab-joining a tuple.
 static void capture_result(mp_obj_t res) {
+    size_t tn = 0;
+    mp_obj_t *titems = nullptr;
+    if (is_ndarray_table(res, tn, titems)) {
+        append_ndarray_table(s_last_result, tn, titems);
+        // Console: the abbreviated repr of each column, not the whole table --
+        // same reasoning as the single-array case in format_value.
+        for (size_t k = 0; k < tn; k++) {
+            if (k) s_last_display += '\t';
+            append_via_print(s_last_display, titems[k]);
+        }
+        return;
+    }
     if (mp_obj_is_type(res, &mp_type_tuple)) {
         size_t n = 0;
         mp_obj_t *items = nullptr;
@@ -361,15 +536,39 @@ void init_py() {
     // All three entry points (console, TCP exec, line-edit) share this dict.
     femm_py::femm_module.globals = mp_globals_get();
 
-    // Set up sys.path so user scripts can `import` from a packages directory
-    // next to the executable and from the current working directory.
-    // "" = CWD (so imports work relative to the user's script location).
-    // exeDir()+"python" = a packages dir co-located with the FEMM binaries.
-    mp_obj_list_append(mp_sys_path, mp_obj_new_str("", 0));
+    // Set up sys.path. MicroPython has already put "" (the current directory,
+    // so imports work relative to the user's script) at the front in
+    // runtime.c:145 -- appending our own "" as well only made every failed
+    // import stat the working directory twice.
+    //
+    // Order after that is deliberate:
+    //   exeDir()+"python"   the vendored stdlib that ships with the program
+    //   userDataDir()+python  the user's own modules, LAST
+    //
+    // Last, so the shipped modules always win. This directory is the user's
+    // equivalent of site-packages, but the directory above it is the STDLIB --
+    // someone dropping a csv.py or json.py in here and silently shadowing ours
+    // would produce failures that look like interpreter bugs.
+    //
+    // The user directory is the only place they CAN write: exeDir()+"python" is
+    // replaced wholesale by every installer, and on an FHS install it is
+    // root-owned. It is appended whether or not it exists -- a missing sys.path
+    // entry is skipped, and creating directories at startup is not this
+    // function's business.
     {
-        std::string pkgdir = exeDir() + "python";
+        // femmResource, not exeDir() alone: on a split (FHS) install the
+        // stdlib is in ../share/femm/python while the executable is in bin/.
+        std::string pkgdir = femmResource("python");
         mp_obj_list_append(mp_sys_path,
             mp_obj_new_str(pkgdir.c_str(), pkgdir.size()));
+    }
+    {
+        std::string userdir = userDataDir();
+        if (!userdir.empty()) {
+            userdir += "python";
+            mp_obj_list_append(mp_sys_path,
+                mp_obj_new_str(userdir.c_str(), userdir.size()));
+        }
     }
 
     // Wire invariant: I is the imaginary unit on both sides of the wire.
@@ -411,39 +610,12 @@ void init_py() {
     femm_py::femm_module.def("_ccosh", [](CComplex z) { return cosh(z); });
     femm_py::femm_module.def("_ctanh", [](CComplex z) { return tanh(z); });
 
-    // String accumulator for bulk data retrieval from script.
-    // Builds a C++ string on the native heap (no GC pressure), then moves
-    // it into the wire result buffer. Usage from script:
-    //   straccum(estimated_bytes)
-    //   for k in range(n): strappend(v1, "\t", v2, "\t", ...)
-    //   strfinish()
-    femm_py::femm_module.def("straccum", [](std::optional<int> hint) {
-        s_accum.clear();
-        if (hint) s_accum.reserve(*hint);
-    });
-    femm_py::femm_module.def("strfinish", []() {
-        if (!s_accum.empty() && s_accum.back() == '\t')
-            s_accum.pop_back();
-        py_set_result(std::move(s_accum));
-    });
-
-    // strappend: raw MicroPython function — accepts any number of args,
-    // formats each via format_value (same as the wire formatter).
-    {
-        static mp_obj_fun_builtin_var_t strappend_obj = {
-            .base = { &mp_type_fun_builtin_var },
-            .sig = MP_OBJ_FUN_MAKE_SIG(0, MP_OBJ_FUN_ARGS_MAX, false),
-            .fun = { .var = [](size_t n, const mp_obj_t *args) -> mp_obj_t {
-                for (size_t i = 0; i < n; i++) {
-                    if (i) s_accum += '\t';
-                    format_value(s_accum, args[i], false);  // wire format
-                }
-                s_accum += '\t';
-                return mp_const_none;
-            }}
-        };
-        store_global("strappend", MP_OBJ_FROM_PTR(&strappend_obj));
-    }
+    // (straccum/strappend/strfinish lived here: a native-heap string builder a
+    // binding could drive to assemble a bulk result client-side. The bulk
+    // getters made it pointless -- and it was wire-only, since strfinish
+    // pushed into the result buffer via py_set_result and returned None, so an
+    // in-process caller got nothing back. That is exactly the local-vs-wire
+    // split the bulk getters removed. See git history for the technique.)
 
     // Console-control globals. These route through the view-command callback so
     // they are harmless no-ops in headless mode; the GUI console (py_console.cpp)

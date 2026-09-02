@@ -95,34 +95,44 @@ of data from solutions.
 \end{itemize}
 
 Perhaps the most remarkable difference between Lua and OctaveFEMM,
-however, is due to the matrix-oriented nature of Octave/Matlab.  In just about any
-OctaveFEMM function in which it would be desiable to enter an array
-of points such that multiple copies of an operation are performed, OctaveFEMM
-will correctly interpret the input perform the requested operation
-on every element in the array.  In addition, for any function in which
-the coordinates of a point are required, that point can be
-specified as an array with two elements instead of specifying each
-element separately.  In functions that require the specification
-of multiple points, those points can be entered as an array of
-two-element arrays.
+however, is due to the matrix-oriented nature of Octave/Matlab.  Most
+OctaveFEMM functions that take the coordinates of a point accept that point
+either as two separate arguments or as a single two-element array, so
+{\tt mi\_addnode(0,0)} and {\tt mi\_addnode([0 0])} do the same thing.
+
+To repeat an operation over many points, pass {\em parallel vectors} --- one
+of $x$ coordinates and one of $y$ --- rather than one array of $xy$ pairs.
+For example, {\tt mi\_addnode([0 1 1],[0 0 1])} adds three nodes, whereas
+{\tt mi\_addnode([0 0; 1 0; 1 1])} adds only one: given a single argument
+the function reads the first two elements of the array, and Matlab stores
+an array column-first.
+
+\subsection{Scope of this manual}
+
+This manual describes the OctaveFEMM toolbox itself: how it is started, how
+its arguments and return values differ from FEMM's own scripting interface,
+and what each function does.  It does not track every command in the engine.
+The femm-qt user manual is the complete command reference; where a function
+exists in the toolbox but is not described here, it behaves as the entry of
+the same name in that manual, with the argument conventions above.
 
 \section{Installation and Startup}
 
-\subsection{Installation for Matlab and Octave 3}
-The OctaveFEMM distribution is automatically installed with FEMM 4.2 in the
-\verb+mfiles+ subdirectory.  The absolute directory is typically
-\verb+c:\Program Files\femm42\mfiles+.  To use OctaveFEMM with Octave or
-Matlab, this path needs to be added to the program's search path. To add
-this path to the search path, type the following lines at the Matlab or
-Octave 3.X.X command prompt:
+\subsection{Installation}
+The OctaveFEMM distribution is installed with femm-qt, in the
+\verb+mfiles+ subdirectory of the installation folder --- by default
+\verb+c:\femm-qt\mfiles+ on Windows.  To use OctaveFEMM, that path has
+to be on the Matlab or Octave search path:
 
 \begin{verbatim}
-	addpath('c:\\femm42\\mfiles');
-	savepath;
+        addpath('c:\femm-qt\mfiles');
+        savepath;
 \end{verbatim}
 
-Alternatively, in Matlab, the interactive {\tt pathtool} command can be used
-to add the {\tt mfiles} directory to the search path.
+In Matlab the interactive {\tt pathtool} command can be used instead.
+OctaveFEMM needs Java support: in Octave that means a JRE and the
+{\tt java} package, and in Matlab it means not starting with
+{\tt -nojvm}.
 
 \subsection{Startup}
 To start an OctaveFEMM session, use the {\tt openfemm} function.
@@ -130,8 +140,12 @@ This function starts up a FEMM process to which OctaveFEMM calls
 are sent. When done with OctaveFEMM, the FEMM process can be shut
 down via the {\tt closefemm} function.
 
-A number of examples that use OctaveFEMM to analyze various problems
-are included in the directory \verb+cd c:\Program Files\femm42\examples+
+Calling {\tt openfemm(1)} starts the engine {\em headless}: no window is
+created and the session is driven entirely from Matlab or Octave.  This is
+useful for batch runs and on machines with no display.
+
+A number of examples that use OctaveFEMM to analyze various problems are
+included in the \verb+examples+ subdirectory of the installation folder.
 
 %-----------------------------------------------------------------------------------
 %

@@ -24,6 +24,11 @@
 
 #include "femm_gc.h"       // femm-qt: gc_alloc_atomic for ndarray payloads
 #include "ulab_tools.h"
+// femm-qt: transform_dot(), for the @ operator handled in ndarray_binary_op()
+#include "numpy/transform.h"
+
+// femm-qt: set by libfemm so complex @ matches complex np.dot; NULL otherwise
+mp_obj_t (*ndarray_matmul_complex_hook)(mp_obj_t, mp_obj_t) = NULL;
 #include "ndarray.h"
 #include "ndarray_operators.h"
 #include "numpy/carray/carray.h"
@@ -1544,12 +1549,21 @@ ndarray_obj_t *ndarray_from_mp_obj(mp_obj_t obj, uint8_t other_type) {
     ndarray_obj_t *ndarray;
 
     if(mp_obj_is_int(obj)) {
-        int32_t ivalue = mp_obj_get_int(obj);
-        if((ivalue < -32768) || (ivalue > 65535)) {
-            // the integer value clearly does not fit the ulab integer types, so move on to float
+        mp_int_t ivalue = mp_obj_get_int(obj);
+        // femm-qt: this function predates int32 and was never taught about it,
+        // which is why `int32_array - 1` used to leave the integer domain: the
+        // 1 became a uint8 and the pair was then widened to float. Two cases
+        // now stay integral -- a scalar meeting an int32 array, and any value
+        // too big for the 16-bit types but comfortably inside an int32. Only a
+        // value that does not fit an int32 at all still falls through to float.
+        bool fits_int32 = (ivalue >= (mp_int_t)INT32_MIN) && (ivalue <= (mp_int_t)INT32_MAX);
+        if(!fits_int32) {
             ndarray = ndarray_new_linear_array(1, NDARRAY_FLOAT);
             mp_float_t *array = (mp_float_t *)ndarray->array;
             array[0] = (mp_float_t)ivalue;
+        } else if((other_type == NDARRAY_INT32) || (ivalue < -32768) || (ivalue > 65535)) {
+            ndarray = ndarray_new_linear_array(1, NDARRAY_INT32);
+            ((int32_t *)ndarray->array)[0] = (int32_t)ivalue;
         } else {
             uint8_t dtype;
             if(ivalue < 0) {
@@ -1618,15 +1632,82 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
         lhs = ndarray_from_mp_obj(lobj, 0);
         rhs = ndarray_from_mp_obj(robj, lhs->dtype);
     }
-    // femm-qt: see ndarray_widen_int32(). Done here, at the single point where
-    // both operands are known to be ndarrays, so that no kernel below ever
-    // sees an int32.
-    if(lhs->dtype == NDARRAY_INT32) {
-        lhs = ndarray_widen_int32(lhs);
+    // femm-qt: int32 routing. Two cases, decided here because this is the single
+    // point at which both operands are known to be ndarrays, and because it is
+    // before ndarray_can_broadcast() -- widening makes a DENSE copy, so strides
+    // computed from the original operand would be stale afterwards.
+    //
+    //   int32 with float or complex, or fed to an operator whose result is
+    //   always float  ->  widen to float here and let ulab's own chains run.
+    //                     Exact: every int32 is representable in a double.
+    //
+    //   int32 with another integer type  ->  left alone here and handled by
+    //                     ndarray_binary_int32() below, which keeps the result
+    //                     integral the way NumPy does.
+    //
+    // The chains themselves therefore still never see an int32, which is what
+    // keeps this an addition rather than a fork of ulab's arithmetic core.
+    if((lhs->dtype == NDARRAY_INT32) || (rhs->dtype == NDARRAY_INT32)) {
+        // An in-place operator is never widened: the result has to land in the
+        // left operand's own buffer, and widening would write it into a discarded
+        // copy instead -- silently leaving the original untouched.
+        bool inplace = (op == MP_BINARY_OP_INPLACE_ADD) || (op == MP_BINARY_OP_INPLACE_SUBTRACT) ||
+                       (op == MP_BINARY_OP_INPLACE_MULTIPLY) || (op == MP_BINARY_OP_INPLACE_MODULO) ||
+                       (op == MP_BINARY_OP_INPLACE_POWER) || (op == MP_BINARY_OP_INPLACE_TRUE_DIVIDE);
+        bool to_float = !inplace &&
+                        ((lhs->dtype == NDARRAY_FLOAT) || (rhs->dtype == NDARRAY_FLOAT) ||
+                         (op == MP_BINARY_OP_TRUE_DIVIDE));
+        #if ULAB_SUPPORTS_COMPLEX
+        to_float = to_float || (!inplace && ((lhs->dtype == NDARRAY_COMPLEX) || (rhs->dtype == NDARRAY_COMPLEX)));
+        #endif
+        if(to_float) {
+            if(lhs->dtype == NDARRAY_INT32) {
+                lhs = ndarray_widen_int32(lhs);
+            }
+            if(rhs->dtype == NDARRAY_INT32) {
+                rhs = ndarray_widen_int32(rhs);
+            }
+        }
     }
-    if(rhs->dtype == NDARRAY_INT32) {
-        rhs = ndarray_widen_int32(rhs);
+
+    // femm-qt: the @ operator. MicroPython's compiler already emits
+    // MP_BINARY_OP_MAT_MULTIPLY for it and delivers it here; upstream ulab
+    // simply has no case for it, so it fell out of the switch below as
+    // MP_OBJ_NULL and surfaced as "unsupported types for __matmul__".
+    //
+    // Handled HERE rather than in that switch, and the position is not
+    // cosmetic: ndarray_can_broadcast() runs in between and would reject the
+    // operands first. Matmul shapes are deliberately NOT broadcastable --
+    // (2,3) @ (3,4) is the whole point -- so a case in the switch would raise
+    // "operands could not be broadcast together" for every non-trivial matrix
+    // product.
+    //
+    // Complex goes to the hook, which libfemm registers so that A @ B and
+    // np.dot(A, B) agree on a complex-symmetric matrix instead of one of them
+    // raising. Left NULL (as in a plain ulab build) it falls through to
+    // transform_dot's own "not implemented for complex".
+    //
+    // numpy distinguishes matmul from dot only for ndim > 2, and ULAB_MAX_DIMS
+    // is 2 here, so routing @ to dot is exact rather than approximate. Raise
+    // that limit and this needs revisiting -- see docs/ulab-max-dims.md.
+    #if ULAB_NUMPY_HAS_DOT
+    if((op == MP_BINARY_OP_MAT_MULTIPLY) || (op == MP_BINARY_OP_REVERSE_MAT_MULTIPLY) ||
+       (op == MP_BINARY_OP_INPLACE_MAT_MULTIPLY)) {
+        ndarray_obj_t *a = lhs, *b = rhs;
+        if(op == MP_BINARY_OP_REVERSE_MAT_MULTIPLY) {
+            // the ndarray arrived on the RIGHT of the expression
+            a = rhs; b = lhs;
+        }
+        #if ULAB_SUPPORTS_COMPLEX
+        if((a->dtype == NDARRAY_COMPLEX) || (b->dtype == NDARRAY_COMPLEX)) {
+            if(ndarray_matmul_complex_hook != NULL) {
+                return ndarray_matmul_complex_hook(MP_OBJ_FROM_PTR(a), MP_OBJ_FROM_PTR(b));
+            }
+        }
+        #endif
+        return transform_dot(MP_OBJ_FROM_PTR(a), MP_OBJ_FROM_PTR(b));
     }
+    #endif
 
     if(op == MP_BINARY_OP_REVERSE_ADD) {
         op = MP_BINARY_OP_ADD;
@@ -1668,18 +1749,12 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
             case MP_BINARY_OP_ADD:
             case MP_BINARY_OP_MULTIPLY:
             case MP_BINARY_OP_SUBTRACT:
-                // here we don't have to list those cases that result in an int16,
-                // because dtype is initialised with that NDARRAY_INT16
-                if(lhs->dtype == rhs->dtype) {
-                    dtype = rhs->dtype;
-                } else if((lhs->dtype == NDARRAY_FLOAT) || (rhs->dtype == NDARRAY_FLOAT)) {
-                    dtype = NDARRAY_FLOAT;
-                } else if(((lhs->dtype == NDARRAY_UINT8) && (rhs->dtype == NDARRAY_UINT16)) ||
-                            ((lhs->dtype == NDARRAY_INT8) && (rhs->dtype == NDARRAY_UINT16)) ||
-                            ((rhs->dtype == NDARRAY_UINT8) && (lhs->dtype == NDARRAY_UINT16)) ||
-                            ((rhs->dtype == NDARRAY_INT8) && (lhs->dtype == NDARRAY_UINT16))) {
-                    dtype = NDARRAY_UINT16;
-                }
+                // femm-qt: one source of truth. This used to be a hand-kept
+                // cascade duplicating ndarray_upcast_dtype()'s table, which is
+                // how an empty result could come back a different dtype from a
+                // non-empty one -- and every promotion change had to be made
+                // twice, in two files, with nothing to catch it if it was not.
+                dtype = ndarray_upcast_dtype(lhs->dtype, rhs->dtype);
                 return MP_OBJ_FROM_PTR(ndarray_new_linear_array(0, dtype));
                 break;
 
@@ -1704,6 +1779,29 @@ mp_obj_t ndarray_binary_op(mp_binary_op_t _op, mp_obj_t lobj, mp_obj_t robj) {
                 return mp_const_none;
                 break;
         }
+    }
+
+    // femm-qt: anything still carrying an int32 at this point is an integer-only
+    // operation -- the float and complex combinations were widened above. One
+    // kernel covers all of them, so none of the dtype chains below has to grow
+    // an int32 row and column. See the NDARRAY_INT32 note in ndarray.h.
+    //
+    // The upcast test is not redundant with the two dtype tests. A pair where
+    // NEITHER operand is int32 can still PRODUCE one -- uint16 with int16, and
+    // int8 with uint16, both of which need a wider signed type than either
+    // holds (see ndarray_upcast_dtype). Without this the pair would fall
+    // through to the chains below, whose trailing branch assumes float and
+    // would reinterpret the bytes. The kernel itself needs nothing: it reads
+    // each operand through ndarray_get_int32_function(), which already covers
+    // every integer dtype.
+    if((lhs->dtype == NDARRAY_INT32) || (rhs->dtype == NDARRAY_INT32) ||
+       (ndarray_upcast_dtype(lhs->dtype, rhs->dtype) == NDARRAY_INT32)) {
+        if((op == MP_BINARY_OP_INPLACE_ADD) || (op == MP_BINARY_OP_INPLACE_SUBTRACT) ||
+           (op == MP_BINARY_OP_INPLACE_MULTIPLY) || (op == MP_BINARY_OP_INPLACE_MODULO) ||
+           (op == MP_BINARY_OP_INPLACE_POWER) || (op == MP_BINARY_OP_INPLACE_TRUE_DIVIDE)) {
+            return ndarray_inplace_int32(op, lhs, rhs, rstrides);
+        }
+        return ndarray_binary_int32(op, lhs, rhs, ndim, shape, lstrides, rstrides);
     }
 
     switch(op) {

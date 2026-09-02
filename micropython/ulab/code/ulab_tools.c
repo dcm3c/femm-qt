@@ -102,7 +102,45 @@ mp_float_t ndarray_get_float_value(void *data, uint8_t dtype) {
     }
 }
 
-#if NDARRAY_BINARY_USES_FUN_POINTER | ULAB_NUMPY_HAS_WHERE
+// femm-qt: integer accessors, the int32 counterpart of the float ones above.
+// Used by ndarray_binary_int32(), which handles every binary operation where an
+// int32 meets another integer type. Every ulab integer dtype fits in an int32,
+// so these are lossless.
+//
+// NOTE THE DIFFERENCE from ndarray_get_float_function(): there is deliberately
+// NO trailing "whatever is left must be float" branch. This returns NULL for a
+// dtype it does not know and the caller raises. The float chains may assume a
+// closed world because dtype is validated at construction (ndarray.c:204,:256),
+// but that assumption is exactly what broke when int32 was added to a set of
+// functions written before it existed. A future dtype must fail loudly here
+// rather than reinterpret bytes.
+static int32_t ndarray_get_int32_uint8(void *data)  { return (int32_t)(*(uint8_t *)data); }
+static int32_t ndarray_get_int32_int8(void *data)   { return (int32_t)(*(int8_t *)data); }
+static int32_t ndarray_get_int32_uint16(void *data) { return (int32_t)(*(uint16_t *)data); }
+static int32_t ndarray_get_int32_int16(void *data)  { return (int32_t)(*(int16_t *)data); }
+static int32_t ndarray_get_int32_int32(void *data)  { return *(int32_t *)data; }
+
+void *ndarray_get_int32_function(uint8_t dtype) {
+    if(dtype == NDARRAY_UINT8) {
+        return (void *)ndarray_get_int32_uint8;
+    } else if(dtype == NDARRAY_INT8) {
+        return (void *)ndarray_get_int32_int8;
+    } else if(dtype == NDARRAY_UINT16) {
+        return (void *)ndarray_get_int32_uint16;
+    } else if(dtype == NDARRAY_INT16) {
+        return (void *)ndarray_get_int32_int16;
+    } else if(dtype == NDARRAY_INT32) {
+        return (void *)ndarray_get_int32_int32;
+    }
+    return NULL;        // not an integer dtype -- caller must raise
+}
+
+// femm-qt: the guard used to be
+//     #if NDARRAY_BINARY_USES_FUN_POINTER | ULAB_NUMPY_HAS_WHERE
+// but ndarray_binary_op() now consults this table too, both to route the pairs
+// that promote to int32 and to type an empty result, and it is compiled
+// unconditionally. Turning np.where off would have failed the link.
+#if 1
 uint8_t ndarray_upcast_dtype(uint8_t ldtype, uint8_t rdtype) {
     // returns a single character that corresponds to the broadcasting rules
     // - if one of the operarands is a float, the result is always float
@@ -112,15 +150,43 @@ uint8_t ndarray_upcast_dtype(uint8_t ldtype, uint8_t rdtype) {
     // uint8 + int16 => int16
     // uint8 + uint16 => uint16
     // int8 + int16 => int16
-    // int8 + uint16 => uint16
-    // uint16 + int16 => float
+    // int8 + uint16 => int32     (femm-qt; upstream says uint16)
+    // uint16 + int16 => int32    (femm-qt; upstream says float)
+    //
+    // femm-qt: the last two are the pairs where a signed and an unsigned type
+    // need more range than either holds -- int8 spans -128..127, uint16 spans
+    // 0..65535, and only a 32-bit signed type covers both. That is what NumPy
+    // promotes them to. Upstream could not say int32, having no such type, and
+    // its two answers fail differently: uint16 is silently WRONG for a negative
+    // int8, while float is at least exact but leaves the integers, so the
+    // result is refused as an index by np.take. The note in ndarray.h about
+    // "uint16 + int16 => float" being upstream precedent rather than NumPy
+    // behaviour is this line.
 
+    #if ULAB_SUPPORTS_COMPLEX
+    // femm-qt: complex wins over everything, checked first so it holds for
+    // every pairing rather than only the ones spelled out below. Upstream never
+    // needed this because the table was consulted only by np.where and the
+    // fun-pointer path; it is now also what types an empty binary result, where
+    // falling through to the end would have called complex + int16 a float.
+    if((ldtype == NDARRAY_COMPLEX) || (rdtype == NDARRAY_COMPLEX)) {
+        return NDARRAY_COMPLEX;
+    }
+    #endif
     if((ldtype == NDARRAY_INT32) || (rdtype == NDARRAY_INT32)) {
-        // femm-qt: int32 is a storage type; every operation on it produces
-        // float64, which represents all of int32 exactly. This is checked
-        // BEFORE the identical-dtype rule below, so that int32 + int32 also
-        // becomes float rather than an int32 the kernels cannot produce.
-        return NDARRAY_FLOAT;
+        // femm-qt: int32 combined with any other INTEGER type gives int32 --
+        // every ulab integer fits in one, which is what NumPy's promotion gives
+        // too. Mixed with float (or complex) it gives float, as everything does.
+        // Checked before the identical-dtype rule so int32+int32 lands here.
+        if((ldtype == NDARRAY_FLOAT) || (rdtype == NDARRAY_FLOAT)) {
+            return NDARRAY_FLOAT;
+        }
+        #if ULAB_SUPPORTS_COMPLEX
+        if((ldtype == NDARRAY_COMPLEX) || (rdtype == NDARRAY_COMPLEX)) {
+            return NDARRAY_COMPLEX;
+        }
+        #endif
+        return NDARRAY_INT32;
     }
     if(ldtype == rdtype) {
         // if the two dtypes are equal, the result is also of that type
@@ -133,10 +199,16 @@ uint8_t ndarray_upcast_dtype(uint8_t ldtype, uint8_t rdtype) {
             ((ldtype == NDARRAY_INT16) && (rdtype == NDARRAY_INT8))) {
         return NDARRAY_INT16;
     } else if(((ldtype == NDARRAY_UINT8) && (rdtype == NDARRAY_UINT16)) ||
-            ((ldtype == NDARRAY_UINT16) && (rdtype == NDARRAY_UINT8)) ||
-            ((ldtype == NDARRAY_INT8) && (rdtype == NDARRAY_UINT16)) ||
-            ((ldtype == NDARRAY_UINT16) && (rdtype == NDARRAY_INT8))) {
+            ((ldtype == NDARRAY_UINT16) && (rdtype == NDARRAY_UINT8))) {
         return NDARRAY_UINT16;
+    } else if(((ldtype == NDARRAY_INT8) && (rdtype == NDARRAY_UINT16)) ||
+            ((ldtype == NDARRAY_UINT16) && (rdtype == NDARRAY_INT8)) ||
+            ((ldtype == NDARRAY_UINT16) && (rdtype == NDARRAY_INT16)) ||
+            ((ldtype == NDARRAY_INT16) && (rdtype == NDARRAY_UINT16))) {
+        // femm-qt: see the table above -- signed and unsigned needing a wider
+        // signed type. Routed to the int32 kernel, so the dtype chains still
+        // never see an int32.
+        return NDARRAY_INT32;
     }
     return NDARRAY_FLOAT;
 }

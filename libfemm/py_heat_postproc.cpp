@@ -152,6 +152,66 @@ void register_heat_postproc_py(HeatResultsDoc *doc) {
                                el.ctr.re, el.ctr.im, s_doc->ElmArea(k), (double)grp);
     });
 
+
+    // ---- Bulk retrieval ----
+    //
+    // Arrays, not text: see the note in py_postproc_common.h. Node indices are
+    // 1-based, as everywhere else in the API.
+    m.def("ho_getallnodes", []() -> mp_obj_t {
+        check_doc(s_doc, HOERR);
+        size_t nn = s_doc->meshnode.size();
+        ndarray_obj_t *a = bulkArray(nn, 2, NDARRAY_FLOAT);
+        mp_float_t *d = bulkF8(a);
+        for (size_t k = 0; k < nn; k++) {
+            d[2 * k]     = (mp_float_t)s_doc->meshnode[k].x;
+            d[2 * k + 1] = (mp_float_t)s_doc->meshnode[k].y;
+        }
+        return MP_OBJ_FROM_PTR(a);
+    });
+    m.def("ho_getallelements", []() -> mp_obj_t {
+        check_doc(s_doc, HOERR);
+        size_t ne = s_doc->meshelem.size();
+        ndarray_obj_t *conn = bulkArray(ne, 3, NDARRAY_INT32);
+        ndarray_obj_t *ctr  = bulkArray(ne, 2, NDARRAY_FLOAT);
+        ndarray_obj_t *area = bulkArray(ne, 0, NDARRAY_FLOAT);
+        ndarray_obj_t *grp  = bulkArray(ne, 0, NDARRAY_INT32);
+        int32_t *pc = bulkI4(conn), *pg = bulkI4(grp);
+        mp_float_t *pt = bulkF8(ctr), *pa = bulkF8(area);
+        for (size_t k = 0; k < ne; k++) {
+            auto &el = s_doc->meshelem[k];
+            pc[3 * k] = el.p[0] + 1; pc[3 * k + 1] = el.p[1] + 1; pc[3 * k + 2] = el.p[2] + 1;
+            pt[2 * k] = (mp_float_t)el.ctr.re; pt[2 * k + 1] = (mp_float_t)el.ctr.im;
+            pa[k] = (mp_float_t)s_doc->ElmArea((int)k);
+            pg[k] = (el.lbl >= 0 && el.lbl < (int)s_doc->labellist.size())
+                        ? s_doc->labellist[el.lbl].InGroup : 0;
+        }
+        mp_obj_t items[4] = {MP_OBJ_FROM_PTR(conn), MP_OBJ_FROM_PTR(ctr),
+                             MP_OBJ_FROM_PTR(area), MP_OBJ_FROM_PTR(grp)};
+        return mp_obj_new_tuple(4, items);
+    });
+    // Heat flux density per element. HRElement is an alias of ERElement, so the
+    // field lives in ONE CComplex holding the 2-D VECTOR (re = Fx, im = Fy) --
+    // not a phasor. Heat flow has no frequency, so this is two REAL columns.
+    m.def("ho_getallf", []() -> mp_obj_t {
+        check_doc(s_doc, HOERR);
+        size_t ne = s_doc->meshelem.size();
+        ndarray_obj_t *a = bulkArray(ne, 2, NDARRAY_FLOAT);
+        mp_float_t *d = bulkF8(a);
+        for (size_t k = 0; k < ne; k++) {
+            d[2 * k]     = (mp_float_t)s_doc->meshelem[k].D.re;
+            d[2 * k + 1] = (mp_float_t)s_doc->meshelem[k].D.im;
+        }
+        return MP_OBJ_FROM_PTR(a);
+    });
+    // Nodal temperature.
+    m.def("ho_getallt", []() -> mp_obj_t {
+        check_doc(s_doc, HOERR);
+        size_t nn = s_doc->meshnode.size();
+        ndarray_obj_t *a = bulkArray(nn, 0, NDARRAY_FLOAT);
+        mp_float_t *d = bulkF8(a);
+        for (size_t k = 0; k < nn; k++) d[k] = (mp_float_t)s_doc->meshnode[k].V;
+        return MP_OBJ_FROM_PTR(a);
+    });
     // ---- Smoothing ----
     auto smooth_fn = [](optional<std::string> mode) {
         check_doc(s_doc, HOERR);

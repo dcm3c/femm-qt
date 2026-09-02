@@ -468,6 +468,7 @@ function mi_modifypointprop(pname,pnum,pval)
 end
 
 mi_moverotate(bx,by,shiftangle) = callfemm("mi_moverotate($(numc(bx))$(numc(by))$(num(shiftangle)))")
+mi_moverotate2(bx,by,shiftangle,editaction) = callfemm("mi_moverotate($(numc(bx))$(numc(by))$(numc(shiftangle))$(num(editaction)))")
 mi_movetranslate(bx,by) = callfemm("mi_movetranslate($(numc(bx))$(num(by)))")
 mi_movetranslate2(bx,by,editaction) = callfemm("mi_movetranslate($(numc(bx))$(numc(by))$(num(editaction)))")
 
@@ -705,6 +706,55 @@ function mo_getalla()
     raw = callfemm("mo_getalla()")
     return collect(isa(raw, Tuple) ? raw : (raw,))
 end
+function eo_getallelements()
+    raw = collect(callfemm("eo_getallelements()"))
+    return permutedims(reshape(raw, 7, :))
+end
+function eo_getallnodes()
+    raw = collect(callfemm("eo_getallnodes()"))
+    return permutedims(reshape(raw, 2, :))
+end
+function eo_getalld()
+    raw = collect(callfemm("eo_getalld()"))
+    return permutedims(reshape(raw, 2, :))
+end
+function eo_getallv()
+    raw = callfemm("eo_getallv()")
+    return collect(isa(raw, Tuple) ? raw : (raw,))
+end
+function ho_getallnodes()
+    raw = collect(callfemm("ho_getallnodes()"))
+    return permutedims(reshape(raw, 2, :))
+end
+function ho_getallelements()
+    raw = collect(callfemm("ho_getallelements()"))
+    return permutedims(reshape(raw, 7, :))
+end
+function ho_getallf()
+    raw = collect(callfemm("ho_getallf()"))
+    return permutedims(reshape(raw, 2, :))
+end
+function ho_getallt()
+    raw = callfemm("ho_getallt()")
+    return collect(isa(raw, Tuple) ? raw : (raw,))
+end
+function co_getallnodes()
+    raw = collect(callfemm("co_getallnodes()"))
+    return permutedims(reshape(raw, 2, :))
+end
+function co_getallelements()
+    raw = collect(callfemm("co_getallelements()"))
+    return permutedims(reshape(raw, 7, :))
+end
+function co_getallj()
+    raw = collect(callfemm("co_getallj()"))
+    return permutedims(reshape(raw, 2, :))
+end
+function co_getallv()
+    raw = callfemm("co_getallv()")
+    return collect(isa(raw, Tuple) ? raw : (raw,))
+end
+
 function mo_getallgapb(bdryname, npts=360)
     raw = collect(callfemm("mo_getallgapb($(quotec(bdryname))$(num(npts)))"))
     return permutedims(reshape(raw, 2, :))
@@ -719,8 +769,6 @@ function mo_getallgapharmonics(bdryname)
 end
 
 mo_gettitle() = callfemm("mo_gettitle()")
-mo_getnodeindex(x,y) = callfemm("mo_getnodeindex($(numc(x))$(num(y)))")
-mo_getelementindex(x,y) = callfemm("mo_getelementindex($(numc(x))$(num(y)))")
 
 # ===================================================================
 #  ELECTROSTATICS PRE-PROCESSOR (ei_)
@@ -815,6 +863,7 @@ function ei_modifypointprop(pname,pnum,pval)
 end
 
 ei_moverotate(bx,by,shiftangle) = callfemm("ei_moverotate($(numc(bx))$(numc(by))$(num(shiftangle)))")
+ei_moverotate2(bx,by,shiftangle,editaction) = callfemm("ei_moverotate($(numc(bx))$(numc(by))$(numc(shiftangle))$(num(editaction)))")
 ei_movetranslate(bx,by) = callfemm("ei_movetranslate($(numc(bx))$(num(by)))")
 ei_movetranslate2(bx,by,editaction) = callfemm("ei_movetranslate($(numc(bx))$(numc(by))$(num(editaction)))")
 
@@ -954,6 +1003,7 @@ eo_savebitmap(fn) = callfemm("eo_savebitmap($(quote_str(fn)))")
 eo_savemetafile(fn) = callfemm("eo_savemetafile($(quote_str(fn)))")
 
 eo_selectblock(x,y) = callfemm("eo_selectblock($(numc(x))$(num(y)))")
+eo_selectconductor(pname) = callfemm("eo_selectconductor($(quote_str(pname)))")
 eo_selectpoint(x,y) = callfemm("eo_selectpoint($(numc(x))$(num(y)))")
 eo_seteditmode(mode) = callfemm("eo_seteditmode($(quote_str(mode)))")
 eo_setgrid(density,ptype) = callfemm("eo_setgrid($(numc(density))$(quote_str(ptype)))")
@@ -982,8 +1032,6 @@ eo_zoomnatural() = callfemm("eo_zoomnatural()")
 eo_zoomout() = callfemm("eo_zoomout()")
 
 eo_gettitle() = callfemm("eo_gettitle()")
-eo_getnodeindex(x,y) = callfemm("eo_getnodeindex($(numc(x))$(num(y)))")
-eo_getelementindex(x,y) = callfemm("eo_getelementindex($(numc(x))$(num(y)))")
 
 # ===================================================================
 #  HEAT FLOW PRE-PROCESSOR (hi_)
@@ -1148,6 +1196,7 @@ function hi_modifypointprop(pname,pnum,pval)
 end
 
 hi_moverotate(bx,by,shiftangle) = callfemm("hi_moverotate($(numc(bx))$(numc(by))$(num(shiftangle)))")
+hi_moverotate2(bx,by,shiftangle,editaction) = callfemm("hi_moverotate($(numc(bx))$(numc(by))$(numc(shiftangle))$(num(editaction)))")
 hi_movetranslate(bx,by) = callfemm("hi_movetranslate($(numc(bx))$(num(by)))")
 hi_movetranslate2(bx,by,editaction) = callfemm("hi_movetranslate($(numc(bx))$(numc(by))$(num(editaction)))")
 
@@ -1287,6 +1336,7 @@ ho_savebitmap(fn) = callfemm("ho_savebitmap($(quote_str(fn)))")
 ho_savemetafile(fn) = callfemm("ho_savemetafile($(quote_str(fn)))")
 
 ho_selectblock(x,y) = callfemm("ho_selectblock($(numc(x))$(num(y)))")
+ho_selectconductor(pname) = callfemm("ho_selectconductor($(quote_str(pname)))")
 ho_selectpoint(x,y) = callfemm("ho_selectpoint($(numc(x))$(num(y)))")
 ho_seteditmode(mode) = callfemm("ho_seteditmode($(quote_str(mode)))")
 ho_setgrid(density,ptype) = callfemm("ho_setgrid($(numc(density))$(quote_str(ptype)))")
@@ -1315,8 +1365,6 @@ ho_zoomnatural() = callfemm("ho_zoomnatural()")
 ho_zoomout() = callfemm("ho_zoomout()")
 
 ho_gettitle() = callfemm("ho_gettitle()")
-ho_getnodeindex(x,y) = callfemm("ho_getnodeindex($(numc(x))$(num(y)))")
-ho_getelementindex(x,y) = callfemm("ho_getelementindex($(numc(x))$(num(y)))")
 
 # ===================================================================
 #  CURRENT FLOW PRE-PROCESSOR (ci_)
@@ -1399,6 +1447,7 @@ ci_analyse() = ci_analyze()
 ci_analyse(n) = ci_analyze(n)
 
 ci_attachdefault() = callfemm("ci_attachdefault()")
+ci_attachouterspace() = callfemm("ci_attachouterspace()")
 ci_clearselected() = callfemm("ci_clearselected()")
 ci_close() = callfemm("ci_close()")
 
@@ -1409,6 +1458,7 @@ ci_copytranslate2(bx,by,copies,editaction) = callfemm("ci_copytranslate($(numc(b
 
 ci_createmesh() = callfemm("ci_createmesh()")
 ci_createradius(x,y,r) = callfemm("ci_createradius($(numc(x))$(numc(y))$(num(r)))")
+ci_defineouterspace(Zo,Ro,Ri) = callfemm("ci_defineouterspace($(numc(Zo))$(numc(Ro))$(num(Ri)))")
 ci_deleteboundprop(n) = callfemm("ci_deleteboundprop($(quote_str(n)))")
 ci_deleteconductor(n) = callfemm("ci_deleteconductor($(quote_str(n)))")
 ci_deletematerial(n) = callfemm("ci_deletematerial($(quote_str(n)))")
@@ -1442,6 +1492,7 @@ function ci_drawrectangle(x1,y1,x2,y2)
     ci_drawpolygon([x1 y1; x1 y2; x2 y2; x2 y1])
 end
 
+ci_detachouterspace() = callfemm("ci_detachouterspace()")
 ci_getmaterial(matname) = callfemm("ci_getmaterial($(quote_str(matname)))")
 ci_hidegrid() = callfemm("ci_hidegrid()")
 ci_hidenames() = callfemm("ci_shownames(0)")
@@ -1470,6 +1521,7 @@ function ci_modifypointprop(pname,pnum,pval)
 end
 
 ci_moverotate(bx,by,shiftangle) = callfemm("ci_moverotate($(numc(bx))$(numc(by))$(num(shiftangle)))")
+ci_moverotate2(bx,by,shiftangle,editaction) = callfemm("ci_moverotate($(numc(bx))$(numc(by))$(numc(shiftangle))$(num(editaction)))")
 ci_movetranslate(bx,by) = callfemm("ci_movetranslate($(numc(bx))$(num(by)))")
 ci_movetranslate2(bx,by,editaction) = callfemm("ci_movetranslate($(numc(bx))$(numc(by))$(num(editaction)))")
 
@@ -1608,6 +1660,7 @@ co_savebitmap(fn) = callfemm("co_savebitmap($(quote_str(fn)))")
 co_savemetafile(fn) = callfemm("co_savemetafile($(quote_str(fn)))")
 
 co_selectblock(x,y) = callfemm("co_selectblock($(numc(x))$(num(y)))")
+co_selectconductor(pname) = callfemm("co_selectconductor($(quote_str(pname)))")
 co_selectpoint(x,y) = callfemm("co_selectpoint($(numc(x))$(num(y)))")
 co_seteditmode(mode) = callfemm("co_seteditmode($(quote_str(mode)))")
 co_setgrid(density,ptype) = callfemm("co_setgrid($(numc(density))$(quote_str(ptype)))")
@@ -1636,8 +1689,6 @@ co_zoomnatural() = callfemm("co_zoomnatural()")
 co_zoomout() = callfemm("co_zoomout()")
 
 co_gettitle() = callfemm("co_gettitle()")
-co_getnodeindex(x,y) = callfemm("co_getnodeindex($(numc(x))$(num(y)))")
-co_getelementindex(x,y) = callfemm("co_getelementindex($(numc(x))$(num(y)))")
 
 # ===================================================================
 #  Exports
@@ -1672,6 +1723,7 @@ export mi_maximize, mi_minimize
 export mi_mirror, mi_mirror2
 export mi_modifyboundprop, mi_modifycircprop, mi_modifymaterial, mi_modifypointprop
 export mi_moverotate, mi_movetranslate, mi_movetranslate2
+export mi_moverotate2
 export mi_probdef, mi_purgemesh, mi_readdxf, mi_refreshview
 export mi_resize, mi_restore, mi_saveas, mi_savebitmap, mi_savedxf, mi_savemetafile
 export mi_scale, mi_scale2
@@ -1702,7 +1754,7 @@ export mo_shownames, mo_showpoints, mo_showvectorplot
 export mo_smooth, mo_smoothoff, mo_smoothon
 export mo_snapgrid, mo_snapgridoff, mo_snapgridon
 export mo_zoom, mo_zoomin, mo_zoomnatural, mo_zoomout
-export mo_gettitle, mo_getnodeindex, mo_getelementindex
+export mo_gettitle
 export mo_getgapb, mo_getgapa, mo_gapintegral, mo_getgapharmonics
 export mo_getallelements, mo_getallnodes, mo_getallb, mo_getalla
 export mo_getallgapb, mo_getallgapa, mo_getallgapharmonics
@@ -1723,6 +1775,7 @@ export ei_maximize, ei_minimize
 export ei_mirror, ei_mirror2
 export ei_modifyboundprop, ei_modifyconductorprop, ei_modifymaterial, ei_modifypointprop
 export ei_moverotate, ei_movetranslate, ei_movetranslate2
+export ei_moverotate2
 export ei_probdef, ei_purgemesh, ei_readdxf, ei_refreshview
 export ei_resize, ei_restore, ei_saveas, ei_savebitmap, ei_savedxf, ei_savemetafile
 export ei_scale, ei_scale2
@@ -1738,6 +1791,7 @@ export ei_getboundingbox, ei_getprobleminfo, ei_gettitle, ei_gridsnap
 # Electrostatics post-processor
 export eo_addcontour, eo_bendcontour, eo_blockintegral, eo_clearblock, eo_clearcontour
 export eo_close, eo_getconductorproperties, eo_getpointvalues
+export eo_selectconductor
 export eo_getv, eo_getd, eo_gete, eo_getperm, eo_getenergydensity
 export eo_getelement, eo_getnode, eo_getprobleminfo
 export eo_groupselectblock
@@ -1753,7 +1807,8 @@ export eo_shownames, eo_showpoints, eo_showvectorplot
 export eo_smooth, eo_smoothoff, eo_smoothon
 export eo_snapgrid, eo_snapgridoff, eo_snapgridon
 export eo_zoom, eo_zoomin, eo_zoomnatural, eo_zoomout
-export eo_gettitle, eo_getnodeindex, eo_getelementindex
+export eo_gettitle
+export eo_getallelements, eo_getallnodes, eo_getalld, eo_getallv
 # Heat flow pre-processor
 export hi_addarc, hi_addblocklabel, hi_addboundprop, hi_addconductorprop
 export hi_addmaterial, hi_addnode, hi_addpointprop, hi_addsegment
@@ -1772,6 +1827,7 @@ export hi_maximize, hi_minimize
 export hi_mirror, hi_mirror2
 export hi_modifyboundprop, hi_modifyconductorprop, hi_modifymaterial, hi_modifypointprop
 export hi_moverotate, hi_movetranslate, hi_movetranslate2
+export hi_moverotate2
 export hi_probdef, hi_purgemesh, hi_readdxf, hi_refreshview
 export hi_resize, hi_restore, hi_saveas, hi_savebitmap, hi_savedxf, hi_savemetafile
 export hi_scale, hi_scale2
@@ -1787,6 +1843,7 @@ export hi_getboundingbox, hi_getprobleminfo, hi_gettitle, hi_gridsnap
 # Heat flow post-processor
 export ho_addcontour, ho_bendcontour, ho_blockintegral, ho_clearblock, ho_clearcontour
 export ho_close, ho_getconductorproperties, ho_getpointvalues
+export ho_selectconductor
 export ho_gett, ho_getf, ho_getg, ho_getk
 export ho_getelement, ho_getnode, ho_getprobleminfo
 export ho_groupselectblock
@@ -1802,24 +1859,29 @@ export ho_shownames, ho_showpoints, ho_showvectorplot
 export ho_smooth, ho_smoothoff, ho_smoothon
 export ho_snapgrid, ho_snapgridoff, ho_snapgridon
 export ho_zoom, ho_zoomin, ho_zoomnatural, ho_zoomout
-export ho_gettitle, ho_getnodeindex, ho_getelementindex
+export ho_gettitle
+export ho_getallelements, ho_getallnodes, ho_getallf, ho_getallt
 # Current flow pre-processor
 export ci_addarc, ci_addblocklabel, ci_addboundprop, ci_addconductorprop
 export ci_addmaterial, ci_addnode, ci_addpointprop, ci_addsegment
 export ci_analyze, ci_analyse
 export ci_attachdefault, ci_clearselected, ci_close
+export ci_attachouterspace
 export ci_copyrotate, ci_copyrotate2, ci_copytranslate, ci_copytranslate2
 export ci_createmesh, ci_createradius
 export ci_deleteboundprop, ci_deleteconductor, ci_deletematerial, ci_deletepointprop
 export ci_deleteselected, ci_deleteselectedarcsegments, ci_deleteselectedlabels
 export ci_deleteselectednodes, ci_deleteselectedsegments
+export ci_defineouterspace
 export ci_detachdefault
+export ci_detachouterspace
 export ci_drawarc, ci_drawline, ci_drawpolyline, ci_drawpolygon, ci_drawrectangle
 export ci_getmaterial, ci_hidegrid, ci_hidenames, ci_loadsolution
 export ci_maximize, ci_minimize
 export ci_mirror, ci_mirror2
 export ci_modifyboundprop, ci_modifyconductorprop, ci_modifymaterial, ci_modifypointprop
 export ci_moverotate, ci_movetranslate, ci_movetranslate2
+export ci_moverotate2
 export ci_probdef, ci_purgemesh, ci_readdxf, ci_refreshview
 export ci_resize, ci_restore, ci_saveas, ci_savebitmap, ci_savedxf, ci_savemetafile
 export ci_scale, ci_scale2
@@ -1835,6 +1897,7 @@ export ci_getboundingbox, ci_getprobleminfo, ci_gettitle, ci_gridsnap
 # Current flow post-processor
 export co_addcontour, co_bendcontour, co_blockintegral, co_clearblock, co_clearcontour
 export co_close, co_getconductorproperties, co_getpointvalues
+export co_selectconductor
 export co_getv, co_getj, co_getk, co_gete
 export co_getelement, co_getnode, co_getprobleminfo
 export co_groupselectblock
@@ -1850,6 +1913,7 @@ export co_shownames, co_showpoints, co_showvectorplot
 export co_smooth, co_smoothoff, co_smoothon
 export co_snapgrid, co_snapgridoff, co_snapgridon
 export co_zoom, co_zoomin, co_zoomnatural, co_zoomout
-export co_gettitle, co_getnodeindex, co_getelementindex
+export co_gettitle
+export co_getallelements, co_getallnodes, co_getallj, co_getallv
 
 end # module JuliaFEMM

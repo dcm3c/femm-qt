@@ -397,6 +397,42 @@ class FemmSession:
     def mo_getalla(self):
         raw = self.callfemm('mo_getalla()')
         return raw if isinstance(raw, list) else [raw]
+    def eo_getallnodes(self):
+        raw = self.callfemm('eo_getallnodes()')
+        return [raw[i:i+2] for i in range(0, len(raw), 2)]
+    def eo_getallelements(self):
+        raw = self.callfemm('eo_getallelements()')
+        return [raw[i:i+7] for i in range(0, len(raw), 7)]
+    def eo_getalld(self):
+        raw = self.callfemm('eo_getalld()')
+        return [raw[i:i+2] for i in range(0, len(raw), 2)]
+    def eo_getallv(self):
+        raw = self.callfemm('eo_getallv()')
+        return raw if isinstance(raw, list) else [raw]
+    def ho_getallnodes(self):
+        raw = self.callfemm('ho_getallnodes()')
+        return [raw[i:i+2] for i in range(0, len(raw), 2)]
+    def ho_getallelements(self):
+        raw = self.callfemm('ho_getallelements()')
+        return [raw[i:i+7] for i in range(0, len(raw), 7)]
+    def ho_getallf(self):
+        raw = self.callfemm('ho_getallf()')
+        return [raw[i:i+2] for i in range(0, len(raw), 2)]
+    def ho_getallt(self):
+        raw = self.callfemm('ho_getallt()')
+        return raw if isinstance(raw, list) else [raw]
+    def co_getallnodes(self):
+        raw = self.callfemm('co_getallnodes()')
+        return [raw[i:i+2] for i in range(0, len(raw), 2)]
+    def co_getallelements(self):
+        raw = self.callfemm('co_getallelements()')
+        return [raw[i:i+7] for i in range(0, len(raw), 7)]
+    def co_getallj(self):
+        raw = self.callfemm('co_getallj()')
+        return [raw[i:i+2] for i in range(0, len(raw), 2)]
+    def co_getallv(self):
+        raw = self.callfemm('co_getallv()')
+        return raw if isinstance(raw, list) else [raw]
     def mo_getallgapb(self, *arg):
         raw = self.callfemm('mo_getallgapb' + doargs(*arg))
         return [raw[i:i+2] for i in range(0, len(raw), 2)]
@@ -434,8 +470,6 @@ class FemmSession:
     def mo_restore(self): self.callfemm('mo_restore()')
     def mo_seteditmode(self, *arg): self.callfemm('mo_seteditmode' + doargs(*arg))
     def mo_selectpoint(self, *arg): return self.callfemm('mo_selectpoint' + doargs(*arg))
-    def mo_getnodeindex(self, *arg): return self.callfemm('mo_getnodeindex' + doargs(*arg))
-    def mo_getelementindex(self, *arg): return self.callfemm('mo_getelementindex' + doargs(*arg))
     def mo_numnodes(self): return self.callfemm('mo_numnodes()')
     def mo_numelements(self): return self.callfemm('mo_numelements()')
     def mo_getnode(self, *arg): return self.callfemm('mo_getnode' + doargs(*arg))
@@ -576,6 +610,7 @@ class FemmSession:
     def eo_lineintegral(self, *arg): return self.callfemm('eo_lineintegral' + doargs(*arg))
     def eo_getprobleminfo(self): return self.callfemm('eo_getprobleminfo()')
     def eo_gettitle(self): return self.callfemm('eo_gettitle()')
+    def eo_selectconductor(self, *arg): self.callfemm('eo_selectconductor' + doargs(*arg))
     def eo_getconductorproperties(self, *arg): return self.callfemm('eo_getconductorproperties' + doargs(*arg))
     def eo_addcontour(self, *arg): self.callfemm('eo_addcontour' + doargs(*arg))
     def eo_bendcontour(self, *arg): self.callfemm('eo_bendcontour' + doargs(*arg))
@@ -750,6 +785,7 @@ class FemmSession:
     def ho_lineintegral(self, *arg): return self.callfemm('ho_lineintegral' + doargs(*arg))
     def ho_getprobleminfo(self): return self.callfemm('ho_getprobleminfo()')
     def ho_gettitle(self): return self.callfemm('ho_gettitle()')
+    def ho_selectconductor(self, *arg): self.callfemm('ho_selectconductor' + doargs(*arg))
     def ho_getconductorproperties(self, *arg): return self.callfemm('ho_getconductorproperties' + doargs(*arg))
     def ho_addcontour(self, *arg): self.callfemm('ho_addcontour' + doargs(*arg))
     def ho_bendcontour(self, *arg): self.callfemm('ho_bendcontour' + doargs(*arg))
@@ -861,6 +897,9 @@ class FemmSession:
     def ci_setcomment(self, *arg): self.callfemm('ci_setcomment' + doargs(*arg))
     def ci_getmaterial(self, *arg): self.callfemm('ci_getmaterial' + doargs(*arg))
     def ci_gettitle(self): return self.callfemm('ci_gettitle()')
+    def ci_defineouterspace(self, *arg): self.callfemm('ci_defineouterspace' + doargs(*arg))
+    def ci_attachouterspace(self): self.callfemm('ci_attachouterspace()')
+    def ci_detachouterspace(self): self.callfemm('ci_detachouterspace()')
     def ci_attachdefault(self): self.callfemm('ci_attachdefault()')
     def ci_detachdefault(self): self.callfemm('ci_detachdefault()')
     def ci_makeABC(self, *arg): self.callfemm('ci_makeABC' + doargs(*arg))
@@ -910,6 +949,7 @@ class FemmSession:
     def co_lineintegral(self, *arg): return self.callfemm('co_lineintegral' + doargs(*arg))
     def co_getprobleminfo(self): return self.callfemm('co_getprobleminfo()')
     def co_gettitle(self): return self.callfemm('co_gettitle()')
+    def co_selectconductor(self, *arg): self.callfemm('co_selectconductor' + doargs(*arg))
     def co_getconductorproperties(self, *arg): return self.callfemm('co_getconductorproperties' + doargs(*arg))
     def co_addcontour(self, *arg): self.callfemm('co_addcontour' + doargs(*arg))
     def co_bendcontour(self, *arg): self.callfemm('co_bendcontour' + doargs(*arg))
@@ -1147,6 +1187,18 @@ def mo_getallelements():  return _default.mo_getallelements()
 def mo_getallnodes():     return _default.mo_getallnodes()
 def mo_getallb():         return _default.mo_getallb()
 def mo_getalla():         return _default.mo_getalla()
+def eo_getallnodes():        return _default.eo_getallnodes()
+def eo_getallelements():     return _default.eo_getallelements()
+def eo_getalld():            return _default.eo_getalld()
+def eo_getallv():            return _default.eo_getallv()
+def ho_getallnodes():        return _default.ho_getallnodes()
+def ho_getallelements():     return _default.ho_getallelements()
+def ho_getallf():            return _default.ho_getallf()
+def ho_getallt():            return _default.ho_getallt()
+def co_getallnodes():        return _default.co_getallnodes()
+def co_getallelements():     return _default.co_getallelements()
+def co_getallj():            return _default.co_getallj()
+def co_getallv():            return _default.co_getallv()
 def mo_getallgapb(*a):    return _default.mo_getallgapb(*a)
 def mo_getallgapa(*a):    return _default.mo_getallgapa(*a)
 def mo_getallgapharmonics(*a): return _default.mo_getallgapharmonics(*a)
@@ -1178,8 +1230,6 @@ def mo_maximize():        _default.mo_maximize()
 def mo_restore():         _default.mo_restore()
 def mo_seteditmode(*a):   _default.mo_seteditmode(*a)
 def mo_selectpoint(*a):   return _default.mo_selectpoint(*a)
-def mo_getnodeindex(*a):  return _default.mo_getnodeindex(*a)
-def mo_getelementindex(*a): return _default.mo_getelementindex(*a)
 def mo_numnodes():        return _default.mo_numnodes()
 def mo_numelements():     return _default.mo_numelements()
 def mo_getnode(*a):       return _default.mo_getnode(*a)
@@ -1298,6 +1348,7 @@ def eo_blockintegral(*a): return _default.eo_blockintegral(*a)
 def eo_lineintegral(*a):  return _default.eo_lineintegral(*a)
 def eo_getprobleminfo():  return _default.eo_getprobleminfo()
 def eo_gettitle():       return _default.eo_gettitle()
+def eo_selectconductor(*a): _default.eo_selectconductor(*a)
 def eo_getconductorproperties(*a): return _default.eo_getconductorproperties(*a)
 def eo_addcontour(*a):    _default.eo_addcontour(*a)
 def eo_bendcontour(*a):   _default.eo_bendcontour(*a)
@@ -1449,6 +1500,7 @@ def ho_blockintegral(*a): return _default.ho_blockintegral(*a)
 def ho_lineintegral(*a):  return _default.ho_lineintegral(*a)
 def ho_getprobleminfo():  return _default.ho_getprobleminfo()
 def ho_gettitle():       return _default.ho_gettitle()
+def ho_selectconductor(*a): _default.ho_selectconductor(*a)
 def ho_getconductorproperties(*a): return _default.ho_getconductorproperties(*a)
 def ho_addcontour(*a):    _default.ho_addcontour(*a)
 def ho_bendcontour(*a):   _default.ho_bendcontour(*a)
@@ -1553,6 +1605,9 @@ def ci_smartmesh(*a):     _default.ci_smartmesh(*a)
 def ci_setcomment(*a):    _default.ci_setcomment(*a)
 def ci_getmaterial(*a):   _default.ci_getmaterial(*a)
 def ci_gettitle():       return _default.ci_gettitle()
+def ci_defineouterspace(*a): _default.ci_defineouterspace(*a)
+def ci_attachouterspace(): _default.ci_attachouterspace()
+def ci_detachouterspace(): _default.ci_detachouterspace()
 def ci_attachdefault():   _default.ci_attachdefault()
 def ci_detachdefault():   _default.ci_detachdefault()
 def ci_makeABC(*a):       _default.ci_makeABC(*a)
@@ -1593,6 +1648,7 @@ def co_blockintegral(*a): return _default.co_blockintegral(*a)
 def co_lineintegral(*a):  return _default.co_lineintegral(*a)
 def co_getprobleminfo():  return _default.co_getprobleminfo()
 def co_gettitle():       return _default.co_gettitle()
+def co_selectconductor(*a): _default.co_selectconductor(*a)
 def co_getconductorproperties(*a): return _default.co_getconductorproperties(*a)
 def co_addcontour(*a):    _default.co_addcontour(*a)
 def co_bendcontour(*a):   _default.co_bendcontour(*a)

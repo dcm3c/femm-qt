@@ -4,12 +4,13 @@
 % Returns an N×7 matrix: [p1 p2 p3 ctr_x ctr_y area group]
 % Node indices are 1-based.
 %
-% Uses the straccum/strappend/strfinish accumulator to build the result
-% on the C++ heap (no interpreter heap pressure) in one IPC round-trip.
+% This used to build the result client-side, looping eo_getelement through the
+% straccum/strappend accumulator, even though the engine has had a C++
+% eo_getallelements since the first MicroPython commit. That was three round
+% trips and the slowest loop shape available, to reproduce what one call already
+% returns. See git history if the generic client-side technique is ever wanted
+% for something the engine genuinely cannot do.
 
 function z = eo_getallelements()
-    n = callfemm('eo_numelements()');
-    callfemm(['straccum(' num2str(n*70) ')']);
-    callfemm(['for k in range(1,int(eo_numelements())+1): strappend(*eo_getelement(k))']);
-    raw = callfemm('strfinish()');
+    raw = callfemm('eo_getallelements()');
     z = reshape(raw, 7, [])';

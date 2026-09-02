@@ -9,6 +9,9 @@
 #include "matlib_dialog_base.h"
 #include "material_lib_path.h"
 #include "utf8_io.h"
+
+#include <filesystem>
+#include <system_error>
 #include "matlib_tree.h"
 #include "document.h"
 
@@ -48,6 +51,7 @@ MatLibDialogBase::MatLibDialogBase(const QString &title, const QString &libFilen
     // writes beside itself, and on macOS that has to happen outside a signed
     // bundle. materialLibPath() is the same resolver the *_getmaterial script
     // commands use, so the reader and the writer cannot disagree.
+    m_libFilename = libFilename;
     m_libPath = materialLibPath(libFilename.toStdString().c_str());
 
     auto *splitter = new QSplitter(Qt::Horizontal);
@@ -154,8 +158,56 @@ static std::string ExtractQuoted(char *v)
 
 void MatLibDialogBase::initLibrary()
 {
+    offerShippedLibraryUpdate();
     loadLibrary();
     populateModelTree();
+}
+
+// A user who has edited a library reads their own copy from then on, so a newer
+// stock library arriving with a new release would otherwise be invisible to
+// exactly the people most likely to want it.
+//
+// Asked HERE, and not at startup, because this is the only moment the answer
+// matters and the only moment a human is present to give one. femm_headless
+// never constructs this dialog, so a scripted run is never blocked -- which is
+// also why the decision cannot live in libfemm's resolver.
+void MatLibDialogBase::offerShippedLibraryUpdate()
+{
+    const std::string name = m_libFilename.toStdString();
+    if (!materialLibUpdateAvailable(name.c_str())) return;
+
+    const QMessageBox::StandardButton answer = QMessageBox::question(
+        this, tr("Updated Material Library Available"),
+        tr("This version of FEMM ships an updated %1, and you have your own "
+           "edited copy of it.\n\n"
+           "Replace your copy with the new one? Any materials you have added "
+           "or changed will be lost.\n\n"
+           "Choosing No keeps your library and stops this being asked again "
+           "for this version.")
+            .arg(m_libFilename),
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+
+    if (answer == QMessageBox::Yes) {
+        const std::string from = materialLibShippedPath(name.c_str());
+        const std::string to = materialLibWritePath(name.c_str());
+        std::error_code ec;
+        if (to.empty() ||
+            !std::filesystem::copy_file(femm_path(from), femm_path(to),
+                                        std::filesystem::copy_options::
+                                            overwrite_existing, ec) || ec) {
+            QMessageBox::warning(
+                this, tr("Could Not Update Material Library"),
+                tr("The updated library could not be copied to:\n\n%1\n\n"
+                   "Your existing library is unchanged.")
+                    .arg(QString::fromStdString(to.empty() ? from : to)));
+            return;                     // do NOT mark seen; offer again later
+        }
+        m_libPath = to;
+    }
+    // Either way the user has now answered for this version of the shipped
+    // library. Marking it seen is what stops the question repeating on every
+    // open, and it is why declining is a real answer rather than a deferral.
+    materialLibMarkSeen(name.c_str());
 }
 
 void MatLibDialogBase::loadLibrary()
@@ -236,7 +288,13 @@ void MatLibDialogBase::readFolderContents(FILE *fp, QTreeWidgetItem *parent)
 
 void MatLibDialogBase::saveLibrary()
 {
-    FILE *fp = femm_fopen(m_libPath, "wt");
+    // NOT m_libPath. That is the READ path, which is the shipped library until
+    // the user has a copy of their own -- and the shipped one may be read-only,
+    // root-owned or inside a signed bundle. Writing always goes to the user's
+    // copy, and this call is the moment it forks from the shipped original.
+    const std::string writePath =
+        materialLibWritePath(m_libFilename.toStdString().c_str());
+    FILE *fp = writePath.empty() ? nullptr : femm_fopen(writePath, "wt");
     if (!fp) {
         // Say so. This used to `return` in silence, so a library that could not
         // be written -- read-only file, full disk, folder not writable, the
@@ -255,12 +313,16 @@ void MatLibDialogBase::saveLibrary()
                "Your changes to the library have NOT been saved. The file may "
                "be read-only, the folder may not be writable, or the disk may "
                "be full.")
-                .arg(QString::fromStdString(m_libPath)));
+                .arg(QString::fromStdString(
+                    writePath.empty() ? m_libPath : writePath)));
         return;
     }
     for (int i = 0; i < m_libTree->topLevelItemCount(); i++)
         writeTreeItem(m_libTree->topLevelItem(i), fp, 0);
     fclose(fp);
+    // From here on this user reads their own copy, so subsequent reads must
+    // resolve to it rather than to the shipped original.
+    m_libPath = writePath;
 }
 
 void MatLibDialogBase::writeTreeItem(QTreeWidgetItem *item, FILE *fp, int depth)

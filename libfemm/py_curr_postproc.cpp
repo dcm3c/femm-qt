@@ -189,6 +189,73 @@ void register_curr_postproc_py(CurrResultsDoc *doc) {
                                el.ctr.re, el.ctr.im, s_doc->ElmArea(k), (double)grp);
     });
 
+
+    // ---- Bulk retrieval ----
+    //
+    // Arrays, not text: see the note in py_postproc_common.h. Node indices are
+    // 1-based. Current flow HAS a frequency, so the field and potential follow
+    // the magnetics rule: real at DC, complex at AC.
+    m.def("co_getallnodes", []() -> mp_obj_t {
+        check_doc(s_doc, COERR);
+        size_t nn = s_doc->cmeshnode.size();
+        ndarray_obj_t *a = bulkArray(nn, 2, NDARRAY_FLOAT);
+        mp_float_t *d = bulkF8(a);
+        for (size_t k = 0; k < nn; k++) {
+            d[2 * k]     = (mp_float_t)s_doc->cmeshnode[k].x;
+            d[2 * k + 1] = (mp_float_t)s_doc->cmeshnode[k].y;
+        }
+        return MP_OBJ_FROM_PTR(a);
+    });
+    m.def("co_getallelements", []() -> mp_obj_t {
+        check_doc(s_doc, COERR);
+        size_t ne = s_doc->cmeshelem.size();
+        ndarray_obj_t *conn = bulkArray(ne, 3, NDARRAY_INT32);
+        ndarray_obj_t *ctr  = bulkArray(ne, 2, NDARRAY_FLOAT);
+        ndarray_obj_t *area = bulkArray(ne, 0, NDARRAY_FLOAT);
+        ndarray_obj_t *grp  = bulkArray(ne, 0, NDARRAY_INT32);
+        int32_t *pc = bulkI4(conn), *pg = bulkI4(grp);
+        mp_float_t *pt = bulkF8(ctr), *pa = bulkF8(area);
+        for (size_t k = 0; k < ne; k++) {
+            auto &el = s_doc->cmeshelem[k];
+            pc[3 * k] = el.p[0] + 1; pc[3 * k + 1] = el.p[1] + 1; pc[3 * k + 2] = el.p[2] + 1;
+            pt[2 * k] = (mp_float_t)el.ctr.re; pt[2 * k + 1] = (mp_float_t)el.ctr.im;
+            pa[k] = (mp_float_t)s_doc->ElmArea((int)k);
+            pg[k] = (el.lbl >= 0 && el.lbl < (int)s_doc->labellist.size())
+                        ? s_doc->labellist[el.lbl].InGroup : 0;
+        }
+        mp_obj_t items[4] = {MP_OBJ_FROM_PTR(conn), MP_OBJ_FROM_PTR(ctr),
+                             MP_OBJ_FROM_PTR(area), MP_OBJ_FROM_PTR(grp)};
+        return mp_obj_new_tuple(4, items);
+    });
+    // Current density per element. Jx and Jy are each a PHASOR (unlike the
+    // electrostatic and heat-flow fields, which pack a vector into one
+    // CComplex), so this is real at DC and complex at AC.
+    m.def("co_getallj", []() -> mp_obj_t {
+        check_doc(s_doc, COERR);
+        size_t ne = s_doc->cmeshelem.size();
+        bool ac = (s_doc->Frequency != 0);
+        ndarray_obj_t *a = bulkArray(ne, 2, bulkFieldDtype(s_doc->Frequency));
+        mp_float_t *d = bulkF8(a);
+        for (size_t k = 0; k < ne; k++) {
+            auto &el = s_doc->cmeshelem[k];
+            if (ac) { bulkPutC(d, 2 * k, el.Jx); bulkPutC(d, 2 * k + 1, el.Jy); }
+            else    { d[2 * k] = (mp_float_t)el.Jx.re; d[2 * k + 1] = (mp_float_t)el.Jy.re; }
+        }
+        return MP_OBJ_FROM_PTR(a);
+    });
+    // Nodal voltage -- a phasor here, so complex at frequency.
+    m.def("co_getallv", []() -> mp_obj_t {
+        check_doc(s_doc, COERR);
+        size_t nn = s_doc->cmeshnode.size();
+        bool ac = (s_doc->Frequency != 0);
+        ndarray_obj_t *a = bulkArray(nn, 0, bulkFieldDtype(s_doc->Frequency));
+        mp_float_t *d = bulkF8(a);
+        for (size_t k = 0; k < nn; k++) {
+            if (ac) bulkPutC(d, k, s_doc->cmeshnode[k].V);
+            else    d[k] = (mp_float_t)s_doc->cmeshnode[k].V.re;
+        }
+        return MP_OBJ_FROM_PTR(a);
+    });
     // ---- Smoothing ----
     auto smooth_fn = [](optional<std::string> mode) {
         check_doc(s_doc, COERR);

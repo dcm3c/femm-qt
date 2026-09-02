@@ -3,9 +3,21 @@
 % pass uses the three sentinel sets every binding shares, so the results are
 % comparable across languages.
 %
-%   matlab -batch "emit_octavefemm"       (or run under Octave)
+%   matlab     -batch "emit_octavefemm"
+%   octave-cli --no-gui -q emit_octavefemm.m
 %
 % Writes emitted_octavefemm.tsv:  wrapper <TAB> pass <TAB> emission
+%
+% BIND_EMIT_SUFFIX appends to the output name, so the same script can record
+% from both hosts without one clobbering the other:
+%
+%   matlab -batch "emit_octavefemm"                             -> emitted_octavefemm.tsv
+%   BIND_EMIT_SUFFIX=_octave octave-cli -q emit_octavefemm.m    -> emitted_octavefemm_octave.tsv
+%   diff the two
+%
+% Measured 2026-08-28: identical for all 632 wrappers except the four
+% *_getview, which embed a tempname -- MATLAB's tp<hex>, Octave's oct-<rand>.
+% So the two hosts build the same command strings, which had been assumed.
 
 global EMITTED
 
@@ -13,8 +25,11 @@ here = fileparts(mfilename('fullpath'));
 addpath(fullfile(here, '..', '..', 'octavefemm'));
 addpath(fullfile(here, 'stub_octavefemm'));      % AFTER, so the stub wins
 
+suffix = getenv('BIND_EMIT_SUFFIX');
+if isempty(suffix), suffix = ''; end
+
 fid = fopen(fullfile(here, 'contract.tsv'), 'r');
-out = fopen(fullfile(here, 'emitted_octavefemm.tsv'), 'w');
+out = fopen(fullfile(here, ['emitted_octavefemm' suffix '.tsv']), 'w');
 nok = 0; nmiss = 0; nerr = 0;
 passes = {'int', 'real', 'cplx'};
 

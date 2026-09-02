@@ -738,6 +738,10 @@ COGroupSelectBlock::usage =
 members of group n. If no number is specified (i.e. COGroupSelectBlock[]), all blocks
 are selected."
 
+COSelectConductor::usage = "COSelectConductor[\"conductor\"] selects all nodes,
+segments, and arc segments that are part of the conductor property named
+\"conductor\"."
+
 COSetEditMode::usage =
 "COSetEditMode[\"mode\"] sets the mode of the postprocessor to point, contour, or area mode.
 Valid entries for mode are \"point\", \"contour\", and \"area\"."
@@ -1384,6 +1388,10 @@ HOGroupSelectBlock::usage =
 members of group n. If no number is specified (i.e. HOGroupSelectBlock[]), all blocks
 are selected."
 
+HOSelectConductor::usage = "HOSelectConductor[\"conductor\"] selects all nodes,
+segments, and arc segments that are part of the conductor property named
+\"conductor\"."
+
 HOSetEditMode::usage =
 "HOSetEditMode[\"mode\"] sets the mode of the postprocessor to point, contour, or area mode.
 Valid entries for mode are \"point\", \"contour\", and \"area\"."
@@ -2006,6 +2014,10 @@ EOGroupSelectBlock::usage =
 "EOGroupSelectBlock[n] selects all of the blocks that are labeled by block labels that are
 members of group n. If no number is specified (i.e. EOGroupSelectBlock[]), all blocks
 are selected."
+
+EOSelectConductor::usage = "EOSelectConductor[\"conductor\"] selects all nodes,
+segments, and arc segments that are part of the conductor property named
+\"conductor\"."
 
 EOSetEditMode::usage =
 "EOSetEditMode[\"mode\"] sets the mode of the postprocessor to point, contour, or area mode.
@@ -3072,6 +3084,29 @@ MOGridSnap::usage = "MOGridSnap[\"flag\"] turns snap-to-grid on or off; flag is 
 EOGridSnap::usage = "EOGridSnap[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
 HOGridSnap::usage = "HOGridSnap[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
 COGridSnap::usage = "COGridSnap[\"flag\"] turns snap-to-grid on or off; flag is \"on\" or \"off\"."
+
+(* Bulk getters. These are defined below in the private context; without a
+   ::usage declaration here they would be created in MathFEMM`Private` and be
+   invisible to a caller -- the symbol would simply echo back unevaluated. *)
+MOGetAllElements::usage = "MOGetAllElements[] returns an N x 7 matrix of data for every mesh element: the three node indices (1-based), the centroid coordinates, the area and the group number."
+MOGetAllNodes::usage = "MOGetAllNodes[] returns an N x 2 matrix of the coordinates of every mesh node."
+MOGetAllB::usage = "MOGetAllB[] returns an N x 2 matrix of the flux density at every element centroid. Complex at a nonzero frequency."
+MOGetAllA::usage = "MOGetAllA[] returns the vector potential at every element centroid. Complex at a nonzero frequency."
+MOGetAllGapB::usage = "MOGetAllGapB["BdryName"] or MOGetAllGapB["BdryName",npts] returns an npts x 2 matrix of Br and Btheta around an air gap element."
+MOGetAllGapA::usage = "MOGetAllGapA["BdryName"] or MOGetAllGapA["BdryName",npts] returns the vector potential at npts points around an air gap element."
+MOGetAllGapHarmonics::usage = "MOGetAllGapHarmonics["BdryName"] returns an N x 6 matrix of air gap element harmonic coefficients."
+EOGetAllElements::usage = "EOGetAllElements[] returns an N x 7 matrix of data for every mesh element."
+EOGetAllNodes::usage = "EOGetAllNodes[] returns an N x 2 matrix of the coordinates of every mesh node."
+EOGetAllD::usage = "EOGetAllD[] returns an N x 2 matrix of the electric displacement at every element."
+EOGetAllV::usage = "EOGetAllV[] returns the voltage at every mesh node."
+HOGetAllNodes::usage = "HOGetAllNodes[] returns an N x 2 matrix of the coordinates of every mesh node."
+HOGetAllElements::usage = "HOGetAllElements[] returns an N x 7 matrix of data for every mesh element."
+HOGetAllF::usage = "HOGetAllF[] returns an N x 2 matrix of the heat flux density at every element."
+HOGetAllT::usage = "HOGetAllT[] returns the temperature at every mesh node."
+COGetAllNodes::usage = "COGetAllNodes[] returns an N x 2 matrix of the coordinates of every mesh node."
+COGetAllElements::usage = "COGetAllElements[] returns an N x 7 matrix of data for every mesh element."
+COGetAllJ::usage = "COGetAllJ[] returns an N x 2 matrix of the current density at every element. Complex at a nonzero frequency."
+COGetAllV::usage = "COGetAllV[] returns the voltage at every mesh node. Complex at a nonzero frequency."
 
 Begin["`Private`"]
 
@@ -4600,6 +4635,8 @@ EOGetConductorProperties[name_]:=Module[{},
         MLGetNC[]
 ]
 
+EOSelectConductor[name_]:=MLPut["eo_selectconductor(" <> Quote[name] <> ")" ]
+
 EOSetEditMode[mode_]:=MLPut["eo_seteditmode(" <> Quote[mode] <> ")" ]
 
 EOSelectBlock[x_,y_]:=MLPut["eo_selectblock(" <> NumC[x] <> Num[y] <> ")" ]
@@ -5054,6 +5091,8 @@ HOGetConductorProperties[name_]:=Module[{},
         MLGetNC[]
 ]
 
+HOSelectConductor[name_]:=MLPut["ho_selectconductor(" <> Quote[name] <> ")" ]
+
 HOSetEditMode[mode_]:=MLPut["ho_seteditmode(" <> Quote[mode] <> ")" ]
 
 HOSelectBlock[x_,y_]:=MLPut["ho_selectblock(" <> NumC[x] <> Num[y] <> ")" ]
@@ -5490,6 +5529,8 @@ COGetConductorProperties[name_]:=Module[{},
         MLGetNC[]
 ]
 
+COSelectConductor[name_]:=MLPut["co_selectconductor(" <> Quote[name] <> ")" ]
+
 COSetEditMode[mode_]:=MLPut["co_seteditmode(" <> Quote[mode] <> ")" ]
 
 COSelectBlock[x_,y_]:=MLPut["co_selectblock(" <> NumC[x] <> Num[y] <> ")" ]
@@ -5814,6 +5855,74 @@ MOGetAllA[]:=Module[{raw},
        MLGet[]
 ]
 
+EOGetAllElements[]:=Module[{raw},
+       MLPut["mlput(eo_getallelements())"];
+       raw=MLGetNC[];
+       Partition[raw,7]
+]
+
+EOGetAllNodes[]:=Module[{raw},
+       MLPut["mlput(eo_getallnodes())"];
+       raw=MLGetNC[];
+       Partition[raw,2]
+]
+
+EOGetAllD[]:=Module[{raw},
+       MLPut["mlput(eo_getalld())"];
+       raw=MLGetNC[];
+       Partition[raw,2]
+]
+
+EOGetAllV[]:=Module[{raw},
+       MLPut["mlput(eo_getallv())"];
+       MLGetNC[]
+]
+
+HOGetAllNodes[]:=Module[{raw},
+       MLPut["mlput(ho_getallnodes())"];
+       raw=MLGetNC[];
+       Partition[raw,2]
+]
+
+HOGetAllElements[]:=Module[{raw},
+       MLPut["mlput(ho_getallelements())"];
+       raw=MLGetNC[];
+       Partition[raw,7]
+]
+
+HOGetAllF[]:=Module[{raw},
+       MLPut["mlput(ho_getallf())"];
+       raw=MLGetNC[];
+       Partition[raw,2]
+]
+
+HOGetAllT[]:=Module[{raw},
+       MLPut["mlput(ho_getallt())"];
+       MLGetNC[]
+]
+
+COGetAllNodes[]:=Module[{raw},
+       MLPut["mlput(co_getallnodes())"];
+       raw=MLGetNC[];
+       Partition[raw,2]
+]
+
+COGetAllElements[]:=Module[{raw},
+       MLPut["mlput(co_getallelements())"];
+       raw=MLGetNC[];
+       Partition[raw,7]
+]
+
+COGetAllJ[]:=Module[{raw},
+       MLPut["mlput(co_getallj())"];
+       raw=MLGet[];
+       Partition[raw,2]
+]
+
+COGetAllV[]:=Module[{raw},
+       MLPut["mlput(co_getallv())"];
+       MLGet[]
+]
 MOGetAllGapB[BdryName_]:=Module[{raw},
        MLPut["mlput(mo_getallgapb(" <> Quote[BdryName] <> "))"];
        raw=MLGet[];

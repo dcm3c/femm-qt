@@ -126,7 +126,7 @@ class Path:
         for name, mode, *_ in os.ilistdir(path):
             full_path = path + _SEP + name
             if name.startswith(prefix) and name.endswith(suffix):
-                yield full_path
+                yield Path(full_path)
             if recursive and mode & 0x4000:  # is_dir
                 yield from self._glob(full_path, pattern, recursive=recursive)
 
@@ -186,6 +186,13 @@ class Path:
     def with_suffix(self, suffix):
         index = -len(self.suffix) or None
         return Path(self._path[:index] + suffix)
+
+    def expanduser(self):
+        if self._path == "~" or self._path.startswith("~" + _SEP):
+            return Path(os.getenv("HOME") + self._path[1:])
+        if self._path[0] == "~":
+            raise RuntimeError("user expansion not supported")
+        return self
 
     @property
     def stem(self):

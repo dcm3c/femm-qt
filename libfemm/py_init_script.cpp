@@ -66,17 +66,71 @@ try:
     def _asc(a):
         m = a if hasattr(a, 'dtype') else _unp.array(a)
         return m * (1 + 0j)
+
+    # REAL INPUT MUST GIVE A REAL RESULT. Every wrapper below used to call
+    # _asc() unconditionally, so np.dot on two float arrays came back complex
+    # where numpy -- and ulab's own dot, which this proxy shadows -- returns a
+    # float. That is a dtype divergence with teeth: the result prints as
+    # "(14+0j)", compares differently, and is refused by anything wanting a
+    # real array. It was also less accurate, because routing real work through
+    # the complex kernel loses the exactness of the real one: inv([[1,2],[3,4]])
+    # came back -1.9999999999999996 where ulab's real path gives exactly -2.
+    #
+    # Two tiers, in this order:
+    #   real input, and ulab has a real implementation  ->  delegate to ulab
+    #   real input, and it does not (solve, svd, pinv)  ->  complex kernel,
+    #                                                       then drop the
+    #                                                       zero imaginary part
+    # The second is not "collapse if the imaginary part looks small". It is
+    # decided from the INPUT dtype, where the answer is known a priori: the
+    # inverse, solution, pseudo-inverse, QR and SVD of a real matrix are real
+    # as a matter of algebra, not of rounding.
+    #
+    # eig/eigvals/roots are deliberately NOT in that set. A real matrix can
+    # have genuinely complex eigenvalues, so their results stay complex --
+    # which is also why they cannot delegate to ulab, whose eig refuses a
+    # non-symmetric matrix outright.
+    def _isreal(a):
+        if hasattr(a, 'dtype'):
+            return int(a.dtype) != int(_unp.complex)
+        if isinstance(a, (list, tuple)):
+            for e in a:
+                if not _isreal(e):
+                    return False
+            return True
+        return not isinstance(a, complex)
+    def _re(x):
+        if isinstance(x, tuple):
+            return tuple(_re(e) for e in x)
+        return x.real if hasattr(x, 'real') else x
+
     def _eig(a):      return _clinalg_eig(_asc(a))
-    def _qr(a):       return _clinalg_qr(_asc(a))
-    def _svd(a):      return _clinalg_svd(_asc(a))
-    def _solve(a, b): return _clinalg_solve(_asc(a), _asc(b))
-    def _inv(a):      return _clinalg_inv(_asc(a))
-    def _det(a):      return _clinalg_det(_asc(a))
-    def _pinv(a):     return _clinalg_pinv(_asc(a))
+    def _qr(a):
+        if _isreal(a):  return _unp.linalg.qr(a if hasattr(a, 'dtype') else _unp.array(a))
+        return _clinalg_qr(_asc(a))
+    def _svd(a):
+        if _isreal(a):  return _re(_clinalg_svd(_asc(a)))
+        return _clinalg_svd(_asc(a))
+    def _solve(a, b):
+        if _isreal(a) and _isreal(b):  return _re(_clinalg_solve(_asc(a), _asc(b)))
+        return _clinalg_solve(_asc(a), _asc(b))
+    def _inv(a):
+        if _isreal(a):  return _unp.linalg.inv(a if hasattr(a, 'dtype') else _unp.array(a))
+        return _clinalg_inv(_asc(a))
+    def _det(a):
+        if _isreal(a):  return _unp.linalg.det(a if hasattr(a, 'dtype') else _unp.array(a))
+        return _clinalg_det(_asc(a))
+    def _pinv(a):
+        if _isreal(a):  return _re(_clinalg_pinv(_asc(a)))
+        return _clinalg_pinv(_asc(a))
     def _cond(a):     return _clinalg_cond(_asc(a))
     def _rank(a):     return _clinalg_rank(_asc(a))
     def _norm(a):     return _clinalg_norm(_asc(a))
-    def _dot(a, b):   return _clinalg_dot(_asc(a), _asc(b))
+    def _dot(a, b):
+        if _isreal(a) and _isreal(b):
+            return _unp.dot(a if hasattr(a, 'dtype') else _unp.array(a),
+                            b if hasattr(b, 'dtype') else _unp.array(b))
+        return _clinalg_dot(_asc(a), _asc(b))
 
     # Built on the kernels above rather than on anything new. numpy spells the
     # rank of a matrix `matrix_rank`; this proxy shipped it as `rank`, which is
@@ -169,10 +223,40 @@ try:
                 er, ei = _split(e); r.append(er); i.append(ei)
             return r, i
         return Re(x), Im(x)
+    _INT_DTYPES = (_unp.int8, _unp.uint8, _unp.int16, _unp.uint16, _unp.int32)
+    def _hascomplex(x):
+        if isinstance(x, (list, tuple)):
+            for e in x:
+                if _hascomplex(e): return True
+            return False
+        return isinstance(x, complex)
+    def _toint(x):
+        if isinstance(x, (list, tuple)):
+            return [_toint(e) for e in x]
+        return int(x)                                # truncates toward zero, as numpy casts
     def _array(a, *args, **kw):
         try:
             return _unp.array(a, *args, **kw)        # real lists/ndarrays, dtype= cases
         except (TypeError, ValueError):
+            # ulab raised. Decide WHY before falling back -- the fallback below
+            # only knows how to handle complex input, and it used to run for any
+            # failure at all, so np.array(floats, dtype=int32) came back COMPLEX
+            # (ulab refuses to truncate a float into an integer dtype; the
+            # complex branch then swallowed that and returned 16 bytes per
+            # element of the wrong type, silently). It also dropped *args/**kw,
+            # so a dtype= was discarded even when the fallback was right.
+            dtype = kw.get('dtype', args[0] if args else None)
+            cplx = (int(a.dtype) == int(_unp.complex)) if hasattr(a, 'dtype') \
+                   else _hascomplex(a)
+            if dtype in _INT_DTYPES:
+                if cplx:
+                    raise                            # numpy refuses this too
+                # numpy casts float -> int by truncation; ulab will not, so do
+                # it here and hand ulab something it accepts.
+                return _unp.array(_toint(a.tolist() if hasattr(a, 'dtype') else a),
+                                  dtype=dtype)
+            if not cplx:
+                raise                                # not a complex-input problem
             if hasattr(a, 'dtype'):                  # a complex ndarray -> dense copy
                 return a * (1 + 0j)
             r, i = _split(a)                         # complex nested list/tuple
@@ -446,6 +530,152 @@ try:
     def _ifft2(a, s=None, axes=None, norm=None):
         return _fft2_impl(a, s, axes, norm, True, "ifft2")
 
+    # --- complex coverage gaps -------------------------------------------------
+    #
+    # Found by sweeping dir(numpy) with complex input (testing/NumpyComplexTest.py).
+    # Everything below already works on a REAL array through ulab; these wrappers
+    # add only the complex branch, so real arrays keep ulab's fast path.
+    #
+    # Added only where NUMPY ITSELF supports complex. Deliberately absent, and
+    # pinned as absent by the test: floor, ceil, degrees, radians, arctan2.
+    # numpy raises TypeError for complex on those too, so ulab's refusal is
+    # already correct and "fixing" them would be a divergence, not a fix.
+    _LN10 = 2.302585092994046
+    _LN2 = 0.6931471805599453
+    _INF = float('inf')
+
+    # Inverse hyperbolics: no C scalar helper, and ulab has no complex form, so
+    # compose from log and sqrt on the principal branch the way numpy does.
+    # acosh uses the FACTORED sqrt(z+1)*sqrt(z-1) rather than sqrt(z*z-1) --
+    # that is what puts the branch cut where numpy puts it.
+    def _cacosh(z): return _clog(z + _csqrt(z + 1.0) * _csqrt(z - 1.0))
+    def _casinh(z): return _clog(z + _csqrt(z * z + 1.0))
+    def _catanh(z): return (_clog(1.0 + z) - _clog(1.0 - z)) * 0.5
+    def _clog10(z): return _clog(z) / _LN10
+    def _clog2(z):  return _clog(z) / _LN2
+    def _cexpm1(z): return _cexp(z) - 1.0
+    def _csinc(z):
+        w = PI * z
+        return 1.0 + 0j if w == 0 else _csin(w) / w
+    def _cisfinite(z):
+        r, i = Re(z), Im(z)
+        return r == r and i == i and abs(r) != _INF and abs(i) != _INF
+    def _cisinf(z):
+        return abs(Re(z)) == _INF or abs(Im(z)) == _INF
+
+    def _iscplx(a):
+        if hasattr(a, 'dtype'):
+            return int(a.dtype) == int(_unp.complex)
+        return isinstance(a, complex)
+    def _flatc(z):
+        n = 1
+        for d in z.shape: n *= d
+        return z.reshape((n,))
+    def _boolarr(vals, shape):
+        return _unp.array([1 if v else 0 for v in vals],
+                          dtype=_unp.bool).reshape(shape)
+
+    # numpy ranks complex LEXICOGRAPHICALLY -- real part first, imaginary as the
+    # tie-break. Every function here that orders or compares complex values goes
+    # through this one key, so they cannot disagree with each other.
+    def _ckey(v): return (Re(v), Im(v))
+
+    def _cunary(real_fn, scalar_fn, boolean=False):
+        def w(a, *args, **kw):
+            if not _iscplx(a):
+                return real_fn(a, *args, **kw)
+            if not hasattr(a, 'shape'):
+                return scalar_fn(a)
+            z = _flatc(a)
+            vals = [scalar_fn(z[i]) for i in range(len(z))]
+            return _boolarr(vals, a.shape) if boolean \
+                else _array(vals).reshape(a.shape)
+        return w
+
+    def _cbinary(real_fn, scalar_fn, boolean=False):
+        def w(x, y, *args, **kw):
+            if not (_iscplx(x) or _iscplx(y)):
+                return real_fn(x, y, *args, **kw)
+            hx, hy = hasattr(x, 'shape'), hasattr(y, 'shape')
+            xs = _flatc(x) if hx else None
+            ys = _flatc(y) if hy else None
+            n = len(xs) if hx else (len(ys) if hy else 1)
+            vals = [scalar_fn(xs[i] if hx else x, ys[i] if hy else y)
+                    for i in range(n)]
+            if not (hx or hy):
+                return vals[0]
+            shape = x.shape if hx else y.shape
+            return _boolarr(vals, shape) if boolean \
+                else _array(vals).reshape(shape)
+        return w
+
+    def _crank(real_fn, cplx_fn):
+        def w(a, *args, **kw):
+            return cplx_fn(a) if _iscplx(a) else real_fn(a, *args, **kw)
+        return w
+
+    def _cpick(a, lower, want_index):
+        z = _flatc(a)
+        best, bk = 0, _ckey(z[0])
+        for i in range(1, len(z)):
+            k = _ckey(z[i])
+            if (k < bk) if lower else (k > bk):
+                best, bk = i, k
+        return best if want_index else z[best]
+
+    def _csorted(a):
+        z = _flatc(a)
+        return sorted([z[i] for i in range(len(z))], key=_ckey)
+
+    def _cmedian(a):
+        s = _csorted(a)
+        n = len(s)
+        return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) * 0.5
+
+    def _cstd(a):
+        # numpy's std of a complex array is REAL: sqrt(mean(|x - mean|^2))
+        z = _flatc(a)
+        n = len(z)
+        m = _sum(z) / n
+        t = 0.0
+        for i in range(n):
+            d = z[i] - m
+            t += Re(d) * Re(d) + Im(d) * Im(d)
+        return _math.sqrt(t / n)
+
+    def _cdiff(a, n=1, **kw):
+        z = a
+        for _ in range(n):
+            z = z[1:] - z[:-1]
+        return z
+
+    def _caround(a, decimals=0):
+        if not _iscplx(a):
+            return _unp.around(a, decimals) if decimals else _unp.around(a)
+        f = 10.0 ** decimals
+        def r1(v):
+            return round(Re(v) * f) / f + (round(Im(v) * f) / f) * 1j
+        if not hasattr(a, 'shape'):
+            return r1(a)
+        z = _flatc(a)
+        return _array([r1(z[i]) for i in range(len(z))]).reshape(a.shape)
+
+    def _cpolyval(p, x):
+        if not (_iscplx(p) or _iscplx(x)):
+            return _unp.polyval(p, x)
+        cs = [c for c in (_flatc(p) if hasattr(p, 'shape') else p)]
+        def ev(t):
+            r = 0
+            for c in cs: r = r * t + c
+            return r
+        if hasattr(x, 'shape'):
+            z = _flatc(x)
+            return _array([ev(z[i]) for i in range(len(z))]).reshape(x.shape)
+        return ev(x)
+
+    def _cmaxfn(a, b): return a if _ckey(a) >= _ckey(b) else b
+    def _cminfn(a, b): return a if _ckey(a) <= _ckey(b) else b
+
     class _FftProxy:
         fft   = staticmethod(_fft)
         ifft  = staticmethod(_ifft)
@@ -481,11 +711,46 @@ try:
         sinh = staticmethod(_vec(_unp.sinh, _csinh))
         cosh = staticmethod(_vec(_unp.cosh, _ccosh))
         tanh = staticmethod(_vec(_unp.tanh, _ctanh))
-        # ulab has none of these; serve them from the scalar complex helpers
+        # ulab has none of these SPELLINGS; serve them from the scalar helpers.
+        # The bare acos/asin/atan below are ulab's own names for the same
+        # functions -- they take the real fast path and only fall back for
+        # complex, so prefer them; these stay for numpy-spelling compatibility.
         arcsin = staticmethod(_velw(_casin))
         arccos = staticmethod(_velw(_cacos))
         arctan = staticmethod(_velw(_catan))
         angle  = staticmethod(_velw(arg))     # phase; arg() returns a real
+        # ulab HAS these names but rejects complex; add the complex branch.
+        # np.arccos(z) worked while np.acos(z) raised, which is a confusing
+        # thing to hit -- same function, one spelling wired up and one not.
+        acos  = staticmethod(_vec(_unp.acos,  _cacos))
+        asin  = staticmethod(_vec(_unp.asin,  _casin))
+        atan  = staticmethod(_vec(_unp.atan,  _catan))
+        acosh = staticmethod(_vec(_unp.acosh, _cacosh))
+        asinh = staticmethod(_vec(_unp.asinh, _casinh))
+        atanh = staticmethod(_vec(_unp.atanh, _catanh))
+        # elementwise, complex branch only
+        log10 = staticmethod(_cunary(_unp.log10, _clog10))
+        log2  = staticmethod(_cunary(_unp.log2,  _clog2))
+        expm1 = staticmethod(_cunary(_unp.expm1, _cexpm1))
+        sinc  = staticmethod(_cunary(_unp.sinc,  _csinc))
+        isfinite = staticmethod(_cunary(_unp.isfinite, _cisfinite, True))
+        isinf    = staticmethod(_cunary(_unp.isinf,    _cisinf,    True))
+        around   = staticmethod(_caround)
+        # ranking and statistics -- lexicographic, as numpy orders complex
+        max    = staticmethod(_crank(_unp.max,    lambda a: _cpick(a, False, False)))
+        min    = staticmethod(_crank(_unp.min,    lambda a: _cpick(a, True,  False)))
+        argmax = staticmethod(_crank(_unp.argmax, lambda a: _cpick(a, False, True)))
+        argmin = staticmethod(_crank(_unp.argmin, lambda a: _cpick(a, True,  True)))
+        sort   = staticmethod(_crank(_unp.sort,   lambda a: _array(_csorted(a))))
+        median = staticmethod(_crank(_unp.median, _cmedian))
+        std    = staticmethod(_crank(_unp.std,    _cstd))
+        diff   = staticmethod(_crank(_unp.diff,   _cdiff))
+        # elementwise comparisons
+        equal     = staticmethod(_cbinary(_unp.equal,     lambda a, b: a == b, True))
+        not_equal = staticmethod(_cbinary(_unp.not_equal, lambda a, b: a != b, True))
+        maximum   = staticmethod(_cbinary(_unp.maximum,   _cmaxfn))
+        minimum   = staticmethod(_cbinary(_unp.minimum,   _cminfn))
+        polyval   = staticmethod(_cpolyval)
         real   = staticmethod(_real)
         imag   = staticmethod(_imag)
         power  = staticmethod(_power)

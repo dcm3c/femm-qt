@@ -19,6 +19,12 @@ underscores; that spelling is not supported.
 nearest node to (x1,y1) to the nearest node to (x2,y2) with angle `angle'
 divided into `maxseg' segments.
 
+\item{\tt ei\_drawline(x1,y1,x2,y2)} Adds nodes at (x1,y1) and (x2,y2) and adds a line segment between them. Unlike {\tt ei\_addsegment}, which connects the nearest EXISTING nodes, this creates the nodes it needs.
+
+\item{\tt ei\_drawarc(x1,y1,x2,y2,angle,maxseg)} Adds nodes at (x1,y1) and (x2,y2) and adds an arc segment of the specified angle and discretization between them.
+
+\item{\tt ei\_drawrectangle(x1,y1,x2,y2)} Adds nodes at the corners of the rectangle with opposite corners (x1,y1) and (x2,y2), then adds the four segments connecting them.
+
 \item {\tt ei\_deleteselected} Delete all selected objects.
 
 \item {\tt ei\_deleteselectednodes} Delete selected nodes.
@@ -813,17 +819,36 @@ should be set to 1.
         \item element area using the length unit defined for the problem
         \item group number associated with the element
     \end{enumerate}
-\item{\tt eo\_getallnodes()} Returns the coordinates of {\em all} mesh
-nodes as a single flat array of $N \times 2$ values: $x_1, y_1, x_2, y_2,
-\ldots$  In the language bindings (MATLAB, Octave, Python, etc.), the
-wrapper function reshapes this into an $N \times 2$ matrix.  This is much
-faster than calling {\tt eo\_getnode} in a loop, because all of the data
-crosses the scripting interface in one call.
+\medskip\noindent
+{\bf About the bulk getters.}  The {\tt *\_getall...} functions return the whole
+mesh in one call instead of one item at a time.  What you get back depends on
+where the script runs.  Called from a language binding over the IPC connection,
+the values arrive as a single flat array and the binding wrapper reshapes them
+into the matrix described below.  Called from a script running inside FEMM
+itself, the function returns that matrix directly, as a numpy array --- there is
+nothing to reshape.  Either way the values, their order and their units are the
+same.  Mesh node indices are {\bf 1-based}, matching {\tt *\_getnode} and
+{\tt *\_getelement}.  (Note that the element records inside a solution file are
+0-based; the scripting interface adds one on the way out.)  Quantities that can
+have a phase --- magnetics and current flow at a nonzero frequency --- come back
+complex; everything else comes back real.
+\medskip
 
-\item{\tt eo\_getallelements()} Returns data for {\em all} mesh elements as
-a flat array of $N \times 7$ values.  Each group of seven contains the same
-fields, in the same order, as {\tt eo\_getelement}.  The binding wrappers
-reshape it into an $N \times 7$ matrix.
+\item{\tt eo\_getallnodes()} Returns the coordinates of {\em all} mesh nodes as
+an $N \times 2$ matrix, one row per node: $x_k, y_k$.
+
+\item{\tt eo\_getallelements()} Returns data for {\em all} mesh elements as an
+$N \times 7$ matrix.  Each row holds the same seven fields, in the same order,
+as {\tt eo\_getelement}.
+\item{\tt eo\_getalld()} Returns the electric displacement $D$ for {\em all} mesh
+elements as an $N \times 2$ matrix, one row per element: $D_x, D_y$.  The value
+is constant over each element.  Unlike {\tt eo\_getpointvalues}, no smoothing is
+applied and no point search is performed.
+
+\item{\tt eo\_getallv()} Returns the voltage at {\em all} mesh nodes as a vector
+of $N$ values.  Note that this is per {\em node}, whereas {\tt eo\_getalld} is
+per {\em element}.
+
 
 \item{\tt eo\_gettitle()} Returns the file path of the current output document as a string.
 

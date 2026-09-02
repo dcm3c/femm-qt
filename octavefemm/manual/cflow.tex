@@ -18,6 +18,24 @@ underscores.
 nearest node to (x1,y1) to the nearest node to (x2,y2) with angle `angle'
 divided into `maxseg' segments.
 
+\item{\tt ci\_drawline(x1,y1,x2,y2)} Adds nodes at (x1,y1) and
+(x2,y2) and adds a line between the nodes.
+
+\item{\tt ci\_drawpolyline([x1,y1;x2,y2'...])} Adds nodes at each
+of the specified points and connects them with segments.
+
+\item{\tt ci\_drawpolygon([x1,y1;x2,y2'...])} Adds nodes at each
+of the specified points and connects them with segments to form a
+closed contour.
+
+\item{\tt ci\_drawarc(x1,y1,x2,y2,angle,maxseg)} Adds nodes at
+(x1,y1) and (x2,y2) and adds an arc of the specified angle and
+discretization connecting the nodes.
+
+\item{\tt ci\_drawrectangle(x1,y1,x2,y2)} Adds nodes at the
+corners of a rectangle defined by the points (x1,y1) and (x2,y2),
+then adds segments connecting the corners of the rectangle.
+
 \item {\tt ci\_deleteselected} Delete all selected objects.
 
 \item {\tt ci\_deleteselectednodes} Delete selected nodes.
@@ -188,64 +206,94 @@ back onto the lua stack.
 \subsection{Editing Commands}
 \begin{itemize}
 
-\item \texttt{ci\_copyrotate(bx, by, angle, copies, (editaction) )}
+\item{\tt ci\_copyrotate(bx, by, angle, copies )}
+        \begin{itemize}
+        \item{\tt bx, by} -- base point for rotation
+        \item{\tt angle} -- angle by which the selected objects are incrementally
+        shifted to make each copy.  {\tt angle} is measured in degrees.
+        \item{\tt copies} -- number of copies to be produced from
+        the selected objects.
+        \end{itemize}
 
-\texttt{bx, by} -- base point for rotation
+\item{\tt ci\_copyrotate2(bx, by, angle, copies, editaction )}
+        \begin{itemize}
+        \item{\tt bx, by} -- base point for rotation
+        \item{\tt angle} -- angle by which the selected objects are incrementally
+        shifted to make each copy.  {\tt angle} is measured in degrees.
+        \item{\tt copies} -- number of copies to be produced from
+        the selected objects.
+        \item{\tt editaction}  0 --nodes, 1 -- lines (segments), 2 --block labels, 3 -- arc
+                segments, 4- group
+        \end{itemize}
 
-\texttt{angle} -- angle by which the selected objects are incrementally
-shifted to make each copy. \texttt{angle} is measured in degrees.
+\item{\tt ci\_copytranslate(dx, dy, copies)}
+        \begin{itemize}
+        \item{\tt dx,dy} -- distance by which the selected objects are incrementally shifted.
+        \item{\tt copies} -- number of copies to be produced from the selected objects.
+        \end{itemize}
 
-\texttt{copies} -- number of copies to be produced from the selected
-objects.
+\item{\tt ci\_copytranslate2(dx, dy, copies, editaction)}
+        \begin{itemize}
+        \item{\tt dx,dy} -- distance by which the selected objects are incrementally shifted.
+        \item{\tt copies} -- number of copies to be produced from the selected objects.
+        \item{\tt editaction}  0 --nodes, 1 -- lines (segments), 2 --block labels, 3 -- arc
+                segments, 4- group
+        \end{itemize}
 
-\texttt{editaction} 0 --nodes, 1 -- lines (segments), 2 --block labels, 3 --
-arc segments, 4- group
+\item{\tt ci\_createradius(x, y, r)} turns a corner located at {\tt (x,y)} into a curve of radius {\tt r}.
 
-\item \texttt{ci\_copytranslate(dx, dy, copies, (editaction))}
+\item{\tt ci\_moverotate(bx,by,shiftangle)}
+        \begin{itemize}
+        \item{\tt bx, by} -- base point for rotation
+        \item{\tt shiftangle} -- angle in degrees by which the selected objects are rotated.
+        \end{itemize}
 
-\texttt{dx,dy} -- distance by which the selected objects are incrementally
-shifted.
+\item{\tt ci\_moverotate2(bx,by,shiftangle, editaction)}
+        \begin{itemize}
+        \item{\tt bx, by} -- base point for rotation
+        \item{\tt shiftangle} -- angle in degrees by which the selected objects are rotated.
+        \item{\tt editaction}  0 --nodes, 1 -- lines (segments), 2 --block labels, 3 -- arc
+                segments, 4- group
+        \end{itemize}
 
-\texttt{copies} -- number of copies to be produced from the selected
-objects.
+\item{\tt ci\_movetranslate(dx,dy)}
+        \begin{itemize}
+        \item{\tt dx,dy} -- distance by which the selected objects are shifted.
+        \end{itemize}
 
-\texttt{editaction} 0 --nodes, 1 -- lines (segments), 2 --block labels, 3 --
-arc segments, 4- group
+\item{\tt ci\_movetranslate2(dx,dy,editaction)}
+        \begin{itemize}
+        \item{\tt dx,dy} -- distance by which the selected objects are shifted.
+        \item{\tt editaction}  0 --nodes, 1 -- lines (segments), 2 --block labels, 3 -- arc
+                segments, 4- group
+        \end{itemize}
 
-\item{\tt mi\_createradius(x, y, r)} turns a corner located at {\tt (x,y)} into a curve of radius {\tt r}.
+\item{\tt ci\_scale(bx,by,scalefactor)}
+        \begin{itemize}
+        \item{\tt bx, by} -- base point for scaling
+        \item{\tt scalefactor} -- a multiplier that determines how
+        much the selected objects are scaled
+        \end{itemize}
 
-\item \texttt{ci\_moverotate(bx,by,shiftangle (editaction))}
+\item{\tt ci\_scale2(bx,by,scalefactor,editaction)}
+        \begin{itemize}
+        \item{\tt bx, by} -- base point for scaling
+        \item{\tt scalefactor} -- a multiplier that determines how
+        much the selected objects are scaled
+        \item{\tt editaction}  0 --nodes, 1 -- lines (segments), 2 --block labels, 3 -- arc
+                segments, 4- group
+        \end{itemize}
 
-\texttt{bx, by} -- base point for rotation
+\item{\tt ci\_mirror(x1,y1,x2,y2)}
+mirror the selected objects about a line passing through the points
+{\tt (x1,y1)} and {\tt (x2,y2)}.
 
-\texttt{shiftangle} -- angle in degrees by which the selected objects are
-rotated.
-
-\texttt{editaction} 0 --nodes, 1 -- lines (segments), 2 --block labels, 3 --
-arc segments, 4- group
-
-\item \texttt{ci\_movetranslate(dx,dy,(editaction))}
-
-\texttt{dx,dy} -- distance by which the selected objects are shifted.
-
-\texttt{editaction} 0 --nodes, 1 -- lines (segments), 2 --block labels, 3 --
-arc segments, 4- group
-
-\item \texttt{ci\_scale(bx,by,scalefactor,(editaction))}
-
-\texttt{bx, by} -- base point for scaling
-
-\texttt{scalefactor} -- a multiplier that determines how much the selected
-objects are scaled
-
-\texttt{editaction} 0 --nodes, 1 -- lines (segments), 2 --block labels, 3 --
-arc segments, 4- group
-
-\item \texttt{ci\_mirror(x1,y1,x2,y2,(editaction))} mirror the selected objects about
-a line passing through the points \texttt{(x1,y1)} and
-\texttt{(x2,y2)}. Valid \texttt{editaction} entries are 0 for
-nodes, 1 for lines (segments), 2 for block labels, 3 for arc
+\item{\tt ci\_mirror2(x1,y1,x2,y2,editaction)}
+mirror the selected objects about a line passing through the points
+{\tt (x1,y1)} and {\tt (x2,y2)}. Valid {\tt editaction} entries are
+0 for nodes, 1 for lines (segments), 2 for block labels, 3 for arc
 segments, and 4 for groups.
+
 
 \item \texttt{ci\_seteditmode(editmode)} Sets the current editmode to:
 
@@ -287,6 +335,10 @@ specified by \texttt{(x2,y2)}.
 \item \texttt{ci\_gridsnap("flag")} Setting flag to ''on'' turns on snap to grid,
 setting flag to "off"turns off snap to grid.
 
+\item{\tt ci\_snapgridon} turns on snap-to-grid. Equivalent to {\tt ci\_gridsnap('on')}.
+
+\item{\tt ci\_snapgridoff} turns off snap-to-grid. Equivalent to {\tt ci\_gridsnap('off')}.
+
 \item \texttt{ci\_setgrid(density,"type")} Change the grid spacing. The density
 parameter specifies the space between grid points, and the type
 parameter is set to \texttt{"cart"} for Cartesian coordinates or
@@ -303,6 +355,8 @@ parameter is set to \texttt{"cart"} for Cartesian coordinates or
 
 \item{\tt ci\_resize(width,height)} resizes the active magnetics input
  window client area to width $\times$ height.
+\item{\tt ci\_getview} grabs the currently displayed current flow input view and
+ returns it as an image matrix, in the form \texttt{imread} would return.
 
 \end{itemize}
 
@@ -479,6 +533,12 @@ block label names on screen. To hide the block label names,
 \texttt{flag} should be 0. To display the names, the parameter
 should be set to 1.
 
+\item{\tt ci\_hidenames} hides the block label names. Equivalent to {\tt ci\_shownames(0)}.
+
+\item{\tt ci\_gettitle} returns the file path of the current document as a string.
+
+\item{\tt ci\_setcomment('comment')} sets the comment/description string associated with the current problem.
+
 \item{\tt ci\_readdxf("filename")} This function imports a dxf file specified by {\tt "filename"}.
 
 \item{\tt ci\_savedxf("filename")} This function saves geometry information in a dxf file specified by {\tt "filename"}.
@@ -597,6 +657,14 @@ The return values, in order, are:
 \texttt{Jcx} & x- or r- direction component of conduction current density \\
 \texttt{Jcy} & y- or z- direction component of conduction current density \\
 \end{tabular}
+
+\item{\tt co\_getv(x,y)} returns the voltage at {\tt (x,y)} -- column 1 of {\tt co\_getpointvalues}. An equivalent form is {\tt co\_getv([x,y])}.
+
+\item{\tt co\_getj(x,y)} returns the two components of current density {\tt Jx, Jy} at {\tt (x,y)} -- columns 2 and 3 of {\tt co\_getpointvalues}. An equivalent form is {\tt co\_getj([x,y])}.
+
+\item{\tt co\_getk(x,y)} returns the two components of AC conductivity {\tt Kx, Ky} at {\tt (x,y)} -- columns 4 and 5 of {\tt co\_getpointvalues}. An equivalent form is {\tt co\_getk([x,y])}.
+
+\item{\tt co\_gete(x,y)} returns the two components of electric field intensity {\tt Ex, Ey} at {\tt (x,y)} -- columns 6 and 7 of {\tt co\_getpointvalues}. An equivalent form is {\tt co\_gete([x,y])}.
 
 \item \texttt{co\_makeplot(PlotType,NumPoints,Filename,FileFormat) }Allows Lua access
 to the X-Y plot routines. If only PlotType or only PlotType and NumPoints
@@ -746,6 +814,10 @@ constant over each element. Setting flag equal to \texttt{"on"}
 turns on smoothing, and setting flag to \texttt{"off"} turns off
 smoothing.
 
+\item{\tt co\_smoothon} turns on smoothing of the $J$ and $E$ fields, which are naturally piece-wise constant over each element. Equivalent to {\tt co\_smooth('on')}.
+
+\item{\tt co\_smoothoff} turns off smoothing. Equivalent to {\tt co\_smooth('off')}.
+
 \item \texttt{co\_showgrid()} Show the grid points.
 
 \item \texttt{co\_hidegrid()} Hide the grid points points.
@@ -836,6 +908,8 @@ current grid size setting.
 
 \item{\tt co\_resize(width,height)} resizes the active magnetics input
  window client area to width $\times$ height.
+\item{\tt co\_getview} grabs the currently displayed current flow output view and
+ returns it as an image matrix, in the form \texttt{imread} would return.
 
 \end{itemize}
 
@@ -871,6 +945,16 @@ block label names on screen. To hide the block label names,
 \texttt{flag} should be 0. To display the names, the parameter
 should be set to 1.
 
+\item{\tt co\_hidenames} hides the block label names. Equivalent to {\tt co\_shownames(0)}.
+
+\item{\tt co\_gettitle} returns the file path of the current document as a string.
+
+\item{\tt co\_snapgrid('flag')} setting {\tt flag} to {\tt 'on'} turns on snap to grid, setting it to {\tt 'off'} turns it off.
+
+\item{\tt co\_snapgridon} turns on snap-to-grid. Equivalent to {\tt co\_snapgrid('on')}.
+
+\item{\tt co\_snapgridoff} turns off snap-to-grid. Equivalent to {\tt co\_snapgrid('off')}.
+
 \item{\tt co\_numnodes} Returns the number of nodes in the in focus current flow output mesh.
 \item{\tt co\_numelements} Returns the number of elements in the in focus current flow output mesh.
 \item{\tt co\_getnode(n)} Returns the (x,y) or (r,z) position of the nth mesh node.
@@ -884,5 +968,15 @@ should be set to 1.
         \item element area using the length unit defined for the problem
         \item group number associated with the element
     \end{enumerate}
+
+
+\item {\bf Bulk getters.}  These fetch the whole mesh in one call instead of one item at a time, which is much faster than looping the per-item getters.  Mesh node indices are {\bf 1-based}, matching {\tt co\_getnode} and {\tt co\_getelement}.  Each returns:
+
+\begin{itemize}
+\item{\tt co\_getallnodes} an $N \times 2$ matrix of the coordinates of every mesh node.
+\item{\tt co\_getallelements} an $N \times 7$ matrix with one row per mesh element, as {\tt co\_getelement}.
+\item{\tt co\_getallj} an $N \times 2$ matrix of the current density $J_x, J_y$ at every element. Complex at a nonzero frequency. The value is constant over each element; no smoothing is applied and no point search is performed.
+\item{\tt co\_getallv} the voltage at every mesh node, complex at a nonzero frequency. Note that this is per {\em node}, whereas {\tt co\_getallj} is per {\em element}.
+\end{itemize}
 
 \end{itemize}

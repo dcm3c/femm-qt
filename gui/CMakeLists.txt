@@ -46,6 +46,18 @@ add_executable(femm_gui
     icons.qrc
     $<$<PLATFORM_ID:Windows>:femm.rc>
 )
+# femm.rc says ICON "icons/femm.ico", but nothing scans a .rc for what it
+# includes -- ninja reported "#deps 0" for femm.rc.obj -- so replacing the icon
+# rebuilt nothing and the executable kept the old one.
+#
+# It hid well: icons.qrc embeds the SAME file for the window icon and that path
+# does rebuild, so the icon inside the running program updated while the one
+# Explorer and the taskbar show stayed four days stale.
+if(WIN32)
+    set_property(SOURCE femm.rc APPEND PROPERTY OBJECT_DEPENDS
+                 "${CMAKE_CURRENT_SOURCE_DIR}/icons/femm.ico")
+endif()
+
 target_include_directories(femm_gui PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(femm_gui PRIVATE femm_ipc Qt6::Widgets)
 target_compile_options(femm_gui PRIVATE -Wall

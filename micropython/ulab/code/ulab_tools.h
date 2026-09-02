@@ -31,6 +31,11 @@ mp_float_t ndarray_get_float_int32(void *);   // femm-qt addition
 mp_float_t ndarray_get_float_float(void *);
 void *ndarray_get_float_function(uint8_t );
 
+// femm-qt: returns an int32_t (*)(void *) for any INTEGER dtype, or NULL if the
+// dtype is not an integer -- callers raise on NULL rather than guessing. See
+// the NDARRAY_INT32 note in ndarray.h.
+void *ndarray_get_int32_function(uint8_t );
+
 uint8_t ndarray_upcast_dtype(uint8_t , uint8_t );
 void *ndarray_set_float_function(uint8_t );
 

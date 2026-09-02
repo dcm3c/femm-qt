@@ -1661,18 +1661,45 @@ Material from other material libraries or models can be imported by selecting th
 ``Import Materials'' option from the right-button menu that appears when the pointer
 is over the root-level folder of either the Library or Model materials lists.
 
-On Windows, Linux and FreeBSD, the materials library is located in the
-same directory as the FEMM executable files, under the filename
-\verb+matlib.dat+.  If you move the materials library, femm will not be
-able to find it.
+FEMM ships a read-only copy of each materials library beside its
+executable files (\verb+matlib.dat+ for magnetics, and
+\verb+statlib.dat+, \verb+heatlib.dat+ and \verb+condlib.dat+ for the
+other three problem types).  Until you change something, that shipped
+copy is the one you are using.
 
-On macOS the application bundle is read-only once it has been signed, so
-the library cannot live inside it.  FEMM instead keeps your copy in
-\verb+~/Library/Application Support/FEMM/+, copying it there the first
-time it is needed from a pristine copy inside the bundle.  That copy is
-the one your edits go into, and it is shared by every copy of FEMM on the
-machine.  Deleting it restores the materials FEMM was shipped with, since
-the next run seeds a fresh one.
+The first time you press OK in the Material Library dialog, your own copy
+is written to your personal FEMM directory, and from then on that is the
+one FEMM reads and writes:
+
+\begin{center}
+\begin{tabular}{ll}
+Windows          & \verb+%APPDATA%\FEMM\+ \\
+macOS            & \verb+~/Library/Application Support/FEMM/+ \\
+Linux, FreeBSD   & \verb+~/.local/share/FEMM/+ \\
+\end{tabular}
+\end{center}
+
+Your copy belongs to you rather than to the installation, which means
+your materials survive upgrading or reinstalling FEMM, are not shared
+with other users of the same machine, and work even where FEMM has been
+installed somewhere you cannot write --- inside a signed application
+bundle on macOS, or under \verb+/usr+ on Linux.  {\bf Deleting your copy
+restores the materials FEMM was shipped with}, since FEMM then goes back
+to reading the shipped one.
+
+Because your copy is yours, it does not automatically gain materials
+added to later releases of FEMM.  If a new version ships a library that
+differs from the one your copy was made from, FEMM offers you the new one
+the next time you open the Material Library dialog.  Accepting replaces
+your library with the new one; declining keeps yours, and you are not
+asked again until a later version changes it once more.  You can always
+import individual materials from another library instead --- see ``Import
+Materials'' above --- which keeps your own edits.
+
+Alongside each library FEMM keeps a small \verb+.seed+ file recording
+which shipped version your copy was made from.  It is what makes the
+offer above possible; it is not a backup, and deleting it simply means
+you may be offered an update you have already seen.
 
 \subsubsection{Circuit Properties}
 

@@ -1,34 +1,42 @@
 % Layer 2, octavefemm: EOCondPropTest driven through the binding.
 %
-%   matlab -batch "l2_condprop_octave"   (with FEMM_DIR set to <build>/bin)
+%   matlab     -batch "l2_condprop_octave"
+%   octave-cli --no-gui -q l2_condprop_octave.m
 %
-% A line-for-line translation of testing/EOCondPropTest.py, so the existing
-% CondPropCompare.py checks the result against the same Original FEMM golden.
+% with FEMM_DIR set to <build>/bin. A line-for-line translation of
+% testing/EOCondPropTest.py, so the existing CondPropCompare.py checks the
+% result against the same Original FEMM golden.
+%
+% ONE file serves both hosts, which needs care: MATLAB requires a script's local
+% functions to come LAST, Octave requires them to be defined BEFORE use. Those
+% are mutually exclusive, so this file has no local functions at all -- helpers
+% are anonymous functions and the per-case body is inlined in a loop. Both forms
+% are portable; a local function is not.
 
 here = fileparts(mfilename('fullpath'));
 addpath(fullfile(here, '..', '..', 'octavefemm'));
 tests = fullfile(here, '..');
 tmp = getenv('TEMP'); if isempty(tmp), tmp = 'C:/temp'; end
 
+fmt = @(z) sprintf('%.10g %.10g', real(z), imag(z));
+fwd = @(p) strrep(p, '\', '/');
+
+cases = {{'electrostatic1.fee', 'electrostatic1 (axi)'}, ...
+         {'electrostatic2.fee', 'electrostatic2 (planar)'}};
+cond = '+10000V';
+
 openfemm(1);                              % 1 = headless
-c = onCleanup(@() closefemm());
-
-runcase(fullfile(tests, 'electrostatic1.fee'), tmp, '+10000V', 'electrostatic1 (axi)');
-runcase(fullfile(tests, 'electrostatic2.fee'), tmp, '+10000V', 'electrostatic2 (planar)');
-fprintf('\nDone.\n');
-
-function s = fmt(re, im)
-    s = sprintf('%.10g %.10g', re, im);
-end
-
-function runcase(fee, tmp, cond, tag)
-    opendocument(strrep(fee, '\', '/'));
-    ei_saveas(strrep(fullfile(tmp, 'l2_oct_temp.fee'), '\', '/'));
+for k = 1:numel(cases)
+    fee = cases{k}{1};
+    tag = cases{k}{2};
+    opendocument(fwd(fullfile(tests, fee)));
+    ei_saveas(fwd(fullfile(tmp, 'l2_oct_temp.fee')));
     ei_analyze();
     ei_loadsolution();
     fprintf('===  %s  ===\n', tag);
     z = eo_getconductorproperties(cond);
-    fprintf('  %-14s = %s | %s\n', cond, ...
-            fmt(real(z(1)), imag(z(1))), fmt(real(z(2)), imag(z(2))));
+    fprintf('  %-14s = %s | %s\n', cond, fmt(z(1)), fmt(z(2)));
     eo_close();
 end
+fprintf('\nDone.\n');
+closefemm();

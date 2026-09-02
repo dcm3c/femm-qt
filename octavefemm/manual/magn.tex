@@ -368,9 +368,13 @@ Set the display area to be from the bottom left corner specified by
 \begin{itemize}
 \item{\verb+mi_showgrid+} Show the grid points.
 \item{\verb+mi_hidegrid+} Hide the grid points points.
-\item{\verb+mi_grid_snap('flag')+}
+\item{\verb+mi_gridsnap('flag')+}
 Setting {\tt flag} to 'on' turns on snap to grid, setting {\tt
 flag} to {\tt 'off'} turns off snap to grid.
+\item{\tt mi\_snapgridon} turns on snap-to-grid. Equivalent to {\tt mi\_gridsnap('on')}.
+
+\item{\tt mi\_snapgridoff} turns off snap-to-grid. Equivalent to {\tt mi\_gridsnap('off')}.
+
 \item{\verb+mi_setgrid(density,'type')+} Change the grid spacing.  The {\tt density}
 parameter specifies the space between grid points, and the {\tt
 type} parameter is set to {\tt 'cart'} for cartesian coordinates or
@@ -382,7 +386,8 @@ type} parameter is set to {\tt 'cart'} for cartesian coordinates or
  minimized or maximized state.
 \item{\tt mi\_resize(width,height)} resizes the active magnetics input
  window client area to width $\times$ height.
-%\item{\tt mi\_getview} grabs the currently displayed magnetics input view and imports it into Octave.
+\item{\tt mi\_getview} grabs the currently displayed magnetics input view and
+ returns it as an image matrix, in the form \texttt{imread} would return.
 \end{itemize}
 
 \subsection{Object Properties}
@@ -433,6 +438,8 @@ values.
 the material specified by the string {\tt 'blockname'}.  The point to be added
 has a flux density of {\tt b} in units of Teslas and a field
 intensity of {\tt h} in units of Amps/Meter.
+
+\item{\tt mi\_addbhpoints('blockname',points)} adds a whole B-H curve to the material named {\tt 'blockname'}, where {\tt points} is an $n$-by-2 matrix whose columns are $b$ in Teslas and $h$ in Amps/Meter. The three-argument form {\tt mi\_addbhpoints('blockname',b,h)} takes the two columns separately. Calls {\tt mi\_addbhpoint} once per row.
 
 \item{\tt mi\_clearbhpoints('blockname')} Clears all B-H data points
 associatied with the material specified by {\tt 'blockname'}.
@@ -589,6 +596,12 @@ document and destroys magnetics preprocessor window.
 \item{\tt mi\_shownames(flag)} This function allow the user to display or hide the block label
 names on screen.  To hide the block label names, {\tt flag} should be 0.  To display the
 names, the parameter should be set to 1.
+\item{\tt mi\_hidenames} hides the block label names. Equivalent to {\tt mi\_shownames(0)}.
+
+\item{\tt mi\_gettitle} returns the file path of the current document as a string.
+
+\item{\tt mi\_setcomment('comment')} sets the comment/description string associated with the current problem.
+
 \item{\tt mi\_readdxf('filename')} This function imports a dxf file specified by {\tt 'filename'}.
 \item{\tt mi\_savedxf('filename')} This function saves geometry information in a dxf file specified by {\tt 'filename'}.
 \item{\tt mi\_defineouterspace(Zo,Ro,Ri)} defines
@@ -854,7 +867,7 @@ by \verb+BdryName+. Values for {\tt inttype} in are:
 \end{center}
 Torque and energy integrals return one result; force integrals return two results for the x- and y- direction force, respectively.
 
-\item{\verb+mo_getgapharmonicsl("BdryName",n)+}
+\item{\verb+mo_getgapharmonics("BdryName",n)+}
 Returns the {\tt acc}, {\tt acs},{\tt brc},{\tt  brs},{\tt  btc}, and {\tt bts}.  These quantities represent the
 components of vector potential, radial flux density, and tangential flux density on the centerline of the specified air gap element at the specified angle.  
 For the $n^{th}$ harmonic, vector potential, radial flux density, and tangential flux density can be represented explicitly as functions of angle via:
@@ -922,11 +935,23 @@ is applied to the $B$ and $H$ fields, which are naturally
 piece-wise constant over each element.  Setting {\tt flag} equal to
 {\tt 'on'} turns on smoothing, and setting {\tt flag} to {\tt
 'off'} turns off smoothing.
+\item{\tt mo\_setweightingscheme(n)} changes the weighting method used for Weighted Stress Tensor force and torque integrals. Type 0, the default, is recommended: it generates a line of elements in the middle of the air gap between components, minimizing error. Type 1 weights all elements equally and uses all elements in the gap. Types 2, 3 and 4 select alternative element weightings and mask transition profiles.
+
+\item{\tt mo\_smoothon} turns on smoothing of the $B$ and $H$ fields, which are naturally piece-wise constant over each element. Equivalent to {\tt mo\_smooth('on')}.
+
+\item{\tt mo\_smoothoff} turns off smoothing. Equivalent to {\tt mo\_smooth('off')}.
+
 \item{\verb+mo_showgrid+} Show the grid points.
 \item{\verb+mo_hidegrid+} Hide the grid points points.
-\item{\verb+mo_grid_snap('flag')+}
+\item{\verb+mo_gridsnap('flag')+}
 Setting {\tt flag} to 'on' turns on snap to grid, setting {\tt
 flag} to {\tt 'off'} turns off snap to grid.
+\item{\tt mo\_snapgrid('flag')} setting {\tt flag} to {\tt 'on'} turns on snap to grid, setting it to {\tt 'off'} turns it off.
+
+\item{\tt mo\_snapgridon} turns on snap-to-grid. Equivalent to {\tt mo\_snapgrid('on')}.
+
+\item{\tt mo\_snapgridoff} turns off snap-to-grid. Equivalent to {\tt mo\_snapgrid('off')}.
+
 \item{\verb+mo_setgrid(density,'type')+} Change the grid spacing.  The {\tt density}
 parameter specifies the space between grid points, and the {\tt
 type} parameter is set to {\tt 'cart'} for cartesian coordinates or
@@ -983,7 +1008,8 @@ current grid size setting.
  minimized or maximized state.
 \item{\tt mo\_resize(width,height)} resizes the active magnetics output
  window client area to width $\times$ height.
-% \item{\tt mo\_getview} grabs the currently displayed magnetics output view and imports it into Octave.
+\item{\tt mo\_getview} grabs the currently displayed magnetics output view and
+ returns it as an image matrix, in the form \texttt{imread} would return.
 \end{itemize}
 
 \subsection{Miscellaneous}
@@ -1000,6 +1026,10 @@ view to the file specified by {\tt 'filename'}.
 names on screen.  To hide the block label names, {\tt flag} should be 0.  To display the
 names, the parameter should be set to 1.
 
+\item{\tt mo\_hidenames} hides the block label names. Equivalent to {\tt mo\_shownames(0)}.
+
+\item{\tt mo\_gettitle} returns the file path of the current document as a string.
+
 \item{\tt mo\_numnodes} Returns the number of nodes in the in focus magnetics output mesh.
 \item{\tt mo\_numelements} Returns the number of elements in the in focus magnets output mesh.
 \item{\tt mo\_getnode(n)} Returns the (x,y) or (r,z) position of the nth mesh node.
@@ -1013,5 +1043,18 @@ names, the parameter should be set to 1.
     	\item element area using the length unit defined for the problem
     	\item group number associated with the element
 	\end{enumerate}
+
+
+\item {\bf Bulk getters.}  These fetch the whole mesh in one call instead of one item at a time, which is much faster than looping the per-item getters.  Mesh node indices are {\bf 1-based}, matching {\tt mo\_getnode} and {\tt mo\_getelement}.  Each returns:
+
+\begin{itemize}
+\item{\tt mo\_getallnodes} an $N \times 2$ matrix of the coordinates of every mesh node, one row per node.
+\item{\tt mo\_getallelements} an $N \times 7$ matrix with one row per mesh element, holding the same seven fields as {\tt mo\_getelement}: the three node indices, the centroid coordinates, the area and the group number.
+\item{\tt mo\_getallb} an $N \times 2$ matrix of the flux density at every element centroid. Complex at a nonzero frequency.
+\item{\tt mo\_getalla} the vector potential at every element centroid. Complex at a nonzero frequency.
+\item{\tt mo\_getallgapb('BdryName')} an $npts \times 2$ matrix of $B_r$ and $B_\theta$ at equally spaced angles around the named air gap element. An optional second argument sets $npts$ (default 360).
+\item{\tt mo\_getallgapa('BdryName')} the vector potential at $npts$ points around the named air gap element. An optional second argument sets $npts$.
+\item{\tt mo\_getallgapharmonics('BdryName')} an $N \times 6$ matrix of the air gap element's harmonic coefficients.
+\end{itemize}
 
 \end{itemize}

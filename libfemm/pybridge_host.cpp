@@ -20,6 +20,7 @@
 //     stream cannot be resynchronised mid-frame, and a worker wedged badly
 //     enough to need Esc was going to be restarted anyway.
 #include "pybridge_host.h"
+#include "femm_resource.h"
 
 #include "py_state.h"
 #include "script_callbacks.h"
@@ -586,9 +587,14 @@ std::string workerScript() {
     // namespace package instead of python/pybridge.py. A hyphen cannot be an
     // identifier. The repo copy is the fallback, so a developer build works
     // before any install step has run.
-    std::string shipped = exeDir() + "pybridge-worker/femmqt_pybridge_worker.py";
     std::error_code ec;
+    // femmResource searches beside the executable, then the macOS bundle's
+    // Resources/, then ../share/femm for a split (FHS) install.
+    std::string shipped = femmResource("pybridge-worker/femmqt_pybridge_worker.py");
     if (fs::exists(femm_path(shipped), ec)) return shipped;
+    // The repo copy, so a developer build works before any install step has
+    // run. Kept out of femmResource: it is specific to this file and would be
+    // meaningless for the manual or python/.
     std::string dev = exeDir() + "../../pybridge/worker/femmqt_pybridge_worker.py";
     if (fs::exists(femm_path(dev), ec)) return femm_u8string(
         fs::weakly_canonical(femm_path(dev), ec));

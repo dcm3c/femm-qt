@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=FEMM
+GenericName=Finite Element Method Magnetics
+Comment=2D electromagnetic, electrostatic, heat flow and current flow analysis
+Exec=@CMAKE_INSTALL_FULL_BINDIR@/femm_gui %f
+Icon=femm-qt
+Terminal=false
+StartupWMClass=femm_gui
+Categories=Science;Engineering;Physics;
+Keywords=FEM;magnetics;electrostatics;finite element;

@@ -122,21 +122,47 @@ void ndarray_set_complex_value(void *, size_t , mp_obj_t );
 
 extern const mp_obj_type_t ulab_ndarray_type;
 
+// femm-qt: the @ operator's complex path. ndarray_binary_op() routes a matmul
+// with a complex operand through this; libfemm sets it to a wrapper over the
+// clinalg kernel so that A @ B agrees with np.dot(A, B). NULL in a plain build,
+// where @ then reports complex as unimplemented exactly as np.dot does.
+extern mp_obj_t (*ndarray_matmul_complex_hook)(mp_obj_t, mp_obj_t);
+
 // femm-qt: NDARRAY_INT32 is an addition to upstream ulab, whose integer types
 // stop at 16 bits. 32767 does not index a finite-element mesh, and upstream
 // wraps silently rather than complaining, so on a desktop the omission is a
 // source of wrong answers rather than a saved kilobyte.
 //
-// It is a *storage* dtype: creation, indexing, slicing, tobytes/frombuffer and
-// the library functions all handle it, but arithmetic on it produces float64
-// (see ndarray_widen_int32, and ndarray_upcast_dtype in ulab_tools.c). That
-// is exact for every int32 value, and it leaves ulab's macro-expanded
-// arithmetic core -- the part that would have to be re-merged on every
-// upstream update -- completely untouched. Upstream already has the same rule
-// for a case it cannot represent: uint16 + int16 => float.
+// It is a full dtype: creation, indexing, slicing, tobytes/frombuffer, the
+// library functions, and ARITHMETIC.
+//
+// Arithmetic is not implemented by adding an int32 row and column to each of
+// the ten macro-expanded dtype chains in ndarray_operators.c -- that is roughly
+// a hundred leaves to re-apply on every upstream update, and a missed one is
+// silent, because every chain ends in a trailing "assume float" branch that
+// would reinterpret the bytes. Instead ndarray_binary_op() routes:
+//
+//   int32 with float or complex, or true division  ->  widened to float here
+//        (ndarray_widen_int32; exact, every int32 fits a double) and handled by
+//        ulab's own chains, which therefore still never see an int32.
+//   int32 with another integer type  ->  ndarray_binary_int32() in
+//        ndarray_operators.c, one kernel for every operator.
+//
+// Semantics follow NumPy: int + int stays int32, +,-,* wrap, // and % floor
+// toward negative infinity, division by zero yields 0, a negative integer power
+// raises, and comparisons give a boolean array. In-place operators follow what
+// ulab already does for its own integer dtypes -- /= and **= are refused,
+// +=, -=, *= and %= preserve the dtype.
+//
+// Until 2026-08-28 arithmetic instead produced float64 for every int32 case.
+// That was exact but diverged from NumPy, and it broke the use the dtype was
+// added for: `conn - 1` became a float array, which np.take then refuses as an
+// index. The rationale given for it cited `uint16 + int16 => float` as upstream
+// precedent -- but NumPy returns int32 there, and upstream widens only because
+// it lacks the 32-bit type added here.
 //
 // int64 is deliberately absent: it cannot round-trip through float64 above
-// 2**53, so the same approach would silently lose precision.
+// 2**53, so a widening approach would silently lose precision.
 enum NDARRAY_TYPE {
     NDARRAY_BOOL = '?', // this must never be assigned to the dtype!
     NDARRAY_UINT8 = 'B',

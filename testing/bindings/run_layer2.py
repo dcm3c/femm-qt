@@ -53,6 +53,14 @@ HOSTS = [
      lambda: shutil.which("matlab") or _first([
          r"C:\Program Files\MATLAB\R2025b\bin\matlab.exe"]),
      lambda exe, d: [exe, "-batch", os.path.splitext(os.path.basename(d))[0]]),
+    # Same octavefemm binding, different HOST. The drivers are one file each:
+    # MATLAB requires a script's local functions last, Octave requires them
+    # before use, so the *_octave.m drivers avoid local functions entirely --
+    # anonymous functions and inlined loops, which both hosts accept.
+    ("octavefemm-oct", "_octave.m",
+     lambda: shutil.which("octave-cli") or _glob(
+         r"C:\Program Files\GNU Octave\Octave-*\mingw64\bin\octave-cli.exe"),
+     lambda exe, d: [exe, "--no-gui", "-q", d]),
     ("scifemm", "_scifemm.sce",
      lambda: shutil.which("WScilex-cli") or _first([
          r"C:\Program Files\scilab-2026.0.1\bin\WScilex-cli.exe"]),
@@ -66,6 +74,14 @@ HOSTS = [
          r"C:\Program Files\Wolfram Research\Mathematica\9.0\math.exe"]),
      lambda exe, d: [exe, "-script", d]),
 ]
+
+
+def _glob(pattern):
+    """First match of a wildcard path -- Octave installs under a versioned
+    directory, so hardcoding Octave-11.1.0 would rot."""
+    import glob as _g
+    hits = sorted(_g.glob(pattern))
+    return hits[-1] if hits else None
 
 
 def _first(paths):

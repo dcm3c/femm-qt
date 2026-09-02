@@ -171,37 +171,70 @@ void register_elec_postproc_py(ElecResultsDoc *doc) {
     });
 
     // ---- Bulk retrieval ----
-    m.def("eo_getallelements", []() -> std::string {
+    // Same shape as mo_getallelements: four typed columns, emitted row-major on
+    // the wire by capture_result(). Node indices are 1-based.
+    m.def("eo_getallelements", []() -> mp_obj_t {
         check_doc(s_doc, EOERR);
-        int ne = (int)s_doc->meshelem.size();
-        std::string buf;
-        buf.reserve(ne * 70);
-        for (int k = 0; k < ne; k++) {
+        size_t ne = s_doc->meshelem.size();
+        ndarray_obj_t *conn = bulkArray(ne, 3, NDARRAY_INT32);
+        ndarray_obj_t *ctr  = bulkArray(ne, 2, NDARRAY_FLOAT);
+        ndarray_obj_t *area = bulkArray(ne, 0, NDARRAY_FLOAT);
+        ndarray_obj_t *grp  = bulkArray(ne, 0, NDARRAY_INT32);
+        int32_t *pc = bulkI4(conn), *pg = bulkI4(grp);
+        mp_float_t *pt = bulkF8(ctr), *pa = bulkF8(area);
+        for (size_t k = 0; k < ne; k++) {
             auto &el = s_doc->meshelem[k];
-            int grp = (el.lbl >= 0 && el.lbl < (int)s_doc->labellist.size())
-                          ? s_doc->labellist[el.lbl].InGroup : 0;
-            appendInt(buf, el.p[0] + 1);
-            appendInt(buf, el.p[1] + 1);
-            appendInt(buf, el.p[2] + 1);
-            appendDouble(buf, el.ctr.re);
-            appendDouble(buf, el.ctr.im);
-            appendDouble(buf, s_doc->ElmArea(k));
-            appendInt(buf, grp);
+            pc[3 * k]     = el.p[0] + 1;
+            pc[3 * k + 1] = el.p[1] + 1;
+            pc[3 * k + 2] = el.p[2] + 1;
+            pt[2 * k]     = (mp_float_t)el.ctr.re;
+            pt[2 * k + 1] = (mp_float_t)el.ctr.im;
+            pa[k] = (mp_float_t)s_doc->ElmArea((int)k);
+            pg[k] = (el.lbl >= 0 && el.lbl < (int)s_doc->labellist.size())
+                        ? s_doc->labellist[el.lbl].InGroup : 0;
         }
-        if (!buf.empty()) buf.pop_back();
-        return buf;
+        mp_obj_t items[4] = {MP_OBJ_FROM_PTR(conn), MP_OBJ_FROM_PTR(ctr),
+                             MP_OBJ_FROM_PTR(area), MP_OBJ_FROM_PTR(grp)};
+        return mp_obj_new_tuple(4, items);
     });
-    m.def("eo_getallnodes", []() -> std::string {
+    m.def("eo_getallnodes", []() -> mp_obj_t {
         check_doc(s_doc, EOERR);
-        int nn = (int)s_doc->meshnode.size();
-        std::string buf;
-        buf.reserve(nn * 50);
-        for (int k = 0; k < nn; k++) {
-            appendDouble(buf, s_doc->meshnode[k].x);
-            appendDouble(buf, s_doc->meshnode[k].y);
+        size_t nn = s_doc->meshnode.size();
+        ndarray_obj_t *a = bulkArray(nn, 2, NDARRAY_FLOAT);
+        mp_float_t *d = bulkF8(a);
+        for (size_t k = 0; k < nn; k++) {
+            d[2 * k]     = (mp_float_t)s_doc->meshnode[k].x;
+            d[2 * k + 1] = (mp_float_t)s_doc->meshnode[k].y;
         }
-        if (!buf.empty()) buf.pop_back();
-        return buf;
+        return MP_OBJ_FROM_PTR(a);
+    });
+
+    // ---- Field and potential, the analogues of mo_getallb / mo_getalla ----
+    //
+    // ERElement::D is ONE CComplex holding the 2-D displacement VECTOR, re = Dx
+    // and im = Dy -- not a phasor. Electrostatics has no frequency, so this is
+    // two REAL columns; flattening it as a complex would put "Dx+Dy*I" on the
+    // wire where two numbers belong. Same convention the line integrals use for
+    // normal/tangential components.
+    m.def("eo_getalld", []() -> mp_obj_t {
+        check_doc(s_doc, EOERR);
+        size_t ne = s_doc->meshelem.size();
+        ndarray_obj_t *a = bulkArray(ne, 2, NDARRAY_FLOAT);
+        mp_float_t *d = bulkF8(a);
+        for (size_t k = 0; k < ne; k++) {
+            d[2 * k]     = (mp_float_t)s_doc->meshelem[k].D.re;
+            d[2 * k + 1] = (mp_float_t)s_doc->meshelem[k].D.im;
+        }
+        return MP_OBJ_FROM_PTR(a);
+    });
+    // Nodal voltage. Per NODE, unlike the element-centred field getters.
+    m.def("eo_getallv", []() -> mp_obj_t {
+        check_doc(s_doc, EOERR);
+        size_t nn = s_doc->meshnode.size();
+        ndarray_obj_t *a = bulkArray(nn, 0, NDARRAY_FLOAT);
+        mp_float_t *d = bulkF8(a);
+        for (size_t k = 0; k < nn; k++) d[k] = (mp_float_t)s_doc->meshnode[k].V;
+        return MP_OBJ_FROM_PTR(a);
     });
 
     // ---- Display control ----
