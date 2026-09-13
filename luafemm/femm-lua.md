@@ -39,6 +39,17 @@ C:\path\to\femm-qt\build\bin\femm-lua.bat myscript.lua
 /path/to/femm-qt/build/bin/femm-lua.sh myscript.lua
 ```
 
+On macOS the launcher also ships **inside the application**, which is where
+it lives once FEMM is installed from the disk image:
+
+```bash
+/Applications/femm_gui.app/Contents/MacOS/femm-lua.sh myscript.lua
+```
+
+Inside the bundle rather than in `~/FEMM/bindings/luafemm` with the other
+client files, because it is not a client file: it is a program you run, and
+it needs the `lua4` interpreter beside it. Both live in `Contents/MacOS`.
+
 (The `FEMM_DIR` variable that the other bindings — octavefemm, pyfemm,
 mathfemm, juliafemm — require is a *separate* matter; see
 [When you need `FEMM_DIR`](#when-you-actually-need-femm_dir) below. The
@@ -83,6 +94,15 @@ or symlink the launcher into a directory already on `PATH`:
 
 ```bash
 ln -s /path/to/femm-qt/build/bin/femm-lua.sh ~/bin/femm-lua
+```
+
+A symlink works here because `femm.lua` and `lua4` are resolved relative to
+the launcher's real location, which `readlink -f` recovers. Prefer an **alias**
+if you are pointing at the copy inside a macOS `.app`, or on any system whose
+`readlink` has no `-f`:
+
+```bash
+alias femm-lua='/Applications/femm_gui.app/Contents/MacOS/femm-lua.sh'
 ```
 
 **Don't want to touch `PATH`?** Use an alias instead, or just run the launcher
@@ -316,12 +336,23 @@ bundle's executable folder instead:
 export FEMM_DIR=/Applications/femm_gui.app/Contents/MacOS
 ```
 
-The binding files themselves ship **inside** the bundle on macOS, since a
-distributed `.app` has no sibling folders to put them in:
+You rarely need to: `femm-lua.sh` sets `FEMM_DIR` to its own directory, and
+inside the bundle that is `Contents/MacOS`, where `femm_gui` and
+`femm_headless` already are. Setting it by hand matters only when you drive
+`lua4` yourself.
+
+The client files ship in two places on macOS, and they are for two different
+jobs. The launcher and the `femm.lua` it loads are in `Contents/MacOS`, beside
+the `lua4` interpreter -- that is what you run. A second, browsable copy of
+`femm.lua` comes out of the disk image with the other bindings:
 
 ```
-/Applications/femm_gui.app/Contents/Resources/bindings/luafemm
+~/FEMM/bindings/luafemm/          <- for driving lua4 yourself
+/Applications/femm_gui.app/Contents/MacOS/femm-lua.sh    <- the launcher
 ```
+
+Use the first only if you are not using the launcher. Finder will not browse
+into a `.app`, which is why the second copy exists at all.
 
 The examples are alongside them, in `Contents/Resources/examples/` -- but those
 are read-only **masters**. Use the `Examples` folder the DMG carries next to the

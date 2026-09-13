@@ -6,11 +6,14 @@ argument is caught by PhaseCompare.py directly.
 """
 import os
 import sys
+import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "..", "pyfemm"))
 EX = os.path.abspath(os.path.join(HERE, "..", "..", "examples"))
-TMP = os.environ.get("TEMP", "C:/temp")
+# tempfile.gettempdir() is the platform's own temp directory: honours TMPDIR on POSIX and TEMP on Windows,
+# so this no longer needs a per-platform branch.
+TMP = tempfile.gettempdir()
 
 import femm  # noqa: E402
 

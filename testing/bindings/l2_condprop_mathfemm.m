@@ -14,8 +14,8 @@
 here = DirectoryName[$InputFileName];
 Get[FileNameJoin[{here, "..", "..", "mathfemm", "mathfemm.m"}]];
 tests = ParentDirectory[here];
-tmp = Environment["TEMP"];
-If[tmp === $Failed, tmp = "C:/temp"];
+(* $TemporaryDirectory is the platform's own temp directory: honours TMPDIR on POSIX and TEMP on Windows, so no per-platform branch. *)
+tmp = $TemporaryDirectory;
 
 fmt[z_] := ToString[NumberForm[N[Re[z]], 10,
               NumberFormat -> (Row[{#1, "e", #3}] &), ExponentFunction -> (# &)]] <>

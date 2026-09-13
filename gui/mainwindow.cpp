@@ -6,6 +6,7 @@
 // based on the active MDI tab type.
 #include "mainwindow.h"
 #include "femm_resource.h"
+#include "build_info.h"
 #include "py_console.h"
 #include "pre_prefs_dialog.h"
 #include "script_prefs_dialog.h"
@@ -2325,8 +2326,13 @@ void MainWindow::createLeftToolbars()
     });
     help->addSeparator();
     help->addAction(tr("&About"), QKeySequence(), [this]() {
-        QMessageBox::about(this, "femm 5.0",
-            "Finite Element Method Magnetics, Version 5.0\n"
+        // The build date is what tells one 5.0 from another in a bug report --
+        // the same job FEMM 4.2's About box gave __DATE__. See common/
+        // build_info.h; the title stays the bare version so the window caption
+        // does not move about from build to build.
+        QMessageBox::about(this, QString("femm %1").arg(femm_version()),
+            QString("Finite Element Method Magnetics, Version %1 %2\n")
+                .arg(femm_version(), femm_build_date()) +
             "Copyright © 2026 David Meeker and contributors\n\n"
             "The femm-qt application (this GUI, the libfemm engine, the IPC "
             "server, the tangle mesher, and the language bindings) is released "

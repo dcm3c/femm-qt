@@ -117,6 +117,11 @@ bash "$ROOT/packaging/stage_extras.sh" "$APPDIR" "$ROOT"
 #   open("model.fem")  then  mi_saveas("temp.fem")
 # both relative to its own directory.
 chmod -R u+w "$APPDIR/examples"
+# pyFEMM's examples live apart from the rest -- two incompatible kinds of .py
+# cannot share one directory, see femm-qt.iss -- and write beside themselves
+# for the same reason, so they need the same treatment.
+[ -d "$APPDIR/bindings/pyfemm/examples" ] &&
+    chmod -R u+w "$APPDIR/bindings/pyfemm/examples"
 
 # ---- 2b. ... and a copy somewhere a human can find ------------------
 # The program directory is deliberately out of the way, and on Ubuntu it is
@@ -163,6 +168,21 @@ ex_n=0
 for f in "$APPDIR/examples"/*; do
     [ -f "$f" ] || continue
     if cp -f "$f" "$WORKDIR/"; then
+        ex_n=$((ex_n + 1))
+    fi
+done
+
+# pyFEMM's examples come along, in a subdirectory rather than mixed in. The
+# reason they are separate at all is that {app}\examples already holds .py
+# files meant for femm-qt's OWN script console -- different runtime, same
+# extension, and two of them the same filename -- so flattening them here
+# would undo the separation at the last step, in the one copy users actually
+# open. Keeping the subdirectory also keeps the loop above right: it takes
+# files only, so it skips this directory rather than descending into it.
+for f in "$APPDIR/bindings/pyfemm/examples"/*; do
+    [ -f "$f" ] || continue
+    mkdir -p "$WORKDIR/pyfemm"
+    if cp -f "$f" "$WORKDIR/pyfemm/"; then
         ex_n=$((ex_n + 1))
     fi
 done
@@ -456,9 +476,25 @@ echo
     [ "$path_state" = edited ] && echo "profile $profile"
 } > "$APPDIR/uninstall-manifest.txt"
 
+# Both the line about locating femm-qt and the Lua line below assume
+# $PREFIX/bin is reachable. It may not be: the PATH section above may have just
+# finished telling the user to add it. Saying "nothing to set up" and "already
+# on PATH" eight lines after "is not on your PATH" is exactly the contradiction
+# that section exists to prevent. Found on FreeBSD, where ~/.local/bin is on
+# nobody's default PATH; on Ubuntu the distro snippet hides it.
+case "$path_state" in
+    absent|absent_csh) bindings_on_path=no ;;
+    *)                 bindings_on_path=yes ;;   # live, in_profile,
+esac                                             # distro_snippet, edited
+
 B="$APPDIR/bindings"
 echo "The language bindings are in $B."
-echo "They locate femm-qt on PATH by themselves -- nothing to set up for that."
+if [ "$bindings_on_path" = yes ]; then
+    echo "They locate femm-qt on PATH by themselves -- nothing to set up for that."
+else
+    echo "They locate femm-qt on PATH by themselves, so they need $PREFIX/bin on"
+    echo "your PATH first -- see above. FEMM_DIR is the alternative."
+fi
 echo "What each language still needs is its own search path pointed at the"
 echo "binding file, which is a separate thing and cannot be done from here:"
 echo "  Octave/MATLAB  addpath('$B/mfiles')"
@@ -467,7 +503,11 @@ echo "  Python         sys.path.append('$B/pyfemm')  -- or pip install pyfemm-qt
 echo "  Julia          include(\"$B/juliafemm/juliafemm.jl\")"
 echo "  Scilab         exec('$B/scifemm/scifemm.sci')"
 echo "  Mathematica    Get[\"$B/mathfemm/mathfemm.m\"]"
-echo "  Lua            femm-lua, already on PATH"
+if [ "$bindings_on_path" = yes ]; then
+    echo "  Lua            femm-lua, already on PATH"
+else
+    echo "  Lua            femm-lua, once $PREFIX/bin is on your PATH"
+fi
 echo "FEMM_DIR still overrides which femm-qt they talk to, if you have several."
 echo
 echo "The examples are in $WORKDIR."

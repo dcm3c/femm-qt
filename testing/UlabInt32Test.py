@@ -334,6 +334,18 @@ def flatten(v):
     return None
 
 
+def describe(v):
+    """What a result IS -- dtype and shape for an array, else its type."""
+    try:
+        return "dtype=%d shape=%s" % (int(v.dtype), v.shape)
+    except Exception:
+        pass
+    try:
+        return "%s len=%d" % (type(v).__name__, len(v))
+    except Exception:
+        return type(v).__name__
+
+
 def compare(label, res_i, err_i, res_f, err_f, report):
     """Compare one int32 result against its float64 twin.
 
@@ -356,8 +368,21 @@ def compare(label, res_i, err_i, res_f, err_f, report):
         return True
     for k in range(len(fi)):
         if abs(fi[k] - ff[k]) > 1e-9 * max(1.0, abs(ff[k])):
-            report.append("%s: differs at %d, int32 %r vs float64 %r"
-                          % (label, k, fi[k], ff[k]))
+            # Two bare numbers are not enough to act on. A mismatch here was
+            # once reported as "differs at 63, int32 1e-09 vs float64 4.0" --
+            # a value no int32 array can hold, which said the result was not
+            # the dtype it should have been, but not what it WAS. So say what
+            # both results actually are, and print them whole when they are
+            # small enough to read: the finding usually arrives from a machine
+            # that is not to hand, and a second round trip costs a day.
+            # ONE report entry, not three: the canary below asserts the
+            # comparator produces exactly one finding for a known difference.
+            msg = ("%s: differs at %d, int32 %r vs oracle %r  [%s | %s]"
+                   % (label, k, fi[k], ff[k],
+                      describe(res_i), describe(res_f)))
+            if 1 < len(fi) <= 64:
+                msg += "\n      int32  %r\n      oracle %r" % (fi, ff)
+            report.append(msg)
             return True
     return True
 

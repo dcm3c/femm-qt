@@ -243,13 +243,17 @@ function format_arg(v)
     return tostring(v)
 end
 
-function callfemm(cmd, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+-- Fourteen, because that is what FEMM 4.2's widest command takes:
+-- mi_addmaterial reads positions 1..14 (femmeLua.cpp, lua_addmatprop).
+-- At ten, every argument past the tenth was dropped silently -- no
+-- error, just a material with default NStrands and WireD.
+function callfemm(cmd, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)
     if not _femm_conn then error("Not connected to FEMM. Call openfemm() first.") end
 
     -- Collect non-nil arguments
-    local args = { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 }
+    local args = { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14 }
     local nargs = 0
-    for i = 1, 10 do
+    for i = 1, 14 do
         if args[i] ~= nil then nargs = i
         else break end
     end
@@ -334,6 +338,11 @@ function newdocument(n) return callfemm("create", n) end
 function smartmesh(n) return callfemm("smartmesh", n) end
 function setcurrentdirectory(d) return callfemm("setcurrentdirectory", d) end
 
+-- chdir(): FEMM 4.2 registers it as a second name for the same handler
+-- (lua_register(lua,"chdir",lua_setcurrentdirectory) in femm.cpp), so it is a
+-- documented spelling rather than a snake_case alias, and scripts use it.
+function chdir(d) return setcurrentdirectory(d) end
+
 -- Legacy global aliases: classic FEMM scripts call open() and create(); the
 -- binding's canonical names are opendocument() and newdocument(). Both forms
 -- forward to the same server commands ("open" / "create").
@@ -376,9 +385,9 @@ function main_restore() return callfemm("main_restore") end
 function mi_addarc(x1,y1,x2,y2,angle,maxseg) return callfemm("mi_addarc",x1,y1,x2,y2,angle,maxseg) end
 function mi_addbhpoint(name,b,h) return callfemm("mi_addbhpoint",name,b,h) end
 function mi_addblocklabel(x,y) return callfemm("mi_addblocklabel",x,y) end
-function mi_addboundprop(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) return callfemm("mi_addboundprop",a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) end
+function mi_addboundprop(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) return callfemm("mi_addboundprop", a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) end
 function mi_addcircprop(pname,ic,ptype) return callfemm("mi_addcircprop",pname,ic,ptype) end
-function mi_addmaterial(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) return callfemm("mi_addmaterial",a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) end
+function mi_addmaterial(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) return callfemm("mi_addmaterial", a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) end
 function mi_addnode(x,y) return callfemm("mi_addnode",x,y) end
 function mi_addpointprop(pname,ap,jp) return callfemm("mi_addpointprop",pname,ap,jp) end
 function mi_addsegment(x1,y1,x2,y2) return callfemm("mi_addsegment",x1,y1,x2,y2) end
@@ -528,7 +537,7 @@ function mo_hidenames() return callfemm("mo_shownames",0) end
 function mo_hidepoints() return callfemm("mo_hidepoints") end
 
 function mo_lineintegral(ptype) return callfemm("mo_lineintegral",ptype) end
-function mo_makeplot(a1,a2,a3) return callfemm("mo_makeplot",a1,a2,a3) end
+function mo_makeplot(a1, a2, a3, a4) return callfemm("mo_makeplot", a1, a2, a3, a4) end
 
 function mo_maximize() return callfemm("mo_maximize") end
 function mo_minimize() return callfemm("mo_minimize") end
@@ -553,7 +562,7 @@ function mo_showgrid() return callfemm("mo_showgrid") end
 function mo_showmesh() return callfemm("mo_showmesh") end
 function mo_shownames() return callfemm("mo_shownames",1) end
 function mo_showpoints() return callfemm("mo_showpoints") end
-function mo_showvectorplot(ptype) return callfemm("mo_showvectorplot",ptype) end
+function mo_showvectorplot(a1, a2) return callfemm("mo_showvectorplot", a1, a2) end
 
 function mo_smooth(flag) return callfemm("mo_smooth",flag) end
 function mo_smoothoff() return callfemm("mo_smooth","off") end
@@ -634,7 +643,7 @@ function eo_getnode(n) return callfemm("eo_getnode",n) end
 function eo_getprobleminfo() return callfemm("eo_getprobleminfo") end
 function eo_groupselectblock(n) return callfemm("eo_groupselectblock",n) end
 function eo_lineintegral(ptype) return callfemm("eo_lineintegral",ptype) end
-function eo_makeplot(a1,a2,a3) return callfemm("eo_makeplot",a1,a2,a3) end
+function eo_makeplot(a1, a2, a3, a4) return callfemm("eo_makeplot", a1, a2, a3, a4) end
 function eo_selectblock(x,y) return callfemm("eo_selectblock",x,y) end
 function eo_selectpoint(x,y) return callfemm("eo_selectpoint",x,y) end
 function eo_seteditmode(mode) return callfemm("eo_seteditmode",mode) end
@@ -713,7 +722,7 @@ function ho_getnode(n) return callfemm("ho_getnode",n) end
 function ho_getprobleminfo() return callfemm("ho_getprobleminfo") end
 function ho_groupselectblock(n) return callfemm("ho_groupselectblock",n) end
 function ho_lineintegral(ptype) return callfemm("ho_lineintegral",ptype) end
-function ho_makeplot(a1,a2,a3) return callfemm("ho_makeplot",a1,a2,a3) end
+function ho_makeplot(a1, a2, a3, a4) return callfemm("ho_makeplot", a1, a2, a3, a4) end
 function ho_selectblock(x,y) return callfemm("ho_selectblock",x,y) end
 function ho_selectpoint(x,y) return callfemm("ho_selectpoint",x,y) end
 function ho_seteditmode(mode) return callfemm("ho_seteditmode",mode) end
@@ -789,7 +798,7 @@ function co_getnode(n) return callfemm("co_getnode",n) end
 function co_getprobleminfo() return callfemm("co_getprobleminfo") end
 function co_groupselectblock(n) return callfemm("co_groupselectblock",n) end
 function co_lineintegral(ptype) return callfemm("co_lineintegral",ptype) end
-function co_makeplot(a1,a2,a3) return callfemm("co_makeplot",a1,a2,a3) end
+function co_makeplot(a1, a2, a3, a4) return callfemm("co_makeplot", a1, a2, a3, a4) end
 function co_selectblock(x,y) return callfemm("co_selectblock",x,y) end
 function co_selectpoint(x,y) return callfemm("co_selectpoint",x,y) end
 function co_seteditmode(mode) return callfemm("co_seteditmode",mode) end
@@ -945,3 +954,135 @@ AmpMeter  = 1
 kAmpMeter = 1000
 Oersted   = 250/PI
 kOersted  = 1000*Oersted
+
+-- ---------------------------------------------------------------------
+-- FEMM 4.2 commands that were never wrapped here.
+--
+-- Found by diffing this file against FEMM 4.2's own script surface -- the
+-- 619 commands it registers from C++ plus the functions in its init.lua --
+-- rather than against the newer bindings, which have a much larger API this
+-- binding deliberately does not chase. Compatibility with 4.2 scripts is the
+-- only thing luafemm is for.
+--
+-- Magnetics was complete; these are the electrostatics, heat-flow and
+-- current-flow twins that were never finished, plus two init.lua helpers.
+-- The twins are GENERATED from their magnetics counterparts above with the
+-- prefix swapped, so the arity comes from a working wrapper rather than from
+-- someone reading a manual.
+--
+-- Deliberately NOT here, though FEMM 4.2 had them: the snake_case aliases
+-- (mi_add_node beside mi_addnode) which 4.2 registered but never documented;
+-- the MATLAB link (mlopen, mlput, lua2matlab, flput); and the interactive
+-- console commands (pause, prompt, quit, actxprint), none of which the
+-- femm-qt engine implements.
+-- ---------------------------------------------------------------------
+
+function ci_drawarc(x1,y1,x2,y2,angle,maxseg) return callfemm("ci_drawarc",x1,y1,x2,y2,angle,maxseg) end
+function ci_drawline(x1,y1,x2,y2) return callfemm("ci_drawline",x1,y1,x2,y2) end
+function ci_drawrectangle(x1,y1,x2,y2)
+    mi_drawpolygon({{x1,y1},{x1,y2},{x2,y2},{x2,y1}})
+end
+function ei_drawarc(x1,y1,x2,y2,angle,maxseg) return callfemm("ei_drawarc",x1,y1,x2,y2,angle,maxseg) end
+function ei_drawline(x1,y1,x2,y2) return callfemm("ei_drawline",x1,y1,x2,y2) end
+function ei_drawrectangle(x1,y1,x2,y2)
+    mi_drawpolygon({{x1,y1},{x1,y2},{x2,y2},{x2,y1}})
+end
+function ei_getmaterial(matname) return callfemm("ei_getmaterial",matname) end
+function ei_hidegrid() return callfemm("ei_hidegrid") end
+function ei_purgemesh() return callfemm("ei_purgemesh") end
+function ei_refreshview() return callfemm("ei_refreshview") end
+function ei_savebitmap(n) return callfemm("ei_savebitmap",n) end
+function ei_savemetafile(n) return callfemm("ei_savemetafile",n) end
+function ei_scale(bx,by,sc) return callfemm("ei_scale",bx,by,sc) end
+function ei_setgrid(density,ptype) return callfemm("ei_setgrid",density,ptype) end
+function ei_showgrid() return callfemm("ei_showgrid") end
+function ei_shownames() return callfemm("ei_shownames",1) end
+function ei_zoom(x1,y1,x2,y2) return callfemm("ei_zoom",x1,y1,x2,y2) end
+function ei_zoomin() return callfemm("ei_zoomin") end
+function ei_zoomout() return callfemm("ei_zoomout") end
+function eo_hidecontourplot() return callfemm("eo_hidecontourplot") end
+function eo_hidedensityplot() return callfemm("eo_hidedensityplot") end
+function eo_hidegrid() return callfemm("eo_hidegrid") end
+function eo_hidepoints() return callfemm("eo_hidepoints") end
+function eo_savebitmap(fn) return callfemm("eo_savebitmap",fn) end
+function eo_savemetafile(fn) return callfemm("eo_savemetafile",fn) end
+function eo_setgrid(density,ptype) return callfemm("eo_setgrid",density,ptype) end
+function eo_showgrid() return callfemm("eo_showgrid") end
+function eo_showpoints() return callfemm("eo_showpoints") end
+function eo_showvectorplot(a1, a2) return callfemm("eo_showvectorplot", a1, a2) end
+function eo_zoom(x1,y1,x2,y2) return callfemm("eo_zoom",x1,y1,x2,y2) end
+function eo_zoomin() return callfemm("eo_zoomin") end
+function eo_zoomout() return callfemm("eo_zoomout") end
+function hi_drawarc(x1,y1,x2,y2,angle,maxseg) return callfemm("hi_drawarc",x1,y1,x2,y2,angle,maxseg) end
+function hi_drawline(x1,y1,x2,y2) return callfemm("hi_drawline",x1,y1,x2,y2) end
+function hi_drawrectangle(x1,y1,x2,y2)
+    mi_drawpolygon({{x1,y1},{x1,y2},{x2,y2},{x2,y1}})
+end
+function ho_hidecontourplot() return callfemm("ho_hidecontourplot") end
+function ho_hidedensityplot() return callfemm("ho_hidedensityplot") end
+function ho_hidegrid() return callfemm("ho_hidegrid") end
+function ho_hidepoints() return callfemm("ho_hidepoints") end
+function ho_savebitmap(fn) return callfemm("ho_savebitmap",fn) end
+function ho_savemetafile(fn) return callfemm("ho_savemetafile",fn) end
+function ho_setgrid(density,ptype) return callfemm("ho_setgrid",density,ptype) end
+function ho_showgrid() return callfemm("ho_showgrid") end
+function ho_showpoints() return callfemm("ho_showpoints") end
+function ho_showvectorplot(a1, a2) return callfemm("ho_showvectorplot", a1, a2) end
+function ho_zoom(x1,y1,x2,y2) return callfemm("ho_zoom",x1,y1,x2,y2) end
+function ho_zoomin() return callfemm("ho_zoomin") end
+function ho_zoomout() return callfemm("ho_zoomout") end
+function ei_gridsnap(flag)
+    if flag == 1 then return callfemm("ei_gridsnap","on")
+    else return callfemm("ei_gridsnap","off") end
+end
+function eo_gridsnap(flag)
+    if flag == 1 then return callfemm("eo_gridsnap","on")
+    else return callfemm("eo_gridsnap","off") end
+end
+function ho_gridsnap(flag)
+    if flag == 1 then return callfemm("ho_gridsnap","on")
+    else return callfemm("ho_gridsnap","off") end
+end
+function mo_gridsnap(flag)
+    if flag == 1 then return callfemm("mo_gridsnap","on")
+    else return callfemm("mo_gridsnap","off") end
+end
+function eo_selectconductor(name) return callfemm("eo_selectconductor",name) end
+function ho_selectconductor(name) return callfemm("ho_selectconductor",name) end
+function AWG(awg) return 8.2514694*exp(-0.115943*awg) end
+-- Read BH points for a material from a file (FEMM 4.2 init.lua,
+-- contributed there by Dr. Henning Kiel). Kept in its original shape: order==1
+-- means the file lists H before B, and the b/h unit factors default to Tesla
+-- and AmpMeter, both already defined above.
+function mi_setbhpointsfromfile(filename, materialname, unitb, unith, order)
+    local fact_b, fact_h, bh = Tesla, AmpMeter, 1
+    if unitb ~= nil then fact_b = unitb end
+    if unith ~= nil then fact_h = unith end
+    if order == 1 then bh = 0 end
+    local bhfile = openfile(filename, "r")
+    if bhfile ~= nil then
+        mi_clearbhpoints(materialname)
+        local b, h
+        if bh == 1 then b, h = read(bhfile, "*n", "*n")
+        else            h, b = read(bhfile, "*n", "*n") end
+        while b ~= nil do
+            mi_addbhpoint(materialname, b*fact_b, h*fact_h)
+            if bh == 1 then b, h = read(bhfile, "*n", "*n")
+            else            h, b = read(bhfile, "*n", "*n") end
+        end
+        closefile(bhfile)
+    end
+end
+
+-- Six more, found once the surface check started ASKING the engine instead of
+-- inferring from octavefemm's file list. octavefemm has no .m for these, so a
+-- proxy said the engine lacked them; the engine has them.
+--
+-- The *_newdocument pair are the per-physics spellings of the global
+-- newdocument(n) above, which is what FEMM 4.2 scripts of that vintage use.
+function mi_newdocument() return callfemm("mi_newdocument") end
+function ei_newdocument() return callfemm("ei_newdocument") end
+function ei_getprobleminfo() return callfemm("ei_getprobleminfo") end
+function mo_setfocus(docname) return callfemm("mo_setfocus",docname) end
+function eo_setfocus(docname) return callfemm("eo_setfocus",docname) end
+function ho_setfocus(docname) return callfemm("ho_setfocus",docname) end

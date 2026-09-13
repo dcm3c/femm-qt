@@ -91,8 +91,15 @@ shift
 goto collect
 
 :run
+rem Propagate the interpreter's exit status, and take it with NOTHING between
+rem the call and the exit -- not even a rem, which is enough to lose it.
+rem
+rem "goto :eof" ended the batch on whatever errorlevel happened to be current
+rem rather than on lua4's, so a script that died reported SUCCESS to whoever
+rem ran femm-lua. Invisible to a human watching the traceback scroll past, and
+rem exactly the wrong answer for anything scripted around it.
 "%LUA4%" -e "!PREAMBLE!" -f!ARGS!
-goto :eof
+exit /b %errorlevel%
 
 :usage
 echo Usage: %~n0 [-h] [-p PORT] [script.lua [args...]]

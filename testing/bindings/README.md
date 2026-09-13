@@ -109,6 +109,23 @@ the round trip at all.
 
     python3 run_layer2.py            # skips hosts that are not installed
 
+Runs on any platform. Until 2026-09-08 it did not: every driver read `TEMP` and
+fell back to `C:/temp`, and `TEMP` is a Windows convention where POSIX sets
+`TMPDIR`, so on Linux, BSD and macOS all of them wrote to a path that does not
+exist. Each driver now asks its own language for the platform's temp directory
+(`tempfile.gettempdir()`, `tempdir`, `tempdir()`, `TMPDIR`, `$TemporaryDirectory`)
+rather than growing a second branch. `l2_phase_reference.py` was worse -- it
+hardcoded one machine's checkout -- and is now relative, which it can be because
+`-run` chdirs to the script's own directory.
+
+What is free on a non-Windows box is worth knowing before you install anything:
+**pyfemm** needs the Python already there for PyBridge, **luafemm** needs
+nothing at all (femm-qt builds `lua4` and installs `femm-lua`), and **Octave** is
+one package -- which covers the MATLAB binding too, since octavefemm is the same
+wrapper set under both hosts. Julia and Scilab availability varies by platform.
+Mathematica and MATLAB are Windows-only here for licensing, not technical,
+reasons.
+
 Layer 2 runs `testing/EOCondPropTest.py`'s scenario through each binding and
 hands the result to the **same comparer and the same Original FEMM golden** the
 in-process suite uses. That is the key property, and it came from the

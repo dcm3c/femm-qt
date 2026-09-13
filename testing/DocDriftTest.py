@@ -79,6 +79,13 @@ for kind, pre, doc in ((0, "mi", "PMTest.fem"), (1, "ei", "electrostatic1.fee"),
     names.update(dir(femm))
     try:
         femm.opendocument(T + doc)
+        # Solve it. The postproc commands do not exist until a solution is
+        # loaded, and solution files are gitignored derived output -- so
+        # assuming one was already sitting beside the fixture worked only on a
+        # machine that had run the suite before. Into a throwaway copy, so the
+        # fixture stays pristine (the same pattern the integral suites use).
+        getattr(femm, pre + "_saveas")(T + "temp" + doc[doc.rfind("."):])
+        getattr(femm, pre + "_analyze")()
         getattr(femm, pre + "_loadsolution")()
         names.update(dir(femm))
     except Exception as e:

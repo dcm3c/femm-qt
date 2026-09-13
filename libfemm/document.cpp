@@ -750,277 +750,313 @@ bool DocumentBase::CanCreateRadius(int n) const
     return j == 2;
 }
 
+// Replace the node indexed by n with a radius of r.
+//
+// This is FEMM 4.2's CbeladrawDoc::CreateRadius (beladrawDoc.cpp:2291-2566)
+// transplanted, not reimplemented, and the reason is worth recording.
+//
+// The first port of this function did its own node bookkeeping -- retarget the
+// endpoint of each curve onto a new tangency-point node, then delete the corner
+// -- instead of calling AddNode()/DeleteSelectedNodes() the way the original
+// does. Both bugs that produced came from that choice, not from the geometry:
+//
+//   * AddNode() attaches each tangency point to whichever curve it actually
+//     LIES ON. Doing it by hand meant deciding, and the decision was made after
+//     a swap of i1/i2 that exists only to orient the new fillet arc -- so
+//     whenever that swap fired, the line was re-terminated on the ARC's
+//     tangency point and the arc on the LINE's. In the original the swap comes
+//     after the nodes are placed and can reach nothing but ar.n0/ar.n1.
+//   * AddNode() also SPLITS the curve it lands on, and a split recomputes both
+//     sweep angles. An arc is stored as (n0, n1, swept angle) with its centre
+//     and radius DERIVED, so moving an endpoint without recomputing the sweep
+//     silently moves the arc onto a different circle -- measured on the
+//     reported model, radius 52.87 about (7.29, 19.60) became 46.75 about
+//     (9.80, 25.20), which destroys the tangency the fillet exists to create.
+//
+// Every primitive the original needs already existed here and is itself a
+// faithful port -- AddNode's arc split uses the same arg((a2-c)/(a0-c))
+// formula, and DeleteSelectedNodes erases the curves attached to a deleted
+// node. So the original transplants unchanged, and the call ORDER is load
+// bearing: ClosestNode() is only unambiguous once the corner node is gone.
+//
+// Two deliberate departures from the original, both local:
+//   * the seg[]/arc[] fill is bounds-guarded. The original writes
+//     seg[nseg++] before testing whether the total is 2, which overruns a
+//     two-element array on a node with three or more curves attached.
+//   * UpdateUndo() is not called: undo is not libfemm's concern here.
 bool DocumentBase::CreateRadius(int n, double r)
 {
-    if (r <= 0 || n < 0 || n >= (int)nodelist.size()) return false;
+    if (r <= 0) return false;
+    if (n < 0 || n >= (int)nodelist.size()) return false;
 
-    // Find the two segments/arcs connected to node n
-    int nseg = 0, narc = 0, seg[2] = {-1,-1}, arc[2] = {-1,-1};
-    for (int k = 0; k < (int)linelist.size(); k++)
-        if (linelist[k].n0 == n || linelist[k].n1 == n) {
+    int nseg = 0, narc = 0, k, arc[2], seg[2];
+
+    for (k = 0; k < (int)linelist.size(); k++)
+        if ((linelist[k].n0 == n) || (linelist[k].n1 == n)) {
             if (nseg < 2) seg[nseg] = k;
             nseg++;
         }
-    for (int k = 0; k < (int)arclist.size(); k++)
-        if (arclist[k].n0 == n || arclist[k].n1 == n) {
+    for (k = 0; k < (int)arclist.size(); k++)
+        if ((arclist[k].n0 == n) || (arclist[k].n1 == n)) {
             if (narc < 2) arc[narc] = k;
             narc++;
         }
     if ((narc + nseg) != 2) return false;
 
-    // Helper: remove node n and renumber all segment/arc references
-    auto removeNode = [&](int idx) {
-        nodelist.erase(nodelist.begin() + idx);
-        for (auto &s : linelist) {
-            if (s.n0 > idx) s.n0--;
-            if (s.n1 > idx) s.n1--;
-        }
-        for (auto &a : arclist) {
-            if (a.n0 > idx) a.n0--;
-            if (a.n1 > idx) a.n1--;
-        }
-    };
-
-    // Helper: update endpoint of a segment from old node to new node
-    auto retargetSeg = [&](int segIdx, int oldNode, int newNode) {
-        if (linelist[segIdx].n0 == oldNode) linelist[segIdx].n0 = newNode;
-        if (linelist[segIdx].n1 == oldNode) linelist[segIdx].n1 = newNode;
-    };
-
-    // Helper: update endpoint of an arc from old node to new node
-    auto retargetArc = [&](int arcIdx, int oldNode, int newNode) {
-        if (arclist[arcIdx].n0 == oldNode) arclist[arcIdx].n0 = newNode;
-        if (arclist[arcIdx].n1 == oldNode) arclist[arcIdx].n1 = newNode;
-    };
-
-    CComplex p0 = nodelist[n].CC();
-
-    switch (nseg - narc) {
-    case 2: // Two lines
+    // there are three valid cases:
+    switch (nseg - narc)
     {
-        CComplex p1, p2;
-        if (linelist[seg[0]].n0 == n) p1 = nodelist[linelist[seg[0]].n1].CC();
-        else p1 = nodelist[linelist[seg[0]].n0].CC();
-        if (linelist[seg[1]].n0 == n) p2 = nodelist[linelist[seg[1]].n1].CC();
-        else p2 = nodelist[linelist[seg[1]].n0].CC();
+        case 0:  // One arc and one line
+        {
+            CComplex c, u, p0, p1, q, p[4], v[8], i1[8], i2[8];
+            double rc, b, R[4], phi;
+            FArcSegment ar;
+            int j, m;
 
-        double phi = arg((p2 - p0) / (p1 - p0));
-        if (fabs(phi) > (179.0 * DEG)) return false;
+            // inherit the boundary condition from the arc so that
+            // we can apply it to the newly created arc later;
+            ar.InGroup        = arclist[arc[0]].InGroup;
+            ar.BoundaryMarker = arclist[arc[0]].BoundaryMarker;
 
-        if (phi < 0) {
-            std::swap(p1, p2);
-            std::swap(seg[0], seg[1]);
-            phi = fabs(phi);
-        }
+            // get the center and radius of the circle associated with the arc;
+            GetCircle(arclist[arc[0]], c, rc);
 
-        double len = r / tan(phi / 2.0);
-        if (abs(p1 - p0) < len || abs(p2 - p0) < len) return false;
+            // get the locations of the endpoints of the segment;
+            p0 = nodelist[n].CC();
+            if (linelist[seg[0]].n0 == n)
+                p1 = nodelist[linelist[seg[0]].n1].CC();
+            else
+                p1 = nodelist[linelist[seg[0]].n0].CC();
 
-        CComplex t1 = len * (p1 - p0) / abs(p1 - p0) + p0;  // tangent point on seg[0]
-        CComplex t2 = len * (p2 - p0) / abs(p2 - p0) + p0;  // tangent point on seg[1]
+            u = (p1 - p0) / abs(p1 - p0);   // unit vector along the line
+            q = p0 + u * Re((c - p0) / u);  // closest point on line to center
+            u = CComplex(0, 1) * u;         // unit normal to the line
 
-        // Inherit boundary condition from one of the segments
-        FArcSegment ar;
-        ar.BoundaryMarker = linelist[seg[0]].BoundaryMarker;
-        ar.InGroup = linelist[seg[0]].InGroup;
+            p[0] = q + r * u; R[0] = rc + r;
+            p[1] = q - r * u; R[1] = rc + r;
+            p[2] = q + r * u; R[2] = rc - r;
+            p[3] = q - r * u; R[3] = rc - r;
 
-        // Add two new nodes
-        FNode nd1; nd1.x = t1.re; nd1.y = t1.im;
-        FNode nd2; nd2.x = t2.re; nd2.y = t2.im;
-        int newN1 = (int)nodelist.size();
-        nodelist.push_back(nd1);
-        int newN2 = (int)nodelist.size();
-        nodelist.push_back(nd2);
-
-        // Retarget segments to the new tangent-point nodes
-        retargetSeg(seg[0], n, newN1);
-        retargetSeg(seg[1], n, newN2);
-
-        // Remove the old corner node
-        removeNode(n);
-        // Adjust new node indices since removal shifts everything above n
-        if (newN1 > n) newN1--;
-        if (newN2 > n) newN2--;
-
-        // Add the fillet arc
-        ar.n0 = newN2;
-        ar.n1 = newN1;
-        ar.ArcLength = 180.0 - phi / DEG;
-        arclist.push_back(ar);
-        return true;
-    }
-    case 0: // One arc and one line
-    {
-        CComplex c, u, p1, q, p[4], v[8], i1[8], i2[8];
-        double rc, b, R[4], phi;
-        int j, m;
-
-        FArcSegment ar;
-        ar.InGroup = arclist[arc[0]].InGroup;
-        ar.BoundaryMarker = arclist[arc[0]].BoundaryMarker;
-
-        GetCircle(arclist[arc[0]], c, rc);
-
-        if (linelist[seg[0]].n0 == n)
-            p1 = nodelist[linelist[seg[0]].n1].CC();
-        else
-            p1 = nodelist[linelist[seg[0]].n0].CC();
-
-        u = (p1 - p0) / abs(p1 - p0);
-        q = p0 + u * Re((c - p0) / u);
-        u = CComplex(0, 1) * u;
-
-        p[0] = q + r * u; R[0] = rc + r;
-        p[1] = q - r * u; R[1] = rc + r;
-        p[2] = q + r * u; R[2] = rc - r;
-        p[3] = q - r * u; R[3] = rc - r;
-
-        for (j = 0, m = 0; m < 4; m++) {
-            b = R[m] * R[m] - abs(p[m] - c) * abs(p[m] - c);
-            if (b >= 0) {
-                b = sqrt(b);
-                CComplex dir = (p[m] - c) / abs(p[m] - c);
-                v[j++] = p[m] + CComplex(0, 1) * b * dir;
-                v[j++] = p[m] - CComplex(0, 1) * b * dir;
-            }
-        }
-
-        u = (p1 - p0) / abs(p1 - p0);
-        for (m = 0, b = 0; b < j; b++) {
-            int bi = (int)b;
-            i1[m] = p0 + u * Re((v[bi] - p0) / u);
-            i2[m] = c + rc * (v[bi] - c) / abs(v[bi] - c);
-            v[m] = v[bi];
-
-            if (ShortestDistanceFromArc(i2[m], arclist[arc[0]]) < (r / 10000.0) &&
-                ShortestDistance(Re(i1[m]), Im(i1[m]), seg[0]) < (r / 10000.0) &&
-                abs(i1[m] - i2[m]) > (r / 10000.0))
+            for (j = 0, k = 0; k < 4; k++)
             {
-                m++;
-                if (m == 2) break;
+                b = R[k] * R[k] - abs(p[k] - c) * abs(p[k] - c);
+                if (b >= 0) {
+                    b = sqrt(b);
+                    v[j++] = p[k] + CComplex(0, 1) * b * (p[k] - c) / abs(p[k] - c);
+                    v[j++] = p[k] - CComplex(0, 1) * b * (p[k] - c) / abs(p[k] - c);
+                }
             }
-        }
 
-        if (m == 0) return false;
-
-        int best = 0;
-        if (m > 1)
-            best = (abs(v[0] - p0) < abs(v[1] - p0)) ? 0 : 1;
-
-        // Compute fillet arc angle
-        phi = arg((i2[best] - v[best]) / (i1[best] - v[best]));
-        CComplex arcStart = i1[best], arcEnd = i2[best];
-        if (phi < 0) {
-            std::swap(arcStart, arcEnd);
-            phi = fabs(phi);
-        }
-
-        // Add new tangent-point nodes
-        FNode nd1; nd1.x = arcStart.re; nd1.y = arcStart.im;
-        FNode nd2; nd2.x = arcEnd.re;   nd2.y = arcEnd.im;
-        int newN1 = (int)nodelist.size();
-        nodelist.push_back(nd1);
-        int newN2 = (int)nodelist.size();
-        nodelist.push_back(nd2);
-
-        // Retarget segment and arc to new nodes
-        retargetSeg(seg[0], n, newN1);
-        retargetArc(arc[0], n, newN2);
-
-        // Remove old corner node
-        removeNode(n);
-        if (newN1 > n) newN1--;
-        if (newN2 > n) newN2--;
-
-        ar.n0 = newN1;
-        ar.n1 = newN2;
-        ar.ArcLength = phi / DEG;
-        arclist.push_back(ar);
-        return true;
-    }
-    case -2: // Two arcs
-    {
-        CComplex c0pos = p0, c1, c2, pts[8], ii1[8], ii2[8];
-        double a[8], bv[8], cv, dv[8], xv[8], r0, r1, r2, phi;
-        int j, k;
-
-        FArcSegment ar;
-        ar.BoundaryMarker = arclist[arc[0]].BoundaryMarker;
-        ar.InGroup = arclist[arc[0]].InGroup;
-
-        r0 = r;
-        GetCircle(arclist[arc[0]], c1, r1);
-        GetCircle(arclist[arc[1]], c2, r2);
-        cv = abs(c2 - c1);
-
-        a[0] = r1 + r0; bv[0] = r2 + r0;
-        a[1] = r1 + r0; bv[1] = r2 + r0;
-        a[2] = r1 - r0; bv[2] = r2 - r0;
-        a[3] = r1 - r0; bv[3] = r2 - r0;
-        a[4] = r1 - r0; bv[4] = r2 + r0;
-        a[5] = r1 - r0; bv[5] = r2 + r0;
-        a[6] = r1 + r0; bv[6] = r2 - r0;
-        a[7] = r1 + r0; bv[7] = r2 - r0;
-
-        for (k = 0; k < 8; k++) {
-            xv[k] = (bv[k] * bv[k] + cv * cv - a[k] * a[k]) / (2.0 * cv * cv);
-            double disc = bv[k] * bv[k] - xv[k] * xv[k] * cv * cv;
-            dv[k] = (disc >= 0) ? sqrt(disc) : 0;
-        }
-
-        CComplex dir = (c2 - c1) / abs(c2 - c1);
-        for (k = 0; k < 8; k += 2) {
-            pts[k]     = ((1 - xv[k]) * cv + CComplex(0, 1) * dv[k]) * dir + c1;
-            pts[k + 1] = ((1 - xv[k]) * cv - CComplex(0, 1) * dv[k]) * dir + c1;
-        }
-
-        for (j = 0, k = 0; k < 8; k++) {
-            ii1[j] = c1 + r1 * (pts[k] - c1) / abs(pts[k] - c1);
-            ii2[j] = c2 + r2 * (pts[k] - c2) / abs(pts[k] - c2);
-            pts[j] = pts[k];
-
-            if (ShortestDistanceFromArc(ii1[j], arclist[arc[0]]) < (r0 / 10000.0) &&
-                ShortestDistanceFromArc(ii2[j], arclist[arc[1]]) < (r0 / 10000.0) &&
-                abs(ii1[j] - ii2[j]) > (r0 / 10000.0))
+            // locations of the centerpoints that could be for the radius that
+            // we are looking for are stored in v.  We now need to paw through
+            // them to find the one solution that we are after.
+            u = (p1 - p0) / abs(p1 - p0);   // unit vector along the line
+            for (m = 0, k = 0; k < j; k++)
             {
-                j++;
-                if (j == 2) break;
+                i1[m] = p0 + u * Re((v[k] - p0) / u);      // intersection with the line
+                i2[m] = c + rc * (v[k] - c) / abs(v[k] - c); // intersection with the arc;
+                v[m] = v[k];
+
+                // add this one to the list of possibly valid solutions if
+                // both of the intersection points actually lie on the arc
+                if (ShortestDistanceFromArc(i2[m], arclist[arc[0]]) < (r / 10000.) &&
+                    ShortestDistance(i1[m].re, i1[m].im, seg[0]) < (r / 10000.) &&
+                    abs(i1[m] - i2[m]) > (r / 10000.))
+                {
+                    m++;
+                    if (m == 2) break;
+                }
             }
+
+            if (m == 0) return false;
+
+            // But there are also special cases where there could be two answers.
+            // We then pick the solution that has the center point closest to
+            // the point to be removed.
+            if (m > 1) {
+                if (abs(v[0] - p0) < abs(v[1] - p0)) j = 0;
+                else j = 1;
+            }
+            else j = 0;   // The index of the winning case is in j....
+
+            // add new nodes at ends of radius
+            AddNode(i1[j].re, i1[j].im, r / 10000.);
+            AddNode(i2[j].re, i2[j].im, r / 10000.);
+            UnselectAll();
+
+            // delete the node that is to be replaced by a radius;
+            n = ClosestNode(p0.re, p0.im);
+            nodelist[n].IsSelected = true;
+            DeleteSelectedNodes();
+
+            // compute the angle spanned by the new arc;
+            phi = arg((i2[j] - v[j]) / (i1[j] - v[j]));
+            if (phi < 0) {
+                c = i2[j]; i2[j] = i1[j]; i1[j] = c;
+                phi = fabs(phi);
+            }
+
+            // add in the new radius;
+            ar.n0 = ClosestNode(i1[j].re, i1[j].im);
+            ar.n1 = ClosestNode(i2[j].re, i2[j].im);
+            ar.ArcLength = phi / DEG;
+            AddArcSegment(ar);
+
+            return true;
         }
+        case 2:  // Two lines
+        {
+            CComplex p0, p1, p2;
+            double phi, len;
+            FArcSegment ar;
 
-        if (j == 0) return false;
+            if (linelist[seg[0]].n0 == n) p1 = nodelist[linelist[seg[0]].n1].CC();
+            else p1 = nodelist[linelist[seg[0]].n0].CC();
 
-        int best = 0;
-        if (j > 1)
-            best = (abs(pts[0] - c0pos) < abs(pts[1] - c0pos)) ? 0 : 1;
+            if (linelist[seg[1]].n0 == n) p2 = nodelist[linelist[seg[1]].n1].CC();
+            else p2 = nodelist[linelist[seg[1]].n0].CC();
 
-        phi = arg((ii2[best] - pts[best]) / (ii1[best] - pts[best]));
-        CComplex arcStart = ii1[best], arcEnd = ii2[best];
-        if (phi < 0) {
-            std::swap(arcStart, arcEnd);
-            phi = fabs(phi);
+            p0 = nodelist[n].CC();
+
+            // get the angle between the lines
+            phi = arg((p2 - p0) / (p1 - p0));
+
+            // check to see if this case is degenerate
+            if (fabs(phi) > (179. * DEG)) return false;
+
+            // check to see if the points are in the wrong order
+            // and fix it if they are.
+            if (phi < 0) {
+                p0 = p1; p1 = p2; p2 = p0; p0 = nodelist[n].CC();
+                k = seg[0]; seg[0] = seg[1]; seg[1] = k;
+                phi = fabs(phi);
+            }
+
+            len = r / tan(phi / 2.);  // distance from p0 to the tangency point;
+
+            // catch the case where the desired radius is too big to fit;
+            if ((abs(p1 - p0) < len) || (abs(p2 - p0) < len)) return false;
+
+            // compute the locations of the tangency points;
+            p1 = len * (p1 - p0) / abs(p1 - p0) + p0;
+            p2 = len * (p2 - p0) / abs(p2 - p0) + p0;
+
+            // inherit the boundary condition from one of the segments
+            // so that we can apply it to the newly created arc later;
+            ar.BoundaryMarker = linelist[seg[0]].BoundaryMarker;
+            ar.InGroup        = linelist[seg[0]].InGroup;
+
+            // add new nodes at ends of radius
+            AddNode(p1.re, p1.im, len / 10000.);
+            AddNode(p2.re, p2.im, len / 10000.);
+            UnselectAll();
+
+            // delete the node that is to be replaced by a radius;
+            n = ClosestNode(p0.re, p0.im);
+            nodelist[n].IsSelected = true;
+            DeleteSelectedNodes();
+
+            // add in the new radius;
+            ar.n0 = ClosestNode(p2.re, p2.im);
+            ar.n1 = ClosestNode(p1.re, p1.im);
+            ar.ArcLength = 180. - phi / DEG;
+            AddArcSegment(ar);
+
+            return true;
         }
+        case -2: // Two arcs
+        {
+            int j;
+            CComplex c0, c1, c2, p[8], i1[8], i2[8];
+            double a[8], b[8], c, d[8], x[8], r0, r1, r2, phi;
+            FArcSegment ar;
 
-        FNode nd1; nd1.x = arcStart.re; nd1.y = arcStart.im;
-        FNode nd2; nd2.x = arcEnd.re;   nd2.y = arcEnd.im;
-        int newN1 = (int)nodelist.size();
-        nodelist.push_back(nd1);
-        int newN2 = (int)nodelist.size();
-        nodelist.push_back(nd2);
+            r0 = r;
+            GetCircle(arclist[arc[0]], c1, r1);
+            GetCircle(arclist[arc[1]], c2, r2);
+            c = abs(c2 - c1);
 
-        retargetArc(arc[0], n, newN1);
-        retargetArc(arc[1], n, newN2);
+            // solve for all of the different possible cases;
+            a[0] = r1 + r0; b[0] = r2 + r0;
+            a[1] = r1 + r0; b[1] = r2 + r0;
+            a[2] = r1 - r0; b[2] = r2 - r0;
+            a[3] = r1 - r0; b[3] = r2 - r0;
+            a[4] = r1 - r0; b[4] = r2 + r0;
+            a[5] = r1 - r0; b[5] = r2 + r0;
+            a[6] = r1 + r0; b[6] = r2 - r0;
+            a[7] = r1 + r0; b[7] = r2 - r0;
+            for (k = 0; k < 8; k++) {
+                x[k] = (b[k] * b[k] + c * c - a[k] * a[k]) / (2. * c * c);
+                d[k] = sqrt(b[k] * b[k] - x[k] * x[k] * c * c);
+            }
+            for (k = 0; k < 8; k += 2)
+            {
+                // solve for the center point of the radius for each solution.
+                p[k]     = ((1 - x[k]) * c + CComplex(0, 1) * d[k]) * (c2 - c1) / abs(c2 - c1) + c1;
+                p[k + 1] = ((1 - x[k]) * c - CComplex(0, 1) * d[k]) * (c2 - c1) / abs(c2 - c1) + c1;
+            }
 
-        removeNode(n);
-        if (newN1 > n) newN1--;
-        if (newN2 > n) newN2--;
+            c0 = nodelist[n].CC();
 
-        ar.n0 = newN1;
-        ar.n1 = newN2;
-        ar.ArcLength = phi / DEG;
-        arclist.push_back(ar);
-        return true;
-    }
+            for (j = 0, k = 0; k < 8; k++)
+            {
+                i1[j] = c1 + r1 * (p[k] - c1) / abs(p[k] - c1); // possible intersection points
+                i2[j] = c2 + r2 * (p[k] - c2) / abs(p[k] - c2); // with the arcs;
+                p[j] = p[k];
+
+                // add this one to the list of possibly valid solutions if
+                // both of the intersection points actually lie on the arc
+                if (ShortestDistanceFromArc(i1[j], arclist[arc[0]]) < (r0 / 10000.) &&
+                    ShortestDistanceFromArc(i2[j], arclist[arc[1]]) < (r0 / 10000.) &&
+                    abs(i1[j] - i2[j]) > (r0 / 10000.))
+                {
+                    j++;
+                    if (j == 2) break;
+                }
+            }
+
+            // There could be no valid solutions...
+            if (j == 0) return false;
+
+            // But there are also special cases where there could be two answers.
+            // We then pick the solution that has the center point closest to
+            // the point to be removed.
+            if (j > 1) {
+                if (abs(p[0] - c0) < abs(p[1] - c0)) j = 0;
+                else j = 1;
+            }
+            else j = 0;   // The index of the winning case is in j....
+
+            // inherit the boundary condition from one of the segments
+            // so that we can apply it to the newly created arc later;
+            ar.BoundaryMarker = arclist[arc[0]].BoundaryMarker;
+            ar.InGroup        = arclist[arc[0]].InGroup;
+
+            // add new nodes at ends of radius
+            AddNode(i1[j].re, i1[j].im, c / 10000.);
+            AddNode(i2[j].re, i2[j].im, c / 10000.);
+            UnselectAll();
+
+            // delete the node that is to be replaced by a radius;
+            n = ClosestNode(c0.re, c0.im);
+            nodelist[n].IsSelected = true;
+            DeleteSelectedNodes();
+
+            // compute the angle spanned by the new arc;
+            phi = arg((i2[j] - p[j]) / (i1[j] - p[j]));
+            if (phi < 0) {
+                c0 = i2[j]; i2[j] = i1[j]; i1[j] = c0;
+                phi = fabs(phi);
+            }
+
+            // add in the new radius;
+            ar.n0 = ClosestNode(i1[j].re, i1[j].im);
+            ar.n1 = ClosestNode(i2[j].re, i2[j].im);
+            ar.ArcLength = phi / DEG;
+            AddArcSegment(ar);
+
+            return true;
+        }
     }
 
     return false;

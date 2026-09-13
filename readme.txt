@@ -2,8 +2,8 @@ FEMM 5.0
 David Meeker
 dmeeker@ieee.org
 
-* Port of Windows MDI program to Qt so that it can be compiled on just 
-  about any platform
+* Port of Windows MDI program to Qt so that it can be compiled on just
+  about any platform.  Builds and runs on Windows, Linux, FreeBSD and macOS.
 * FEMM now uses tangle, compiled as an internal library, for meshing
   instead of Triangle
 * Solvers rewritten around a whole-matrix ILDL preconditioner: 2-3x faster
@@ -18,9 +18,11 @@ dmeeker@ieee.org
   released under the MIT License (see LICENSE-MIT). The finite element field
   solvers in solvers/ are released under the GNU General Public License v3 or
   later (see solvers/COPYING). The SPDX-License-Identifier tag in each source
-  file is authoritative. Bundled components keep their own licenses: Qt
-  (LGPL-3.0), MicroPython, ulab, and complexEigenPairSolver (MIT). For use of
-  the GPL solvers under terms other than GPLv3 (e.g., in proprietary or 
-  closed-source applications), alternative licensing arrangements are 
-  available on request -- please contact the author.
-
+  file is authoritative. Bundled components keep their own licenses, and the
+  license text for each ships in bin/ beside the program: Qt (LGPL-3.0, see
+  NOTICE-Qt.txt and QT-THIRD-PARTY-NOTICES.txt), MicroPython, micropython-lib,
+  ulab, the Boehm-Demers-Weiser garbage collector, Lua 4 and LuaSocket (the
+  legacy Lua client), and complexEigenPairSolver -- all MIT/X11 or similar.
+  For use of the GPL solvers under terms other than GPLv3 (e.g., in
+  proprietary or closed-source applications), alternative licensing
+  arrangements are available on request -- please contact the author.

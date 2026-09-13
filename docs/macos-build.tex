@@ -248,6 +248,11 @@ To wrap the built bundle in a draggable \texttt{.dmg}:
 packaging/macos_dmg.sh
 \end{lstlisting}
 
+When a Developer ID is configured this script also signs, notarises and
+staples the image; see \textit{Signing and notarisation} below.  To build
+and package in one step, use \texttt{packaging/macos\_release.sh}
+instead, which runs both scripts in the order that matters.
+
 This is a separate step from the build, in the same way that running
 Inno Setup is separate from compiling on Windows.  The bundle has to
 exist to run and to test; a disk image is only needed to hand FEMM to
@@ -312,26 +317,72 @@ survive throwing the disk image away.
 
 \subsection{Signing and notarisation}
 
-\texttt{macos\_build.sh} applies an ad-hoc signature, which is enough to
-build, run and test on your own machine.  It is \emph{not} enough for a
-disk image handed to anyone else: downloaded from the internet, an
-ad-hoc signed application is refused by Gatekeeper as coming from an
-unidentified developer.
+With nothing configured, \texttt{macos\_build.sh} applies an ad-hoc
+signature.  That is enough to build, run and test on your own machine,
+and it is what an ordinary build still does --- no Apple account is
+needed to work on FEMM.  It is \emph{not} enough for a disk image handed
+to anyone else: downloaded from the internet, an ad-hoc signed
+application is refused by Gatekeeper as coming from an unidentified
+developer.
 
-Distributing to others needs an Apple Developer ID, with which the
-bundle is signed, the image notarised, and the ticket stapled:
+Distributing to others needs an Apple Developer ID.  Two environment
+variables turn it on, and the arrangement mirrors
+\texttt{packaging/pack.bat} on Windows --- nothing account-specific is
+committed, and leaving them unset changes nothing:
+
+\begin{center}
+\begin{tabular}{ll}
+\hline
+\textbf{set} & \textbf{result} \\
+\hline
+nothing & ad-hoc; the everyday build \\
+\texttt{FEMM\_SIGN\_ID} & Developer ID, hardened runtime, secure timestamp \\
+\quad + \texttt{FEMM\_NOTARY\_PROFILE} & notarised and stapled as well \\
+\hline
+\end{tabular}
+\end{center}
+
 \begin{lstlisting}
-codesign --force --options runtime --timestamp \
-         --sign "Developer ID Application: ..." \
-         build/bin/femm_gui.app
-xcrun notarytool submit <image>.dmg \
-         --keychain-profile <profile> --wait
-xcrun stapler staple <image>.dmg
+export FEMM_SIGN_ID="Developer ID Application: Your Name (TEAMID)"
+export FEMM_NOTARY_PROFILE=femm-notary
 \end{lstlisting}
-Those steps are deliberately not part of \texttt{macos\_dmg.sh}: they
-need credentials, a network round trip to Apple, and decisions about the
-hardened runtime and entitlements that are best made against real error
-messages rather than guessed at in advance.
+
+The notary profile is created once, interactively, and then lives in the
+keychain.  It asks for an app-specific password from
+\texttt{appleid.apple.com}, not for your Apple ID password:
+\begin{lstlisting}
+xcrun notarytool store-credentials femm-notary \
+      --apple-id you@example.com --team-id TEAMID
+\end{lstlisting}
+
+With both set, one command cuts a release --- the counterpart of
+\texttt{packaging/pack.bat}.  It resolves the identity and checks the
+credentials \emph{before} building anything, so a misconfigured release
+fails in the first second rather than after a full build:
+\begin{lstlisting}
+packaging/macos_release.sh
+\end{lstlisting}
+
+Signing is inside-out rather than \texttt{codesign -{}-deep}: every
+nested Mach-O first, the \texttt{.app} last, because each signature
+seals what is beneath it.  This is not a stylistic preference.
+\texttt{-{}-deep} is deprecated for signing and a bundle signed that way
+can fail notarisation; and because \texttt{Contents/MacOS} is the code
+directory, the 54 Python and text files staged there are code objects
+too, which \texttt{-{}-deep} had been signing silently into extended
+attributes.  They are signed explicitly now.  Notarisation accepts that
+layout, which is why \texttt{python/} and \texttt{pybridge-worker/} can
+stay where they are.
+
+No entitlements are needed.  There is no JIT, and the garbage collector
+is built with \texttt{GC\_DISABLE\_INCREMENTAL}, so no \texttt{SIGSEGV}
+or Mach exception handler is ever installed --- those are the two things
+that usually force an entitlement under the hardened runtime.
+
+Notarisation is a queue on Apple's side, and 25 minutes per submission
+is normal rather than a hang; there are two submissions, the application
+and the image.  \texttt{FEMM\_NOTARY\_TIMEOUT} (default \texttt{1h})
+bounds the wait, and reaching it does not cancel the submission.
 
 \section{Troubleshooting}
 

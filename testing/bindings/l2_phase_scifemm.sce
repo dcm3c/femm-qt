@@ -4,7 +4,9 @@
 HERE = get_absolute_file_path('l2_phase_scifemm.sce');
 exec(fullfile(HERE, '..', '..', 'scifemm', 'scifemm.sci'), -1);
 EX = fullfile(HERE, '..', '..', 'examples');
-TMP = getenv('TEMP', 'C:/temp');
+// TMPDIR is Scilab's own per-session scratch directory, created for us
+// on every platform. Scratch files here are not read back after the run.
+TMP = TMPDIR;
 BS = ascii(92);
 
 function s = fmt(z)

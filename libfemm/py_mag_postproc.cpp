@@ -17,7 +17,6 @@
 #include "py_editor_common.h"
 #include "py_postproc_common.h"
 #include "results_doc.h"
-#include "fastio.h"
 
 #include <cmath>
 #include <cstdio>
@@ -54,26 +53,6 @@ static int findAGE(const char *name) {
     for (int i = 0; i < (int)s_rdoc->agelist.size(); i++)
         if (s_rdoc->agelist[i].BdryName == name) return i;
     return -1;
-}
-
-// Flat tab-separated serialization helpers. Doubles go through fio_append_g
-// (common/fastio.h): the shortest digit string that strtod reads back to the
-// identical value, which is what "%.17g" was here for and what the rest of the
-// wire formatter (libfemm/py_state.cpp) now emits. Same format everywhere, ~10x
-// faster than snprintf on a whole-mesh readout.
-static void appendComplex(std::string &buf, CComplex z) {
-    char c[80];
-    z.ToString(c);
-    buf += c;
-    buf += '\t';
-}
-static void appendDouble(std::string &buf, double v) {
-    fio_append_g(buf, v);
-    buf += '\t';
-}
-static void appendInt(std::string &buf, int v) {
-    buf += std::to_string(v);
-    buf += '\t';
 }
 
 void deactivate_mag_postproc_py() { s_rdoc = nullptr; }

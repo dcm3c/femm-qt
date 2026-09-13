@@ -9,8 +9,8 @@
 here = DirectoryName[$InputFileName];
 Get[FileNameJoin[{here, "..", "..", "mathfemm", "mathfemm.m"}]];
 ex = FileNameJoin[{ParentDirectory[ParentDirectory[here]], "examples"}];
-tmp = Environment["TEMP"];
-If[tmp === $Failed, tmp = "C:/temp"];
+(* $TemporaryDirectory is the platform's own temp directory: honours TMPDIR on POSIX and TEMP on Windows, so no per-platform branch. *)
+tmp = $TemporaryDirectory;
 
 slash[p_] := StringReplace[p, "\\" -> "/"];
 pad[s_, n_] := s <> StringJoin[Table[" ", {Max[0, n - StringLength[s]]}]];

@@ -14,14 +14,19 @@
 //   femm_headless --port N        # TCP server on port N (what the bindings use)
 //   femm_headless script.py       # run script, then serve
 //   femm_headless -run script.py  # run script and exit (batch / CI)
+//   femm_headless --version       # version and build date, then exit
+//   femm_headless --help          # the above, then exit
 //
 // The bindings always pass --port, so they always land in server mode; the REPL
 // only appears for a human running it bare at a terminal (or with -i).
+//
+// print_usage() below prints this same list; keep the two in step.
 
 #include "py_state.h"
 #include "tcp_server.h"
 #include "script_callbacks.h"   // set_exit_hook
 #include "utf8_io.h"
+#include "build_info.h"
 
 #include <csignal>
 #include <vector>
@@ -58,6 +63,32 @@ static void sigint_handler(int sig)
         std::signal(sig, SIG_DFL);
         std::raise(sig);
     }
+}
+
+// Usage, for --help and for the error an unrecognized switch prints. Kept in
+// step with the comment block at the top of this file -- which was, until
+// --help existed, the only place the switches were written down at all.
+static void print_usage(FILE *out)
+{
+    fprintf(out,
+        "FEMM headless analysis engine.\n"
+        "\n"
+        "Usage:\n"
+        "  femm_headless                 REPL if stdin is a terminal, else TCP server\n"
+        "  femm_headless --port N        TCP server on port N (what the bindings use)\n"
+        "  femm_headless -run script.py  run the script and exit (batch / CI)\n"
+        "  femm_headless script.py       run the script, then serve\n"
+        "  femm_headless -i [script.py]  force the REPL (runs the script first)\n"
+        "\n"
+        "Options:\n"
+        "  --port N, -port N    listen on port N (default 48015)\n"
+        "  -run FILE            run FILE, then exit\n"
+        "  -i, --interactive    force the interactive REPL\n"
+        "  --version, -version  print the version and build date, then exit\n"
+        "  -h, --help           print this and exit\n"
+        "\n"
+        "Naming a script ends this program's arguments: everything after it is\n"
+        "passed to the script as sys.argv[1:], so engine switches go first.\n");
 }
 
 static bool stdin_is_tty()
@@ -251,26 +282,17 @@ int main(int argc, char *argv[])
     // original hazard along with it.
     setvbuf(stdout, nullptr, _IOLBF, 0);
 
-    fprintf(stderr, "FEMM headless engine v5.0\n");
-
-    // Layer 1: initialize Python
-    init_py();
-
-    // Ctrl+C interrupts a running script/command when launched from a terminal.
-    std::signal(SIGINT, sigint_handler);
-#ifdef _WIN32
-    // Ctrl+Break too, which on Windows is the companion "stop this console
-    // program" key -- and the only console signal deliverable to another
-    // process group, so it is also how a supervising process (or a test) can
-    // interrupt a long run without killing it outright.
-    std::signal(SIGBREAK, sigint_handler);
-#endif
-
-    // Parse arguments
+    // Arguments are parsed BEFORE the banner and before Python starts, because
+    // --version and --help have to answer instantly and with no side effects --
+    // no banner on stderr to confuse a caller capturing stdout, no listening
+    // socket, and an answer even on a machine where the engine cannot start.
     int port = 48015;
     bool portGiven = false;
     bool runAndExit = false;
     bool wantRepl = false;
+    bool wantVersion = false;
+    bool wantHelp = false;
+    std::string badFlag;              // unrecognized -switch, if any
     std::string script;               // empty => no script given
     bool haveScript = false;
 
@@ -288,6 +310,22 @@ int main(int argc, char *argv[])
             haveScript = true;
         } else if (args[i] == "-i" || args[i] == "--interactive") {
             wantRepl = true;
+        } else if (args[i] == "-version" || args[i] == "--version") {
+            wantVersion = true;
+        } else if (args[i] == "-h" || args[i] == "-help" || args[i] == "--help") {
+            wantHelp = true;
+        } else if (args[i].size() > 1 && args[i][0] == '-') {
+            // An unrecognized switch USED to fall through to the branch below
+            // and become the script name: `femm_headless --version` then tried
+            // to run a file called "--version", failed, and -- with no -run to
+            // make it exit -- sat serving TCP forever. A typo hung the program
+            // instead of reporting itself.
+            //
+            // A leading '-' is what distinguishes a mistyped switch from a
+            // filename. A script really named "-foo.py" is still reachable as
+            // "./-foo.py", which is the same escape every Unix tool offers.
+            badFlag = args[i];
+            break;
         } else if (!haveScript) {
             script = args[i];
             haveScript = true;
@@ -297,12 +335,49 @@ int main(int argc, char *argv[])
         // femm-lua. So `-run s.py --port 5` hands --port to the script rather
         // than moving the server -- switches meant for the engine go before the
         // script. The bindings pass --port first and never pass a script, so
-        // they are unaffected.
+        // they are unaffected. This is also why --help and --version are read
+        // HERE rather than by scanning argv up front: `-run s.py --help` is the
+        // script's --help, not ours.
         if (haveScript) {
             scriptArgs.assign(args.begin() + i + 1, args.end());
             break;
         }
     }
+
+    if (wantVersion) {
+        // stdout: this is the answer to a question, not a status line.
+        printf("FEMM headless engine v%s %s\n", femm_version(), femm_build_date());
+        return 0;
+    }
+    if (wantHelp) {
+        print_usage(stdout);
+        return 0;
+    }
+    if (!badFlag.empty()) {
+        fprintf(stderr, "femm_headless: unrecognized option '%s'\n\n",
+                badFlag.c_str());
+        print_usage(stderr);
+        return 2;
+    }
+
+    // The build date is here so a bug report can say WHICH v5.0 it came from.
+    // stderr, with the rest of the status: stdout is the data channel and a
+    // client parsing a script's output must not have to skip a banner.
+    fprintf(stderr, "FEMM headless engine v%s %s\n",
+            femm_version(), femm_build_date());
+
+    // Layer 1: initialize Python
+    init_py();
+
+    // Ctrl+C interrupts a running script/command when launched from a terminal.
+    std::signal(SIGINT, sigint_handler);
+#ifdef _WIN32
+    // Ctrl+Break too, which on Windows is the companion "stop this console
+    // program" key -- and the only console signal deliverable to another
+    // process group, so it is also how a supervising process (or a test) can
+    // interrupt a long run without killing it outright.
+    std::signal(SIGBREAK, sigint_handler);
+#endif
 
     // Interactive REPL when asked for explicitly (-i), or when launched bare at
     // a terminal (no --port, no script, stdin is a TTY). The bindings always

@@ -17,7 +17,12 @@
 #     thing an off-by-one would silently break
 import numpy as np
 
-EX = "C:/Claude/uPython/femm-qt/examples/"
+# Fixtures are the tracked models in THIS directory, analyzed into a throwaway
+# copy so the fixture stays pristine -- the same pattern the block-integral
+# suites use. It used to open four files under an absolute path on the author's
+# machine and assume their solutions were already sitting beside them, so it
+# could only ever pass here: on a fresh checkout the path does not exist, one of
+# the four models was never tracked, and solution files are gitignored.
 CODE = {100: "f8", 105: "i4", 99: "c16"}
 bad = []
 
@@ -34,8 +39,11 @@ def check(label, cond, detail=""):
 
 
 def geom(pfx, doc, loadfn, nodefn, elemfn, numnodes):
+    ed = loadfn[:2]                       # mi / ei / hi / ci
     print("%s  (%s)" % (pfx, doc))
-    opendocument(EX + doc)
+    opendocument(doc)
+    globals()[ed + "_saveas"]("temp" + doc[doc.rfind("."):])
+    globals()[ed + "_analyze"]()
     globals()[loadfn]()
     nodes = globals()[pfx + "_getallnodes"]()
     tup = globals()[pfx + "_getallelements"]()
@@ -62,7 +70,7 @@ def geom(pfx, doc, loadfn, nodefn, elemfn, numnodes):
 
 
 print()
-geom("mo", "my_SPM_motor_AGB.fem", "mi_loadsolution", "mo_getnode",
+geom("mo", "PMTest.fem", "mi_loadsolution", "mo_getnode",
      "mo_getelement", "mo_numnodes")
 b = mo_getallb()
 a = mo_getalla()
@@ -82,7 +90,7 @@ check("...and differs with smoothing on (they are not the same quantity)",
       abs(b[0][0] - pvs[1]) > 1e-12)
 
 print()
-geom("eo", "bdemo1.fee", "ei_loadsolution", "eo_getnode", "eo_getelement",
+geom("eo", "electrostatic1.fee", "ei_loadsolution", "eo_getnode", "eo_getelement",
      "eo_numnodes")
 d = eo_getalld()
 v = eo_getallv()
@@ -91,7 +99,7 @@ check("eo_getalld -> (ne,2) f8 (a VECTOR, not a phasor)",
 check("eo_getallv -> f8", dt(v) == "f8", dt(v))
 
 print()
-geom("ho", "auto-htutor.feh", "hi_loadsolution", "ho_getnode", "ho_getelement",
+geom("ho", "heatFlow1.feh", "hi_loadsolution", "ho_getnode", "ho_getelement",
      "ho_numnodes")
 f = ho_getallf()
 t = ho_getallt()
@@ -99,11 +107,15 @@ check("ho_getallf -> (ne,2) f8", dt(f) == "f8" and f.shape[1] == 2, dt(f))
 check("ho_getallt -> f8", dt(t) == "f8", dt(t))
 
 print()
-geom("co", "ACElec2.fec", "ci_loadsolution", "co_getnode", "co_getelement",
+geom("co", "currentFlow3.fec", "ci_loadsolution", "co_getnode", "co_getelement",
      "co_numnodes")
 j = co_getallj()
 cv = co_getallv()
-print("     (frequency-dependent: dtype is %s / %s)" % (dt(j), dt(cv)))
+# currentFlow3 runs at 60 Hz, so this is the AC half of the DC/AC rule the
+# mo_ section above pins at DC. It used to be printed rather than checked, which
+# meant the header's claim to cover both halves was only half true.
+check("co_getallj/getallv at 60 Hz -> c16",
+      dt(j) == "c16" and dt(cv) == "c16", "%s / %s" % (dt(j), dt(cv)))
 
 print()
 if bad:

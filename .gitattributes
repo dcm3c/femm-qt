@@ -1,3 +1,19 @@
 # Shell scripts must keep LF line endings so they run on Linux and macOS
 # regardless of the checkout platform's core.autocrlf setting.
 *.sh text eol=lf
+
+# The contract.tsv LF rule is NOT here. It lives in the repository-root
+# .gitattributes, and putting it here instead is what went wrong once:
+# packaging/buildsource.bat builds the source zip with
+#
+#     git archive --prefix=femm-qt/ HEAD        run from femm-qt/
+#
+# and that subtree archive does not apply this file. A rule written here
+# therefore governs checkouts and stops governing the distribution, which is
+# the half that reaches other machines -- every source zip shipped
+# contract.tsv as CRLF while the committed blob was LF. See the root
+# .gitattributes for the full account.
+#
+# The *.sh rule above is duplicated at the root and kept working throughout,
+# which is precisely why the failure was invisible. Add new rules to the ROOT
+# file unless they are meant to apply to checkouts only.

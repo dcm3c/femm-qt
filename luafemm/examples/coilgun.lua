@@ -1,7 +1,16 @@
-package.path = package.path .. ";../?.lua"
-dofile("../femm.lua")
+-- coilgun.lua
+--
+-- Run it with the launcher, which connects to FEMM before the first line
+-- below executes:
+--
+--     femm-lua coilgun.lua
+--
+-- There is deliberately no dofile("../femm.lua") and no openfemm() here.
+-- femm-lua.sh / femm-lua.bat supply both, and a second openfemm() would open
+-- a second connection to a server that serves one client per port -- it would
+-- be refused. A script for the Lua binding looks like a script for FEMM 4.2,
+-- which is the whole point of the binding.
 
-openfemm(1)
 newdocument(0)
 
 mi_probdef(0, "millimeters", "axi", 1e-8, 0, 30)
@@ -51,13 +60,15 @@ mi_analyze(1)
 mi_loadsolution()
 
 -- Read flux density at origin
-local Bx, By = mo_getb(0, 0)
-print(string.format("B at origin: Bx=%.6f T, By=%.6f T", Bx, By))
+-- mo_getpointvalues is the FEMM 4.2 way: mo_getb is a convenience the newer
+-- bindings added and 4.2 never had, so it is not in this binding either.
+local A, Bx, By = mo_getpointvalues(0, 0)
+print(format("B at origin: Bx=%.6f T, By=%.6f T", Bx, By))
 
 -- Block integral for stored energy
 mo_selectblock((ri+ro)/2, 0)
 local energy = mo_blockintegral(2)
-print(string.format("Stored energy in coil: %.6e J", energy))
+print(format("Stored energy in coil: %.6e J", energy))
 mo_clearblock()
 
 mo_close()

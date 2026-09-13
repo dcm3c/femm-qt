@@ -441,6 +441,47 @@ cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_PREFIX_PATH=/usr/local/lib/cmake/Qt6
 \end{lstlisting}
 
+\subsection{Qt found, but CMake stops inside it}
+
+A different failure from the one above, and the advice above does not fix
+it.  CMake locates Qt~6 quite happily and then dies part-way through
+configuring, before compiling anything:
+\begin{lstlisting}
+CMake Error at /usr/local/lib/cmake/Qt6Gui/
+              Qt6QICNSPluginTargetsPrecheck.cmake:2:
+  Unknown CMake command "_qt_internal_should_include_targets".
+\end{lstlisting}
+
+Nothing is wrong with the source tree, and
+\texttt{-DCMAKE\_PREFIX\_PATH} will not help: Qt was found.  The Qt~6
+packages are at \emph{different versions}.  The helper that error names
+comes from \texttt{qt6-base}, while the file calling it is installed by a
+newer plugin package, so the two disagree about what exists.
+
+This happens on an installation image more than a month or two old.
+Whatever Qt pieces the image shipped stay at their original version,
+\texttt{pkg install qt6} fetches the current ones on top, and the result
+is a mixture.  Confirm it by looking for more than one version:
+\begin{lstlisting}
+pkg info -x qt6
+\end{lstlisting}
+
+The fix is to update the system first and build afterwards.  On GhostBSD
+use Update Station, which creates a boot environment as it goes; on
+FreeBSD, \texttt{sudo pkg upgrade}.  On a three-month-old image expect
+several hundred packages.
+
+Two practical notes, because this bites on a virtual machine.
+\texttt{sudo pkg upgrade -n} prints what the upgrade needs without
+changing anything --- \texttt{pkg} stages every package under
+\texttt{/var/cache/pkg} before installing, so peak usage is roughly the
+download plus the installed growth, and a 15~GB disk is not enough for a
+Qt-sized upgrade.  And a ZFS boot environment taken by hand beforehand
+makes the space problem \emph{worse} rather than better: the snapshot
+pins the old blocks, so nothing the upgrade rewrites can be freed while
+it exists.  With room to spare it is worth having; on a tight disk it is
+what runs you out.
+
 \subsection{Missing OpenGL headers}
 
 On minimal installations or VMs without a desktop, Qt may need the Mesa
@@ -485,5 +526,55 @@ export LIBGL_ALWAYS_SOFTWARE=1
 to your shell startup file (or \texttt{setenv LIBGL\_ALWAYS\_SOFTWARE 1} for
 csh/tcsh).
 \end{enumerate}
+
+\subsection{SciFEMM does not work}
+
+SciFEMM is the one binding with no working configuration on FreeBSD, and the
+cause is in Scilab rather than in femm-qt.
+
+Scilab has no native sockets, so SciFEMM talks to femm-qt through
+\texttt{java.net.Socket}.  That needs a Scilab with a JVM, and only one of the
+two command-line binaries has one:
+
+\begin{itemize}[nosep]
+\item \texttt{scilab-cli} is \texttt{-nwni} mode --- no window, no Java.  It
+      runs, then refuses the first thing SciFEMM does: \emph{``Scilab
+      `jimport' function disabled in -nogui or -nwni mode''}.
+\item \texttt{scilab-adv-cli} has the JVM, and segfaults on startup.
+\end{itemize}
+
+The crash is not specific to SciFEMM or to Java.  It reproduces with no
+femm-qt code involved at all:
+\begin{lstlisting}
+scilab-adv-cli -quit -e "disp(1+1)"
+\end{lstlisting}
+which prints a fatal error and \texttt{Signal: Segmentation fault (11)},
+\texttt{Address not mapped}, failing at address \texttt{0x0}.
+
+Two things this is \emph{not}, both checked:
+
+\begin{itemize}[nosep]
+\item \textbf{Not the JVM on the machine.}  OctaveFEMM also uses Java for its
+      socket communication --- see \emph{Using with Octave} above, which
+      installs a JDK for exactly that reason --- and works.
+\item \textbf{Not the OpenGL problem} described in the previous subsection.
+      The \texttt{libEGL}/\texttt{DRI3} warnings do appear before the crash,
+      but setting \texttt{LIBGL\_ALWAYS\_SOFTWARE=1} removes those warnings
+      and the segfault is unchanged.  They are noise.
+\end{itemize}
+
+Tested on GhostBSD, FreeBSD 15.0-RELEASE-p10, with \texttt{scilab-6.1.1\_30}
+from the GhostBSD package repository.  That is the stock \texttt{math/scilab}
+port at the same revision --- \texttt{make -V PKGNAME} in
+\texttt{/usr/ports/math/scilab} returns the identical version --- so building
+it locally would compile the same 2021 source and is unlikely to behave
+differently.  Scilab's own project publishes no FreeBSD binaries, and the
+version in ports is several years behind the 2024--2026 releases that work on
+Windows and Linux.
+
+Stock FreeBSD's own \texttt{scilab} package has not been tested; if it works
+there, the difference is the build environment rather than the source.  The
+other five bindings --- OctaveFEMM, pyFEMM, JuliaFEMM, LuaFEMM and MathFEMM
+--- are unaffected.
 
 \end{document}

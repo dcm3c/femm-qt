@@ -147,10 +147,53 @@ function openfemm(varargin)
 
         // Launch femm-qt detached. Quote the path: a macOS bundle's inner
         // binary can live under a directory with spaces.
+        //
+        // The quote character comes from ascii(), which looks laboured and
+        // is not. In Scilab ' and " are INTERCHANGEABLE string delimiters, so
+        // '"' is not "a string holding a double quote" -- the " closes the
+        // string the ' opened. On its own that is a parse error ("Unexpected
+        // end of line in a string"); inside a longer concatenation it merely
+        // re-lexes into different literals and parses fine, which is what
+        // this line used to do:
+        //
+        //   '"' + exe + '" --port ' + string(port) + ' &'
+        //
+        // built the literal text ' + exe + " --port 48015 & -- exe never
+        // substituted, quotes unbalanced -- and sh answered "Syntax error:
+        // Unterminated quoted string". The accompanying "File
+        // /tmp/SCI_TMP_.../unix.err does not exist" reads like a temp-dir
+        // permission problem and is only sh having failed before unix_s
+        // could redirect into it.
+        //
+        // A literal quote of either kind must therefore be written doubled
+        // ('''') or fetched by code point. ascii(39) is the latter, and it
+        // cannot be misread by the next person the way '''' can. Single
+        // quotes also suit sh better than double: no expansion inside them.
+        //
+        // Windows is unaffected and keeps its own idiom -- "" is the escape
+        // inside a "-delimited string, and start's first "" is the window
+        // title it insists on before a quoted path.
         if getos() == 'Windows' then
             host("start """" """ + exe + """ --port " + string(port));
         else
-            unix_s('"' + exe + '" --port ' + string(port) + ' &');
+            // The engine's stdio goes to /dev/null, and that is load-bearing,
+            // not tidiness. unix_s collects a command's output by reading it
+            // to EOF. A backgrounded child that INHERITS that output holds the
+            // write end open after sh exits, so EOF never comes and unix_s
+            // never returns: openfemm hangs forever, with the engine already
+            // up and listening, before the connect loop below is ever reached.
+            //
+            // Measured on macOS with Scilab 2026.1.0: the engine's fd 1 and 2
+            // were PIPEs, the port was LISTEN with nothing ESTABLISHED, and the
+            // script never got past openfemm. Where unix_s captures into temp
+            // files rather than a pipe -- the unix.err note above suggests that
+            // is what it does on Linux -- the unredirected line happens to
+            // work. Redirecting here makes it independent of how unix_s is
+            // implemented. pyfemm (subprocess.DEVNULL) and juliafemm
+            // (pipeline(cmd, devnull)) already launch the engine this way.
+            q = ascii(39);
+            unix_s(q + exe + q + ' --port ' + string(port) + ..
+                   ' </dev/null >/dev/null 2>&1 &');
         end
 
         // Wait for TCP server. Use a flag instead of break because

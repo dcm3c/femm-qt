@@ -12,29 +12,61 @@
 #  this into macos_build.sh would put hdiutil, and later a notarisation
 #  round trip to Apple, on the everyday build path.
 #
-#  NOT SIGNED OR NOTARISED. macos_build.sh applies an ad-hoc signature to
-#  the bundle, which is enough to run and test locally, but a DMG handed
-#  to anyone else needs a Developer ID:
+#  SIGNING follows whatever macos_build.sh did, through the same two
+#  environment variables -- see the header of packaging/macos_sign.sh:
 #
-#      codesign --force --options runtime --timestamp \
-#               --sign "Developer ID Application: ..." <app>
-#      xcrun notarytool submit <dmg> --keychain-profile ... --wait
-#      xcrun stapler staple <dmg>
+#    nothing set            the image is unsigned, and so is the app in it.
+#                           Fine for a local look at the layout; Gatekeeper
+#                           refuses it anywhere else.
 #
-#  Those are left out on purpose rather than written blind -- the failure
-#  modes there (hardened runtime, entitlements, nested binaries needing
-#  their own timestamped signature) only show up against a real
-#  certificate and real error messages.
+#  The FILENAME records which of those you got. Only a signed, notarised,
+#  stapled image that Gatekeeper accepts is named femm-qt-5.0_<date>.dmg;
+#  anything else gets -adhoc, -unnotarized or -REJECTED after the date. Ship
+#  the one with nothing after the date.
+#    FEMM_SIGN_ID           the image is signed with the Developer ID.
+#    + FEMM_NOTARY_PROFILE  the image is notarised and stapled as well.
+#
+#  This is the SECOND notarisation round. macos_build.sh already notarised
+#  and stapled femm_gui.app itself; this one covers the image. Both are
+#  wanted: the image's ticket is what gets checked on download, and the
+#  app's own ticket is what keeps working after it has been dragged to
+#  /Applications and the image thrown away.
 # ======================================================================
 set -euo pipefail
 
 cd "$(dirname "$0")/.."          # femm-qt/
 
+# Reads FEMM_SIGN_ID / FEMM_NOTARY_PROFILE and sets the mode. Sourced before
+# the staging work so a misconfiguration fails immediately rather than after
+# hdiutil has built an image that cannot be used.
+. "packaging/macos_sign.sh"
+
 APP="build/bin/femm_gui.app"
 OUT_DIR="packaging/output"
 VOLNAME="FEMM 5.0"
 STAMP="$(date +%d%b%Y)"
-DMG="$OUT_DIR/femm-qt-5.0_${STAMP}.dmg"
+
+# The image is BUILT under a working name and only takes its real one at the
+# very end, once what it actually IS has been established -- see "Name it for
+# what it turned out to be" at the bottom of this script.
+#
+# The name used to be the date and nothing else, in both signing modes. That
+# records WHEN an image was built and never whether it can be shipped, and
+# those are not the same question: an ad-hoc image (FEMM_SIGN_ID unset) runs on
+# the machine that built it and is refused by Gatekeeper everywhere else. It
+# bit us twice. On the same day the ad-hoc build silently replaced a signed,
+# notarised and stapled image built hours earlier -- the entire Apple round
+# trip gone, no prompt, because the line below this one used to be `rm -f
+# "$DMG"`. On different days both survived, and the test build sorted newest
+# and looked like the newest release. packaging/output is the folder builds are
+# handed over in, so its filenames are exactly where that question gets asked.
+#
+# The working name is dot-prefixed: hidden in Finder, plainly not a deliverable
+# in ls, skipped by the *.dmg glob macos_release.sh uses, and removed by the
+# trap if this script does not reach the end.
+DMG_BASE="femm-qt-5.0_${STAMP}"
+DMG="$OUT_DIR/.${DMG_BASE}.building.dmg"
+DMG_WORK="$DMG"          # cleared once the image has been named, not before
 
 # ---- The bundle has to be there, and has to be current ---------------
 if [ ! -d "$APP" ]; then
@@ -64,6 +96,36 @@ if [ "$APP/Contents/MacOS/femm_gui" -nt "$APP/Contents/MacOS/femm_headless" ]; t
     exit 1
 fi
 
+# ---- The app must already carry the signature this image will claim ---
+# Division of labour that is easy to get wrong: THIS script signs the
+# IMAGE; macos_build.sh signs what is inside it. Run this one on its own
+# against an ad-hoc bundle and the result is a Developer-ID-signed image
+# wrapping an app Apple will refuse -- and the way you find out is a full
+# notarisation round trip, which is tens of minutes. Check it in a second
+# instead.
+#
+# Captured and string-matched rather than piped into `grep -q`: under
+# pipefail that pipeline can come back 141 (SIGPIPE) instead of the match,
+# which silently skips the check. See macos_sign.sh.
+if [ "$FEMM_SIGN_MODE" = "developer-id" ]; then
+    APPSIG="$(codesign -dv --verbose=2 "$APP" 2>&1 || true)"
+    if [ "${APPSIG#*Signature=adhoc}" != "$APPSIG" ]; then
+        echo "ERROR: $APP is ad-hoc signed, but this image would be signed"
+        echo "       with a Developer ID. Notarisation would reject the app"
+        echo "       inside it."
+        echo "       Run ./macos_build.sh with FEMM_SIGN_ID set, first."
+        exit 1
+    fi
+    if [ -n "$FEMM_NOTARY_PROFILE" ] &&
+       ! xcrun stapler validate "$APP" >/dev/null 2>&1; then
+        echo "ERROR: $APP has no stapled notarisation ticket, but"
+        echo "       FEMM_NOTARY_PROFILE is set."
+        echo "       Run ./macos_build.sh with the SAME variables set, so the"
+        echo "       app is notarised and stapled before it goes in the image."
+        exit 1
+    fi
+fi
+
 # ---- Stage what ships -------------------------------------------------
 # The app, a symlink to /Applications, and a copy of the examples.
 #
@@ -90,10 +152,18 @@ fi
 # read-only masters, which costs half a megabyte and means the examples are
 # recoverable after the DMG is thrown away.
 STAGE="$(mktemp -d)"
-trap 'rm -rf "$STAGE"' EXIT
+trap 'rm -rf "$STAGE"; [ -n "${DMG_WORK:-}" ] && rm -f "$DMG_WORK"; true' EXIT
 
 echo "Staging..."
-cp -R "$APP" "$STAGE/"
+# ditto rather than cp -R, for what this bundle now carries rather than for
+# anything cp does wrong: 54 files in Contents/MacOS hold their code
+# signature in an extended attribute (see macos_sign.sh), and the stapled
+# ticket is a file at Contents/CodeResources. Measured here, cp -R preserves
+# both -- but it preserves xattrs as behaviour, whereas ditto preserves them
+# as its contract. For the one copy that becomes the artifact people
+# download, take the guarantee. A dropped xattr would not fail visibly here;
+# it would produce an image whose app no longer verifies.
+ditto "$APP" "$STAGE/femm_gui.app"
 ln -s /Applications "$STAGE/Applications"
 
 # ---- One folder to drag, and it lands in the Linux layout ------------
@@ -191,6 +261,23 @@ configure -- but each language has to be told where its own binding file is:
   Scilab         exec('~/FEMM/bindings/scifemm/scifemm.sci')
   Mathematica    Get["~/FEMM/bindings/mathfemm/mathfemm.m"]
 
+Lua is different: it is not loaded into a program you already have, it IS
+the program. Legacy FEMM 4.2 Lua scripts run through a launcher that ships
+inside the application, with the Lua interpreter beside it:
+
+  /Applications/femm_gui.app/Contents/MacOS/femm-lua.sh myscript.lua
+
+Dragging an application out of a disk image cannot add anything to your
+PATH, so that full path is the honest answer. If you use it often, give it
+a name in your ~/.zshrc:
+
+  alias femm-lua='/Applications/femm_gui.app/Contents/MacOS/femm-lua.sh'
+
+An alias rather than a symlink on purpose: the launcher locates the Lua
+interpreter and femm.lua relative to its own directory, and following a
+symlink back to the bundle needs "readlink -f", which is not on every
+system. The alias has nothing to resolve.
+
 Set FEMM_DIR only if you keep more than one copy of FEMM and need to say
 which one they should talk to.
 
@@ -242,14 +329,96 @@ hdiutil create \
     -quiet \
     "$DMG"
 
-echo
-echo "Wrote $DMG ($(du -h "$DMG" | cut -f1))"
+# ---- Sign, notarise and staple the image ------------------------------
+# The app inside was already signed (and possibly notarised and stapled) by
+# macos_build.sh. This covers the image itself, which is the thing a
+# browser actually downloads and quarantines.
+#
+# The log is OUTSIDE $STAGE on purpose: $STAGE is what hdiutil just packaged,
+# and anything dropped in there would have shipped.
+SIGN_LOG="$(mktemp -t femm_dmg_sign.XXXXXX)"
+# The half-built image goes too if anything below fails. Notarisation needs the
+# network and Apple's servers, so this script can abort part way through more
+# or less at random, and an aborted run must not leave something behind that a
+# later reader could take for a finished artifact.
+trap 'rm -rf "$STAGE"; rm -f "$SIGN_LOG"; [ -n "${DMG_WORK:-}" ] && rm -f "$DMG_WORK"; true' EXIT
+
+if [ "$FEMM_SIGN_MODE" = "developer-id" ]; then
+    echo "Signing the image ($FEMM_SIGN_MODE)..."
+    femm_sign_dmg "$DMG" "$SIGN_LOG"
+
+    if [ -n "$FEMM_NOTARY_PROFILE" ]; then
+        echo "Notarising the image..."
+        # No zip this time: notarytool takes a .dmg directly, because a disk
+        # image is already the single file it wants. Only a .app has to be
+        # wrapped (see macos_build.sh step 6).
+        # Labelled with the name the image is ABOUT to get, not its working
+        # one: these two print progress and errors, and ".femm-...building.dmg"
+        # in a notarisation log helps nobody.
+        femm_notarize "$DMG" "${DMG_BASE}.dmg"
+        femm_staple "$DMG" "${DMG_BASE}.dmg"
+    fi
+fi
+
 echo
 echo "Contents:"
 hdiutil attach "$DMG" -nobrowse -quiet -mountpoint "$STAGE/mnt"
 ls -1 "$STAGE/mnt" | sed 's/^/  /'
 hdiutil detach "$STAGE/mnt" -quiet
 echo
-echo "This DMG is ad-hoc signed only. Downloaded on another Mac it will be"
-echo "refused by Gatekeeper as an unidentified developer -- see the header"
-echo "of this script for the Developer ID steps that fix that."
+
+# ---- What this image will do on someone else's Mac --------------------
+# Each branch also decides what the file will be CALLED. The releasable image
+# -- signed, notarised, stapled and accepted -- gets the plain name; everything
+# else carries a label saying why it is not that. The folder then answers
+# "which of these do I ship" on its own, without anyone having to remember
+# which run each file came out of.
+if [ "$FEMM_SIGN_MODE" != "developer-id" ]; then
+    SUFFIX="-adhoc"
+    echo "This DMG is UNSIGNED. Downloaded on another Mac it will be refused"
+    echo "by Gatekeeper as an unidentified developer -- set FEMM_SIGN_ID and"
+    echo "FEMM_NOTARY_PROFILE (see packaging/macos_sign.sh) to fix that."
+elif [ -z "$FEMM_NOTARY_PROFILE" ]; then
+    SUFFIX="-unnotarized"
+    echo "Signed with a Developer ID but NOT notarised. Still refused on"
+    echo "another Mac: since macOS 10.15 a Developer ID signature alone is"
+    echo "not enough. Set FEMM_NOTARY_PROFILE."
+else
+    # The real test, and the one worth trusting: this is the assessment
+    # macOS runs when the image is opened from a browser download.
+    # --context context:primary-signature asks about the DMG's OWN
+    # signature, which is the thing being judged at that moment.
+    # Captured, not piped into grep -q -- see macos_sign.sh for why.
+    GK="$(spctl -a -t open --context context:primary-signature -v "$DMG" 2>&1 || true)"
+    if [ "${GK#*accepted}" != "$GK" ]; then
+        SUFFIX=""
+        echo "Signed, notarised, stapled, and accepted by Gatekeeper."
+        echo "This image can be handed to anyone."
+    else
+        # Labelled rather than left with the release name. This is the one
+        # failure that would otherwise look exactly like a good release: it
+        # is signed, it is notarised, everything above it succeeded, and
+        # Gatekeeper still refuses it.
+        SUFFIX="-REJECTED"
+        echo "WARNING: Gatekeeper did not accept the finished image:"
+        printf '%s\n' "$GK" | sed 's/^/  /'
+    fi
+fi
+
+# ---- Name it for what it turned out to be -----------------------------
+# Here, at the end, rather than where the name used to be chosen at the top:
+# signing, notarisation and the Gatekeeper assessment can each fail, and a name
+# picked before any of them had run would describe what was intended rather
+# than what happened.
+DMG_FINAL="$OUT_DIR/${DMG_BASE}${SUFFIX}.dmg"
+mv -f "$DMG" "$DMG_FINAL"
+DMG_WORK=""              # it has a real name now; the trap leaves it alone
+DMG="$DMG_FINAL"
+
+echo
+echo "Wrote $DMG ($(du -h "$DMG" | cut -f1))"
+if [ -n "$SUFFIX" ]; then
+    echo "The '${SUFFIX#-}' in the name is deliberate: this image is NOT the"
+    echo "one to ship. A releasable build is named femm-qt-5.0_<date>.dmg with"
+    echo "nothing after the date."
+fi

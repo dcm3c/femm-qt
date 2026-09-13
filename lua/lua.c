@@ -157,6 +157,61 @@ static int l_getargs (lua_State *l) {
 }
 
 
+/*
+** `arg' is two things at once, and FEMM needs both.
+**
+** This interpreter binds the script's command-line arguments to the global
+** `arg', which is the standard Lua 4 convention -- and in THIS build `arg' is
+** also the complex phase function from the maths library, because lua4
+** compiles CComplex as its number type. Setting the table plainly therefore
+** destroyed arg(z) for the whole run.
+**
+** That is a FEMM 4.2 compatibility break, not a curiosity. In FEMM 4.2 scripts
+** ran inside femm's own embedded interpreter, which never set `arg', so arg(z)
+** worked. Through femm-lua a script is run with -f, so it did not, and a 4.2
+** script asking for the phase of a complex result got "attempt to call global
+** `arg' (a table value)" -- from a line that had been correct for 20 years.
+**
+** Lua 4 can have both: a tag method for the "function" event makes a non-
+** function value callable. So the table is given its own tag, and calling it
+** forwards to whatever `arg' was before -- the maths function -- with the
+** table itself dropped from the arguments.
+**
+** Stack on entry, per this interpreter's C-closure convention (see l_getargs
+** above, which reads its upvalue at -1): the called value, then the call's own
+** arguments, then the upvalue.
+*/
+static int l_arg_call (lua_State *l) {
+  int top = lua_gettop(l);      /* [1]=the arg table, [2..top-1]=args, [top]=fn */
+  int i;
+  lua_pushvalue(l, top);        /* the original arg(), to be called */
+  for (i = 2; i < top; i++)
+    lua_pushvalue(l, i);
+  lua_call(l, top - 2, 1);
+  return 1;
+}
+
+
+/*
+** Bind `arg' to the argument table without losing arg() the function.
+** If `arg' was not a function to begin with -- a build without the complex
+** maths library -- this degrades to exactly what it replaced.
+*/
+static void setargs_global (void) {
+  lua_getglobal(L, "arg");
+  if (lua_isfunction(L, -1)) {
+    int tag = lua_newtag(L);
+    lua_pushcclosure(L, l_arg_call, 1);   /* consumes the old arg() */
+    lua_settagmethod(L, tag, "function");
+    lua_settag(L, tag);                   /* tag the table on the stack top */
+  }
+  else {
+    lua_pop(L, 1);                        /* nothing worth preserving */
+  }
+  lua_setglobal(L, "arg");
+}
+
+
 static int file_input (const char *argv) {
   int result = ldo(lua_dofile, argv);
   if (result) {
@@ -275,7 +330,7 @@ static int handle_argv (char *argv[], struct Options *opt) {
               return EXIT_FAILURE;
             }
             getargs(argv+i);  /* collect remaining arguments */
-            lua_setglobal(L, "arg");
+            setargs_global(); /* ...without destroying arg() the function */
             return file_input(argv[i]);  /* stop scanning arguments */
           }
           case 's': {

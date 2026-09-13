@@ -58,10 +58,15 @@ check("frombuffer(offset) outlives source", list(fb) == [0.0, 1.5, 3.0, 4.5, 6.0
 # 500 int32 pairs that spell the addresses of 500 garbage objects. Under
 # conservative scanning of the payload this pinned ~520 KB; atomic storage pins
 # nothing (the residue is stack conservativeness, well under 100 KB).
+PROBE_BLOCKS = 20000
+PROBE_BYTES = 1000
+PROBE_KB = PROBE_BLOCKS * PROBE_BYTES // 1024   # what the probe itself allocates
+
+
 def retention_probe(pin):
     gc.collect()
     base = gc.mem_alloc()
-    big = [bytearray(1000) for _ in range(20000)]
+    big = [bytearray(PROBE_BYTES) for _ in range(PROBE_BLOCKS)]
     idx = np.zeros((500, 2), dtype=np.int32)
     if pin:
         for r in range(500):
@@ -71,9 +76,37 @@ def retention_probe(pin):
     del big
     gc.collect()
     return (gc.mem_alloc() - base) // 1024, idx
-r0, _ = retention_probe(False)
-r1, keep = retention_probe(True)
-check("int32 pairs do not pin garbage", r1 - r0 < 100, "%d KB retained vs %d KB control" % (r1, r0))
+# gc.mem_alloc() is not a stable baseline across a large free under bdwgc: the
+# 240 MB array from section 1 comes off the heap at whatever collection Boehm
+# gets round to, which can be one INSIDE a probe -- so the probe's base was
+# taken with it counted and its final reading without, and the delta comes back
+# at about -234000 KB. On Ubuntu that made this check fail 3 times in 10 with
+# "16 KB retained vs -234360 KB control", where 16 KB is the healthy answer and
+# the control is the nonsense.
+#
+# The same race can HIDE a regression rather than invent one -- land the release
+# in the second probe instead and r1 - r0 goes hugely negative, which passes.
+# So both readings are required to be sane before the comparison means anything,
+# and a warm-up runs first to take the settling out of the measured pair. The
+# 100 KB threshold below is untouched; it was never the problem.
+# A reading is INVALID, rather than merely small, when it is more negative than
+# the probe's own allocation: a probe cannot release memory it never allocated,
+# so anything past -PROBE_KB is the baseline moving underneath it, not a
+# measurement. A few KB either side of zero is ordinary noise and stays valid --
+# an earlier version of this guard demanded r >= 0 and rejected a healthy -4 KB.
+def sane(r):
+    return r >= -PROBE_KB
+
+
+retention_probe(False)                    # warm-up, discarded
+for _attempt in range(4):
+    r0, _ = retention_probe(False)
+    r1, keep = retention_probe(True)
+    if sane(r0) and sane(r1):
+        break                             # neither reading straddled a release
+check("int32 pairs do not pin garbage",
+      sane(r0) and sane(r1) and r1 - r0 < 100,
+      "%d KB retained vs %d KB control" % (r1, r0))
 del keep
 
 # --- 4. Multi-block churn is not quadratic --------------------------------------

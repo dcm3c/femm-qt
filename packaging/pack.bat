@@ -83,9 +83,29 @@ exit /b 0
 
 rem ----------------------------------------------------------------------
 :setup_signing
-if not defined FEMM_SIGNTOOL (
-    for /f "delims=" %%I in ('dir /b /s /a-d "%ProgramFiles(x86)%\Windows Kits\10\bin\*\x64\signtool.exe" 2^>nul') do set "FEMM_SIGNTOOL=%%I"
-)
+rem Find signtool. NOTE: `dir` accepts a wildcard only in the FINAL path
+rem component, so the SDK version directory CANNOT be globbed --
+rem "...\bin\*\x64\signtool.exe" does not return no matches, it fails outright
+rem with "The filename, directory name, or volume label syntax is incorrect."
+rem That is why this used to report "no signtool.exe found" on a machine that
+rem had one. Recurse for the filename and filter for the x64 build instead.
+rem The last match wins, which is the newest SDK for the 10.0.NNNNN.0 names in
+rem use (they sort lexicographically in version order).
+rem
+rem The SDK root is hoisted into its own variable FIRST, outside the block, and
+rem that is also load bearing: %ProgramFiles(x86)% used directly inside
+rem `if ... ( )` puts a literal ")" into the block while cmd is still looking
+rem for the one that closes it, and the whole thing dies with
+rem "\Windows was unexpected at this time."
+rem ...and no parenthesised block, for the same reason: cmd expands variables
+rem while scanning for the ")" that closes the block, so the ")" inside
+rem "Program Files (x86)" closes it early and the line dies with
+rem "\Windows was unexpected at this time." That happens whether the path is
+rem written inline or reached through a variable, so a goto is used instead.
+set "WINSDKBIN=%ProgramFiles(x86)%\Windows Kits\10\bin"
+if defined FEMM_SIGNTOOL goto :have_signtool
+for /f "delims=" %%I in ('dir /b /s /a-d "%WINSDKBIN%\signtool.exe" 2^>nul ^| findstr /i "\\x64\\"') do set "FEMM_SIGNTOOL=%%I"
+:have_signtool
 if not defined FEMM_SIGNTOOL (
     echo pack: signing requested but no signtool.exe found. Install the Windows
     echo       SDK signing tools, or set FEMM_SIGNTOOL to its full path.
@@ -110,11 +130,20 @@ set "SIGNJSON=%CD%\output\trusted-signing.json"
 set "SIGNARGS=sign /v /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib"
 
 echo pack: signing build\bin executables as %FEMM_SIGN_ACCOUNT%/%FEMM_SIGN_PROFILE%
-for %%E in (femm_gui femm_headless femm_headlessw fkn belasolv hsolv csolv lua4) do (
-    if exist "..\build\bin\%%E.exe" (
-        "%FEMM_SIGNTOOL%" %SIGNARGS% "%FEMM_SIGN_DLIB%" /dmdf "%SIGNJSON%" "..\build\bin\%%E.exe" || exit /b 1
-    )
-)
+rem One CALL per executable rather than a nested block. FEMM_SIGNTOOL holds a
+rem path under "Program Files (x86)", and expanding it inside `do ( ... )`
+rem hands cmd a ")" while it is still scanning for the one that closes the
+rem block -- the same trap as the discovery above, and it would fail only when
+rem signing was actually switched on.
+for %%E in (femm_gui femm_headless femm_headlessw fkn belasolv hsolv csolv lua4) do call :sign_one %%E || exit /b 1
+goto :signed_all
+
+:sign_one
+if not exist "..\build\bin\%~1.exe" exit /b 0
+"%FEMM_SIGNTOOL%" %SIGNARGS% "%FEMM_SIGN_DLIB%" /dmdf "%SIGNJSON%" "..\build\bin\%~1.exe"
+exit /b %errorlevel%
+
+:signed_all
 
 rem Hand ISCC the same command for the installer and uninstaller. $q is Inno's
 rem own quote escape -- using it instead of literal quotes keeps this a single

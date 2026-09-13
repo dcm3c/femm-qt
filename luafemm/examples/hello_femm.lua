@@ -1,7 +1,15 @@
-package.path = package.path .. ";../?.lua"
-dofile("../femm.lua")
-
-openfemm(1)
+-- hello_femm.lua
+--
+-- Run it with the launcher, which connects to FEMM before the first line
+-- below executes:
+--
+--     femm-lua hello_femm.lua
+--
+-- There is deliberately no dofile("../femm.lua") and no openfemm() here.
+-- femm-lua.sh / femm-lua.bat supply both, and a second openfemm() would open
+-- a second connection to a server that serves one client per port -- it would
+-- be refused. A script for the Lua binding looks like a script for FEMM 4.2,
+-- which is the whole point of the binding.
 
 newdocument(0)
 mi_probdef(0, "millimeters", "planar", 1e-8, 1, 30)

@@ -28,8 +28,17 @@ exist upstream -- so those are compared against this in-process run, which uses
 the same engine the bindings drive.
 """
 
-EX = "C:/Claude/uPython/femm-qt/examples/"
-TMP = "C:/temp/"
+# Relative, because this one runs INSIDE femm_headless rather than in CPython:
+# there is no tempfile module in the engine's MicroPython, and `-run` chdirs to
+# the script's own directory, so the tree is reachable from here on every
+# platform. The absolute paths this replaces were why the whole phasecurrent
+# scenario could only ever run on the author's machine.
+#
+# Scratch lands beside this script rather than in a temp directory -- the same
+# habit every in-process suite in testing/ follows -- and *.fem / *.ans are
+# ignored tree-wide.
+EX = "../../examples/"
+TMP = ""
 
 PHASES = (("A", complex(1000, 0)),
           ("B", complex(-500, -866.0254038)),

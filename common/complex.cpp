@@ -134,12 +134,21 @@ char* CComplex::ToString(char *s)
 // the same swap common/fastio.h made for the .ans hot loops. (Size barely
 // moves on computed values: 2-4%, not fastio.h's 30-40% for .ans input.)
 //
-// This matters beyond speed: ToString feeds the IPC wire (via appendComplex in
-// libfemm/py_mag_postproc.cpp), and libfemm/py_state.cpp's format_complex --
-// which formats every OTHER wire result -- moved to to_chars in 2026-08. The
-// two must agree, or one command returns "0.1" while the next returns
+// This matters beyond speed. ToString has no caller left in this tree -- the
+// last one was appendComplex() in libfemm/py_mag_postproc.cpp, which went away
+// when the bulk getters started returning typed arrays -- but it is still the
+// REFERENCE definition of the wire format: libfemm/py_state.cpp's
+// format_complex replicates the structure below rather than calling it (it
+// writes into a std::string, not a char buffer), and tests/test_py_state.cpp
+// checks the special cases against it. So the two must stay in step, digits
+// included, or one command returns "0.1" while the next returns
 // "0.10000000000000001" for the same value. The I / -I / I* STRUCTURE below is
-// the contract and is unchanged; only the digits are.
+// the contract.
+//
+// Note that lua/common/complex.cpp is a deliberate FORK of this file, not a
+// stale copy: it prints %.14g because it feeds the lua4 REPL's display, and
+// luafemm sends wire arguments with an explicit %.17g of its own. Do not
+// "sync" the two.
 static void cx_g(char *b, size_t n, double v)
 {
 	std::to_chars_result r = std::to_chars(b, b + n - 1, v);

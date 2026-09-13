@@ -7,7 +7,8 @@ include(joinpath(HERE, "..", "..", "juliafemm", "juliafemm.jl"))
 using .JuliaFEMM
 
 const EX = abspath(joinpath(HERE, "..", "..", "examples"))
-const TMP = get(ENV, "TEMP", "C:/temp")
+# tempdir() is the platform's own temp directory: honours TMPDIR on POSIX and TEMP on Windows, so no per-platform branch is needed.
+const TMP = tempdir()
 const PHASES = (("A", complex(1000.0, 0.0)),
                 ("B", complex(-500.0, -866.0254038)),
                 ("C", complex(-500.0, 866.0254038)))

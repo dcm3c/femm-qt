@@ -25,25 +25,47 @@ ISS="$ROOT/packaging/femm-qt.iss"
 [ -f "$ISS" ] || { echo "stage_extras: no manifest at $ISS" >&2; exit 1; }
 
 # ---- Examples --------------------------------------------------------
-# Every example line reads
+# An example line reads
 #   Source: "..\examples\X"; DestDir: "{app}\examples"; ...
-# and no other DestDir ends in examples", so the pattern needs no
-# backslash. The paths are relative to packaging/.
+# and the DESTINATION is now read as well as the source, because more than one
+# DestDir ends in examples. It used to be safe to ignore: everything went to
+# {app}\examples, so matching the line was enough to know where the file went.
+# pyFEMM's examples go to {app}\pyfemm\examples instead -- see femm-qt.iss for
+# why -- and a pattern that only matched the line would have quietly flattened
+# them back into the shared directory, recreating on macOS and Linux exactly
+# the collision the separate directory exists to prevent, while Windows got it
+# right. A platform-specific bug from a one-line assumption.
+#
+# The mapping is the one the rest of this script already uses: Windows puts a
+# binding at {app}\<name> and everywhere else it is bindings/<name>. So
+# {app}\examples -> examples, and {app}\<name>\examples -> bindings/<name>/examples.
 mkdir -p "$DEST/examples"
 n=0
 missing=0
-while IFS= read -r rel; do
+while IFS='|' read -r rel dest; do
     [ -n "$rel" ] || continue
+    case "$dest" in
+        "{app}/examples")     sub="examples" ;;
+        "{app}/"*"/examples") sub="bindings/${dest#\{app\}/}" ;;
+        *)
+            # Never drop a listed example without saying so. This arm exists
+            # only for a DestDir shape nobody has written yet, and a silent
+            # skip here would ship one fewer example with no sign of it.
+            missing=$((missing + 1))
+            echo "  WARNING: unrecognised example DestDir, NOT staged: $dest" >&2
+            continue ;;
+    esac
     src="$ROOT/packaging/$rel"
     if [ -f "$src" ]; then
-        cp "$src" "$DEST/examples/"
+        mkdir -p "$DEST/$sub"
+        cp "$src" "$DEST/$sub/"
         n=$((n + 1))
     else
         missing=$((missing + 1))
         echo "  WARNING: listed in femm-qt.iss but not found: $rel" >&2
     fi
 done <<EOF
-$(awk -F'"' '/DestDir: .*examples";/ { print $2 }' "$ISS" | tr '\\' '/')
+$(awk -F'"' '/DestDir: .*examples";/ { print $2 "|" $4 }' "$ISS" | tr '\\' '/')
 EOF
 
 if [ "$n" -eq 0 ]; then
@@ -88,6 +110,16 @@ done
 # open and every reason not to find. luafemm's README is renamed on the way
 # out: in one flat directory beside five other guides, "README.md" says
 # nothing about which thing it is the readme for.
+# The file-format references, one per physics: the on-disk layout of
+# .fem/.fee/.feh/.fec, which is what a third-party tool or a mesh importer
+# needs. Their own subdirectory, matching {app}\docs on Windows -- four more
+# PDFs in the flat directory above would bury the guides that are actually
+# about using the program.
+mkdir -p "$DEST/docs"
+for doc in "$ROOT"/docs/*-file-formats.pdf; do
+    [ -f "$doc" ] && cp "$doc" "$DEST/docs/"
+done
+
 for doc in "$ROOT/pyfemm/pyfemm.md" \
            "$ROOT/octavefemm/octavefemm.md" \
            "$ROOT/luafemm/femm-lua.md"; do

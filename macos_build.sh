@@ -30,6 +30,13 @@ if [ -n "$missing" ]; then
     exit 1
 fi
 
+# ---- Signing configuration -------------------------------------------
+# Sourced HERE, before cmake, purely so a misconfigured release fails in the
+# first second instead of after a full build and a bundle assembly. It reads
+# FEMM_SIGN_ID / FEMM_NOTARY_PROFILE and sets the mode; see the header of
+# packaging/macos_sign.sh for what they mean and how to create the profile.
+. "packaging/macos_sign.sh"
+
 # ---- Locate Qt 6 via Homebrew (try qt@6, then qt) --------------------
 QT_PREFIX=""
 for formula in qt@6 qt; do
@@ -80,11 +87,66 @@ APP_RES="$APP/Contents/Resources"
 DEPLOY_LOG="$(mktemp -t macdeployqt.XXXXXX)"
 trap 'rm -f "$DEPLOY_LOG"' EXIT
 
+# ---- Does everything in the bundle point at something that is there? --
+# Prints one line per unresolved dependency, and nothing at all when the
+# bundle is closed. Used twice: to decide whether macdeployqt needs another
+# pass (just below), and as a gate before signing (step 4b).
+#
+# All the relocatable load-command forms are checked, not just one. An
+# earlier version of this audit looked at @rpath alone and pronounced a
+# bundle clean while it held three broken @executable_path references --
+# which is why this is a function with a fixed definition rather than
+# something retyped each time it is needed.
+#
+# Absolute paths (/usr/lib, /System/...) are the OS's to satisfy, so they
+# are skipped.
+bundle_broken_refs() {
+    find "$APP/Contents" -type f -print0 2>/dev/null |
+    while IFS= read -r -d '' _f; do
+        file -b "$_f" 2>/dev/null | grep -q "Mach-O" || continue
+        otool -L "$_f" 2>/dev/null | tail -n +2 | awk '{print $1}' |
+        while IFS= read -r _r; do
+            if [ "${_r#@executable_path/../}" != "$_r" ]; then
+                _t="$APP/Contents/${_r#@executable_path/../}"
+            elif [ "${_r#@rpath/}" != "$_r" ]; then
+                _t="$APP_FRAMEWORKS/${_r#@rpath/}"
+            elif [ "${_r#@loader_path/}" != "$_r" ]; then
+                _t="${_f%/*}/${_r#@loader_path/}"
+            else
+                continue
+            fi
+            [ -e "$_t" ] || echo "  ${_f#"$APP"/} -> $_r"
+        done
+    done | sort -u
+}
+
 DEPLOYQT="$QT_PREFIX/bin/macdeployqt"
 if [ -x "$DEPLOYQT" ]; then
     echo "Bundling Qt frameworks (macdeployqt)..."
     if "$DEPLOYQT" "$APP" >"$DEPLOY_LOG" 2>&1; then
         echo "  Qt frameworks bundled."
+
+        # macdeployqt does not reach a fixpoint in one pass over a BARE
+        # bundle. It copies the plugins, but the frameworks those plugins
+        # pull in -- QtSvg for the svg icon engine, QtPdf for the pdf image
+        # format -- are left as @rpath references with nothing behind them.
+        # Run it again, with the plugins now in place, and it resolves and
+        # copies them.
+        #
+        # So the FIRST build of a fresh tree produced a bundle with dangling
+        # plugin dependencies, and the SECOND silently repaired it. That hid
+        # for as long as nobody threw the build directory away; `clean`, or
+        # any new checkout, hit it every time.
+        #
+        # A loop rather than just running it twice, so the condition is "the
+        # bundle is closed" and not "we did it the number of times that
+        # happened to work once".
+        _pass=1
+        while [ -n "$(bundle_broken_refs)" ] && [ "$_pass" -lt 4 ]; do
+            echo "  unresolved dependencies remain -- macdeployqt pass $((_pass + 1))..."
+            "$DEPLOYQT" "$APP" >>"$DEPLOY_LOG" 2>&1 || true
+            _pass=$((_pass + 1))
+        done
     else
         echo "ERROR: macdeployqt failed.  Its output:"
         cat "$DEPLOY_LOG"
@@ -144,47 +206,168 @@ done
 # forever, each entry is re-checked here against the bundle as it actually is,
 # and kept (with a warning) if anything still points at it -- so a future Qt
 # rearranging its dependencies degrades to a fatter bundle, never a broken one.
-PRUNE_PLUGINS="platforminputcontexts"
+# 2026-09-09: the lists above the fixpoint had gone stale and the step had
+# quietly stopped pruning. The bundle grew from ~75 MB to 108 MB, and
+# libssl.3.dylib and libcrypto.3.dylib started shipping -- the exact outcome the
+# comment above says this step exists to prevent.
+#
+# Newer Qt deploys QtVirtualKeyboard, which was never listed, so it landed in
+# the KEEP set and vouched for QtQuick -> QtQml -> QtNetwork -> OpenSSL under
+# the "still referenced" guard. Every one of those IS listed here, and every one
+# survived on its say-so. The newer PlugIns/tls and PlugIns/networkinformation
+# arrived the same way and vouch for QtNetwork and OpenSSL directly.
+#
+# femm_gui links Qt6::Widgets and nothing else (gui/CMakeLists.txt), so none of
+# it is reachable code; the virtual-keyboard PLUGIN was already being pruned,
+# which left its frameworks as dead weight still holding the chain up.
+#
+# Two list additions unravel it in one pass: plugins are removed before the
+# reference scan, and files inside a framework that is itself a prune candidate
+# are skipped when collecting references, so candidates cannot vouch for each
+# other.
+# 2026-09-11: QtPdf and QtSvg added, with the two plugins that pull them.
+# Neither is reachable: gui/icons.qrc is 88 .png and 18 .ico and the tree
+# contains no .svg at all, and Help > Manual hands the PDF to the system
+# viewer via QDesktopServices::openUrl (mainwindow.cpp:2322) rather than
+# rendering it. savebitmap writes PNG (built into QtGui) or JPEG, so
+# libqjpeg and libjpeg STAY.
+#
+# QtPdf is why this matters rather than being 4 MB of tidying: QtPdf pulls
+# QtNetwork, and QtNetwork hard-links libssl and libcrypto. Leaving QtPdf in
+# was enough to hold the whole OpenSSL chain up on its own.
+#
+# Entries may name a plugin DIRECTORY or a single plugin file -- `rm -rf`
+# does not care, and the pdf/svg plugins are one file each inside a
+# directory whose other members are wanted.
+# The image-format surface of this program is small and provable, so the
+# codecs are listed by what is USED rather than trimmed by guesswork:
+#
+#   reading  gui/icons.qrc, and nothing else -- 88 .png and 18 .ico
+#   writing  savebitmap, which is PNG or JPEG (gui/main.cpp:198-201);
+#            the only other grab() goes to the clipboard as a QPixmap
+#
+# PNG is built into QtGui and needs no plugin. So libqico and libqjpeg stay
+# (and with them libjpeg), and every other format Qt ships a codec for is
+# dead weight -- along with libjasper, libmng, libtiff, libwebp* and
+# libsharpyuv, which exist only to serve those codecs.
+#
+# SVG needs BOTH of its plugins named. libqsvgicon is the icon ENGINE and
+# libqsvg is the image FORMAT; pruning only the first leaves the second
+# holding QtSvg up, which is exactly what happened on the first attempt.
+PRUNE_PLUGINS="platforminputcontexts tls networkinformation \
+imageformats/libqpdf.dylib iconengines/libqsvgicon.dylib \
+imageformats/libqsvg.dylib imageformats/libqgif.dylib \
+imageformats/libqicns.dylib imageformats/libqjp2.dylib \
+imageformats/libqmacheif.dylib imageformats/libqmng.dylib \
+imageformats/libqtga.dylib imageformats/libqtiff.dylib \
+imageformats/libqwbmp.dylib imageformats/libqwebp.dylib"
 PRUNE_FRAMEWORKS="QtQuick.framework QtOpenGL.framework QtQmlMeta.framework \
 QtQmlModels.framework QtQmlWorkerScript.framework QtQml.framework \
-QtNetwork.framework libbrotlidec.1.dylib libbrotlicommon.1.dylib \
-libssl.3.dylib libcrypto.3.dylib"
+QtVirtualKeyboard.framework QtVirtualKeyboardQml.framework \
+QtNetwork.framework QtPdf.framework QtSvg.framework \
+libbrotlidec.1.dylib libbrotlicommon.1.dylib \
+libssl.3.dylib libcrypto.3.dylib \
+libjasper.7.dylib libmng.2.dylib libtiff.6.dylib liblcms2.2.dylib \
+libwebp.7.dylib libwebpdemux.2.dylib libwebpmux.3.dylib libsharpyuv.0.dylib"
 
 for p in $PRUNE_PLUGINS; do
     rm -rf "$APP/Contents/PlugIns/$p"
 done
+# A plugin directory left empty by the line above is litter, and an empty
+# directory inside Contents/PlugIns is one more thing for codesign to seal.
+#
+# rmdir is EXPECTED to fail on most of these -- imageformats still holds a
+# dozen plugins -- so the failure is absorbed on the command itself. Writing
+# it as `[ -d "$d" ] && rmdir "$d"` puts a failing compound at the end of the
+# loop body, which under `set -e` ends the script: that cost one clean build
+# to find, and the trace pointed at the rmdir line with the EXIT trap firing
+# immediately after.
+for d in "$APP"/Contents/PlugIns/*/; do
+    if [ -d "$d" ]; then
+        rmdir "$d" 2>/dev/null || true
+    fi
+done
 
-# Collect every install-name referenced by what we are KEEPING. Files inside a
-# prune candidate are skipped, so the candidates cannot vouch for each other.
-# (A self-reference is harmless here: a pruned item is never in the keep set.)
-PRUNE_REFS=$(
-    for f in "$APP_BIN"/* "$APP"/Contents/PlugIns/*/*.dylib \
-             "$APP_FRAMEWORKS"/*.dylib "$APP_FRAMEWORKS"/*.framework/Versions/*/*; do
-        [ -f "$f" ] || continue
-        skip=0
-        for p in $PRUNE_FRAMEWORKS; do
-            # Plain string tests, not `case`: a `case` whose pattern ends in `)`
-            # placed inside this $(...) trips a parser bug in macOS's system bash
-            # 3.2 ("syntax error near unexpected token ;;"). The prefix test is
-            # true when $f lives inside the framework dir we are pruning.
-            if [ "$f" = "$APP_FRAMEWORKS/$p" ] || \
-               [ "${f#"$APP_FRAMEWORKS/$p"/}" != "$f" ]; then
-                skip=1; break
-            fi
-        done
-        [ "$skip" -eq 1 ] && continue
-        otool -L "$f" 2>/dev/null | tail -n +2 | awk '{print $1}'
-    done | sed -e 's#.*/Frameworks/##' -e 's#^@rpath/##' -e 's#^@loader_path/##' \
-         | awk -F/ '{print $1}' | sort -u
-)
+# Decide what actually goes, by iterating to a FIXPOINT.
+#
+# CONDEMNED starts as every candidate and only ever shrinks. Each pass
+# collects the install-names referenced by everything NOT currently
+# condemned; a candidate something still points at is reprieved, and on the
+# NEXT pass its own dependencies count as referenced too. When a pass
+# reprieves nobody, what is left is genuinely unreachable.
+#
+# The single pass this replaces got that wrong in a way that shipped: files
+# inside a candidate are skipped when collecting references, so candidates
+# cannot vouch for each other -- but a candidate that is later REPRIEVED
+# never got its own dependencies counted, and they were deleted out from
+# under it. Adding QtPdf to the prune list made that visible. QtPdf vouched
+# for QtNetwork, QtNetwork was reprieved, and libssl, libcrypto and
+# libbrotlidec -- referenced by nothing else, because the tls plugin that
+# used to vouch for them had just been pruned -- were deleted anyway. The
+# result passed every check the script had and was a broken bundle:
+#
+#     QtNetwork -> @executable_path/../Frameworks/libssl.3.dylib   (gone)
+#
+# Step 4b is the backstop that would now catch it regardless.
+CONDEMNED=" "
+for fw in $PRUNE_FRAMEWORKS; do CONDEMNED="$CONDEMNED$fw "; done
+
+while : ; do
+    PRUNE_REFS=$(
+        for f in "$APP_BIN"/* "$APP"/Contents/PlugIns/*/*.dylib \
+                 "$APP_FRAMEWORKS"/*.dylib "$APP_FRAMEWORKS"/*.framework/Versions/*/*; do
+            [ -f "$f" ] || continue
+            skip=0
+            for p in $PRUNE_FRAMEWORKS; do
+                # Only a STILL-CONDEMNED candidate is skipped. Once reprieved,
+                # a framework is part of the keep set and what it points at
+                # has to count -- that is the whole fix.
+                [ "${CONDEMNED#* $p }" != "$CONDEMNED" ] || continue
+                # Plain string tests, not `case`: a `case` whose pattern ends in `)`
+                # placed inside this $(...) trips a parser bug in macOS's system bash
+                # 3.2 ("syntax error near unexpected token ;;"). The prefix test is
+                # true when $f lives inside the framework dir we are pruning.
+                if [ "$f" = "$APP_FRAMEWORKS/$p" ] || \
+                   [ "${f#"$APP_FRAMEWORKS/$p"/}" != "$f" ]; then
+                    skip=1; break
+                fi
+            done
+            [ "$skip" -eq 1 ] && continue
+            otool -L "$f" 2>/dev/null | tail -n +2 | awk '{print $1}'
+        done | sed -e 's#.*/Frameworks/##' -e 's#^@rpath/##' -e 's#^@loader_path/##' \
+             | awk -F/ '{print $1}' | sort -u
+    )
+
+    # Wrapped in newlines once, so each test below can ask for an exact line.
+    PRUNE_REFS_NL="$(printf '\n%s\n' "$PRUNE_REFS")"
+
+    reprieved=0
+    for fw in $PRUNE_FRAMEWORKS; do
+        [ "${CONDEMNED#* $fw }" != "$CONDEMNED" ] || continue   # already reprieved
+        [ -e "$APP_FRAMEWORKS/$fw" ] || continue
+        # Substring test rather than `printf ... | grep -qx`. That pipeline is
+        # only safe while PRUNE_REFS stays short: grep -q exits on the match,
+        # the writer takes SIGPIPE, and under `set -o pipefail` the status is
+        # 141 rather than 0 -- so the branch inverts and a framework that IS
+        # still referenced gets deleted. Demonstrated with a long list; the
+        # real one is a few dozen names, which is why it has never fired. The
+        # newline guards keep it a whole-line match, as -x was.
+        if [ "${PRUNE_REFS_NL#*$'\n'"$fw"$'\n'}" != "$PRUNE_REFS_NL" ]; then
+            echo "NOTE: $fw is still referenced — keeping it (Qt's dependency set has changed)"
+            NEWC=" "
+            for x in $CONDEMNED; do
+                [ "$x" = "$fw" ] || NEWC="$NEWC$x "
+            done
+            CONDEMNED="$NEWC"
+            reprieved=1
+        fi
+    done
+    [ "$reprieved" -eq 0 ] && break
+done
 
 for fw in $PRUNE_FRAMEWORKS; do
-    [ -e "$APP_FRAMEWORKS/$fw" ] || continue
-    if printf '%s\n' "$PRUNE_REFS" | grep -qx "$fw"; then
-        echo "NOTE: $fw is still referenced — keeping it (Qt's dependency set has changed)"
-    else
-        rm -rf "$APP_FRAMEWORKS/$fw"
-    fi
+    [ "${CONDEMNED#* $fw }" != "$CONDEMNED" ] || continue   # reprieved; keep it
+    rm -rf "$APP_FRAMEWORKS/$fw"
 done
 
 # ---- 3. Material libraries (read-only seeds) ------------------------
@@ -206,14 +389,36 @@ done
 mkdir -p "$APP_RES"
 cp ../matlibs/*.dat "$APP_RES/"
 
-# Lua 4 legacy client assets -- the TEXT half. These stay outside the bundle
-# with every other binding's client files; only the lua4 binary goes inside, for
-# signing (step 2). femm-lua.sh finds the interpreter and the engine wherever
-# they are: beside itself in a source tree, or inside femm_gui.app in a
-# distribution. Matches the other platforms' build scripts, where everything is
-# beside everything (linux_build.sh / freebsd_build.sh).
+# Lua 4 legacy client assets. Two copies, and the reason is that a source tree
+# and a distribution are shaped differently.
+#
+# In bin/, femm-lua.sh finds lua4 through its own fallback: there is no
+# bin/lua4 (step 3c deletes it), but bin/femm_gui.app/Contents/MacOS/lua4 is
+# right there. That is the arrangement the other platforms have, where
+# everything sits beside everything (linux_build.sh / freebsd_build.sh).
+#
+# In the BUNDLE, because a distribution has no bin/ at all. The launcher used
+# to ship nowhere: packaging/stage_extras.sh stages femm.lua and the README
+# into the bindings folder and never staged femm-lua.sh, so an installed .app
+# had no way to run a legacy Lua script. Even staged into bindings/luafemm it
+# could not have worked -- the lua4 fallback looks for femm_gui.app BESIDE the
+# script, and in ~/FEMM/bindings/luafemm the app is in /Applications.
+#
+# Contents/MacOS is where it belongs anyway: it is where executables live on
+# macOS, it is where lua4 already is, and it is the same relationship the other
+# platforms have between the launcher and the program (on Linux the launcher
+# lives in the app directory and unix_install.sh symlinks it onto PATH). The
+# script then needs NO change -- $here/femm.lua, $here/lua4 and FEMM_DIR=$here
+# are all satisfied by that one directory.
+#
+# A DMG is a drag-install and cannot put anything on PATH; /usr/local/bin is
+# root-owned and ~/bin is not on the macOS default PATH the way ~/.local/bin is
+# on Ubuntu. So the Read Me names the full path instead, the same way
+# unix_install.sh prints the line to add when PATH is not already set up.
 cp ../luafemm/femm.lua ../luafemm/femm-lua.sh bin/
 chmod +x bin/femm-lua.sh
+cp ../luafemm/femm.lua ../luafemm/femm-lua.sh "$APP_BIN/"
+chmod +x "$APP_BIN/femm-lua.sh"
 
 # ---- 3b2. The manual ------------------------------------------------
 # Help > Manual (F1) opens applicationDirPath()/manual.pdf, which is where the
@@ -353,35 +558,162 @@ copy_license ../pylib/vendor/LICENSE.micropython-lib   LICENSE-micropython-lib.t
 # the Inno Setup list, which is why this file is macOS-only.
 copy_license ../THIRD-PARTY-NOTICES.txt          THIRD-PARTY-NOTICES.txt
 
+# ---- 4b. Nothing may point at something that is not there -------------
+# The bundle is finished; before it is signed, check that it is CLOSED --
+# every relocatable dependency of every Mach-O in it resolves to a file that
+# is actually present.
+#
+# This is a gate, not a warning, because both ways of getting it wrong are
+# invisible at runtime until exactly the wrong moment. A dangling plugin
+# dependency does not stop the app launching: Qt loads image-format and
+# icon-engine plugins lazily, fails quietly, and carries on without the
+# format. The bundle looks fine, signs fine, notarises fine, and is broken.
+#
+# Both bugs this catches shipped at least once. macdeployqt's first pass
+# left the svg and pdf plugins pointing at frameworks it had not copied
+# (see step 1); the prune's non-iterated fixpoint deleted libssl and
+# libcrypto while keeping the QtNetwork that needs them (see step 2b).
+# Neither was found by anything else in this script.
+echo "Checking the bundle is self-contained..."
+BROKEN_REFS="$(bundle_broken_refs)"
+if [ -n "$BROKEN_REFS" ]; then
+    echo "ERROR: the bundle has unresolved dependencies:"
+    printf '%s\n' "$BROKEN_REFS"
+    echo
+    echo "       Nothing is signed or shipped in this state. Usually one of:"
+    echo "         * a framework pruned in step 2b that something still needs"
+    echo "           -- remove it from PRUNE_FRAMEWORKS, or prune whatever"
+    echo "           pulls it in as well;"
+    echo "         * macdeployqt not having copied something, which the retry"
+    echo "           loop in step 1 should have handled."
+    exit 1
+fi
+echo "  no unresolved dependencies."
+
 # ---- 5. Re-sign the whole bundle --------------------------------------
 # Two things broke the signature macdeployqt applied: adding/rewriting the
 # solvers, and macdeployqt's own habit of mangling the signatures of the
 # Homebrew dylibs it copies (the "codesign verification error" it prints).
-# A single deep ad-hoc re-sign re-seals every nested binary bottom-up and
-# fixes both.  No Developer ID is needed for local use — an ad-hoc signature
-# ("-") satisfies Gatekeeper's "code has not been modified" check.
+# Re-signing every nested binary bottom-up and then the bundle fixes both.
+#
+# WHICH signature depends on the environment -- ad-hoc by default, Developer
+# ID when FEMM_SIGN_ID is set, and notarised on top of that when
+# FEMM_NOTARY_PROFILE is too. packaging/macos_sign.sh, sourced at the top,
+# holds the whole arrangement and the inside-out walk itself; the three
+# modes are documented in its header.
+#
+# An ad-hoc signature is enough to run and test HERE -- it satisfies
+# Gatekeeper's "code has not been modified" check on the machine that made
+# it -- and is refused everywhere else, which is what the release modes are
+# for.
 if command -v codesign >/dev/null 2>&1; then
-    echo "Code-signing the bundle (ad-hoc)..."
-    # codesign prints "replacing existing signature" on rebuilds — benign noise.
-    # Hide it (and show it only if signing actually fails).
-    if ! codesign --force --deep --sign - "$APP" >>"$DEPLOY_LOG" 2>&1; then
-        echo "ERROR: code signing failed.  Output:"
-        cat "$DEPLOY_LOG"
-        exit 1
-    fi
-    if codesign --verify --deep --strict "$APP" 2>/dev/null; then
+    echo "Code-signing the bundle ($FEMM_SIGN_MODE)..."
+    femm_sign_app "$APP" "$DEPLOY_LOG"
+
+    # --deep is right HERE, where it means "check the nested code too" --
+    # unlike signing, where it is deprecated. See macos_sign.sh.
+    if codesign --verify --deep --strict --verbose=2 "$APP" >>"$DEPLOY_LOG" 2>&1; then
         echo "  Signature verified."
     else
         echo "WARNING: bundle signature did not verify."
         # The macdeployqt step is the usual culprit, so surface its (otherwise
         # hidden) output now that something has actually gone wrong.
         if [ -s "$DEPLOY_LOG" ]; then
-            echo "--- macdeployqt output ---"
+            echo "--- macdeployqt / codesign output ---"
             cat "$DEPLOY_LOG"
-            echo "--- end macdeployqt output ---"
+            echo "--- end output ---"
         fi
     fi
 fi
 
+# ---- 6. Notarise and staple the app -----------------------------------
+# Only when a notary profile is configured; otherwise this is where the
+# everyday build ends.
+#
+# The app is notarised HERE, separately from the .dmg that
+# packaging/macos_dmg.sh notarises later, and both rounds are wanted. The
+# DMG's ticket covers the DMG; it does not travel with an .app dragged out
+# of it onto a machine that is offline. Stapling the app as well means the
+# copy in /Applications validates on its own.
+if [ -n "$FEMM_NOTARY_PROFILE" ]; then
+    echo "Notarising the app..."
+
+    # notarytool will not take a .app directory -- it wants a single file --
+    # so the bundle is zipped for the trip. ditto, NOT `zip`: the Qt
+    # frameworks are full of symlinks (Versions/Current, the top-level
+    # QtCore -> Versions/Current/QtCore), and a zip that flattens them
+    # produces a submission Apple rejects as a malformed bundle.
+    # --keepParent keeps the femm_gui.app wrapper inside the archive.
+    #
+    # The ticket is stapled to the .app, never to the zip: the zip is a
+    # shipping container that is thrown away here.
+    NOTARY_TMP="$(mktemp -d)"
+    trap 'rm -f "$DEPLOY_LOG"; rm -rf "$NOTARY_TMP"' EXIT
+
+    ditto -c -k --keepParent "$APP" "$NOTARY_TMP/femm_gui.zip"
+    femm_notarize "$NOTARY_TMP/femm_gui.zip" "femm_gui.app"
+    femm_staple "$APP" "femm_gui.app"
+
+    # What Gatekeeper itself will say on the far side. `-t exec` is the
+    # right context for an application; the DMG is assessed differently
+    # (see macos_dmg.sh).
+    #
+    # Captured and string-matched rather than piped into `grep -q`: under
+    # pipefail that pipeline can report SIGPIPE instead of the match and
+    # warn about a bundle that is perfectly fine. See macos_sign.sh.
+    GK="$(spctl -a -t exec -vv "$APP" 2>&1 || true)"
+    if [ "${GK#*accepted}" != "$GK" ]; then
+        echo "  Gatekeeper: accepted."
+    else
+        echo "WARNING: Gatekeeper did not accept the app:"
+        printf '%s\n' "$GK" | sed 's/^/    /'
+    fi
+fi
+
+# ---- 7. Re-stamp the copies so the staleness check keeps working ------
+# testing/_verify_all.sh and packaging/macos_dmg.sh both detect "somebody
+# ran ninja without reassembling the bundle" by asking whether femm_gui is
+# newer than the copies sitting beside it. Signing breaks that test through
+# no fault of its own: the .app is signed LAST -- it has to be, each
+# signature seals what is below it -- and signing the .app rewrites
+# Contents/MacOS/femm_gui. So femm_gui comes out a second newer than the
+# solvers signed moments earlier, and every run afterwards reports a stale
+# bundle that is not stale. It cost a DMG build and a suite run to find.
+#
+# Re-stamping the copies restores exactly what the check MEANS -- "was
+# femm_gui modified after this bundle was assembled?" -- rather than
+# defeating it: a later `ninja` relinks femm_gui and makes it newer than
+# these again, which is the case the check exists to catch.
+#
+# One touch for all of them, so they share an instant and none can be
+# newer than another. mtime is not covered by a code signature, so this
+# invalidates neither the signature nor the stapled ticket.
+STAMP_LIST=""
+for exe in femm_gui $BUNDLE_EXES; do
+    if [ -f "$APP_BIN/$exe" ]; then
+        STAMP_LIST="$STAMP_LIST $APP_BIN/$exe"
+    fi
+done
+if [ -n "$STAMP_LIST" ]; then
+    touch $STAMP_LIST
+fi
+
 echo
 echo "Build complete.  App bundle: build/bin/femm_gui.app"
+case "$FEMM_SIGN_MODE" in
+    ad-hoc)
+        echo "Signed ad-hoc: runs here, refused on any other Mac."
+        echo "Set FEMM_SIGN_ID (and FEMM_NOTARY_PROFILE) to build a"
+        echo "distributable one -- see packaging/macos_sign.sh."
+        ;;
+    developer-id)
+        if [ -n "$FEMM_NOTARY_PROFILE" ]; then
+            echo "Signed, notarised and stapled. Run packaging/macos_dmg.sh"
+            echo "to wrap it in a .dmg for distribution."
+        else
+            echo "Signed with a Developer ID but NOT notarised."
+            echo "Set FEMM_NOTARY_PROFILE to notarise -- without it macOS will"
+            echo "still refuse this on another machine."
+        fi
+        ;;
+esac

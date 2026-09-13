@@ -146,6 +146,20 @@ Source: "bin\pybridge-worker\*"; DestDir: "{app}\bin\pybridge-worker"; Excludes:
 
 ; Documentation
 Source: "..\manual\manual.pdf";                DestDir: "{app}\bin"; Flags: ignoreversion
+
+; The file-format references, one per physics. These describe the on-disk
+; layout of .fem/.fee/.feh/.fec -- every keyword, in the order written -- and
+; are what someone writing a third-party tool, a mesh importer or a batch
+; generator needs. They existed as .tex in docs/ since before this port and
+; had never been built or listed here, so they reached nobody.
+;
+; Their own folder rather than {app}\bin, because they are reference material
+; a user opens rather than something the program loads, and four of them flat
+; beside the licences would bury the manual.
+Source: "..\docs\magnetics-file-formats.pdf";      DestDir: "{app}\docs"; Flags: ignoreversion
+Source: "..\docs\electrostatics-file-formats.pdf"; DestDir: "{app}\docs"; Flags: ignoreversion
+Source: "..\docs\heatflow-file-formats.pdf";       DestDir: "{app}\docs"; Flags: ignoreversion
+Source: "..\docs\currentflow-file-formats.pdf";    DestDir: "{app}\docs"; Flags: ignoreversion
 Source: "..\LICENSE-MIT";                   DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "..\LICENSE-GPL";                   DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "..\NOTICE-Qt.txt";                 DestDir: "{app}\bin"; Flags: ignoreversion
@@ -192,6 +206,28 @@ Source: "..\examples\ACElec2.py";                           DestDir: "{app}\exam
 Source: "..\examples\Force-vs-Position.py";                 DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "..\examples\coilgun.py";                           DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "..\examples\mySPMLossScriptAGB.py";                DestDir: "{app}\examples"; Flags: ignoreversion
+; The SPM core-loss script in all four forms it exists in. The _fast twin is
+; the reason: it is the only worked example of the BULK GETTERS anywhere in
+; the distribution. mo_getallelements() hands back four typed arrays in one
+; call, where the plain version asks mo_getpointvalues once per element per
+; rotor position -- about two million round trips over a full spin. Shipping
+; the pair is what makes that visible, since the interesting part is the
+; difference between them rather than either one alone, and the difference is
+; not subtle: measured through octavefemm on the same machine and model, 7.5
+; seconds per rotor position the plain way against 0.47 with the bulk getters.
+; Around 22 minutes for a full spin, against 85 seconds.
+;
+; Both languages, because the audience differs: the .py runs inside femm-qt
+; with nothing installed, the .m is the MATLAB/Octave original it was
+; translated from. All four open my_SPM_motor_AGB.fem, which already ships.
+;
+; Sourced from examples\ rather than octavefemm\examples\, unlike the other
+; five .m here. That directory holds an older standalone copy of _fast.m;
+; these are the pair added as the originals behind the .py translations
+; (234c652), so they belong together and match what the Python reads like.
+Source: "..\examples\mySPMLossScriptAGB_fast.py";           DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\mySPMLossScriptAGB.m";                 DestDir: "{app}\examples"; Flags: ignoreversion
+Source: "..\examples\mySPMLossScriptAGB_fast.m";            DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "..\examples\open1.py";                             DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "..\examples\plot-mesh-matplotlib.py";              DestDir: "{app}\examples"; Flags: ignoreversion
 Source: "..\examples\2horse_femm42.lua";                    DestDir: "{app}\examples"; Flags: ignoreversion
@@ -246,6 +282,42 @@ Source: "..\juliafemm\examples\ACElec2.jl";           DestDir: "{app}\examples";
 Source: "..\pyfemm\femm.py";                          DestDir: "{app}\pyfemm";  Flags: ignoreversion
 Source: "..\pyfemm\pyproject.toml";                   DestDir: "{app}\pyfemm";  Flags: ignoreversion skipifsourcedoesntexist
 Source: "..\pyfemm\pyfemm.md";                        DestDir: "{app}\pyfemm";  Flags: ignoreversion
+
+; pyFEMM's examples go in a directory of their OWN, and are the only examples
+; that do. Every other binding's examples are told apart by their extension --
+; .m, .jl, .sce, .lua -- so they can share {app}\examples harmlessly. Python
+; has two incompatible kinds of .py and no way to tell them apart by name:
+;
+;   {app}\examples\ACElec2.py    runs INSIDE femm-qt's script console; the
+;                                commands are globals and it opens with
+;                                create(3)
+;   here \ACElec2.py             runs under CPython and drives femm-qt over
+;                                TCP; it opens with import femm / openfemm()
+;
+; Two of them even share a basename (ACElec2.py, coilgun.py), so one would
+; simply overwrite the other in a flat directory. Worse than the collision is
+; that the survivor fails confusingly in whichever runtime it was not meant
+; for. Putting these beside femm.py says which is which by where it is, which
+; is the one thing an extension cannot say -- and it is where someone using
+; the binding is already looking, since pyfemm.md points at {app}\pyfemm.
+;
+; The set matches juliafemm's, which already made this call: the six tutorials
+; ship, and Phase3 and ReturnErrorMsg do not (the latter is four lines that
+; call a nonexistent command on purpose -- a diagnostic, not a tutorial).
+; All six were run headless before being listed here.
+Source: "..\pyfemm\examples\ACElec2.py";              DestDir: "{app}\pyfemm\examples"; Flags: ignoreversion
+Source: "..\pyfemm\examples\coilgun.py";              DestDir: "{app}\pyfemm\examples"; Flags: ignoreversion
+Source: "..\pyfemm\examples\demo2.py";                DestDir: "{app}\pyfemm\examples"; Flags: ignoreversion
+Source: "..\pyfemm\examples\htutor.py";               DestDir: "{app}\pyfemm\examples"; Flags: ignoreversion
+Source: "..\pyfemm\examples\roters1b.py";             DestDir: "{app}\pyfemm\examples"; Flags: ignoreversion
+Source: "..\pyfemm\examples\strips.py";               DestDir: "{app}\pyfemm\examples"; Flags: ignoreversion
+; The two models these scripts OPEN, rather than build. They duplicate copies
+; under {app}\examples on purpose: a script resolves its model relative to its
+; own directory, so a shared copy one level up would not be found, and an
+; example that cannot find its model is worse than no example. The other four
+; scripts build their geometry and save it, so they need nothing here.
+Source: "..\pyfemm\examples\coilgun.fem";             DestDir: "{app}\pyfemm\examples"; Flags: ignoreversion
+Source: "..\pyfemm\examples\roters1b.fem";            DestDir: "{app}\pyfemm\examples"; Flags: ignoreversion
 
 ; Lua 4 interface. The functional client (lua4.exe, femm.lua, femm-lua.bat)
 ; ships in {app}\bin above, because femm-lua.bat loads femm.lua / lua4.exe from

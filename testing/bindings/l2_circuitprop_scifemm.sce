@@ -5,7 +5,9 @@
 HERE = get_absolute_file_path('l2_circuitprop_scifemm.sce');
 exec(fullfile(HERE, '..', '..', 'scifemm', 'scifemm.sci'), -1);
 TESTS = fullfile(HERE, '..');
-TMP = getenv('TEMP', 'C:/temp');
+// TMPDIR is Scilab's own per-session scratch directory, created for us
+// on every platform. Scratch files here are not read back after the run.
+TMP = TMPDIR;
 
 function p = T(name)
     global G_TESTS

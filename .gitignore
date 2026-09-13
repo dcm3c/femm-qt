@@ -60,6 +60,14 @@ packaging/output/
 !docs/linux-build.pdf
 !docs/freebsd-build.pdf
 !docs/macos-build.pdf
+# The file-format references now ship too (femm-qt.iss -> {app}\docs,
+# stage_extras.sh -> docs/ everywhere else), so they need the same exception
+# for the same reason: a checkout without them means an installer that cannot
+# be built complete, and rebuilding them needs a full TeX installation.
+!docs/magnetics-file-formats.pdf
+!docs/electrostatics-file-formats.pdf
+!docs/heatflow-file-formats.pdf
+!docs/currentflow-file-formats.pdf
 *.png
 !gui/icons/*.png
 # The manual's figures are sources, not build products: since the manual moved

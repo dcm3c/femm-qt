@@ -15,7 +15,8 @@
 here = fileparts(mfilename('fullpath'));
 addpath(fullfile(here, '..', '..', 'octavefemm'));
 tests = fullfile(here, '..');
-tmp = getenv('TEMP'); if isempty(tmp), tmp = 'C:/temp'; end
+% tempdir is the platform's own temp directory: honours TMPDIR on POSIX and TEMP on Windows, so no per-platform branch is needed.
+tmp = tempdir;
 
 fmt = @(z) sprintf('%.10g %.10g', real(z), imag(z));
 T = @(n) strrep(fullfile(tests, n), '\', '/');

@@ -191,7 +191,8 @@ connections on TCP port {\itshape N} rather than the default, 48015.
 \vspace{1ex}
 \noindent{\bf Headless engine:} \texttt{femm\_headless [-{}-port {\itshape N}] [{\itshape script.py}]}\\
 \phantom{{\bf Headless engine:} }\texttt{femm\_headless -run {\itshape script.py} [{\itshape args}\ldots]}\\
-\phantom{{\bf Headless engine:} }\texttt{femm\_headless -i [{\itshape script.py}]}
+\phantom{{\bf Headless engine:} }\texttt{femm\_headless -i [{\itshape script.py}]}\\
+\phantom{{\bf Headless engine:} }\texttt{femm\_headless -{}-version} $|$ \texttt{-{}-help}
 
 \begin{itemize}
 \item{\itshape script.py} --- Run the script, and then continue listening for
@@ -208,7 +209,21 @@ REPL.
 
 \item\texttt{-{}-port {\itshape N}} --- Listen on TCP port {\itshape N} rather
 than the default, 48015.
+
+\item\texttt{-{}-version} --- Print the version and build date --- for example,
+{\tt FEMM headless engine v5.0 09Sep2026} --- and exit.  This is the quickest
+way to say which build you are running when reporting a problem, and it answers
+without starting the Python engine or opening a port, so it still works on a
+machine where FEMM itself will not start.  The same version and date appear in
+the GUI under {\tt Help|About}.
+
+\item\texttt{-h}, \texttt{-{}-help} --- Print a summary of these options and
+exit.
 \end{itemize}
+
+\noindent An unrecognized option is an error: {\tt femm\_headless} names it,
+prints the usage summary, and exits with code {\tt 2} rather than trying to run
+it as a script.
 
 \vspace{1ex}
 \noindent{\bf Passing arguments to a script.}  Anything after the script name

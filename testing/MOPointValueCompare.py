@@ -49,7 +49,19 @@ def parse(path):
         for piece in m.group(2).split("|"):
             nums = piece.split()
             if len(nums) >= 2:
-                comps.append(complex(float(nums[0]), float(nums[1])))
+                # A host's own banner can match the key = value shape above:
+                # Scilab on Linux prints a JVM class-data-sharing warning
+                # holding (value = "org.scilab...ScilabClassLoader") on
+                # STDOUT, which lands in a captured binding run. Drop a line
+                # whose "numbers" are not numbers rather than dying on it --
+                # the values around it are good. Same guard as
+                # PhaseCompare.parse, which is why that comparer alone
+                # survived the Scilab runs.
+                try:
+                    comps.append(complex(float(nums[0]), float(nums[1])))
+                except ValueError:
+                    comps = []
+                    break
         if comps:
             vals[(s, m.group(1).strip())] = comps
     return secs, vals

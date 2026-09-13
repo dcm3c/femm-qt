@@ -90,17 +90,28 @@ def main():
     # covers whatever gets staged beside the binaries next.
     import sys
     import os as _os
-    exedir = None
-    for entry in sys.path:
-        if entry.endswith("/python"):
-            exedir = entry[:-len("/python")]
-    check("found the binary directory", exedir is not None, str(sys.path))
-    if exedir:
-        risky = ("pybridge", "matplotlib", "numpy", "scipy", "os", "sys",
-                 "json", "struct", "time", "re", "random", "gc", "math")
-        shadowing = [n for n in _os.listdir(exedir)
-                     if n in risky and _os.path.isdir(exedir + "/" + n)]
-        check("no directory beside the binaries shadows a module",
+    # TWO sys.path entries end in "/python" (libfemm/py_state.cpp adds both):
+    # the package directory beside the binaries, and the per-user one under the
+    # data directory. Keeping only the LAST match picked the user directory --
+    # so on Windows this was checking %APPDATA%\FEMM, where nothing is ever
+    # staged, and the check passed vacuously; on a fresh Linux box the user
+    # directory has never been created and listdir raised ENOENT. py_state.cpp
+    # appends it whether or not it exists on purpose (a missing sys.path entry
+    # is simply skipped), so a missing directory is not a failure -- it holds
+    # nothing, which is what is being asserted.
+    pydirs = [e for e in sys.path if e.endswith("/python")]
+    check("found the binary directory", pydirs != [], str(sys.path))
+    risky = ("pybridge", "matplotlib", "numpy", "scipy", "os", "sys",
+             "json", "struct", "time", "re", "random", "gc", "math")
+    for entry in pydirs:
+        d = entry[:-len("/python")]
+        try:
+            names = _os.listdir(d)
+        except OSError:
+            continue
+        shadowing = [n for n in names
+                     if n in risky and _os.path.isdir(d + "/" + n)]
+        check("nothing beside " + d + " shadows a module",
               not shadowing, str(shadowing))
 
     # --- attributes, in both directions ----------------------------------------

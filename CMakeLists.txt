@@ -198,6 +198,27 @@ if(EXISTS "${MPY_DIR}/mpconfigport.sha256")
     endif()
 endif()
 
+# --- Build identity (Help > About, and the femm_headless banner) ----------
+# common/build_info.cpp is GENERATED, not written by hand: see common/
+# build_info.h for why a hand-written __DATE__ would silently freeze at the day
+# the tree was first built. Generated once here so a fresh configure has the
+# file, and again by femm_build_stamp on every build so the date is the date.
+# cmake/BuildInfo.cmake rewrites it only when the content changes, so this
+# costs one recompile-and-relink per day, not per build.
+set(FEMM_VERSION_SHORT "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
+set(BUILD_INFO_IN "${COMMON_DIR}/build_info.cpp.in")
+set(BUILD_INFO_CPP "${CMAKE_BINARY_DIR}/generated/build_info.cpp")
+set(BUILD_INFO_ARGS
+    "-DIN=${BUILD_INFO_IN}" "-DOUT=${BUILD_INFO_CPP}"
+    "-DFEMM_VERSION=${FEMM_VERSION_SHORT}")
+execute_process(COMMAND "${CMAKE_COMMAND}" ${BUILD_INFO_ARGS}
+                -P "${CMAKE_SOURCE_DIR}/cmake/BuildInfo.cmake")
+add_custom_target(femm_build_stamp
+    COMMAND "${CMAKE_COMMAND}" ${BUILD_INFO_ARGS}
+            -P "${CMAKE_SOURCE_DIR}/cmake/BuildInfo.cmake"
+    COMMENT "Stamping the build date")
+set_source_files_properties("${BUILD_INFO_CPP}" PROPERTIES GENERATED TRUE)
+
 # --- Common math library (complex, spars, StdAfx) — MIT ---
 # The shared numeric foundation linked by BOTH the MIT GUI/libfemm and the GPL
 # solvers. (Solver-only matrix code — cspars/fullmatrix — stays GPL in
@@ -209,7 +230,9 @@ add_library(femm_common STATIC
     "${COMMON_DIR}/StdAfx.cpp"
     "${COMMON_DIR}/fullmatrix.cpp"   # CFullMatrix + complex eig/qr kernels (MIT)
     "${COMMON_DIR}/utf8_io.cpp"      # UTF-8 path shims (femm_fopen/femm_path/...)
+    "${BUILD_INFO_CPP}"              # generated; femm_version/femm_build_date
 )
+add_dependencies(femm_common femm_build_stamp)
 target_include_directories(femm_common PUBLIC "${COMMON_DIR}")
 target_compile_options(femm_common PRIVATE -Wall
     -Wno-unused-variable -Wno-sign-compare -Wno-write-strings
@@ -373,7 +396,25 @@ set(FEMM_DATADIR "${CMAKE_INSTALL_DATADIR}/femm")
 install(TARGETS femm_headless fkn belasolv hsolv csolv lua
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
 if(TARGET femm_gui)
-    install(TARGETS femm_gui RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+    # BUNDLE DESTINATION is not optional on macOS. femm_gui sets MACOSX_BUNDLE
+    # (gui/CMakeLists.txt), and CMake REFUSES to configure an install() of a
+    # bundle target that has no BUNDLE DESTINATION -- "install TARGETS given no
+    # BUNDLE DESTINATION for MACOSX_BUNDLE executable target". That is a
+    # CONFIGURE error, so it stops the build before a single file is compiled,
+    # and it is invisible everywhere else: RUNTIME is what Windows, Linux and
+    # BSD use, and the rule only applies on Apple.
+    #
+    # The install() rules arrived with the relocatable-install work (2026-08-29)
+    # and the last macOS build predated them, so this had never been configured
+    # on a Mac until 2026-09-09.
+    #
+    # "." puts femm_gui.app at the prefix root, which is where a .app belongs;
+    # macOS ships the bundle in a DMG (assembled by macos_build.sh) rather than
+    # a bin/ tree, so this path exists for completeness rather than for the way
+    # anyone actually installs it there.
+    install(TARGETS femm_gui
+            RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+            BUNDLE  DESTINATION ".")
 endif()
 if(TARGET femm_headlessw)
     # Windows only, and ipc/CMakeLists.txt builds it only there: it is
