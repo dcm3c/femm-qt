@@ -19,6 +19,7 @@
 #include <QHBoxLayout>
 #include <QDialogButtonBox>
 #include <QMessageBox>
+#include "mouse_release_gate.h"
 
 PropertyListDialog::PropertyListDialog(DocumentBase *doc, int propType, QWidget *parent)
     : QDialog(parent), m_doc(doc), m_propType(propType)
@@ -40,7 +41,10 @@ PropertyListDialog::PropertyListDialog(DocumentBase *doc, int propType, QWidget 
     connect(addBtn, &QPushButton::clicked, this, &PropertyListDialog::onAdd);
     connect(delBtn, &QPushButton::clicked, this, &PropertyListDialog::onDelete);
     connect(modBtn, &QPushButton::clicked, this, &PropertyListDialog::onModify);
-    connect(m_list, &QListWidget::itemDoubleClicked, this, &PropertyListDialog::onModify);
+    // Emitted from the list's own double-click handler, before the button-up;
+    // onModify runs a modal editor. mouse_release_gate.cpp.
+    connect(m_list, &QListWidget::itemDoubleClicked, this,
+            [this]() { femmAfterMouseRelease(this, [this]() { onModify(); }); });
 
     auto *btnLayout = new QVBoxLayout;
     btnLayout->addWidget(addBtn);

@@ -1,6 +1,6 @@
 # Stamp the build date into the generated common/build_info.cpp.
 #
-#   cmake -DIN=<template> -DOUT=<generated> -DFEMM_VERSION=5.0 -P BuildInfo.cmake
+#   cmake -DIN=<template> -DOUT=<generated> -DFEMM_VERSION=5.0.20261013 -P BuildInfo.cmake
 #
 # Run at configure time so the file exists for a first build, and again as a
 # custom target on EVERY build so it cannot name a day the binary was not built

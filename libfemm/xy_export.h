@@ -60,10 +60,32 @@ inline std::vector<std::string> columnLabels(const std::string &name, int ncols)
 // spreadsheet and matches every other number the program shows.
 #define XY_EXPORT_FMT "%.14g"
 
+// One CSV field, quoted per RFC 4180 when it has to be: a field holding a
+// comma, a double quote or a line break is wrapped in double quotes, with each
+// embedded quote doubled. Anything else is written bare -- whitespace alone
+// needs no quoting. Labels such as "H, A/m" are why this exists: written bare,
+// they split into two columns and the header no longer lines up with the data.
+inline std::string csvField(const std::string &s)
+{
+    if (s.find_first_of(",\"\r\n") == std::string::npos) return s;
+    std::string out = "\"";
+    for (char c : s) {
+        if (c == '"') out += "\"\"";
+        else out += c;
+    }
+    out += '"';
+    return out;
+}
+
 // Write the data as comma-separated values: a header row naming the columns,
 // then one row per point holding the x value followed by one column per curve.
 // Ragged columns are tolerated -- a curve shorter than the x vector simply
 // stops contributing.
+//
+// The separator is a bare comma, with no space after it. Under RFC 4180 a
+// space after the comma belongs to the next field, and a quote only opens a
+// quoted field as that field's first character, so ", \"H, A/m\"" would still
+// split on the inner comma in Excel and in Python's csv module.
 inline bool writeCsv(const std::string &path,
                      const std::string &xLabel,
                      const std::vector<std::string> &colLabels,
@@ -74,15 +96,15 @@ inline bool writeCsv(const std::string &path,
     FILE *fp = femm_fopen(path, "wt");
     if (!fp) return false;
 
-    fprintf(fp, "%s", xLabel.c_str());
+    fprintf(fp, "%s", csvField(xLabel).c_str());
     for (size_t c = 0; c < cols.size(); c++)
-        fprintf(fp, ", %s", c < colLabels.size() ? colLabels[c].c_str() : "");
+        fprintf(fp, ",%s", c < colLabels.size() ? csvField(colLabels[c]).c_str() : "");
     fprintf(fp, "\n");
 
     for (size_t i = 0; i < x.size(); i++) {
         fprintf(fp, XY_EXPORT_FMT, x[i]);
         for (const auto &col : cols)
-            if (i < col.size()) fprintf(fp, ", " XY_EXPORT_FMT, col[i]);
+            if (i < col.size()) fprintf(fp, "," XY_EXPORT_FMT, col[i]);
         fprintf(fp, "\n");
     }
     fclose(fp);

@@ -1,0 +1,823 @@
+source,fig,curve,condition,H_Am,B_T
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.001,0.0085619
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.0012251,0.0087101
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.0015009,0.0088609
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.0018388,0.0090144
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.0022528,0.0091704
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.00276,0.0093292
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.0033813,0.0094908
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.0041426,0.0096551
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.0050752,0.0098223
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.0062177,0.0099924
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.0076175,0.010165
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.0093324,0.010341
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.011433,0.01052
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.014007,0.010703
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.017161,0.010888
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.021024,0.011077
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.025757,0.011268
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.031556,0.011463
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.03866,0.011662
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.047363,0.011864
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.058026,0.012069
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.07109,0.012278
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.087094,0.012491
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.1067,0.012707
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.13072,0.012927
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.16015,0.013151
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.19621,0.013379
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.24038,0.01361
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.29449,0.013846
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.36079,0.014086
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.44201,0.01433
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.54152,0.014578
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.66344,0.01483
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.81279,0.015087
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,0.99578,0.015348
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,1.22,0.015614
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,1.4946,0.015884
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,1.8311,0.01616
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,2.2433,0.016439
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,2.7483,0.016724
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,3.367,0.017014
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,4.1251,0.017308
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,5.0537,0.017608
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,6.1915,0.017913
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,7.5853,0.018223
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,9.293,0.018538
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,11.385,0.018859
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,13.948,0.019186
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,17.088,0.019518
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,20.935,0.019856
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,25.648,0.0202
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,31.423,0.02055
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,38.497,0.020906
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,47.163,0.021268
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,57.781,0.021636
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,70.789,0.022011
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,83.945,0.024435
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,98.969,0.027552
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,116.68,0.031066
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,137.57,0.035029
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,160.85,0.039904
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,187.19,0.045721
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,217.76,0.052408
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,251.41,0.060556
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,289.96,0.070035
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,332.74,0.081392
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,380.55,0.094874
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,433.64,0.11093
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,492.08,0.13015
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,555.89,0.15323
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,624.96,0.18104
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,698.04,0.21483
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,774.07,0.25605
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,849.83,0.30688
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,918.93,0.37037
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,968.05,0.45088
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,995.67,0.55115
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,1120.6,0.64869
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,1321.9,0.73027
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,1583,0.80285
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,1907.8,0.87126
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,2307,0.93779
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,2795.9,1.0034
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,3394.3,1.0681
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,4127.6,1.1309
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,5028.8,1.189
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,6139,1.2395
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,7496.8,1.29
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,9162.9,1.3362
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1075 & H1100,H 1075 / H 1100 aged,11223,1.3603
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,3.9836,0.0081444
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,4.4216,0.0084661
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,4.9078,0.0088006
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,5.4474,0.0091482
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,6.0464,0.0095096
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,6.7112,0.0098852
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,7.4491,0.010276
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,8.2682,0.010682
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,9.1773,0.011104
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,10.186,0.011542
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,11.306,0.011998
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,12.55,0.012472
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,13.929,0.012965
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,15.461,0.013477
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,17.161,0.014009
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,19.048,0.014563
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,21.142,0.015138
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,23.467,0.015736
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,26.047,0.016357
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,28.911,0.017003
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,32.09,0.017675
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,35.618,0.018373
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,39.535,0.019099
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,43.882,0.019854
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,48.707,0.020638
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,54.062,0.021453
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,60.006,0.0223
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,66.604,0.023181
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,73.928,0.024097
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,82.056,0.025049
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,90.745,0.026206
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,98.925,0.028113
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,107.84,0.030158
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,117.56,0.032353
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,128.16,0.034707
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,139.72,0.037232
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,152.31,0.039941
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,166.04,0.042847
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,180.43,0.046134
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,195.78,0.04976
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,212.42,0.05367
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,230.49,0.057887
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,250.04,0.06245
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,270.51,0.06756
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,292.67,0.073089
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,316.64,0.07907
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,341.98,0.085683
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,369.14,0.092901
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,398.33,0.10076
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,429.09,0.10945
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,462.18,0.11891
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,496.9,0.12939
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,533.94,0.14086
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,572.93,0.15352
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,613.85,0.16753
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,656.8,0.18301
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,701.54,0.20017
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,747.73,0.21929
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,794.92,0.24064
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,842.52,0.26459
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,889.71,0.29154
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,934.65,0.32212
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,975.42,0.35697
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,1007.7,0.39702
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,1024.3,0.4431
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,1028.2,0.49477
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,1067.2,0.54882
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,1144.2,0.5982
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,1244.9,0.64314
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,1365.5,0.68416
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,1503.4,0.72346
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,1659.3,0.76166
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,1834.9,0.79878
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,2031.4,0.83558
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,2251.1,0.87221
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,2496.6,0.9086
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,2770.8,0.94475
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,3076.9,0.98076
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,3419.1,1.0162
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,3801.7,1.051
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,4229.8,1.0847
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,4709.2,1.1169
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,5245.2,1.1482
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,5842.9,1.1798
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,6509.5,1.2117
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,7252.9,1.2439
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,8082.6,1.2761
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,9009.9,1.3073
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,10049,1.3356
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H900,H 900 aged,11223,1.3526
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,10.617,0.0085619
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,11.58,0.0089788
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,12.63,0.009416
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,13.775,0.0098745
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,15.024,0.010355
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,16.386,0.01086
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,17.872,0.011388
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,19.493,0.011943
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,21.26,0.012524
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,23.188,0.013134
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,25.291,0.013774
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,27.584,0.014445
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,30.085,0.015148
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,32.813,0.015885
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,35.789,0.016659
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,39.034,0.01747
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,42.573,0.018321
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,46.434,0.019213
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,50.644,0.020149
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,55.237,0.02113
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,60.245,0.022159
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,65.708,0.023238
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,71.666,0.024369
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,78.165,0.025556
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,85.252,0.0268
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,92.983,0.028105
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,101.41,0.029474
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,110.61,0.030909
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,120.64,0.032414
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,131.58,0.033992
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,143.51,0.035647
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,154.63,0.038022
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,166.27,0.040667
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,178.78,0.043497
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,192.24,0.046524
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,206.72,0.049761
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,222.28,0.053224
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,239.02,0.056928
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,257.01,0.060889
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,275.91,0.065235
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,295.55,0.070047
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,316.59,0.075214
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,339.13,0.080763
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,363.27,0.086721
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,388.73,0.093207
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,415.24,0.10034
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,443.56,0.10802
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,473.82,0.11629
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,505.15,0.12541
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,538.28,0.13529
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,573.52,0.14597
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,609.72,0.15778
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,648.2,0.17054
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,687.83,0.18459
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,729.62,0.19986
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,772.32,0.21672
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,816.82,0.23515
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,862.79,0.25535
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,909.87,0.27759
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,958.24,0.30201
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,1008.1,0.32881
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,1059.6,0.35814
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,1113.7,0.39013
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,1171.6,0.42473
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,1235.7,0.46169
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,1308.9,0.50037
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,1395.9,0.53941
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,1500,0.5773
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,1623.4,0.61267
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,1763.9,0.64655
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,1920.6,0.68004
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,2094.6,0.71326
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,2286.9,0.74654
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,2499.3,0.77986
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,2733.7,0.81324
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,2992.2,0.84676
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,3277.4,0.88022
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,3592.2,0.91359
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,3939.6,0.94676
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,4323.4,0.97945
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,4747.8,1.0114
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,5217.3,1.0422
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,5736.9,1.0717
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,6310,1.101
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,6940.8,1.1308
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,7635.6,1.161
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,8401.2,1.1913
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,9246,1.2212
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,10181,1.2493
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,Condition A,solution annealed,11223,1.2705
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.001,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.0012721,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.0016181,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.0020583,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.0026183,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.0033307,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.0042368,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.0053894,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.0068557,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.0087208,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.011093,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.014111,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.01795,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.022834,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.029046,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.036948,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.047,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.059787,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.076052,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.096742,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.12306,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.15654,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.19913,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.2533,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.32222,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.40988,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.52139,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.66323,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,0.84367,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,1.0732,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,1.3652,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,1.7366,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,2.209,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,2.81,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,3.5744,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,4.5469,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,5.7839,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,7.3575,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,9.3591,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,11.905,0.0001
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,14.971,0.00010153
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,15.97,0.00012802
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,17.035,0.00016141
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,18.172,0.00020352
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,19.385,0.00025661
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,20.678,0.00032355
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,21.92,0.00040863
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,23.227,0.00051614
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,24.613,0.00065192
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,26.081,0.00082343
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,28.232,0.0010329
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,30.889,0.0012912
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,34.075,0.0016081
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,37.95,0.0019942
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,42.709,0.0024593
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,48.374,0.0030214
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,55.13,0.0036977
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,63.189,0.0045083
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,72.733,0.0054803
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,84.031,0.0066436
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,97.362,0.0080363
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,113.06,0.0097039
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,131.51,0.011702
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,153.19,0.014095
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,178.48,0.016975
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,207.94,0.020443
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,242.27,0.02462
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,282.26,0.029649
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,328.86,0.035707
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,383.14,0.043002
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,445.31,0.05189
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,517.08,0.062661
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,599.59,0.07575
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,694.07,0.091696
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,802.24,0.11112
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,925.77,0.13483
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,1066.9,0.16376
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,1227.9,0.19908
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,1411.8,0.24219
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,1622.6,0.29473
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,1865.8,0.35852
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,2151.5,0.43524
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,2506.7,0.52409
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,2997.6,0.61548
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,3654.4,0.70531
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,4524.3,0.78789
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,5645.9,0.8656
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,7064.8,0.94466
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,8873.8,1.0201
+Cleveland-Cliffs ARMCO 17-4 PH,Fig. 3,H1150,H 1150 aged,11223,1.072
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.001,0.0026255
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.001,0.0032604
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.001,0.0040488
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.001,0.0050277
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.001,0.0062434
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.001,0.0077531
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.0010842,0.0089123
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.001346,0.0090002
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.0016711,0.009089
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.0020747,0.0091786
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.0025758,0.0092691
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.0031979,0.0093605
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.0039703,0.0094528
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.0049292,0.009546
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.0061197,0.0096401
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.0075977,0.0097352
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.0094328,0.0098312
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.011711,0.0099281
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.014539,0.010026
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.018051,0.010125
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.022411,0.010225
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.027824,0.010326
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.034544,0.010427
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.042887,0.01053
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.053245,0.010634
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.066105,0.010739
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.08207,0.010845
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.10189,0.010952
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.1265,0.01106
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.15705,0.011169
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.19499,0.011279
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.24208,0.01139
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.30055,0.011502
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.37314,0.011616
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.46326,0.01173
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.57515,0.011846
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.71406,0.011963
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,0.88652,0.012081
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,1.1006,0.0122
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,1.3665,0.01232
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,1.6965,0.012442
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,2.1062,0.012564
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,2.6149,0.012688
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,3.2465,0.012813
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,4.0306,0.01294
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,5.0041,0.013067
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,6.2127,0.013196
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,7.7132,0.013326
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,9.5761,0.013458
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,11.813,0.014135
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,14.546,0.015007
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,17.911,0.015932
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,22.055,0.016915
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,27.158,0.017959
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,33.441,0.019066
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,40.658,0.020915
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,49.354,0.023036
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,59.91,0.025372
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,72.137,0.028352
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,86.669,0.031806
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,103.73,0.035889
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,123.73,0.040694
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,147.03,0.046384
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,174.32,0.053026
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,206.09,0.060831
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,242.93,0.070035
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,285.73,0.080835
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,335.29,0.093541
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,392.45,0.10854
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,458.23,0.12627
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,533.12,0.14742
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,616.86,0.173
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,703.75,0.20538
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,775.43,0.2492
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,841.59,0.30452
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,907.15,0.37311
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,969.94,0.45842
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,1019.3,0.56575
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,1176.3,0.66349
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,1408.8,0.74786
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,1698.6,0.83404
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,2067.3,0.91317
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,2536.9,0.98005
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,3120.5,1.0442
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,3839.7,1.1113
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,4735.2,1.1733
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,5848.8,1.2308
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,7231.1,1.2855
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,8953.9,1.3311
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1075 & H1100,H 1075 / H 1100 aged,11103,1.3645
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1000.9,0.4933
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1017.5,0.5058
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1035.7,0.51816
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1055.3,0.53047
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1075.9,0.54275
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1097.6,0.555
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1120.4,0.56725
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1144.3,0.57948
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1169.1,0.59172
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1195.1,0.6039
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1222.2,0.61604
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1250.3,0.6282
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1279.5,0.64036
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1309.9,0.65238
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1341.4,0.66443
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1374,0.67648
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1407.9,0.68836
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1443,0.70026
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1479.3,0.71211
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1517,0.72381
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1555.9,0.73554
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1596.2,0.74709
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1638,0.75856
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1681.1,0.77
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1725.9,0.78119
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1772,0.79238
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1819.9,0.80334
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1869.4,0.81417
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1920.5,0.82491
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,1973.2,0.83554
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2027.6,0.8462
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2083.5,0.85691
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2141.2,0.86762
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2200.6,0.8783
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2261.9,0.8889
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2325.1,0.89941
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2390.4,0.90979
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2457.9,0.92002
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2527.5,0.93009
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2599.4,0.93999
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2673.6,0.94972
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2750.3,0.9593
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2829.3,0.96873
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2910.9,0.97803
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,2995,0.9872
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,3081.7,0.99628
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,3171.2,1.0053
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,3263.4,1.0142
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,3358.4,1.023
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,3456.3,1.0318
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,3557.1,1.0406
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,3661,1.0493
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,3768,1.0581
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,3878.2,1.0669
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,3991.6,1.0757
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,4108.4,1.0846
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,4228.6,1.0935
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,4352.4,1.1025
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,4479.9,1.1114
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,4611.2,1.1203
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,4746.5,1.1292
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,4886,1.138
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,5029.7,1.1467
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,5177.8,1.1554
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,5330.4,1.164
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,5487.7,1.1726
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,5649.8,1.181
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,5816.8,1.1894
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,5989,1.1977
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,6166.4,1.2059
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,6349.2,1.214
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,6537.6,1.2221
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,6731.7,1.2301
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,6931.8,1.238
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,7137.9,1.2459
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,7350.2,1.2538
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,7569,1.2617
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,7794.2,1.2695
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,8026.2,1.2775
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,8265.1,1.2855
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,8510.9,1.2936
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,8764.4,1.3015
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,9025.9,1.3092
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,9295.7,1.3166
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,9574.1,1.3236
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,9861.3,1.3303
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,10158,1.3365
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,10464,1.3423
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,10779,1.3476
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H900,H 900 aged,11105,1.352
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,778.42,0.25442
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,795.66,0.26184
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,812.49,0.26968
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,829.36,0.27782
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,846.47,0.28624
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,863.97,0.29491
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,881.9,0.30382
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,900.33,0.31297
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,919.36,0.32234
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,938.9,0.33196
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,959.15,0.3418
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,980.04,0.35187
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1001.6,0.36218
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1024,0.3727
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1047,0.38349
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1071,0.39446
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1095.7,0.40568
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1121.3,0.41711
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1147.9,0.42877
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1175.4,0.44066
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1204,0.45273
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1233.5,0.46506
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1264.3,0.47752
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1296.1,0.49022
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1329.2,0.50311
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1363.6,0.51614
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1399.2,0.52941
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1436.4,0.54274
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1475,0.55625
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1515.1,0.56992
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1557,0.5836
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1600.5,0.59742
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1645.9,0.61131
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1693.3,0.62512
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1742.7,0.63897
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1794.2,0.65282
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1848.3,0.66643
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1904.8,0.6799
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,1964.1,0.69307
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,2026.2,0.70599
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,2090.9,0.71871
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,2158.3,0.73127
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,2228.5,0.74372
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,2301.4,0.75608
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,2377.1,0.76837
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,2455.7,0.7806
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,2537.3,0.7928
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,2621.8,0.80499
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,2709.5,0.81719
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,2800.3,0.8294
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,2894.5,0.84165
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,2992,0.85392
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,3093,0.86625
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,3197.6,0.87862
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,3306,0.89104
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,3418.2,0.90353
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,3534.5,0.91607
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,3654.8,0.92867
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,3779.4,0.94134
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,3908.5,0.95407
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,4042.1,0.96686
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,4180.6,0.97971
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,4324,0.99258
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,4472.9,1.0052
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,4628,1.0174
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,4789.4,1.0292
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,4957.2,1.0407
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,5131.6,1.0518
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,5312.6,1.0627
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,5500.6,1.0733
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,5695.7,1.0837
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,5898.2,1.0939
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,6108.3,1.1039
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,6326.2,1.1137
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,6552.3,1.1235
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,6786.6,1.1331
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,7029.6,1.1427
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,7281.4,1.1522
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,7542.4,1.1617
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,7812.8,1.1713
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,8092.8,1.181
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,8382.6,1.1909
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,8682.3,1.2012
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,8992.4,1.2117
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,9313.6,1.2224
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,9646.4,1.233
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,9991.5,1.2436
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,10349,1.254
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,10720,1.2644
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,Condition A,solution annealed,11105,1.2744
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,123.71,0.00096602
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,124.61,0.0010659
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,125.61,0.001176
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,126.7,0.0012974
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,127.89,0.0014313
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,129.21,0.0015788
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,130.64,0.0017414
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,132.22,0.0019206
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,133.96,0.0021178
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,135.87,0.002335
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,137.96,0.002574
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,140.26,0.0028369
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,142.77,0.0031259
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,145.52,0.0034436
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,148.52,0.0037924
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,151.8,0.0041753
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,155.39,0.0045953
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,159.3,0.0050555
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,163.56,0.0055596
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,168.21,0.006111
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,173.28,0.0067138
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,178.78,0.0073723
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,185.16,0.008084
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,192.02,0.0088602
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,199.14,0.009711
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,206.52,0.010643
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,214.17,0.011665
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,222.93,0.012765
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,232.43,0.013959
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,242.65,0.015254
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,253.74,0.016656
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,265.62,0.018178
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,278.35,0.019826
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,292,0.021612
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,306.63,0.023545
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,322.32,0.025636
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,339.11,0.027899
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,357.05,0.030346
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,376.21,0.032994
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,396.66,0.035858
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,418.47,0.038955
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,441.72,0.042306
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,466.45,0.045931
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,492.76,0.049855
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,520.7,0.054104
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,550.37,0.058704
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,581.82,0.063689
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,615.11,0.069093
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,650.31,0.074956
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,687.44,0.081323
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,726.54,0.088243
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,767.73,0.095763
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,811.22,0.10393
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,857.93,0.11272
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,908.07,0.12219
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,961.55,0.13241
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,1018.3,0.14348
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,1077.9,0.15552
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,1140.1,0.16866
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,1204.7,0.18304
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,1271.8,0.19876
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,1341.7,0.21593
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,1415.1,0.23463
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,1492.6,0.25494
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,1574.7,0.27695
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,1661.9,0.3008
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,1753.8,0.32673
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,1851.7,0.35476
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,1957.4,0.3849
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,2072.8,0.41708
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,2200.2,0.45117
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,2342.4,0.48689
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,2501.8,0.524
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,2681.8,0.562
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,2885.4,0.60041
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,3115.8,0.6387
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,3376.8,0.67621
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,3671,0.71261
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,4001.3,0.74765
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,4370.1,0.78145
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,4780.6,0.81404
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,5236.2,0.84555
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,5740.7,0.87623
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,6298.1,0.90636
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,6912.8,0.93628
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,7589.9,0.96634
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,8338.4,0.99552
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,9167.6,1.023
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,10088,1.048
+Cleveland-Cliffs ARMCO 15-5 PH VAC CE,Fig. 7,H1150,H 1150 aged,11111,1.0691
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,47.013,0.0001
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,52.753,0.00010152
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,53.717,0.00011526
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,54.698,0.00013086
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,55.697,0.00014858
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,56.715,0.0001687
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,57.751,0.00019153
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,58.806,0.00021746
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,59.88,0.00024691
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,60.974,0.00028033
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,62.088,0.00031828
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,63.222,0.00036138
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,64.377,0.0004103
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,65.553,0.00046585
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,66.751,0.00052891
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,67.97,0.00060052
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,69.413,0.00068135
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,72.313,0.00076941
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,75.334,0.00086885
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,78.481,0.00098115
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,81.76,0.001108
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,85.175,0.0012512
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,88.733,0.0014129
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,92.44,0.0015955
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,96.613,0.0017992
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,102.35,0.0020176
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,108.44,0.0022624
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,114.88,0.0025369
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,121.7,0.0028448
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,128.94,0.00319
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,137.43,0.0035651
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,146.92,0.0039776
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,157.07,0.0044378
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,167.92,0.0049513
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,179.78,0.005519
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,193.14,0.0061383
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,207.5,0.0068271
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,222.92,0.0075931
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,239.91,0.0084349
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,258.43,0.009364
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,278.38,0.010395
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,300.09,0.011534
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,323.7,0.012792
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,349.18,0.014187
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,376.84,0.015728
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,406.75,0.017435
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,439.05,0.019327
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,473.94,0.021423
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,511.58,0.023747
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,552.09,0.026327
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,595.75,0.02919
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,642.59,0.032375
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,692.9,0.035915
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,746.82,0.039854
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,804.37,0.044248
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,865.93,0.049144
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,931.41,0.054613
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,1000.8,0.060733
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,1074.4,0.067583
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,1152,0.075261
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,1233.6,0.083885
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,1318.7,0.093593
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,1407.1,0.10454
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,1497.9,0.11693
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,1590.3,0.13097
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,1683.1,0.14694
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,1775.1,0.16513
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,1866.4,0.18581
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,1957.8,0.2093
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,2050.7,0.23588
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,2146.7,0.26591
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,2248.4,0.29969
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,2359.2,0.33753
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,2484.5,0.37955
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,2631.8,0.42562
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,2810.3,0.47518
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,3033.8,0.52664
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,3314.6,0.57777
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,3663.2,0.626
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,4075.7,0.67211
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,4554.1,0.7167
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,5104,0.76005
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,5732.7,0.80253
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,6448.6,0.8445
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,7262,0.88635
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,8183.7,0.9286
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,9233.2,0.96984
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,10431,1.009
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,11796,1.0465
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42,H950,H 950 aged,13351,1.082
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42 points,H950 (plotted points),H 950 aged,183.06,0.0094913
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42 points,H950 (plotted points),H 950 aged,320.92,0.016442
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42 points,H950 (plotted points),H 950 aged,458.79,0.023393
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42 points,H950 (plotted points),H 950 aged,596.65,0.031192
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42 points,H950 (plotted points),H 950 aged,713.82,0.039014
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42 points,H950 (plotted points),H 950 aged,1341.1,0.095469
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42 points,H950 (plotted points),H 950 aged,1809.8,0.1719
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42 points,H950 (plotted points),H 950 aged,2581.9,0.40988
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42 points,H950 (plotted points),H 950 aged,4346.5,0.7
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42 points,H950 (plotted points),H 950 aged,6573.1,0.85113
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42 points,H950 (plotted points),H 950 aged,8744.4,0.9532
+Cleveland-Cliffs ARMCO PH 13-8 Mo,Fig. 42 points,H950 (plotted points),H 950 aged,13115,1.077

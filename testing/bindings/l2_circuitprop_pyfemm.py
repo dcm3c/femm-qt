@@ -6,7 +6,8 @@ MOCircuitPropCompare.py checks it against the same Original FEMM golden.
 This is the scenario that matters most for a binding: every AC case returns
 COMPLEX current, voltage and flux linkage, so it exercises complex results
 coming back through the reply parser -- three per circuit, 105 components in
-all. (Complex arguments GOING OUT are still uncovered: no accuracy suite passes
+all, of which the comparer checks 72 (the harmonic cases with iron are not
+compared against OF; see of_ac_curve.py). (Complex arguments GOING OUT are still uncovered: no accuracy suite passes
 one, which is exactly why octavefemm's num.m survived five months.)
 
 Paths are absolute here. The in-process test relies on -run having chdir'd into

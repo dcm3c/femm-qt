@@ -186,8 +186,9 @@ timestamps, and paragraph formatting for reports.
 convention rather than desktop Python's space.
 \item{\tt collections}, {\tt struct}, {\tt array}, {\tt io}, {\tt errno},
 {\tt gc} --- the remaining general-purpose pieces.
-\item{\tt matplotlib}, {\tt xlsxwriter}, {\tt zipfile} --- publication-quality
-plots, Excel workbooks, and zip archives.  These two are different from everything above: they are not
+\item{\tt matplotlib}, {\tt xlsxwriter}, {\tt zipfile}, {\tt pandas} ---
+publication-quality plots, Excel workbooks, zip archives, and data frames.
+These four are different from everything above: they are not
 part of FEMM but are forwarded to a Python installation on the machine, so
 they need one (see the {\em Plotting with matplotlib} chapter, which also
 covers reaching any other Python package the same way).
@@ -574,7 +575,7 @@ Note if you use a path you must use two backslashes {\em e.g.}
 \subsection{Mesh Commands}
 
 \begin{itemize}
-\item{\tt mi\_createmesh()} runs triangle to create a mesh. Note that this is not a
+\item{\tt mi\_createmesh()} runs the mesher to create a mesh. Note that this is not a
 necessary precursor of performing an analysis, as {\tt
 mi\_analyze()} will make sure the mesh is up to date before running
 an analysis. The number of elements in the mesh is returned as a result.
@@ -716,6 +717,8 @@ properties:
                                 \item 4 -- Plain stranded wire
                                 \item 5 -- Litz wire
                                 \item 6 -- Square wire
+                                \item 7 -- 10\% copper-clad aluminum (CCA) wire
+                                \item 8 -- 15\% copper-clad aluminum (CCA) wire
                 \end{itemize}
         \item{\tt Phi\_hx} Hysteresis lag in degrees in the x-direction for linear problems.
         \item{\tt Phi\_hy} Hysteresis lag in degrees in the y-direction for linear problems.
@@ -1026,7 +1029,7 @@ Symbol & Definition \\ \hline
  Mu2 & relative permeability $\mu_y$ if planar, $\mu_z$ if axisymmetric \\
  Pe & Power density dissipated through ohmic losses \\
  Ph & Power density dissipated by hysteresis \\
- ff & Fill factor (for laminated materials) \\ \hline
+ ff & Fill factor: lamination fill for laminated materials, winding fill for wire materials, otherwise $-1$ (solid region) or 1 (multi-turn region) \\ \hline
  \end{tabular}
 \end{center}
 

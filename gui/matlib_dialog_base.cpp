@@ -22,6 +22,7 @@
 #include <QLineEdit>
 #include <QSplitter>
 #include <QMessageBox>
+#include "mouse_release_gate.h"
 #include <QMenu>
 #include <QFileDialog>
 #include <QDesktopServices>
@@ -76,10 +77,16 @@ MatLibDialogBase::MatLibDialogBase(const QString &title, const QString &libFilen
 
     // All operations are reached via drag-and-drop, double-click, the Delete/
     // Insert keys, and the right-click context menus — no button column.
+    // itemDoubleClicked is emitted from the tree's own double-click handler,
+    // i.e. before the button-up; the editor is modal. mouse_release_gate.cpp.
     connect(m_libTree, &QTreeWidget::itemDoubleClicked, this,
-            [this](QTreeWidgetItem *item, int) { modifyItem(m_libTree, item); });
+            [this](QTreeWidgetItem *item, int) {
+                femmAfterMouseRelease(this, [this, item]() { modifyItem(m_libTree, item); });
+            });
     connect(m_modelTree, &QTreeWidget::itemDoubleClicked, this,
-            [this](QTreeWidgetItem *item, int) { modifyItem(m_modelTree, item); });
+            [this](QTreeWidgetItem *item, int) {
+                femmAfterMouseRelease(this, [this, item]() { modifyItem(m_modelTree, item); });
+            });
     connect(m_libTree, &MatLibTree::itemDropped, this, &MatLibDialogBase::onItemDropped);
     connect(m_modelTree, &MatLibTree::itemDropped, this, &MatLibDialogBase::onItemDropped);
 
@@ -176,30 +183,57 @@ void MatLibDialogBase::offerShippedLibraryUpdate()
     const std::string name = m_libFilename.toStdString();
     if (!materialLibUpdateAvailable(name.c_str())) return;
 
+    // An unedited older library and an edited one deserve different words:
+    // the first loses nothing by being replaced, and saying "your changes
+    // will be lost" to someone who made none is the kind of warning that
+    // teaches people to click No.
+    const bool pristine = materialLibCopyIsPristine(name.c_str());
+    const QString body = pristine
+        ? tr("This version of FEMM ships an updated %1. Your copy is an older "
+             "stock library with no changes of your own.\n\n"
+             "Replace it with the new one?\n\n"
+             "Choosing No keeps your copy and stops this being asked again "
+             "for this version.")
+        : tr("This version of FEMM ships an updated %1, and you have your own "
+             "edited copy of it.\n\n"
+             "Replace your copy with the new one? Any materials you have added "
+             "or changed will be lost.\n\n"
+             "Choosing No keeps your library and stops this being asked again "
+             "for this version.");
     const QMessageBox::StandardButton answer = QMessageBox::question(
-        this, tr("Updated Material Library Available"),
-        tr("This version of FEMM ships an updated %1, and you have your own "
-           "edited copy of it.\n\n"
-           "Replace your copy with the new one? Any materials you have added "
-           "or changed will be lost.\n\n"
-           "Choosing No keeps your library and stops this being asked again "
-           "for this version.")
-            .arg(m_libFilename),
+        this, tr("Updated Material Library Available"), body.arg(m_libFilename),
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
     if (answer == QMessageBox::Yes) {
         const std::string from = materialLibShippedPath(name.c_str());
         const std::string to = materialLibWritePath(name.c_str());
-        std::error_code ec;
-        if (to.empty() ||
-            !std::filesystem::copy_file(femm_path(from), femm_path(to),
-                                        std::filesystem::copy_options::
-                                            overwrite_existing, ec) || ec) {
+        // Remove, then copy. NOT copy_file(..., overwrite_existing): MinGW's
+        // libstdc++ (GCC 13.1, the Windows toolchain) fails that with EEXIST
+        // ("File exists") whenever the target exists -- which here it always
+        // does -- so "Replace your copy" could never succeed on Windows.
+        // Removing first is safe on this path: with no user copy the resolver
+        // reads the shipped library, which is what the user just chose, so a
+        // copy that failed after the remove still leaves them on it.
+        bool ok = !to.empty();
+        if (ok) {
+            std::error_code ec;
+            std::filesystem::remove(femm_path(to), ec);
+            ec.clear();
+            ok = std::filesystem::copy_file(femm_path(from), femm_path(to), ec) && !ec;
+        }
+        if (!ok) {
+            // Say what actually happened: the remove may or may not have
+            // gone through before the copy failed.
+            std::error_code ec;
+            const bool kept = !to.empty() && std::filesystem::exists(femm_path(to), ec);
             QMessageBox::warning(
                 this, tr("Could Not Update Material Library"),
-                tr("The updated library could not be copied to:\n\n%1\n\n"
-                   "Your existing library is unchanged.")
-                    .arg(QString::fromStdString(to.empty() ? from : to)));
+                tr("The updated library could not be copied to:\n\n%1\n\n%2")
+                    .arg(QString::fromStdString(to.empty() ? from : to),
+                         kept ? tr("Your existing library is unchanged.")
+                              : tr("Your old copy was removed, so FEMM will use "
+                                   "the updated library it ships with.")));
+            if (!kept) m_libPath = from;
             return;                     // do NOT mark seen; offer again later
         }
         m_libPath = to;

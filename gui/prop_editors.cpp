@@ -15,6 +15,10 @@
 #include <QDialogButtonBox>
 #include <QGroupBox>
 
+// Items in the Material Type combo before any "Other" entry: Not laminated,
+// three laminations, magnet/stranded/litz/square wire, 10% and 15% CCA.
+static const int kLamTypeItems = 10;
+
 // Evaluate a PyLineEdit as CComplex
 static CComplex evalComplex(const PyLineEdit *edit)
 {
@@ -69,6 +73,11 @@ MaterialEditorDialog::MaterialEditorDialog(QWidget *parent) : QDialog(parent)
     m_lamType->addItem(tr("Plain stranded wire"));    // 5 -> LamType 4
     m_lamType->addItem(tr("Litz wire"));              // 6 -> LamType 5
     m_lamType->addItem(tr("Square wire"));            // 7 -> LamType 6
+    // Copper-clad aluminium. Same round-wire model as magnet/litz wire with
+    // their own proximity-effect curve fits (solver GetFillFactor, results
+    // GetFillFactor); stranded like litz. OF MatDlg indices 8 and 9.
+    m_lamType->addItem(tr("10% CCA"));                // 8 -> LamType 7
+    m_lamType->addItem(tr("15% CCA"));                // 9 -> LamType 8
     form->addRow(tr("Material Type:"), m_lamType);
     connect(m_lamType, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MaterialEditorDialog::onLamTypeChanged);
@@ -132,8 +141,9 @@ void MaterialEditorDialog::onLamTypeChanged(int idx)
     const bool isWire = (idx >= 4);
 
     if (isWire) {
-        // Magnet (4) and square (7) wire are a single strand; stranded (5) and
-        // litz (6) let the user set the strand count.
+        // Magnet (4) and square (7) wire are a single strand; stranded (5),
+        // litz (6) and the two CCA types (8, 9) let the user set the strand
+        // count, as OF's MatDlg does.
         if (idx == 4 || idx == 7) {
             m_NStrands->setText("1");
             m_NStrands->setEnabled(false);
@@ -245,6 +255,19 @@ void MaterialEditorDialog::fromProp(const FMaterialProp &m)
     int lamIdx = m.LamType;
     if (lamIdx != 0) lamIdx++;
     else if (m.Lam_d != 0 || m.LamFill != 1) lamIdx = 1;
+    // A stored type this combo has no entry for (a file from a newer FEMM, or
+    // a hand edit) must survive an open-and-OK unchanged. Selecting an index
+    // past the last item does NOT do that: Qt sets currentIndex to -1 and
+    // toProp would then store LamType 0, silently turning a wound coil into a
+    // solid conductor -- which is exactly what happened to CCA materials
+    // before their entries existed. Give it an entry of its own that carries
+    // the original value, which toProp writes back verbatim.
+    while (m_lamType->count() > kLamTypeItems)
+        m_lamType->removeItem(m_lamType->count() - 1);
+    if (lamIdx < 0 || lamIdx >= kLamTypeItems) {
+        m_lamType->addItem(tr("Other (LamType %1)").arg(m.LamType), m.LamType);
+        lamIdx = m_lamType->count() - 1;
+    }
     // Populate the combo and nonlinear check without firing their handlers
     // mid-load; the handlers run once, explicitly, after every field is in
     // place (mirrors OF OnInitDialog, where MFC's SetCurSel doesn't notify).
@@ -288,6 +311,8 @@ void MaterialEditorDialog::toProp(FMaterialProp &m) const
     int lamIdx = m_lamType->currentIndex();
     m.LamType = lamIdx - 1;
     if (m.LamType < 0) m.LamType = 0;
+    const QVariant kept = m_lamType->currentData();   // set only on "Other"
+    if (kept.isValid()) m.LamType = kept.toInt();
     m.Lam_d = m_Lam_d->evaluateAsDouble(0);
     m.LamFill = m_LamFill->evaluateAsDouble(1);
     if (m.LamFill <= 0) m.LamFill = 1;

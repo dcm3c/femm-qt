@@ -1,0 +1,63 @@
+% SPDX-License-Identifier: CC-BY-4.0
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[colorlinks=true, urlcolor=blue, linkcolor=red]{hyperref}
+
+\begin{document}
+\author{David Meeker}
+\title{Samarium Cobalt Magnet Properties}
+\maketitle
+
+Sintered SmCo properties defined in FEMM are meant to be representative of typical examples rather than strictly based on the products from one vendor.  Reasonable references are below.
+
+SmCo magnets come in two formulations: 
+
+\begin{itemize}
+\item \textit{SmCo1:5} was the first developed SmCo alloy.  Energy products for this alloy range from 16 to 25 MGOe.  This alloy has a slightly higher electrical conductivity with 1.8 MS/m being a representative value. Based on manufacturer's specs, a relative permeability 1.03 is typical for this alloy.
+\item \textit{SmCo2:17} is a more recent SmCo alloy.  Energy products for this alloy are higher, ranging from 20 to 35 MGOe.  Electrical conductivity is lower with 1.16 MS/m being a representative value. Based on manufacturer's specs, a relative permeability 1.1 is typical for this alloy.
+\end{itemize}
+
+Both alloys have a very high coercivity and a straight-line second-quadrant demagnetization curve.
+
+On the basis of data from many vendors, the numerical designation of the magnet grade represents the best-case energy product in units of MGOe as measured at room temperature (20°C) for a range of energy product usually spanning a range of 2 MGOe. However, magnets are rarely delivered magnetized to this best-case magnetization. For this reason, it is assumed that the actual energy product is the numerical grade minus one in units of MGOe, i.e. a SmCo26 magnet has an energy product of 25MGOe at 20°C.
+
+The grades assumed by FEMM are listed below in Tables 1 and 2.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|} 
+\hline
+Grade & \(BH_{max}\), MGOe & \(B_r\), T & \(B_r\), kG & \(H_{cB}\), kA/m & \(H_{cB}\), kOe & \(\sigma\), MS/m \\ \hline \hline
+SmCo18 & 17 & 0.837 & 8.37 & 647 & 8.13 & 1.8 \\ \hline
+SmCo20 & 19 & 0.885 & 8.85 & 684 & 8.59 & 1.8 \\ \hline
+SmCo22 & 21 & 0.930 & 9.30 & 719 & 9.03 & 1.8 \\ \hline
+SmCo24 & 23 & 0.973 & 9.73 & 752 & 9.45 & 1.8 \\ \hline
+\end{tabular}
+\caption{Typical SmCo1:5 Properties}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+Grade & \(BH_{max}\), MGOe & \(B_r\), T & \(B_r\), kG & \(H_{cB}\), kA/m & \(H_{cB}\), kOe & \(\sigma\), MS/m \\ \hline \hline
+SmCo24 & 23 & 1.006 & 10.06 & 728 & 9.15 & 1.16 \\ \hline
+SmCo26 & 25 & 1.049 & 10.49 & 759 & 9.53 & 1.16 \\ \hline
+SmCo28 & 27 & 1.090 & 10.90 & 789 & 9.91 & 1.16 \\ \hline
+SmCo30 & 29 & 1.130 & 11.30 & 817 & 10.27 & 1.16 \\ \hline
+SmCo32 & 31 & 1.1679 & 11.68 & 845 & 10.62 & 1.16 \\ \hline
+\end{tabular}
+\caption{Typical SmCo2:17 Properties}
+\end{table}
+
+\subsection*{References}
+
+\noindent Dexter Magnetics, \href{https://web.archive.org/web/20201124041321/https://www.dextermag.com/products/permanent-magnets/samarium-cobalt-magnets/}{Samarium Cobalt Magnets}, accessed 22 Aug 2019.
+
+\noindent Bunting Magnetics Europe, \href{https://web.archive.org/web/20201218013444/https://www.buntingeurope.com/wp-content/uploads/2018/07/BME_Samarium_Cobalt_data_sheet.pdf}{Samarium Cobalt Data Sheet}, accessed 18 Dec 2020.
+
+\noindent \url{https://en.wikipedia.org/wiki/Samarium%E2%80%93cobalt_magnet}
+
+\noindent Copyright 2026 David Meeker. This document is licensed under the \href{https://creativecommons.org/licenses/by/4.0/}{Creative Commons Attribution 4.0 International License (CC BY 4.0)}.
+
+\end{document}

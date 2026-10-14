@@ -211,7 +211,10 @@ REPL.
 than the default, 48015.
 
 \item\texttt{-{}-version} --- Print the version and build date --- for example,
-{\tt FEMM headless engine v5.0 09Sep2026} --- and exit.  This is the quickest
+{\tt FEMM headless engine v5.0.20261013 13Oct2026} --- and exit.  The version
+is the release, numbered by its date; the date after it is when this
+particular binary was built, which differs from the release date for a test
+build made between releases.  This is the quickest
 way to say which build you are running when reporting a problem, and it answers
 without starting the Python engine or opening a port, so it still works on a
 machine where FEMM itself will not start.  The same version and date appear in
@@ -1591,8 +1594,12 @@ denote the direction in which the material is laminated
 {\tt Laminated y-direction}).
 If the material is meant to represent a bulk wound coil, this drop
 list specifies the sort of wire from which the coil is constructed
-({\tt Magnet wire}, {\tt Plain stranded wire}, {\tt Litz wire} or
-{\tt Square wire}).  The default entry, {\tt Not laminated}, denotes a
+({\tt Magnet wire}, {\tt Plain stranded wire}, {\tt Litz wire},
+{\tt Square wire}, {\tt 10\% CCA} or {\tt 15\% CCA}).  The two CCA
+types are copper-clad aluminum wire with 10\% or 15\% of the cross-section
+copper; their proximity and skin effects follow their own curve fits rather
+than those for solid copper wire, and the conductivity entered for the
+material should be that of the clad wire as a whole.  The default entry, {\tt Not laminated}, denotes a
 solid material.  Selecting a wire type resets the material's magnetic and
 source properties -- $\mu$, $H_c$, $J$, and any B-H curve -- since those
 are implied by the wire's geometry and fill rather than specified directly.
@@ -1640,7 +1647,7 @@ If a wire type is selected, the {\tt Wire} row's {\tt Strands} and
 {\tt Square wire} types are selected, it is understood that there can only be
 one strand, so the {\tt Strands} box is set to 1 and disabled.  The wire's
 diameter (or width) is then entered in the {\tt Dia (mm)} edit box.  For
-stranded and Litz wire, one enters the number of strands and the strand
+stranded, Litz and CCA wire, one enters the number of strands and the strand
 diameter.  Currently, only builds
 with a single strand gauge are supported.
 
@@ -2034,9 +2041,14 @@ titled {\tt Conductor Properties} instead.
 \item {\tt Problem Info} Reports the problem type, frequency, depth and
 length units of the solution, along with the number of nodes and elements in
 its mesh.
-\item {\tt Plot B-H Curves} Draws the B-H curve of every nonlinear material
-used in the model, which is a quick way to check that a material's curve is
-the one you meant to assign.
+\item {\tt Plot B-H Curves} Asks which nonlinear material to plot and how
+many points to sample (the count starts at the {\tt Edit|Preferences} value),
+then draws that material's B-H curve as the solver used it. For a DC problem
+this is the curve you entered. For a harmonic problem it is the effective
+curve: the fundamental of B under sinusoidal H, with the hysteresis lag,
+lamination eddy currents and fill factor folded in. It is complex, so it is
+drawn as Re[B] and Im[B] against $|H|$. The plot window's {\tt Export...}
+button writes the points to a file.
 \end{itemize}
 
 \subsection{Contour Plot}

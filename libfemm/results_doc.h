@@ -244,6 +244,7 @@ public:
         double E = 0;
         double Ph = 0, Pe = 0;
         double ff = 0;
+        bool ffIsLam = false;   // ff holds the lamination fill, not a winding's
     };
     bool GetPointValues(double x, double y, PointVals &u);
     bool GetPointValues(double x, double y, int k, PointVals &u);

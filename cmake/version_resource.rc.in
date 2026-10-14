@@ -1,0 +1,32 @@
+// GENERATED FILE -- do not edit. cmake/WinVersion.cmake writes one of these per
+// executable from cmake/version_resource.rc.in and project(VERSION ...).
+#include <winver.h>
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION    @FEMM_RC_BINARY_VERSION@
+ PRODUCTVERSION @FEMM_RC_BINARY_VERSION@
+ FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK
+ FILEFLAGS      0
+ FILEOS         VOS_NT_WINDOWS32
+ FILETYPE       VFT_APP
+ FILESUBTYPE    VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName",      "David Meeker and contributors"
+            VALUE "FileDescription",  "@FEMM_RC_DESCRIPTION@"
+            VALUE "FileVersion",      "@FEMM_RC_VERSION@"
+            VALUE "InternalName",     "@FEMM_RC_FILENAME@"
+            VALUE "LegalCopyright",   "Copyright (C) 2026 David Meeker and contributors"
+            VALUE "OriginalFilename", "@FEMM_RC_FILENAME@"
+            VALUE "ProductName",      "FEMM"
+            VALUE "ProductVersion",   "@FEMM_RC_VERSION@"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

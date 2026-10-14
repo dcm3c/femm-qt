@@ -105,9 +105,18 @@ g++ -c -I../common -std=c++17 -O1 -o "$BD/utf8_io.o"            ../common/utf8_i
 g++ -c -I../common -std=c++17 -O1 -D'I=CComplex(0,1)' -o "$BD/fullmatrix.o" ../common/fullmatrix.cpp
 
 COMMON_LINK="$BD/py_state.o $BD/py_init_script.o $BD/py_bind.o $BD/py_bind_type.o $BD/complex.o $BD/test_stubs.o $BD/py_os.o $BD/py_pybridge.o $BD/py_clinalg.o $BD/pybridge_host.o $BD/utf8_io.o $BD/fullmatrix.o $BD/libmpyembed.a $BD/libbdwgc.a"
-# -lws2_32: pybridge_host.cpp talks to the CPython worker over a socket.
-g++ -o "$BD/test_py_bind"  "$BD/test_bind.o"  $COMMON_LINK -lws2_32
-g++ -o "$BD/test_py_state" "$BD/test_state.o" $COMMON_LINK -lws2_32
+# pybridge_host.cpp talks to the CPython worker over a socket. On Windows that
+# is Winsock, a library of its own; everywhere else the sockets live in libc,
+# so there is nothing to add -- and naming -lws2_32 there fails the link
+# outright ("cannot find -lws2_32"), which is what this script did on Linux.
+# Same shape as the Qt phase below, which already tests for its dependency
+# rather than assuming the Windows layout.
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) SOCKLIB=-lws2_32 ;;
+  *)                    SOCKLIB= ;;
+esac
+g++ -o "$BD/test_py_bind"  "$BD/test_bind.o"  $COMMON_LINK $SOCKLIB
+g++ -o "$BD/test_py_state" "$BD/test_state.o" $COMMON_LINK $SOCKLIB
 
 echo "=== Phase 4: compile-check shared templates vs MagDocument (syntax only) ==="
 g++ -fsyntax-only -std=c++17 $MPYINC $OURINC ../tests/compile_check_templates.cpp \

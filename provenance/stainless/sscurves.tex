@@ -1,0 +1,348 @@
+% SPDX-License-Identifier: CC-BY-4.0
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+\documentclass[
+  11pt,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{2} % number sections and subsections
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
+\hypersetup{
+  pdftitle={B-H Curves for Stainless Steels},
+  pdfauthor={David Meeker},
+  colorlinks=true,
+  linkcolor={Maroon},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+\renewcommand{\today}{%
+  \the\day\ %
+  \ifcase\month\or
+  Jan\or Feb\or Mar\or Apr\or May\or Jun\or
+  Jul\or Aug\or Sep\or Oct\or Nov\or Dec\fi
+  \ \the\year
+}
+
+\title{B-H Curves for Stainless Steels}
+\author{David Meeker}
+\date{\today}
+
+% article.cls sets the bibliography heading with \section*, which would
+% leave the references the one unnumbered heading in a numbered document.
+\usepackage{etoolbox}
+\patchcmd{\thebibliography}{\section*{\refname}}{\section{\refname}}{}{\GenericWarning{}{sscurves: bibliography heading not numbered}}
+\begin{document}
+\maketitle
+
+\section{Introduction}\label{introduction}
+
+Stainless steel earns its place in a magnetic circuit by what it does when it is not carrying flux. Solenoid valve bodies, fuel injector armatures and poles, position sensors, and the shafts and end caps of machines run in fluids that would ruin plain steel. The ferritic and martensitic grades are ferromagnetic, and the free-machining solenoid grades 430F and 430FR are made and sold for exactly this duty. The precipitation-hardening grades go a step further. 17-4 PH, 15-5 PH and PH 13-8 Mo harden by aging at 482 to 621 °C after machining, with no quench to distort the shape. A typical 17-4 PH bar's 0.2\% yield runs from 1,276 MPa at the low end of that range to 758 MPa at the high end \cite{clf-174}. Parts made from them are often asked to carry flux as well as load.
+
+Two things decide what such a part does magnetically, and a library entry has to state both. The first is the alloy, which fixes the saturation: 12\% chromium saturates near 1.8 T, 17\% near 1.6 T, 26\% near 1.3 T. The second is the condition, and it dominates everything below saturation. Carpenter's own data for one alloy, Type 430FR Solenoid Quality, put the maximum relative permeability at 300 to 500 unannealed and 1,100 to 2,500 after a full hydrogen anneal, with the coercive force falling from 400--560 A/m to 95--200 A/m over the same range \cite{carpenter-alloydata}. Its Blue Book puts annealed 410 at a maximum permeability of 750 and the same alloy hardened at 95 \cite{bluebook}. A factor of eight either way is not a tolerance.
+
+This page gives seventeen entries, each stating both: eight ferritic and martensitic grades in the annealed condition plus one cold drawn, and eight precipitation-hardening entries by aging condition plus PH 13-8 Mo in Condition H 950.
+
+The two halves are built differently, because the published data are of two different kinds. For the annealed grades the makers publish four magnetization curves and a dozen tabulated maximum permeabilities; so the curves are used to establish one shape, and the tabulated permeabilities scale it to grades that have no curve of their own. For the precipitation-hardening grades each condition has its own published curve and no tabulated permeability at all; so each entry is its curve. In both halves saturation is given from composition and never fitted, and every table passes the gates used on the earlier pages \cite{meeker-lowcarbon,meeker-iron,meeker-cofe,meeker-nife}.
+
+\section{Annealed Ferritic and Martensitic Grades}\label{annealed}
+
+\subsection{Sources}\label{annealed-sources}
+
+Four annealed DC curves are held. Carpenter's Chrome Core 12-FM datasheet \cite{carpenter-cc12fm} draws two of them on one chart as vector artwork, Chrome Core 12-FM and Type 430FR Solenoid Quality, both fully annealed bar of 0.250 to 0.625 in tested on a Fahy permeameter to ASTM A341, from 0.4 to 100 Oe. Valbruna's soft magnetic steels brochure \cite{valbruna} draws the third, its MG2 grade (a 430F class, 1.2--1.5\% silicon) after its magnetic anneal, on linear axes to 5,000 A/m; that page is a scan, and the curve is picked out by its colour. The fourth is the Metals Handbook's 416 annealed \cite{mh8}, used to 100 Oe, the limit of the figure. Compositions and resistivities for the grades themselves are the manufacturers' analyses of Oxley, Goodell and Molt's bars \cite{oxley}, except the 12\% chromium grade (Carpenter's mid-range) and MG2 (Valbruna's).
+
+Maximum permeabilities are Carpenter's Blue Book Table 1 \cite{bluebook}, measured the same way on 0.375 to 0.625 in bar: 750 for annealed 410 and 416, 950 for 420, 1,800 for 430F and 430FR Solenoid Quality, 1,000 for 446, and 3,100 for Chrome Core 12-FM. Where a grade has a curve of its own, the curve's value is used instead, and the two disagree: the Chrome Core chart implies 4,064 against the table's 3,100, and 2,838 for 430FR against 1,800. Valbruna's chart and its own table agree, 1,908 against 1,840. The 430FR entry therefore uses 2,285, the geometric mean of Carpenter's chart and Valbruna's table, and the 12\% chromium entry uses its chart's 4,064. That disagreement is carried through to the results as a factor of about 1.3 in the field at the knee.
+
+A third measurement of 430FR is held and is not used: fifteen points headed ``Carpenters 430FR data as measured by Cardiff University March thirteenth ninety seven'', with a maximum permeability of 1,881. It cannot be 430FR: it reaches 1.80 T at 1,055 A/m, so it needs \(J_s \ge 1.80\) T, where Eq.~\eqref{eq:jsann} gives 1.549 T for the composition, Carpenter's own 1991 sheet states 1.35 T and Valbruna's MG2 page 1.54 T. Nor does it follow the 430FR entry, needing 35\% more field below 0.8 T and then parting from it completely --- 620 A/m for 1.4 T against the entry's 6,634. A saturation of 1.80 T puts the specimen in low-chromium or chromium-free material whatever the label said.
+
+\subsection{Saturation from Composition}\label{annealed-js}
+
+In these steels the carbon is not in solution. It is in chromium carbide, taken here as Cr\(_{23}\)C\(_{6}\), which is 5.68\% carbon and 94.32\% chromium by mass: a mass fraction \(f = \mathrm{C}/5.68\) of a phase that carries no moment and takes 94.32\,\(f\) of the chromium out of the matrix with it. What is left is a ferrite matrix diluted by the remaining chromium, silicon and manganese,
+
+\begin{equation}\label{eq:jsann}
+J_s = (1 - f)\,J_{s,\mathrm{Fe}} - k_\mathrm{Cr}\left(\mathrm{Cr} - 94.32\,f\right) - k_\mathrm{Si}\,\mathrm{Si} - k_\mathrm{Mn}\,\mathrm{Mn},
+\end{equation}
+
+with the elements in weight per cent. \(J_{s,\mathrm{Fe}} = 2.158\) T is Sanford and Bennett's \cite{sanford1941}, and \(k_\mathrm{Mn} = 0.0228\) and \(k_\mathrm{Si} = 0.048\) T/wt\% are the ones the low-carbon and silicon pages use \cite{meeker-lowcarbon,meeker-si}. The chromium coefficient, \(k_\mathrm{Cr} = 0.0306\) T/wt\%, is the slope of Bozorth's saturation of iron-chromium alloys at 20 °C (\cite{bozorth1951}, Fig. 7-23, p. 229, read as \(21.68 - 0.306\,\mathrm{Cr}\) kG over 2--32\% chromium).
+
+Tavares and co-workers measured 180.2 A m\(^2\)/kg at 5 T on annealed 420 of 13.5\% chromium and 0.40\% carbon \cite{tavares}, which at their density of 7.8 g/cm\(^3\) is 1.766 T. Equation~\eqref{eq:jsann} gives 1.796 T with no silicon or manganese and 1.771 T with 420's typical 0.3 Si and 0.45 Mn. Putting the same carbon in cementite instead of chromium carbide would give 1.651 T, 0.11 T low: at 0.4\% carbon the difference between the two carbides is larger than everything else in the formula except the chromium itself.
+
+\subsection{One Shape}\label{master}
+
+Divide each of the four curves by its own saturation and by \(H_{50}\), the field at which \(J = J_s/2\), and they fall on one curve. From \(J_s/2\) to \(10\,H_{50}\) they lie within 0.06 in \(J/J_s\) of one another, 0.03 on average, although their chromium runs from 12 to 18\% and their \(H_{50}\) from 174 to 1,001 A/m --- a factor of six in field. Below \(J_s/2\) they part, and by \(0.3\,J_s\) they are 0.17 apart in \(J/J_s\): the Chrome Core curve rises out of the origin steeply and the Handbook's 416 gently, and no scaling brings the two feet together.
+
+One number closes the system. The maximum permeability of a curve is reached where \(dJ/dH = J/H\), and on the scaled curve that point is fixed, so
+
+\begin{equation}\label{eq:master}
+J(H) = J_s\,M\!\left(\frac{H}{H_{50}}\right), \qquad H_{50} = \frac{c_M\,J_s}{\mu_0\,(\mu_{\max} - 1)},
+\end{equation}
+
+where \(M\) is the shape and \(c_M = \max M(u)/u\) is a property of the shape alone. The four member curves give \(c_M = 0.507\), and each one's own \(\mu_{\max}\mu_0 H_{50}/J_s\) is 0.506, 0.506, 0.516 and 0.542, the last being the Handbook's 416. So a grade with a tabulated maximum permeability and a composition needs nothing else: \(J_s\) from Eq.~\eqref{eq:jsann}, \(H_{50}\) from Eq.~\eqref{eq:master}, and \(M\) from the four curves.
+
+\(M\) itself is built the way the nickel-iron entries are \cite{meeker-nife}. Each member curve is taken from 0.1 T up, scaled, carried past its last point toward \(J/J_s = 1\), and the four are averaged in \(\ln u\) at fixed \(J/J_s\), which keeps the knee as sharp as the curves it comes from. Points below 0.1 T are dropped: Valbruna's axes are linear, where a pixel is 5 mT, and Carpenter's curves begin at 0.05 T with a foot flatter than any curve through the origin can be. Below the lowest common point each entry is a straight line from the origin.
+
+The test the construction has to pass is leave-one-out: build \(M\) from three curves and ask it to predict the fourth, given only that curve's own saturation and maximum permeability. Over \(J/J_s\) from 0.3 to 0.84 the RMS error is 0.05 in \(\ln H\) for Carpenter's 430FR, 0.08 for Valbruna's MG2, 0.15 for the Handbook's 416 and 0.18 for Chrome Core 12-FM.
+
+\subsection{The Entries, and One That Is Not Annealed}\label{annealed-entries}
+
+Seven annealed entries follow: 410, 416, 420, a 12\% chromium ferritic grade of the Chrome Core 12-FM class, 430F, 430FR and 446. Their saturations from Eq.~\eqref{eq:jsann} are 1.793, 1.752, 1.803, 1.759, 1.596, 1.549 and 1.335 T. Conductivity is from Oxley's resistivities \cite{oxley}, Carpenter's for the 12\% chromium grade and Valbruna's for MG2. Hardened martensitic grades are deliberately left out: the Blue Book puts hardened 410 and 416 at a maximum permeability of 95 and 420 at 40, and no curve is held anywhere near that range.
+
+The eighth entry is Valbruna's MG2 as cold drawn, before the magnetic anneal. It does not scale onto \(M\) below \(J_s/2\), so it is kept as its own curve and follows the 430FR entry above its last charted point, 5,000 A/m, with the gap there ($-0.178$ T) decaying as \(1/H\) \cite{meeker-iron}. Its measured maximum permeability, 459, and coercive force, 424 A/m, both fall inside Carpenter's unannealed ranges for 430FR --- 300 to 500 and 400 to 560 A/m \cite{carpenter-alloydata} --- so the entry is named ``430FR, cold drawn''.
+
+\subsection{A Check the Family Did Not See}\label{annealed-check}
+
+Carpenter's 1991 Alloy Data sheets for 430F and 430FR Solenoid Quality \cite{carpenter-alloydata} carry four DC magnetization curves of mill-annealed bar, by hardness for 430F and by diameter for 430FR. None of the four is a member of the family. Given only its own maximum permeability, read from the curve, and its grade's composition saturation, the family predicts \(J\) at 10 Oe within 0.03 T for all four, with a knee RMS of 0.08 to 0.38 in \(\ln H\).
+
+At 100 Oe the four 1991 curves run 0.10 to 0.16 T below the family. That is a disagreement between sources and not a failure of the shape: Carpenter's current Chrome Core chart puts 430FR at 1.49 T at 100 Oe, its own 1991 sheet at 1.30 T, and the same 1991 sheet states a ``saturation flux density'' of 1.35 T for 430FR where Eq.~\eqref{eq:jsann} gives 1.549 T for the composition. The stated saturations on those sheets are not used.
+
+\section{Precipitation-Hardening Grades}\label{ph}
+
+\subsection{Sources, and What the Artwork Can and Cannot Say}\label{ph-sources}
+
+Three Cleveland-Cliffs (ARMCO) product bulletins carry magnetic curves. The 17-4 PH bulletin \cite{clf-174} draws normal induction for four conditions --- Condition A as solution annealed, and aged at H 900, H 1075/H 1100 and H 1150 --- on 0 to 140 Oe by 0 to 14 kG, with hysteresis loops of the same four beside it. The 15-5 PH bulletin \cite{clf-155} draws the same four conditions on the same axes. The PH 13-8 Mo bulletin \cite{clf-138} draws Condition H 950 alone, on 0 to 200 Oe by 0 to 1.3 T, annotated ``Maximum Permeability = 130'', and it is the only one of the three that still shows its measured points.
+
+All three charts are vector artwork, so no curve is traced from an image; each is read from the path in the PDF, told from its neighbours by its stroke colour and dash pattern, and placed by the chart's own tick marks. The bulletins are modern redraws of old charts, and the redrawing shows at the foot. On the 15-5 chart the H 900 and Condition A curves are simply not drawn below 0.49 and 0.25 T. On the 17-4 chart all four reach the origin, but H 900 and H 1075 stand nearly vertical between 11 and 13 Oe, which no magnetization curve does. Both charts are linear in \(B\) across about 220 points of artwork, so a point is 6 mT and 50 A/m. Nothing below 0.1 T is used.
+
+What the two bulletins agree on is everything else. Condition by condition, over the range where both are drawn, they differ by at most 0.02 T in \(B\) --- 0.10 T for one near-vertical stretch of the H 900 pair --- and by 0.02 to 0.03 in \(\ln H\) at fixed \(B\) above 0.6 T. They are the same measurements, drawn twice: one measurement, of an alloy neither bulletin identifies, under two labels. So each condition is pooled from both charts, which also supplies the two feet the 15-5 chart omits, and the 17-4 and 15-5 entries then differ only in their saturation and their conductivity.
+
+\subsection{Saturation from Composition}\label{ph-js}
+
+Equation~\eqref{eq:jsann} does not carry over. Its carbide term describes annealed ferrite, and these are martensites aged at 482--621 °C; and their carbon is at most 0.07\%, against the 0.13--0.34\% of the annealed martensitic grades, so that term has little left to do here. What these alloys do carry is copper, nickel, molybdenum, aluminium and niobium, and Eq.~\eqref{eq:jsann} has a coefficient for none of them. Table 1 of Ouda, Danninger and Gierl-Mayer \cite{ouda} supplies them. It collects three published sets of attenuation coefficients \(A_i\) in T m\(^3\)/kg per mass per cent, for
+
+\begin{equation}\label{eq:jsph}
+J_s = J_{s,\mathrm{Fe}} - \sum_i k_i x_i, \qquad k_i = \rho_\mathrm{Fe} A_i,
+\end{equation}
+
+and it is already the source of two of this project's coefficients: multiplied by the density of iron, 7876 kg/m\(^3\), Exner's column gives 0.0228 T/wt\% for manganese, the value the low-carbon page uses, and 0.048 and 0.055 for silicon and aluminium, the values the silicon page uses. Exner's nickel and molybdenum are 0.0020 and 0.0099 T/wt\%. Copper appears only in Hoselitz's column, at 0.0228 T/wt\%. Niobium appears in none of the three and is taken as a non-magnetic substituent, \(J_{s,\mathrm{Fe}}/100 = 0.0216\) T/wt\%, which is what Hoselitz's copper very nearly is.
+
+Two things make that table safe to lean on here. The first is that the two coefficients this project already had from elsewhere are reproduced by it: manganese exactly, and Exner's chromium, 0.0292 T/wt\%, agrees with the 0.0306 read off Bozorth's Fig. 7-23 to within 5\%, or 0.02 T on 16\% chromium. The second is that nickel is nearly free: at 0.0020 T/wt\%, PH 13-8 Mo's 8\% nickel costs 0.016 T, and nothing in these alloys turns on how well that number is known.
+
+Chromium and copper do the work. At the specification mid-range, and with silicon, manganese and carbon --- which are specified only as maxima --- carried at half their maxima, Eq.~\eqref{eq:jsph} gives 1.514 T for 17-4 PH, 1.570 T for 15-5 PH and 1.660 T for PH 13-8 Mo with everything in solution. The specification bands are wide, and the half-widths they span are 0.108, 0.092 and 0.039 T.
+
+The 13-8 Mo entry is aged, and that alloy hardens by a nickel intermetallic, \(\beta\)-NiAl. Counting H 950's aluminium as all precipitated, 1.125\% Al ties 2.45\% Ni into 3.6\% of the mass in a phase with no moment, and with the matrix renormalized the saturation is 1.650 T, 10 mT under the solution value; that is the value the entry uses. The same question comes out at nothing for 17-4 and 15-5. Their copper precipitates as \(\epsilon\)-copper, nearly pure copper, and as a non-magnetic phase that costs \(J_{s,\mathrm{Fe}}/100 = 0.0216\) T per weight per cent, against the 0.0228 charged for copper in solution: about 4 mT across their copper. So one saturation serves every condition of those two alloys.
+
+\subsection{Construction}\label{ph-construction}
+
+Each entry is its pooled curve, carried above the chart's last point toward \(J_s\) by the tail of the nickel-iron page \cite{meeker-nife},
+
+\begin{equation}\label{eq:tail}
+J(H) = J_s - (J_s - J_e)\left[(2-n)\,\frac{H_e}{H} + (n-1)\left(\frac{H_e}{H}\right)^{2}\right], \qquad H > H_e,\quad 1 \le n \le 2,
+\end{equation}
+
+with \(n = (dJ/d\ln H)_e/(J_s - J_e)\) measured over the last half-decade of the curve: the two-term law of approach, matched in value and slope. A curve ending above \(n = 2\) takes the \(1/H^{2}\) term alone, and one ending below \(n = 1\) has its exponent raised smoothly to 1, after which the tail is \(a_0/H\); the law of approach these pages use, Bozorth's two-term law for crystalline material \cite{bozorth1951}, has no term slower than that. Below the first used point each entry is a straight line from the origin, and each is smoothed, \(\ln J\) against \(\log H\), with the narrowest Gaussian that lets it pass the gates --- none for five of the nine, 0.03 to 0.05 decade for the rest.
+
+That exponent is also the check on the saturation. The two-term law of approach allows \(n\) from 1, the wall term \(a_0/H\) alone, to 2, Akulov's rotation term alone; so a curve that has reached its asymptotic range should measure \(n\) between 1 and 2 against the right \(J_s\), and nothing in the construction arranges that. It comes out at 1.14, 1.49 and 1.15 for 17-4's Condition A, H 900 and H 1075 against \(J_s = 1.514\) T, and 0.93, 1.13 and 0.86 for 15-5's against 1.570 T. The composition saturation and the charted curves meet, with neither fitted to the other. How finely that confirms the saturation is limited by the sources, though. Since the two bulletins print one set of curves, the test is one curve run against two saturations 0.056 T apart, and it passes against both, \(n\) averaging 1.26 against 1.514 T and 0.97 against 1.570 T. It is consistent with the composition saturation to within about 0.1 T, and cannot resolve it more finely. Read against the full range the law allows, though, the shared curve is not neutral between its two labels. Against 17-4's 1.514 T all three conditions fall between 1 and 2; against 15-5's 1.570 T two fall below 1, which is what a saturation set too high produces. That is weak evidence, since the curves may not be fully asymptotic at 11 kA/m, but the one measurement printed in both bulletins sits more comfortably with 17-4's composition than with 15-5's.
+
+The other two do not get there: 0.64 and 0.57 for the two H 1150 curves, and 0.53 for PH 13-8 Mo H 950. Either they are still short of the asymptotic range at the end of their charts, or a few per cent of them is not ferromagnetic. Both readings are available. The last charted field is 7 and 6 times the coercive force for those curves, against 12 for H 1075, so the first is plausible on its own; and H 1150 ages at 620 °C, where reverted austenite is the usual explanation for a softer, lower curve. These charts cannot separate the two, and no measurement of retained or reverted austenite is held for any of these heats, so the composition saturation stands. The tail cannot approach it at the curve's own pace, which is slower than that law allows, so it takes the first reading: its exponent is raised to 1, and the reverted-austenite reading is carried as the stated risk in the limitations.
+
+The hysteresis figures give the coercive force, and it is what makes the ordering of the normal curves make sense. Reading the loops where they cross \(B = 0\): 12.0, 12.2, 13.5 and 19.5 Oe for 17-4's H 1075, H 900, Condition A and H 1150, and 12.4, 12.5, 12.2 and 19.6 Oe for 15-5's. The 13-8 Mo bulletin states 27 Oe. The deficit at the end of each chart tracks it --- \((J_s - J)H/H_c\) there is 1.9 to 2.6 for the three softer conditions, 3.3 to 3.7 for H 1150 and 3.7 for 13-8 Mo H 950 --- which is the same ordering the tail exponents give. These are minor loops, with tips at about 10 kG, and not saturation loops.
+
+Conductivity is from each bulletin's table of resistivities. 17-4 PH gives 100 $\mu\Omega$·cm in Condition A and 80 in both H 900 and H 1075; 15-5 PH gives 98 and 77. Neither bulletin prints a figure for H 1150, which takes the aged value. The PH 13-8 Mo bulletin gives 100.1 $\mu\Omega$·cm at 25 °C in Condition A only, and the H 950 entry uses 80, that times the 0.80 by which aging lowers 17-4's. That last number is an inference across alloys and not a published one.
+
+\subsection{Why Not the Family Shape}\label{ph-family}
+
+The family of Section~\ref{master} needs only a saturation and a maximum permeability, and these charts give both, so it can be asked to carry the PH grades too. It should not, for two reasons and one measurement.
+
+The reasons: the family was fitted to annealed ferrite of maximum permeability 755 to 4,064, where these are aged martensites of 138 to 445, and its master shape already fails to collapse the feet of its own members. The measurement: given each PH curve's own saturation and maximum permeability, the family's knee RMS is 0.12 to 0.26 in \(\ln H\), no worse than it does on Carpenter's 1991 430 curves. Above the knee it misses. At 8 kA/m it is 0.17 T high on 13-8 Mo H 950 and 0.08 T high on the two H 1150 curves, while running 0.03 to 0.08 T low on H 900 and H 1075. And the constant that closes Eq.~\eqref{eq:master}, \(c_M = 0.507\) for the annealed curves to within 7\%, measures 0.55 to 0.67 on these. Every PH condition here has a charted curve of its own, so nothing is gained by borrowing a shape, and none is borrowed.
+
+\section{Results}\label{results}
+
+\begin{center}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+B (T) at H (A/m) & 100 & 400 & 1,000 & 4,000 & 10,000 & 40,000 & \(\mu_{\max}\) & \(\sigma\) (MS/m) \\
+\midrule
+410, annealed & 0.040 & 0.202 & 0.918 & 1.384 & 1.518 & 1.747 & 748 & 1.75 \\
+416, annealed & 0.041 & 0.212 & 0.917 & 1.357 & 1.488 & 1.712 & 754 & 1.75 \\
+420, annealed & 0.051 & 0.350 & 1.066 & 1.426 & 1.558 & 1.779 & 950 & 1.82 \\
+12Cr ferritic, annealed & 0.415 & 1.241 & 1.401 & 1.592 & 1.706 & 1.796 & 4,064 & 1.75 \\
+430F, annealed & 0.097 & 0.862 & 1.165 & 1.355 & 1.478 & 1.619 & 1,796 & 1.67 \\
+430FR, annealed & 0.138 & 0.964 & 1.175 & 1.347 & 1.465 & 1.580 & 2,279 & 1.32 \\
+446, annealed & 0.054 & 0.486 & 0.899 & 1.093 & 1.193 & 1.348 & 1,000 & 1.56 \\
+430FR, cold drawn & 0.029 & 0.140 & 0.558 & 1.100 & 1.371 & 1.556 & 459 & 1.32 \\
+\midrule
+17-4 PH, Condition A & 0.024 & 0.097 & 0.345 & 0.957 & 1.242 & 1.498 & 302 & 1.00 \\
+17-4 PH, H 900 & 0.025 & 0.102 & 0.413 & 1.071 & 1.330 & 1.531 & 407 & 1.25 \\
+17-4 PH, H 1075/H 1100 & 0.027 & 0.108 & 0.491 & 1.121 & 1.346 & 1.524 & 445 & 1.25 \\
+17-4 PH, H 1150 & 0.013 & 0.052 & 0.145 & 0.740 & 1.044 & 1.421 & 165 & 1.25 \\
+15-5 PH, Condition A & 0.024 & 0.097 & 0.345 & 0.957 & 1.242 & 1.533 & 302 & 1.02 \\
+15-5 PH, H 900 & 0.025 & 0.102 & 0.413 & 1.071 & 1.330 & 1.560 & 407 & 1.30 \\
+15-5 PH, H 1075/H 1100 & 0.027 & 0.109 & 0.481 & 1.120 & 1.346 & 1.557 & 433 & 1.30 \\
+15-5 PH, H 1150 & 0.013 & 0.052 & 0.145 & 0.740 & 1.044 & 1.450 & 165 & 1.30 \\
+PH 13-8 Mo, H 950 & 0.007 & 0.030 & 0.075 & 0.663 & 0.994 & 1.461 & 138 & 1.25 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All seventeen tables pass the gates: \(B\) strictly increasing, \(dB/dH\) not less than \(\mu_0\), and a single maximum of the differential permeability counted from the origin. The nine PH entries reproduce the curves they are built from to an RMS of 0.008 to 0.026 in \(\ln H\), and within each alloy the four conditions keep their order --- H 1075/H 1100 easiest, then H 900, then Condition A, then H 1150 --- at every induction from 0.4 to 1.3 T.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={The eight annealed and cold-drawn entries, with the Metals Handbook 416 curve.}]{out/sscurves_fig1.png}}
+\caption{The annealed family and the cold-drawn entry, with the Metals Handbook's 416 curve. Left: \(B\) against \(H\). Right: relative permeability against \(B\).}
+\end{figure}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={The four member curves scaled onto one shape, and the entries that follow from it.}]{out/ss_fit.png}}
+\caption{Left: the four annealed curves divided by their own \(J_s\) and \(H_{50}\), and the master shape \(M\). Middle: each member's distance from \(M\) in \(\ln u\) at fixed \(J/J_s\). Right: the entries.}
+\end{figure}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={The precipitation-hardening entries.}]{out/sscurves_fig2.png}}
+\caption{The precipitation-hardening entries. The 15-5 PH entries (dotted) lie on the 17-4 PH entries of the same condition until the tails separate above 30 kA/m. Annealed 410 is drawn for scale.}
+\end{figure}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Each precipitation-hardening entry against the charted curves it is built from.}]{out/ph_fit.png}}
+\caption{Each PH entry (black) against the charted curves it pools. Lower rows: each curve's distance from the entry in \(\ln H\).}
+\end{figure}
+
+Two checks fall out of the sources themselves. The PH 13-8 Mo chart still shows the points it was drawn through, and the curve read from the artwork passes through them within 0.004 T; the same curve gives a maximum permeability of 139 against the 130 the figure is annotated with, and the entry 138. And the whole PH set can be put beside the annealed one: a hardened 410 has a maximum permeability of 95 by the Blue Book, where 17-4 PH in its hardest condition, H 900, has 407. The precipitation-hardening grades reach their strength with 0.07\% carbon maximum and no quench, and they are magnetically much softer than a quenched martensite of the same strength.
+
+\section{Limitations}\label{limitations}
+
+The annealed entries are a shape from four curves scaled by a tabulated maximum permeability, and where the makers' own chart and table disagree about that number, so will the entry. Carpenter's chart and its table differ by a factor of 1.6 for 430FR, which the entry splits, and by 1.3 for the 12\% chromium grade, where the entry follows the chart; the same factor appears in the field at the knee. Five of the seven annealed entries --- 410, 416, 420, 430F and 446 --- have no curve of their own at all, and rest entirely on Eq.~\eqref{eq:master} and a single tabulated number. The leave-one-out errors of Section~\ref{master}, 0.05 to 0.18 in \(\ln H\), are what to expect of them, and the 1991 430 comparison suggests 0.10 to 0.16 T at 100 Oe is possible at the top.
+
+No annealed curve is held above about 8 kA/m. Above that every annealed entry is the master shape's own tail to the composition saturation, carried past each member's last point by the two-term tail of Section~\ref{ph-construction}, so that no entry approaches its saturation more slowly than \(a_0/H\), the slowest term of Bozorth's law of approach \cite{bozorth1951}. The entries' deficits below saturation are 0.8 to 5.4\% at 40 kA/m and 0.1 to 0.4\% at 400 kA/m, smallest for the 12\% chromium ferritic grade and largest for 410 and 416. The rotation term in these tails is inferred from each member's own slope at its end, never from \(K_1\). Three of the four members end climbing more slowly than \(1/H\), so for them nothing of it is inferred: the tail is \(a_0/H\), with the whole remaining deficit charged to the wall term.
+
+The martensitic grades carry a second error on top of it. Their \(H_{50}\) is five to six times Chrome Core's, so above about 8 kA/m, where the Handbook's 416 stops, their shape is the soft members' shape stretched in field. Wall pinning scales that way; rotation against the anisotropy does not, since it goes with \(H/H_a\) and \(H_a\) is set by composition. At the same \(H/H_{50}\) a hard grade is closer to \(H_a\), its rotation further along, and its deficit smaller than the master shape says. An \(a_0/H\) tail from 410's own deficit at 10 kA/m would give 4.0\% at 40 kA/m and 1.6\% at 100 against the entry's 5.4 and 1.9\%, so 410, 416 and 420 probably still read some tens of millitesla low around 40 kA/m, where a saturated solenoid pole works. The low-carbon page's remedy, a rotation term scaled by \(H_a\), needs the anisotropy constant of iron-chromium alloys, and Bozorth reports only values derived from coercive force on partly two-phase alloys, which he says are not to be relied upon \cite{bozorth1951}. Hardened martensitic grades are not covered, and the one cold-worked entry is a single Valbruna curve for one grade in one draft.
+
+For the precipitation-hardening entries the charts stop at 11 kA/m (17-4 and 15-5) and 13 kA/m (13-8 Mo), and above that each is Eq.~\eqref{eq:tail}. For H 1150 and 13-8 Mo H 950 the charts end climbing at \(n\) near 0.55, more slowly than the law of approach these pages use allows, and the tails take the reading that the curves are short of their asymptotic range: at 400 kA/m those entries are 15, 17 and 25 mT short of \(J_s\). If instead a few per cent of those alloys is non-magnetic --- reverted austenite is the usual reading for H 1150 --- the entries are high at the top by about that few per cent, 0.05 to 0.10 T, and no held measurement settles it. Below 0.1 T none of the PH curves is data; the entries are straight lines from the origin, of initial permeability 59 to 217.
+
+The specification bands on the PH saturations are wide, 0.108 T for 17-4 PH and 0.092 for 15-5, and the two entries of a given condition differ only by the 0.056 T between their mid-range saturations, inside both bands. The published curves cannot tell the two alloys apart. Anyone who has a mill certificate should put its chromium and copper through Eq.~\eqref{eq:jsph} and rescale.
+
+The semi-austenitic grades 17-7 PH and PH 15-7 Mo are not built. Their bulletins \cite{clf-177,clf-157} give permeability numbers by condition --- about 5 in Condition A, 100 to 150 hardened --- and no curve. Custom 455 is not built either, for want of any magnetic data at all.
+
+\section{Implementation}\label{implementation}
+
+\texttt{dig\_ss.py} reads the four annealed curves into \texttt{out/ss\_curves.csv} and \texttt{ss\_build.py} builds the master shape and the eight annealed and cold-drawn entries, writing \texttt{femm\_ss\_*.csv}, the staging library \texttt{ss\_fit.dat} and the second figure; \texttt{emit\_ss\_fem.py} writes \texttt{ss\_fit\_materials.fem} and \texttt{check\_ss\_430.py} runs the 1991 comparison.
+
+\texttt{dig\_ph.py} reads the three PH bulletins' normal induction curves into \texttt{out/ph\_curves.csv} and their hysteresis figures into \texttt{out/ph\_hyst.csv}; \texttt{ph\_build.py} builds the nine entries and the fourth figure; \texttt{emit\_ph\_fem.py} writes \texttt{ph\_fit\_materials.fem}, which round-trips against the emitted tables; \texttt{check\_ph.py} runs the checks of Sections~\ref{ph-sources}, \ref{ph-family} and \ref{results}. \texttt{make\_ssfig.py} draws the first and third figures.
+
+\section{Conclusions}\label{conclusions}
+
+Seventeen entries, each naming its alloy and its condition, replace three that named neither. Two of the three were the same Metals Handbook curve for 416 wearing two labels, one of them 430's, and the third had no source; the fourth stainless entry in the library, Custom 455, still has no magnetic data behind it and is left alone until some appears.
+
+Condition turned out to be worth as much as the introduction claimed. Within one alloy, 430FR, the annealed entry and the cold-drawn one differ by a factor of five in maximum permeability, and the cold-drawn one needs seven times the field for 1 T, 3,051 A/m against 442. Within 17-4 PH the aging temperature moves \(B\) at 4 kA/m from 0.74 T at H 1150 to 1.12 T at H 1075, and the maximum permeability from 165 to 445. A stainless part modelled without its condition is not modelled.
+
+The two constructions each did what was asked of them. For the annealed grades, four curves collapse onto one shape to within 0.06 in \(J/J_s\) above \(J_s/2\). Scaled by nothing but a composition saturation and a tabulated maximum permeability, that shape predicts a curve it has not seen to 0.05--0.18 in \(\ln H\), and that is what lets five grades with no published curve have an entry. For the precipitation-hardening grades, each condition had its own curve and needed no shape; what it needed was a saturation, and the law of approach was consistent with the composition value, to within about 0.1 T, for three of the four conditions of both alloys. Where it did not, on H 1150 and on 13-8 Mo H 950, the page says so rather than fitting the difference away.
+
+\begin{thebibliography}{99}\label{references}
+
+\bibitem{meeker-lowcarbon} ``Generating B-H Curves for Low-Carbon Steels,'' companion page. The law of approach, the gates, \(J_{s,\mathrm{Fe}}\), \(k_\mathrm{C}\) and \(k_\mathrm{Mn}\).
+
+\bibitem{meeker-iron} ``B-H Curves for Commercially Pure Iron,'' companion page. The join of a curve to a reference entry with the gap decaying as \(1/H\).
+
+\bibitem{meeker-cofe} ``B-H Curves for Cobalt-Iron Alloys,'' companion page.
+
+\bibitem{meeker-nife} ``B-H Curves for Nickel-Iron Alloys,'' companion page. Pooling curves in \(\ln H\) at fixed \(J\), and the tail of Eq.~\eqref{eq:tail}.
+
+\bibitem{meeker-si} ``B-H Curves for Silicon Steels,'' companion page. \(k_\mathrm{Si}\) and \(k_\mathrm{Al}\).
+
+\bibitem{carpenter-cc12fm} Carpenter Electrification, Chrome Core 12-FM datasheet, undated. Type analysis (p. 1); physical and magnetic properties (p. 4); typical DC normal induction of fully annealed 0.250--0.625 in bar, Chrome Core 12-FM against Type 430FR Solenoid Quality, Fahy permeameter per ASTM A341 (p. 5); heat treatment (p. 6).
+
+\bibitem{bluebook} Carpenter Technology Corp., \emph{2012 Carpenter's Stainless Steel Blue Book}. Magnetic behaviour of the ferritic, martensitic and austenitic grades (pp. 21--22); Table 1, maximum relative permeability and coercive force of 410, 416, 420, 430F and 430FR Solenoid Quality, 440B, 446 and the Chrome Core grades, annealed and hardened, Fahy permeameter on 0.375--0.625 in bar (p. 23).
+
+\bibitem{carpenter-alloydata} Carpenter Technology Corp., ``Stainless Type 430F Solenoid Quality'' and ``Stainless Type 430FR Solenoid Quality,'' sheets 15 and 16 of \emph{Alloy Data --- Soft Magnetic Alloys}, Carpenter Steel Division, print code 2-91. Physical properties, DC magnetic properties by condition per ASTM A341 (unannealed, mill annealed CG and PG, and full anneal, 2 h at 1550 °F in hydrogen), and DC magnetization curves of mill-annealed bar.
+
+\bibitem{valbruna} Acciaierie Valbruna, \emph{Soft Magnetic Steels --- Stainless Steels \& Iron Silicon Alloys}, brochure, undated. MG2 as cold drawn and after the magnetic anneal, \(B(H)\) to 5,000 A/m and hysteresis loops (p. 4); composition, resistivity and DC properties of the MG1--MG7 solenoid grades on 9 mm specimens (pp. 5--8).
+
+\bibitem{oxley} P. Oxley, J. Goodell and R. Molt, \href{https://doi.org/10.1016/j.jmmm.2009.01.012}{``Magnetic properties of stainless steels at room and cryogenic temperatures,''} \emph{J. Magn. Magn. Mater.} 321 (2009) 2107--2114. Manufacturers' analyses (Table 1) and resistivities (Table 2) of ten ferritic and martensitic grades as received.
+
+\bibitem{tavares} S. S. M. Tavares, D. Fruchart, S. Miraglia and D. Laborie, \href{https://doi.org/10.1016/S0925-8388(00)01149-8}{``Magnetic properties of an AISI 420 martensitic stainless steel,''} \emph{J. Alloys Compd.} 312 (2000) 307--314.
+
+\bibitem{clf-174} Cleveland-Cliffs, \emph{ARMCO 17-4 PH Stainless Steel} product data bulletin, 10/2022. Composition (p. 1); physical properties by condition, Table 17 (p. 10); normal induction, Fig. 3, and hysteresis curves, Fig. 4 (p. 12).
+
+\bibitem{clf-155} Cleveland-Cliffs, \emph{ARMCO 15-5 PH VAC CE Stainless Steel} product data bulletin, 07/2022. Composition (p. 1); physical properties by condition, Table 18 (p. 16); normal induction, Fig. 7, and hysteresis curves, Fig. 8 (p. 17).
+
+\bibitem{clf-138} Cleveland-Cliffs, \emph{ARMCO PH 13-8 Mo Stainless Steel} product data bulletin, 10/2022. Composition (p. 1); thermal conductivity and electrical resistivity in Condition A, Table 18 (p. 32); normal induction, Fig. 42, and hysteresis curve, Fig. 43, Condition H 950 (p. 33).
+
+\bibitem{clf-177} Cleveland-Cliffs, \emph{ARMCO 17-7 PH Stainless Steel} product data bulletin, 10/2022. Magnetic permeability by condition; no B-H curve.
+
+\bibitem{clf-157} Cleveland-Cliffs, \emph{ARMCO PH 15-7 Mo Stainless Steel} product data bulletin, 05/2021. Physical properties by Condition A, TH 1050 and RH 950, including magnetic permeability at 25--200 Oe; no B-H curve.
+
+\bibitem{ouda} K. Ouda, H. Danninger and C. Gierl-Mayer, \href{https://doi.org/10.1080/00325899.2018.1530850}{``Magnetic measurement of retained austenite in sintered steels --- benefits and limitations,''} \emph{Powder Metallurgy}, published online 9 October 2018. Table 1, attenuation coefficients of C, Cr, Ni, Mo, Co, Mn, W, Si, Al and V after Maurer and Schroeter (1929) and Exner (1960), and of those plus P, S, Cu and N after Hoselitz.
+
+\bibitem{sanford1941} R. L. Sanford and E. G. Bennett, \href{https://nvlpubs.nist.gov/nistpubs/jres/26/jresv26n1p1_a1b.pdf}{``Determination of the magnetic saturation induction of iron,''} NBS Research Paper RP1354, 1941.
+
+\bibitem{mh8} \emph{Metals Handbook}, 8th ed., Vol. 1, American Society for Metals, 1961, Fig. 17, p. 792, ``Direct-current magnetization curves for various magnetic materials,'' curve 18, 416 stainless steel, annealed.
+
+\bibitem{bozorth1951} R. M. Bozorth, \href{https://doi.org/10.1109/9780470544624}{\emph{Ferromagnetism}}, Van Nostrand, New York, 1951; reissued by IEEE Press, 1993. Fig. 7-23, p. 229, saturation of iron-chromium alloys against chromium content; pp. 484--488, the law of approach to saturation; p. 574, anisotropy of iron alloys including chromium.
+
+\end{thebibliography}
+
+\noindent Copyright 2026 David Meeker. This document is licensed under the \href{https://creativecommons.org/licenses/by/4.0/}{Creative Commons Attribution 4.0 International License (CC BY 4.0)}.
+
+\end{document}

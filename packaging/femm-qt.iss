@@ -3,10 +3,14 @@
 
 #define MyDate GetDateTimeString('ddmmmyyyy', '', '')
 #define MyYear GetDateTimeString('yyyy', '', '')
+; FemmVersion: project(VERSION) from CMakeLists.txt, written by the build.
+; Run ninja first (pack.bat already requires it) or this include fails.
+#include "..\build\generated\version.iss"
 
 [Setup]
 AppName           = FEMM
-AppVerName        = femm 5.0 {#MyDate}
+AppVersion        = {#FemmVersion}
+AppVerName        = femm {#FemmVersion} {#MyDate}
 AppCopyright      = Copyright © 1998-{#MyYear}, DC Meeker
 AppPublisher      = D. Meeker
 DefaultDirName    = c:\femm-qt
@@ -66,6 +70,15 @@ Name: "{app}\bin\pybridge-worker"
 Name: "{app}\examples"
 Name: "{app}\mfiles"
 Name: "{app}\mathfemm"
+
+[InstallDelete]
+; Before 2026-10 the file-format references were installed loose in {app}\docs;
+; they now live in {app}\docs\formats. An upgrade would otherwise leave the old
+; copies beside the new folder.
+Type: files; Name: "{app}\docs\*-file-formats.pdf"
+; MathFEMM-Demo2.nb shipped until 2026-10 and was then removed (it carried a
+; dead 2004 contact address); an upgrade would otherwise keep the old copy.
+Type: files; Name: "{app}\examples\MathFEMM-Demo2.nb"
 
 [Files]
 ; FEMM executables
@@ -155,11 +168,37 @@ Source: "..\manual\manual.pdf";                DestDir: "{app}\bin"; Flags: igno
 ;
 ; Their own folder rather than {app}\bin, because they are reference material
 ; a user opens rather than something the program loads, and four of them flat
-; beside the licences would bury the manual.
-Source: "..\docs\magnetics-file-formats.pdf";      DestDir: "{app}\docs"; Flags: ignoreversion
-Source: "..\docs\electrostatics-file-formats.pdf"; DestDir: "{app}\docs"; Flags: ignoreversion
-Source: "..\docs\heatflow-file-formats.pdf";       DestDir: "{app}\docs"; Flags: ignoreversion
-Source: "..\docs\currentflow-file-formats.pdf";    DestDir: "{app}\docs"; Flags: ignoreversion
+; beside the licences would bury the manual. docs\formats rather than docs
+; itself since the material-library papers joined them (below); the [InstallDelete]
+; entry removes the copies an older installer left loose in {app}\docs.
+Source: "..\docs\magnetics-file-formats.pdf";      DestDir: "{app}\docs\formats"; Flags: ignoreversion
+Source: "..\docs\electrostatics-file-formats.pdf"; DestDir: "{app}\docs\formats"; Flags: ignoreversion
+Source: "..\docs\heatflow-file-formats.pdf";       DestDir: "{app}\docs\formats"; Flags: ignoreversion
+Source: "..\docs\currentflow-file-formats.pdf";    DestDir: "{app}\docs\formats"; Flags: ignoreversion
+; The provenance papers behind every entry in the four material libraries
+; (CC BY 4.0, from the vendored release in provenance\), with matlibs\README.md
+; as the folder's index: it says which papers cover which library and states
+; the libraries' licence. Flat, not in the release's per-paper folders, which
+; exist for its scripts. THIS LIST IS THE ONE THE OTHER PLATFORMS USE:
+; packaging/stage_extras.sh reads every "{app}\docs\..." line here, so a paper
+; added here ships everywhere. It must also be named in femm-qt/.gitignore, or
+; it is never committed for this line to find.
+Source: "..\provenance\ceramic\ceramiccurves.pdf";                    DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\provenance\cobalt-iron\cofecurves.pdf";                   DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\provenance\iron\ironcurves.pdf";                          DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\provenance\libraries\provenance\condlib_provenance.pdf";  DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\provenance\libraries\provenance\heatlib_provenance.pdf";  DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\provenance\libraries\provenance\statlib_provenance.pdf";  DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\provenance\low-carbon\bhcurves.pdf";                      DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\provenance\magnets\AlnicoProperties.pdf";                 DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\provenance\magnets\BondedNdFeB.pdf";                      DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\provenance\magnets\SinteredNdFeBProperties.pdf";          DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\provenance\magnets\SmCoProperties.pdf";                   DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\provenance\metglas\metglascurves.pdf";                    DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\provenance\nickel-iron\nifecurves.pdf";                   DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\provenance\silicon\sicurves.pdf";                         DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\provenance\stainless\sscurves.pdf";                       DestDir: "{app}\docs\materials"; Flags: ignoreversion
+Source: "..\matlibs\README.md";                          DestDir: "{app}\docs\materials"; Flags: ignoreversion
 Source: "..\LICENSE-MIT";                   DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "..\LICENSE-GPL";                   DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "..\NOTICE-Qt.txt";                 DestDir: "{app}\bin"; Flags: ignoreversion
@@ -251,7 +290,6 @@ Source: "..\octavefemm\*.m";                                DestDir: "{app}\mfil
 ; MathFEMM (Mathematica interface)
 Source: "..\mathfemm\mathfemm.m";                    DestDir: "{app}\mathfemm"; Flags: ignoreversion;
 Source: "..\mathfemm\usage.nb";                      DestDir: "{app}";          Flags: ignoreversion;
-Source: "..\mathfemm\examples\MathFEMM-Demo2.nb";    DestDir: "{app}\examples"; Flags: ignoreversion;
 Source: "..\mathfemm\examples\roters1b.nb";          DestDir: "{app}\examples"; Flags: ignoreversion;
 Source: "..\mathfemm\examples\strips.nb";            DestDir: "{app}\examples"; Flags: ignoreversion;
 Source: "..\mathfemm\examples\htutor.nb";            DestDir: "{app}\examples"; Flags: ignoreversion;

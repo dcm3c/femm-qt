@@ -3,8 +3,10 @@
 # prescribed-A gradient (Alo=0, Ahi=0.0254*Bdes), so B == Bdes uniformly through
 # the whole block and mo_getpointvalues(0,0) isolates the B-H curve / permeability
 # evaluation with ZERO mesh sensitivity. femm-qt and OF must be identical for
-# every (frequency, Bdes) -- any difference is a genuine constitutive-evaluation
-# discrepancy, not mesh.
+# every Bdes at DC -- any difference is a genuine constitutive-evaluation
+# discrepancy, not mesh. The AC rows are no longer compared against OF: OF's
+# effective AC curve is wrong (of_ac_curve.py), and ACBHCurveTest.py checks
+# femm-qt's against a quadrature oracle instead. FQReference still holds them.
 #
 # The material is laminated (LamFill=0.98), so there is no bulk eddy current and B
 # stays uniform even at frequency; the AC rows therefore exercise the COMPLEX

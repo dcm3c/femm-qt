@@ -1,0 +1,268 @@
+% SPDX-License-Identifier: CC-BY-4.0
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+\documentclass[
+  11pt,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{2} % number sections and subsections
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
+\hypersetup{
+  pdftitle={B-H Curves for Ceramic Magnets},
+  pdfauthor={David Meeker},
+  colorlinks=true,
+  linkcolor={Maroon},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+\renewcommand{\today}{%
+  \the\day\ %
+  \ifcase\month\or
+  Jan\or Feb\or Mar\or Apr\or May\or Jun\or
+  Jul\or Aug\or Sep\or Oct\or Nov\or Dec\fi
+  \ \the\year
+}
+
+\title{B-H Curves for Ceramic Magnets}
+\author{David Meeker}
+\date{\today}
+
+% article.cls sets the bibliography heading with \section*, which would
+% leave the references the one unnumbered heading in a numbered document.
+\usepackage{etoolbox}
+\patchcmd{\thebibliography}{\section*{\refname}}{\section{\refname}}{}{\GenericWarning{}{ceramiccurves: bibliography heading not numbered}}
+\begin{document}
+\maketitle
+
+\section{Introduction}\label{introduction}
+
+Sintered hard ferrite, sold as ``ceramic'' magnet, is the least expensive class of permanent magnet \cite{dexter}: motors for fans, pumps and windshield wipers, loudspeakers, holding and separator magnets, sensors. Its remanence is only about 0.4 T, a third of neodymium-iron-boron's, but it does not corrode \cite{eclipse}, it can be used to 250 °C \cite{dexter}, and it costs little enough that a designer can simply use more of it. A finite element model of such a device needs the second-quadrant curve of the grade actually used, and ferrite grades differ enough to matter: across the grades below, the coercivity runs from 159 to 292 kA/m and the energy product from 9 to 38 kJ/m\(^3\).
+
+Ferrite grades come under two naming systems. The American ``Ceramic'' numbers are defined by the Magnetic Materials Producers Association \cite{mmpa}, and makers who sell under them publish measured demagnetization curves. The Chinese ``Y'' grades are sold against tables of property ranges; their makers publish few curves, and those they do publish look drawn rather than measured.
+
+This page gives two kinds of entry, and keeps the two kinds apart. For the Ceramic grades, five curves digitized from one maker's published data. For the Y grades, which have no curve worth digitizing, fifteen curves generated from each grade's tabulated typical values on one shared shape. These are not measurements, and each is named ``(typical)'' in the library to say so. The two kinds turn out to rest on the same model, which is what lets the measured curves test the generated ones.
+
+\section{Grade Names}\label{grade-names}
+
+MMPA's Standard 0100-00 \cite{mmpa} is the reference for the Ceramic numbers. Its Table III-1 lists Ceramic 1, 5, 7 and 8, with typical Br, Hc, Hcj and (BH)max, and four more grades that carry only a brief designation, the energy product in MGOe over the intrinsic coercivity in kOe: 3.4/3.9, 4.0/2.9, 3.2/4.8 and 3.8/4.0. Ceramic 2 and 6 appear only in its Appendix A, among materials ``not covered in product sections'', which its scope describes as older materials largely replaced, materials made by one company, or materials still in development, without saying which applies to which. With no current maker's curve to be had, neither is carried here.
+
+Makers split Ceramic 8 in two. Dexter's HF081 matches MMPA's Ceramic 8 (3.5/3.1), and its HF083 matches the grade MMPA calls only 4.0/2.9; the names ``Ceramic 8A'' and ``8B'' used below for those two are vendor shorthand, not MMPA's. For the Y grades, the e-Magnets UK and Eclipse Magnetics tables \cite{emagnets,eclipse} cross-reference C5 to Y30, C8/C8A to Y30H-1, C8B to Y33, C7 to Y26H-2 and C1 to Y10T. The first three give measured curves for three Y grades, which Section~\ref{one-model} uses.
+
+\section{Measured Curves}\label{measured}
+
+The Ceramic entries are all from Dexter Magnetic Technologies \cite{dexter}, whose web page tabulates typical properties of its HF grades and links a demagnetization chart for each: normal and intrinsic curves at 20, 70, 120 and 170 °C. One maker's charts give one test method and one temperature throughout. The 20 °C normal curves of HF050, HF081 and HF083 were digitized, 12 to 16 points each, and smoothed with
+
+\begin{equation}\label{eq:normal}
+B(H) = \left(1 - e^{-k\,(H + H_{cB})/H_{cB}}\right)\left(B_r + \mu_0 \mu_r H\right),
+\end{equation}
+
+a straight recoil line of permeability \(\mu_r\) through \(B_r\), multiplied by an exponential knee that closes B at \(H = -H_{cB}\), with \(k\) setting the knee's sharpness. The fitted \(k\) is 21.5, 26.0 and 34.3. HF010 and HF070 are drawn as straight lines from remanence to coercivity, since their intrinsic coercivities (3.2 and 4.0 kOe) lie so far beyond their normal ones (2.0 and 3.1 kOe) that the knee falls in the third quadrant.
+
+FEMM takes a nonlinear magnet as a table of B against \(H + H_{cB}\), from (0, 0) to \((B_r, H_{cB})\), with the coercivity entered separately as \(H_c\); the three kneed curves, HF050, HF081 and HF083, are tabulated at 21 or 41 points equally spaced in B. HF010 and HF070 are entered as linear magnets, a recoil permeability and a coercivity with no table. Equation~\eqref{eq:normal} has a second zero, where its linear factor vanishes at \(H = -B_r/(\mu_0\mu_r)\), well beyond the true coercivity, so \(H_{cB}\) must be taken from the fitted parameter and not from a root search, which can land on the wrong zero.
+
+The entries reproduce their digitized points to 2.8--3.4 mT RMS, and agree with Dexter's own table and with MMPA (both given as Br in T, HcB in kA/m, (BH)max in kJ/m\(^3\)):
+
+\begin{center}
+\small
+\begin{tabular}{llrrrrll}
+\toprule
+Entry & Dexter & Br (T) & HcB (kA/m) & (BH)max & \(\mu_r\) & Dexter table & MMPA \\
+\midrule
+Ceramic 1 & HF010 & 0.232 & 159.5 & 9.2 & 1.157 & 0.230, 159, 8.8 & 0.230, 150, 8.35 \\
+Ceramic 5 & HF050 & 0.383 & 193.0 & 26.4 & 1.104 & 0.380, 191, 27.1 & 0.380, 190, 27.1 \\
+Ceramic 7 & HF070 & 0.342 & 244.3 & 20.9 & 1.112 & 0.340, 247, 22.3 & 0.340, 260, 21.9 \\
+Ceramic 8A & HF081 & 0.388 & 234.9 & 28.3 & 1.057 & 0.385, 231, 27.9 & 0.385, 235, 27.8 \\
+Ceramic 8B & HF083 & 0.413 & 225.3 & 31.7 & 1.072 & 0.410, 227, 31.8 & 0.410, 225, 31.8 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Every recoil permeability lies within MMPA's 1.05 to 1.2. The largest departures from Dexter's table are in the energy products of the two straight-line entries, Ceramic 1 (+5\%) and Ceramic 7 ($-$6\%), and they are in Dexter's table as much as in the entries. A straight line through Dexter's own Br and Hc encloses \(B_r H_{cB}/4\): 9.2 kJ/m\(^3\) for HF010, where the table's 1.1 MGOe (8.8) reads as 1.15 rounded down, and 21.0 kJ/m\(^3\) for HF070, less than the table's 2.8 MGOe (22.3), which no straight line through those end points can enclose. The entries follow the charts' end points.
+
+An older set was digitized first and set aside. Nasar's \emph{Schaum's Outline} \cite{nasar} reproduces Indiana General's curves for its Indox I, II, V and VI-A, which match MMPA's Ceramic 1, 2, 5 and 6 to within 1--9\% in remanence, coercivity and energy product. But Indox V's coercivity, 174 kA/m, is 9\% below Ceramic 5's 190 in MMPA, Dexter and e-Magnets alike: an older, softer material than today's Ceramic 5. One current maker's curves were preferred.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={The five measured Ceramic entries and their digitized points.}]{out/ceramiccurves_fig2.png}}
+\caption{The Ceramic entries, from Dexter's 20 °C curves. Circles: the digitized points of HF050, HF081 and HF083. Ceramic 1 and 7 are straight lines from Dexter's remanence to its coercivity.}
+\end{figure}
+
+\section{Typical-Value Curves for the Y Grades}\label{typical}
+
+A Y grade is defined by a row of ranges: Br, HcB, HcJ and (BH)max, each spanning several per cent. With no measured curve to take, the entry is built from the middle of the row. The intrinsic curve is modelled and B follows from it:
+
+\begin{equation}\label{eq:intrinsic}
+J(H) = \left(B_r - \mu_0 \chi H_{cJ}\right)\left(1 - e^{-s\,(H + H_{cJ})/H_{cJ}}\right) + \mu_0 \chi \left(H + H_{cJ}\right), \qquad \chi = \mu_r - 1, \qquad B = \mu_0 H + J.
+\end{equation}
+
+J vanishes exactly at \(-H_{cJ}\), the slope near remanence is \(\mu_0\mu_r\), and \(dB/dH\) never falls below \(\mu_0\mu_r\); no magnet's curve can be flatter than \(\mu_0\), since in the second quadrant \(dB/dH = \mu_0(1 + dM/dH)\) and the magnetization can only fall as the reverse field grows. The inputs are \(B_r\) and \(H_{cJ}\), the two quantities that fix the curve's ends in the tables; \(H_{cB}\) and \((BH)_{\max}\) are results, and they are the check. Two parameters are shared by every grade, \(\mu_r = 1.07\) and \(s = 35\). For every grade here the energy product falls on the straight part of the curve, where it equals \(B_r^2/(4\mu_0\mu_r)\): the energy products test \(\mu_r\) alone, and 1.07, fitted to the table midpoints, puts all of them in range. The knee parameter \(s\) sets the ratio \(H_{cB}/H_{cJ}\), and the tables alone do not fix it: any \(s\) from about 35 up keeps every grade's HcB inside its range, the RMS departure from the midpoints moving only from 1.9\% at 35 to 1.5\% at 50. The measured magnets of Section~\ref{one-model} decide it. Dexter's HF050, HF081 and HF083 have \(H_{cB}/H_{ci}\) of 0.970, 0.952 and 0.976, a mean of 0.966, and Eq.~\eqref{eq:intrinsic} gives 0.969 at \(s = 35\). Of the values the tables allow, 35 is also the roundest, and so the least optimistic: a knee sharper than the real one overstates the reverse field a magnet can take before its induction collapses, which is what a demagnetization study asks. Least optimistic is not conservative, though. Against the measured magnets of Section~\ref{one-model} the generated knee lies beyond the real one by up to 6.5 kA/m for the roundest of them, and inside it for the sharpest.
+
+Br and HcJ are the midpoints of the Eclipse Magnetics ranges \cite{eclipse}; e-Magnets UK and Magnet Store \cite{emagnets,magnetstore} print the same ranges. Every Y row of the Eclipse table was put through Eq.~\eqref{eq:intrinsic}, and a grade is carried if its computed HcB and (BH)max both fall inside its published ranges and within about 4\% of their midpoints. Fifteen do: Y26H, Y26H-2, Y27H, Y28H-1, Y30, Y30BH, Y30H-1, Y30H-2, Y32, Y33, Y33H, Y34, Y35, Y36 and Y38. The others are left out for reasons that can be read off their rows:
+
+\begin{itemize}
+\tightlist
+\item Y23, Y25 and Y32H-1 have HcB well below HcJ, a ratio of 0.86 to 0.90, which means a rounder knee than the shared shape; the model overshoots their HcB by 9--12\%.
+\item Y20's computed energy product lands above its range; its Br range, 320--380 mT, is too wide for a midpoint to stand for it. Y22H lands inside its ranges but 5--6\% from both midpoints.
+\item Y40's tabulated HcB exceeds \(B_r/(\mu_0\mu_r)\), which a straight line of recoil 1.07 cannot reach.
+\item Y28H-2's row contradicts itself, giving Br as 360--380 mT in one column and 3.3--3.8 kG in the next.
+\item Y8T and Y10T are isotropic, with a recoil near 1.2; Y10T is Ceramic 1 by the cross-reference, and Dexter's HF010 is carried for it.
+\item Y28, Y26H-1 and Y32H-2 would repeat a curve already carried: Y28's row is identical to Y30's, and the other two have the same Br and HcJ midpoints as Y26H and Y33.
+\end{itemize}
+
+The entries are generated at 20 °C. The generator can scale Br and HcJ to other temperatures with Dexter's coefficients \cite{dexter}, $-$0.20\,\%/°C for induction and +0.35\,\%/°C for coercivity over 20--150 °C; Dexter does not say whether its coercivity coefficient is for Hc or Hci, and it is applied to HcJ. Ferrite's coercivity falls on cooling: at $-$40 °C, Y30's HcB would be 155 kA/m against 194 at 20 °C.
+
+\section{One Model, Two Uses}\label{one-model}
+
+Equations \eqref{eq:normal} and \eqref{eq:intrinsic} are the same construction applied to different quantities: a straight recoil line joined to a single exponential knee, closing B at \(H_{cB}\) in the first and J at \(H_{cJ}\) in the second. Each implies the other's coercivity, since either can be carried past its own closing point, and what differs is only which coercivity is the input. In practice they are one model. Fitted to the same digitized points, with all four parameters free, the two forms give the same remanence and recoil permeability to the third decimal, curves that nowhere differ by more than 0.2 mT, and the same residuals, 2.8--3.4 mT RMS.
+
+Both therefore give an intrinsic coercivity from a measured normal curve alone. Carried past \(-H_{cB}\) to where J vanishes, the normal-form fits put it at 204.4, 252.6 and 234.5 kA/m for HF050, HF081 and HF083, and the intrinsic-form fits, where it is a parameter, at 204.2, 251.7 and 234.4: the two agree to within 1 kA/m, and both sit within 2.8\% of the 198.9, 246.7 and 230.8 that Dexter tabulates. So the \(H_{cJ}\) that the generator takes from the Y tables means what the tables mean by it. The choice between the forms is a matter of which end is given. A measured chart closes at \(H_{cB}\), which can be read off it, so the measured entries use Eq.~\eqref{eq:normal}; the Y tables fix \(H_{cJ}\), and give \(H_{cB}\) only as a range, so the typical entries use Eq.~\eqref{eq:intrinsic}.
+
+The generator can then be tested directly. Given only Dexter's Br and Hci for those three grades, with the shared \(\mu_r = 1.07\) and \(s = 35\), it returns coercivities of 192.7, 235.0 and 222.5 kA/m against the measured 193.0, 234.9 and 225.3. At every induction above 0.2 T its field is within 2.0--3.6 kA/m of the measured curve; below 0.2 T, in the knee, within 2.8--6.5 kA/m. The sign differs from magnet to magnet: for HF050 the generated knee lies beyond the measured one by up to 6.5 kA/m, for HF083 inside it by up to 2.8, and for HF081 it crosses, 1.7 beyond and 3.9 inside. The knee is where one shared shape serves some magnets better than others: HF050's is the roundest of the three and carries the largest error. Fitted with its intrinsic coercivity free, each measured curve gives a rounder knee still, \(s\) of 20 to 33, together with an \(H_{cJ}\) 2--3\% above Dexter's; knee shape and coercivity trade against each other in such a fit, and the ratio \(H_{cB}/H_{cJ}\), with Dexter's own \(H_{ci}\), is the better-determined quantity, which is why it sets \(s\).
+
+What separates a typical entry from a particular magnet is mostly the table. Figure 2 sets the Y30, Y30H-1 and Y33 entries beside the measured Dexter curves of those grades. Y30 and HF050 nearly coincide (0.385 T and 193.8 kA/m against 0.383 T and 193.0). Y30H-1 sits 14 kA/m beyond HF081 because the Eclipse HcJ range for that grade, 235--290 kA/m, is centred well above Dexter's 247; Y33 sits 6 kA/m beyond HF083 for the same reason. Those are differences between the middle of a range and one maker's product, not errors of the model.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={The fifteen typical Y-grade entries, and three of them against measured curves.}]{out/ceramiccurves_fig3.png}}
+\caption{Left: the fifteen typical Y-grade entries at 20 °C. Right: the Y30, Y30H-1 and Y33 entries (solid) against Dexter's measured curves for the same grades by the cross-reference (dashed): HF050, HF081 and HF083.}
+\end{figure}
+
+\section{Results}\label{results}
+
+\begin{center}
+\begin{tabular}{lrrrl}
+\toprule
+Entry & Br (T) & HcB (kA/m) & (BH)max (kJ/m\(^3\)) & Eclipse HcB; (BH)max \\
+\midrule
+Y26H (typical) & 0.375 & 228.6 & 26.15 & 220--250; 23--28 \\
+Y26H-2 (typical) & 0.370 & 274.7 & 25.45 & 263--288; 24--28 \\
+Y27H (typical) & 0.385 & 222.9 & 27.56 & 205--250; 25--29 \\
+Y28H-1 (typical) & 0.390 & 250.4 & 28.28 & 240--260; 27--30 \\
+Y30 (typical) & 0.385 & 193.8 & 27.56 & 175--210; 26--30 \\
+Y30BH (typical) & 0.385 & 227.6 & 27.56 & 223--235; 27--30 \\
+Y30H-1 (typical) & 0.390 & 248.4 & 28.28 & 230--275; 27--32 \\
+Y30H-2 (typical) & 0.405 & 291.5 & 30.50 & 275--300; 27--32.5 \\
+Y32 (typical) & 0.410 & 175.8 & 31.03 & 160--190; 30--33.5 \\
+Y33 (typical) & 0.420 & 231.1 & 32.80 & 220--250; 31.5--35 \\
+Y33H (typical) & 0.420 & 250.7 & 32.80 & 250--270; 31.5--35 \\
+Y34 (typical) & 0.430 & 213.4 & 34.37 & 200--230; 32.5--36 \\
+Y35 (typical) & 0.440 & 221.9 & 35.99 & 215--239; 33.1--38.2 \\
+Y36 (typical) & 0.440 & 251.5 & 36.00 & 247--271; 35.1--38.3 \\
+Y38 (typical) & 0.450 & 285.9 & 37.65 & 285--305; 36.6--40.6 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All fifteen typical entries fall inside both published ranges, and their slopes nowhere go below 1.067 \(\mu_0\). The five measured entries are in the table of Section~\ref{measured}. Every tabulated entry runs from (0, 0) to \((B_r, H_{cB})\) with \(H_c\) equal to its last field, as FEMM requires of a nonlinear magnet; Ceramic 1 and Ceramic 7 are the linear exceptions. Conductivity is zero throughout. MMPA's Table III-4 \cite{mmpa} gives the resistivity of ceramic magnets as \(10^6\)~\(\Omega\)\,cm, a conductivity of \(10^{-4}\)~S/m, which is zero for any field calculation.
+
+\section{Limitations}\label{limitations}
+
+The measured entries are one maker's typical curves at 20 °C. They are not a specification, and a given lot will sit somewhere within the maker's own tolerances.
+
+The typical entries are the middle of each grade's published ranges drawn on a shared shape. A real Y30 may lie anywhere within the Y30 ranges, and Section~\ref{one-model} shows two of three measured magnets lying 6 to 14 kA/m from the midpoint entry in coercivity for that reason alone. The shared knee matches the measured magnets on average, not one by one: below about 0.2 T the typical curves can differ from a real magnet by up to 7 kA/m in field even when its Br and HcJ are known exactly, and where the magnet's knee is rounder than the family's, the entry's knee lies at the larger reverse field: the optimistic side, by up to that much, exactly where a demagnetization study looks. Grades whose knee is rounder than the family's, and isotropic grades, are not generated. The temperature scaling rests on one maker's coefficients, applied to HcJ although the maker does not say which coercivity it means, and extrapolated below 20 °C. That matters most on the cold side, because ferrite's coercivity falls on cooling and low-temperature irreversible demagnetization is its characteristic failure: at $-$40 °C the scaling puts Y30's HcB at 155 kA/m against 194 at 20 °C, a fifth less margin, and that number rests on the extrapolation.
+
+The entries are major demagnetization curves, and FEMM uses each as a single-valued B against H. A region driven past the knee in a solution does not come back along a lower recoil line when the field is removed; it comes back up the same curve, as if nothing had happened. Irreversible demagnetization therefore has to be judged by checking each region's operating point against the knee, not read off the field solution. FEMM's manual says as much for nonlinear magnets: an analysis that follows the recoil is beyond its scope \cite{femm-manual}.
+
+What lies beyond \(B = 0\) depends on how an entry is written. A kneed entry is a table, and FEMM takes it as the demagnetization curve shifted right by \(H_{cB}\), so that \(B = 0\) falls at the origin \cite{femm-manual}; it is meant for the second quadrant and carries nothing below that point. For the grades whose intrinsic coercivity lies well beyond the normal one, among them Y26H-2 and Y30H-2, operating points with \(B < 0\) are physically reachable without demagnetizing the magnet, since \(J\) is still positive there, and the tables do not describe them: a region driven below \(B = 0\) should be treated as outside the entry. The straight-line entries, Ceramic 1 and Ceramic 7, are linear models, a recoil permeability and a coercivity with no table, and FEMM extends a linear magnet into the third quadrant without limit. That is right for them as far as their own knees, which lie in the third quadrant near \(H_{cJ}\), 255 and 318 kA/m; beyond that the real magnet collapses and the entry never does.
+
+\section{Implementation}\label{implementation}
+
+\texttt{Magnets/Ceramic/Indox.nb} holds the digitized Dexter points, the fits of Eq.~\eqref{eq:normal} and the resulting blocks, written to \texttt{Magnets/Ceramic/Indox.fem}; that file also holds two Indox-based blocks, Ceramic 2 and 6, which are not proposed for the library. \texttt{Magnets/Ceramic/ceramic.nb} generates the typical entries from Eq.~\eqref{eq:intrinsic} and writes them to \texttt{Magnets/Ceramic/Yferrite\_typical.fem}. \texttt{cer\_check.py} computes every figure quoted here and draws the three figures.
+
+\section{Conclusions}\label{conclusions}
+
+The result is twenty ceramic entries, each with its source and its kind stated. The Ceramic grades rest on one maker's measured curves, within a few per cent of that maker's tables and of MMPA's. The Y grades, for which no measured curve worth using is published, rest on their own tabulated typical values, drawn on a shape that is physically possible by construction and that every one of the fifteen passes against its published ranges.
+
+The two kinds are kept apart in name, but not in method. The model that smooths the measured curves and the one that generates the typical ones are the same model, and that is what makes the typical curves testable: given a real magnet's Br and HcJ, the generator reproduces its measured curve to within a few kA/m above the knee. A typical entry is a fair picture of the middle of a grade, which is what a Y-grade specification actually promises; for a particular magnet, its maker's own curve is better, and where one exists it should be used.
+
+\begin{thebibliography}{99}\label{references}
+
+\bibitem{mmpa} Magnetic Materials Producers Association, \emph{Standard Specifications for Permanent Magnet Materials}, MMPA Standard No. 0100-00, Chicago. Table III-1, typical magnetic properties of ceramic magnet materials (p. 12); Appendix A, materials not covered in product sections (p. 25); Section I, 1.1, scope.
+
+\bibitem{dexter} Dexter Magnetic Technologies, ``Ceramic (Hard Ferrite) Magnets,'' web page, \url{https://www.dextermag.com/products/permanent-magnets/ceramic-magnets/}, printed 29 Sep 2026: properties table for HF010, HF050, HF070 and HF081--HF085, and the demagnetization chart of each grade at 20, 70, 120 and 170 °C.
+
+\bibitem{eclipse} Eclipse Magnetics Ltd, \emph{Ferrite Magnets/Ceramic Magnets Datasheet}, 2014. Ranges of Br, HcB, HcJ and (BH)max for grades Y8T to Y40; typical values for C1 to C10; cross-reference of C and Y grades.
+
+\bibitem{emagnets} e-Magnets UK, ``Grades of Ferrite,'' web page, \url{https://e-magnetsuk.com/ferrite-magnets/grades-of-ferrite/}, printed 28 Sep 2026.
+
+\bibitem{magnetstore} Magnet Store, ``Grades of Ferrite Magnets,'' web page, \url{https://magnetstore.co.uk/magnet-grades/ferrite-magnet-grades/}, printed 28 Sep 2026.
+
+\bibitem{nasar} S. A. Nasar, \emph{Schaum's Outline of Theory and Problems of Electric Machines and Electromechanics}, 2nd ed., McGraw-Hill, 1998, Fig. 1-12, ``Demagnetization and energy-product curves for Indox ceramic magnets,'' p. 8.
+
+\bibitem{femm-manual} D. Meeker, \emph{Finite Element Method Magnetics, Version 4.2, User's Manual}, Appendix A.1, ``Modeling Permanent Magnets,'' pp.~173--175.
+
+\end{thebibliography}
+
+\noindent Copyright 2026 David Meeker. This document is licensed under the \href{https://creativecommons.org/licenses/by/4.0/}{Creative Commons Attribution 4.0 International License (CC BY 4.0)}.
+
+\end{document}

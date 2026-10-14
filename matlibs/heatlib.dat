@@ -153,6 +153,9 @@
 <Ky> = 104
 <Kt> = 3.7480000000000002
 <qv> = 0
+    <TKPoints> = 2
+      273	104
+      473	77
 <EndBlock>
 
 <BeginFolder>
@@ -163,9 +166,10 @@
 <Ky> = 22
 <Kt> = 3.6579999999999999
 <qv> = 0
-    <TKPoints> = 2
+    <TKPoints> = 3
       273	22
-      473	26
+      373	26
+      473	35
 <EndBlock>
 
 <BeginBlock>
@@ -338,12 +342,13 @@
 <Ky> = 43
 <Kt> = 3.6899999999999999
 <qv> = 0
-    <TKPoints> = 5
+    <TKPoints> = 6
       273	43
       473	42
       673	36
-      873	29
-      1073	28
+      873	33
+      1073	29
+      1273	28
 <EndBlock>
 
 <BeginBlock>
@@ -493,7 +498,7 @@
 <BeginFolder>
 <FolderName> = "Platinum"
 <BeginBlock>
-<BlockName> = "Platnium, Pure"
+<BlockName> = "Platinum, Pure"
 <Kx> = 72
 <Ky> = 72
 <Kt> = 2.8530000000000002
@@ -574,13 +579,12 @@
 <Ky> = 428
 <Kt> = 2.484
 <qv> = 0
-    <TKPoints> = 6
+    <TKPoints> = 5
       273	428
       473	415
       673	399
       873	383
       1073	368
-      1273	355
 <EndBlock>
 
 <BeginBlock>
@@ -831,7 +835,7 @@
 <BlockName> = "Coal"
 <Kx> = 0.23999999999999999
 <Ky> = 0.23999999999999999
-<Kt> = 0.0016249999999999999
+<Kt> = 1.625
 <qv> = 0
 <EndBlock>
 
@@ -883,10 +887,13 @@
 
 <BeginBlock>
 <BlockName> = "Diatomaceous Earth"
-<Kx> = 1.3
-<Ky> = 1.3
+<Kx> = 0.09
+<Ky> = 0.09
 <Kt> = 0.34999999999999998
 <qv> = 0
+    <TKPoints> = 2
+      273	0.09
+      673	0.16
 <EndBlock>
 
 <BeginBlock>
@@ -930,10 +937,13 @@
 
 <BeginBlock>
 <BlockName> = "Window"
-<Kx> = 0.83999999999999997
-<Ky> = 0.83999999999999997
+<Kx> = 1.00
+<Ky> = 1.00
 <Kt> = 2.2679999999999998
 <qv> = 0
+    <TKPoints> = 2
+      273	1
+      373	1.15
 <EndBlock>
 
 <EndFolder>
@@ -973,8 +983,8 @@
 
 <BeginBlock>
 <BlockName> = "Feltboard"
-<Kx> = 0.1
-<Ky> = 0.1
+<Kx> = 0.035
+<Ky> = 0.035
 <Kt> = 0.179
 <qv> = 0
 <EndBlock>
@@ -1032,8 +1042,8 @@
 
 <BeginBlock>
 <BlockName> = "Rock Wool"
-<Kx> = 0.058999999999999997
-<Ky> = 0.058999999999999997
+<Kx> = 0.040
+<Ky> = 0.040
 <Kt> = 0.084
 <qv> = 0
 <EndBlock>
@@ -1165,16 +1175,16 @@
 <EndFolder>
 <BeginBlock>
 <BlockName> = "Teflon-min-heat-capacity"
-<Kx> = 0.34999999999999998
-<Ky> = 0.34999999999999998
+<Kx> = 0.26
+<Ky> = 0.26
 <Kt> = 2.5800000000000001
 <qv> = 0
 <EndBlock>
 
 <BeginBlock>
 <BlockName> = "Teflon-max-heat-capacity"
-<Kx> = 0.34999999999999998
-<Ky> = 0.34999999999999998
+<Kx> = 0.26
+<Ky> = 0.26
 <Kt> = 3.2200000000000002
 <qv> = 0
 <EndBlock>
@@ -1264,7 +1274,7 @@
 
 <EndFolder>
 <BeginFolder>
-<FolderName> = "Liquid Metals"
+<FolderName> = "Liquid Metals (stagnant only)"
 <BeginBlock>
 <BlockName> = "Bismuth, liquid"
 <Kx> = 16.800000000000001
@@ -1296,18 +1306,18 @@
 
 <BeginBlock>
 <BlockName> = "Mercury"
-<Kx> = 142
-<Ky> = 142
+<Kx> = 6.97
+<Ky> = 6.97
 <Kt> = 1.863
 <qv> = 0
     <TKPoints> = 7
-      234	142
-      273	140
-      300	139
-      350	138
-      400	137
-      500	136
-      600	134
+      234	6.97
+      273	7.79
+      300	8.34
+      350	9.15
+      400	9.84
+      500	11
+      600	12
 <EndBlock>
 
 <BeginBlock>
@@ -1362,19 +1372,19 @@
 
 <EndFolder>
 <BeginFolder>
-<FolderName> = "Saturated Liquids"
+<FolderName> = "Saturated Liquids (stagnant only)"
 <BeginBlock>
 <BlockName> = "Ammonia"
-<Kx> = 0.54600000000000004
-<Ky> = 0.54600000000000004
+<Kx> = 0.586
+<Ky> = 0.586
 <Kt> = 2.8799999999999999
 <qv> = 0
     <TKPoints> = 5
-      233	0.54600000000000004
-      253	0.54600000000000004
-      273	0.54000000000000004
-      293	0.52100000000000002
-      313	0.49299999999999999
+      233	0.586
+      253	0.558
+      273	0.522
+      293	0.481
+      313	0.436
 <EndBlock>
 
 <BeginBlock>
@@ -1410,16 +1420,16 @@
 
 <BeginBlock>
 <BlockName> = "Freon-12"
-<Kx> = 0.069000000000000006
-<Ky> = 0.069000000000000006
+<Kx> = 0.0909
+<Ky> = 0.0909
 <Kt> = 1.296
 <qv> = 0
     <TKPoints> = 5
-      233	0.069000000000000006
-      253	0.070999999999999994
-      273	0.072999999999999995
-      293	0.072999999999999995
-      313	0.069000000000000006
+      233	0.0909
+      253	0.0832
+      273	0.0759
+      293	0.0689
+      313	0.062
 <EndBlock>
 
 <BeginBlock>
@@ -1469,7 +1479,7 @@
 
 <EndFolder>
 <BeginFolder>
-<FolderName> = "Gases at 1 atm"
+<FolderName> = "Gases at 1 atm (stagnant only)"
 <BeginBlock>
 <BlockName> = "Air"
 <Kx> = 0.018100000000000002

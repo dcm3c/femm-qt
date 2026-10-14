@@ -193,15 +193,23 @@ pyrow(){ # label command...
 # Runs inside the interpreter rather than driving it, so it needs no comparer.
 inproc(){ # script label
   printf "%-26s " "$2:"
-  out=$($B -run "$T/$1" 2>&1 \
-        | grep -vE "^(FEMM headless|IPC:|Executing:|Script complete)")
+  # The engine's own exit status counts. It used to be dropped (row_verdict
+  # was handed a literal 0), so a suite that SEGFAULTED printed nothing, had
+  # no failure marker to find, and read as green -- which is precisely how a
+  # use-after-free shows up half the time (ListdirGcTest on the unfixed
+  # converter: three crashes in six runs). Captured through a file because
+  # the status of a command substitution's pipeline is not otherwise ours.
+  out=$($B -run "$T/$1" 2>&1; echo "$?" > "$TMP/inproc.rc")
+  rc=$(cat "$TMP/inproc.rc" 2>/dev/null || echo 1)
+  out=$(printf "%s\n" "$out" | grep -vE "^(FEMM headless|IPC:|Executing:|Script complete)")
+  [ "$rc" -ne 0 ] && out=$(printf "%s\nengine exited with status %s\n" "$out" "$rc")
   last=$(printf "%s\n" "$out" | tail -1)
   printf "%s\n" "$last"
   # A suite that dies says WHY on the lines ABOVE its last one -- and tail -1
   # threw exactly those away. A red row on a remote machine then read only
   # "Script error: 1", which costs a round trip to the machine under test
   # before the real diagnosis can even start.
-  row_verdict "$2" 0 "$out"
+  row_verdict "$2" "$rc" "$out"
   if [ "$ROW_BAD" -eq 1 ]; then
       row_detail "$out"
   fi
@@ -229,27 +237,33 @@ run HOPointValueTest.py      ScalarPointValueCompare.py  OF_hopv_result.txt  fq_
 pyrow FluxConstraint python3 FluxConstraintTest.py "$B"
 pyrow Transient python3 TransientTest.py "$FKN" "$B"
 pyrow IncrementalLorentz python3 IncrementalLorentzTest.py "$B"
+inproc ACBHCurveTest.py ACBHCurve
 pyrow FQReference python3 FQReferenceCompare.py
 # Runs inside the interpreter rather than driving it, so it needs no comparer.
 inproc OsModuleTest.py OsModule
 inproc StdlibModuleTest.py StdlibModules
 inproc UlabInt32Test.py UlabInt32
 inproc GcTest.py GcTest
+inproc ListdirGcTest.py ListdirGc
 inproc DateTimeTest.py DateTime
 inproc CsvTest.py Csv
 inproc PylibTest.py Pylib
 pyrow RunScriptSize python3 RunScriptSizeTest.py "$B"
 pyrow RedirectedOutput python3 RedirectedOutputTest.py "$B"
 pyrow ScriptArgv python3 ScriptArgvTest.py "$B"
+pyrow XYExportCsv python3 XYExportCsvTest.py "$B"
 inproc ProxyDunderTest.py ProxyDunders
 inproc PointLocationTest.py PointLocation
 inproc MagDirTransformTest.py MagDirTransform
+inproc NodePropsTransformTest.py NodePropsTransform
+inproc PointFillFactorTest.py PointFillFactor
 inproc CreateRadiusTest.py     CreateRadius
 inproc FftTest.py Fft
 inproc NumpyProxyTest.py NumpyProxy
 inproc NumpyComplexTest.py NumpyComplex
 inproc BulkGetterTest.py BulkGetters
 inproc MaterialLibTest.py MaterialLib
+inproc MaterialLibHistoryTest.py MaterialLibHistory
 inproc SaveBeforeRunTest.py SaveBeforeRun
 inproc CreateMeshTest.py CreateMesh
 # Documentation drift, both manuals against the shipped wrappers and against

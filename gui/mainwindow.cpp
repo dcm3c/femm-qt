@@ -64,13 +64,23 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QTimer>
+#include <QMimeData>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QFileOpenEvent>
+#include <QUrl>
 #include <QComboBox>
 #include <QDialogButtonBox>
+#include <QDialog>
+#include <QScrollArea>
+#include <QScreen>
 #include <QSettings>
 #include <QDesktopServices>
 
 #include "py_line_edit.h"
 #include "dxf_io.h"
+
+static bool femmOpenable(const QString &path);
 
 static QIcon icon(const char *name)
 {
@@ -123,6 +133,9 @@ MainWindow::MainWindow(TcpServer *server, QWidget *parent)
     });
     // Esc interrupts a running script, application-wide (see eventFilter()).
     qApp->installEventFilter(this);
+    // Files dropped anywhere on the window open as File>Open would. Child
+    // widgets that do not take drops themselves pass the drag up to here.
+    setAcceptDrops(true);
 
     // Window control buttons on the right side of the menu bar
     {
@@ -299,7 +312,7 @@ EditorWidget *MainWindow::addEditorTab(DocumentBase *doc, const QString &title)
     // Apply saved preferences
     QSettings settings;
     editor->setShowGrid(settings.value("editor/showGrid", true).toBool());
-    editor->setSnapToGrid(settings.value("editor/snapToGrid", true).toBool());
+    editor->setSnapToGrid(settings.value("editor/snapToGrid", false).toBool());
     editor->setShowNames(settings.value("editor/showNames", true).toBool());
 
     // Apply default problem settings for new documents
@@ -357,6 +370,51 @@ EditorWidget *MainWindow::addEditorTab(DocumentBase *doc, const QString &title)
 // flushes those paints, so the warning lands over the drawn view with the
 // flagged regions already visible. The parent doubles as the context object,
 // so the lambda is dropped if the window goes away first.
+// Help > About. Not QMessageBox::about: on macOS that is drawn as a native
+// alert, and the platform keeps alerts narrow, so a text this long wraps into
+// a column taller than the screen and the bottom of it is simply not there.
+// A plain dialog chooses its own width, wraps the text as prose, and scrolls
+// if the screen is still too short. Sized from the screen it will appear on,
+// so it fits a laptop as well as a big display.
+static void showAbout(QWidget *parent, const QString &title, const QString &text)
+{
+    QDialog dlg(parent);
+    dlg.setWindowTitle(title);
+
+    auto *label = new QLabel(text);
+    label->setWordWrap(true);
+    label->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    label->setContentsMargins(12, 8, 12, 8);
+    label->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+
+    auto *scroll = new QScrollArea;
+    scroll->setWidget(label);
+    scroll->setWidgetResizable(true);
+    scroll->setFrameShape(QFrame::NoFrame);
+
+    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok);
+    QObject::connect(buttons, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+
+    auto *top = new QHBoxLayout;
+    if (parent && !parent->windowIcon().isNull()) {
+        auto *iconLabel = new QLabel;
+        iconLabel->setPixmap(parent->windowIcon().pixmap(64, 64));
+        iconLabel->setAlignment(Qt::AlignTop);
+        iconLabel->setContentsMargins(12, 8, 0, 8);
+        top->addWidget(iconLabel, 0, Qt::AlignTop);
+    }
+    top->addWidget(scroll, 1);
+
+    auto *layout = new QVBoxLayout(&dlg);
+    layout->addLayout(top, 1);
+    layout->addWidget(buttons);
+
+    const QScreen *screen = parent ? parent->screen() : nullptr;
+    const QRect avail = screen ? screen->availableGeometry() : QRect(0, 0, 1280, 800);
+    dlg.resize(qMin(720, avail.width() - 80), qMin(600, avail.height() - 120));
+    dlg.exec();
+}
+
 static void warnMultiplyDefinedLabels(QWidget *parent)
 {
     QTimer::singleShot(0, parent, [parent]() {
@@ -831,7 +889,7 @@ void MainWindow::showEmptyUI()
     m_preTopBar2->hide();
     m_ppTopBar->hide();
     m_leftNav->hide();
-    m_actProblem->setVisible(false);
+    m_preMenuProblem->menuAction()->setVisible(false);
     m_preMenuView->menuAction()->setVisible(false);
     m_preMenuGrid->menuAction()->setVisible(false);
     m_preMenuOperation->menuAction()->setVisible(false);
@@ -863,7 +921,7 @@ void MainWindow::showPreprocessorUI()
     if (m_actRedo) m_actRedo->setVisible(true);
     if (m_actDeleteSelected) m_actDeleteSelected->setVisible(true);
     if (m_windowMenu) m_windowMenu->menuAction()->setVisible(true);
-    m_actProblem->setVisible(true);
+    m_preMenuProblem->menuAction()->setVisible(true);
     m_preMenuView->menuAction()->setVisible(true);
     m_preMenuGrid->menuAction()->setVisible(true);
     m_preMenuOperation->menuAction()->setVisible(true);
@@ -892,7 +950,7 @@ void MainWindow::showPostprocessorUI()
     if (m_actRedo) m_actRedo->setVisible(false);
     if (m_actDeleteSelected) m_actDeleteSelected->setVisible(false);
     if (m_windowMenu) m_windowMenu->menuAction()->setVisible(true);
-    m_actProblem->setVisible(false);
+    m_preMenuProblem->menuAction()->setVisible(false);
     m_preMenuView->menuAction()->setVisible(false);
     m_preMenuGrid->menuAction()->setVisible(false);
     m_preMenuOperation->menuAction()->setVisible(false);
@@ -1040,7 +1098,11 @@ void MainWindow::onOpen()
         "FEMM Files (*.fem *.fee *.feh *.fec);;Solution Files (*.ans *.res *.anh *.anc);;All Files (*)");
     if (path.isEmpty()) return;
     settings.setValue("lastDirectory", QFileInfo(path).absolutePath());
+    openPath(path);
+}
 
+void MainWindow::openPath(const QString &path)
+{
     if (path.endsWith(".ans", Qt::CaseInsensitive) || path.endsWith(".res", Qt::CaseInsensitive) ||
         path.endsWith(".anh", Qt::CaseInsensitive) || path.endsWith(".anc", Qt::CaseInsensitive)) {
         openResultsFile(path);
@@ -1053,6 +1115,49 @@ void MainWindow::onOpen()
             QMessageBox::warning(this, "Error", QString("Failed to open %1:\n%2").arg(path, errmsg));
     }
     addToRecentFiles(path);
+}
+
+// The files a drop or a Finder open may hand us: the four problem documents
+// and their solutions. Not .py -- running a script because it was dropped on
+// the window, or double-clicked in Finder, is not something to do implicitly.
+static bool femmOpenable(const QString &path)
+{
+    static const char *ext[] = {"fem", "fee", "feh", "fec", "ans", "res", "anh", "anc"};
+    const QString suffix = QFileInfo(path).suffix().toLower();
+    for (const char *e : ext)
+        if (suffix == QLatin1String(e)) return true;
+    return false;
+}
+
+static QStringList femmDroppedFiles(const QMimeData *mime)
+{
+    QStringList out;
+    if (!mime || !mime->hasUrls()) return out;
+    for (const QUrl &u : mime->urls())
+        if (u.isLocalFile() && femmOpenable(u.toLocalFile()))
+            out << u.toLocalFile();
+    return out;
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (!py_is_running() && !femmDroppedFiles(event->mimeData()).isEmpty())
+        event->acceptProposedAction();
+    else
+        event->ignore();
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    const QStringList files = femmDroppedFiles(event->mimeData());
+    if (files.isEmpty() || py_is_running()) { event->ignore(); return; }
+    event->acceptProposedAction();
+    // Not inside the drop handler: opening runs the interpreter and can raise
+    // a modal error box, and on macOS the source (Finder) waits for the drop
+    // to complete before it will let go of the drag session.
+    QTimer::singleShot(0, this, [this, files]() {
+        for (const QString &f : files) openPath(f);
+    });
 }
 
 void MainWindow::onSave()
@@ -1537,14 +1642,7 @@ void MainWindow::createCommonMenus()
     edit->addAction(tr("Co&py"), QKeySequence(), this, &MainWindow::onCopy);
     m_actDeleteSelected = edit->addAction(tr("&Delete Selected"), QKeySequence::Delete, [this]() {
         auto *e = activeEditor();
-        if (e && e->document()) {
-            e->document()->pushUndo();
-            e->document()->DeleteSelectedSegments();
-            e->document()->DeleteSelectedArcSegments();
-            e->document()->DeleteSelectedNodes();
-            e->document()->DeleteSelectedBlockLabels();
-            e->update();
-        }
+        if (e) e->deleteSelected();   // shared with Backspace; see keyPressEvent
     });
     edit->addAction(tr("&Move"), QKeySequence(), this, &MainWindow::onMove);
     edit->addAction(tr("Sc&ale"), QKeySequence(), this, &MainWindow::onScale);
@@ -1684,17 +1782,34 @@ void MainWindow::createPreprocessorUI()
         else updateStatus(tr("No orphaned nodes found"));
     });
 
-    // "Problem" has only ever had the one entry (Problem Definition), so make
-    // the menu-bar item itself open that dialog directly rather than dropping a
-    // single-item menu.
-    m_actProblem = new QAction(tr("&Problem"), this);
-    connect(m_actProblem, &QAction::triggered, this, [this]() {
+    // "Problem" holds only one entry, and between 24eb1f2 and this commit it
+    // was a bare QAction on the menu bar for that reason -- one click instead
+    // of a single-item menu. That is invisible on macOS: there, QMenuBar is a
+    // proxy for the system menu bar, and Cocoa's accepts only submenus at the
+    // top level, so the action rendered nowhere. With no toolbar button and no
+    // shortcut, Problem Definition -- and with it the problem type, units,
+    // precision, min angle and the magnetics FREQUENCY -- was unreachable on
+    // macOS from 18 Jul 2026 until this commit.
+    //
+    // Only macOS was affected, and the reason is not "macOS is special": it is
+    // whether the desktop supplies a GLOBAL menu bar. QMenuBar delegates to a
+    // system bar only when the platform theme offers one -- always on macOS;
+    // on Linux only with KDE's Global Menu widget, a GNOME appmenu extension,
+    // or the old Unity. Stock Ubuntu is GNOME with no global bar, so Qt draws
+    // the menu bar itself and the bare action rendered fine there (verified).
+    //
+    // A menu unconditionally anyway: the working Linux case is a default that
+    // a user can switch off, one shape everywhere beats an #ifdef, and nothing
+    // in a test can catch the regression -- the QAction is valid and enabled
+    // on every platform; only a native bar declines to draw it. The menu is
+    // the guard.
+    m_preMenuProblem = menuBar()->addMenu(tr("&Problem"));
+    m_preMenuProblem->addAction(tr("&Problem Definition..."), [this]() {
         auto *e = activeEditor();
         if (!e || !e->document()) return;
         ProblemDialog dlg(e->document(), this);
         dlg.exec();
     });
-    menuBar()->addAction(m_actProblem);
 
     m_preMenuGrid = menuBar()->addMenu(tr("&Grid"));
     m_showGridMenu = m_preMenuGrid->addAction(tr("&Show Grid"));
@@ -1710,7 +1825,7 @@ void MainWindow::createPreprocessorUI()
     });
     m_snapGridMenu = m_preMenuGrid->addAction(tr("S&nap to Grid"));
     m_snapGridMenu->setCheckable(true);
-    m_snapGridMenu->setChecked(QSettings().value("editor/snapToGrid", true).toBool());
+    m_snapGridMenu->setChecked(QSettings().value("editor/snapToGrid", false).toBool());
     connect(m_snapGridMenu, &QAction::toggled, [this](bool on) {
         auto *e = activeEditor(); if (e) e->setSnapToGrid(on);
         if (m_snapGridTB && m_snapGridTB->isChecked() != on) {
@@ -2269,7 +2384,7 @@ void MainWindow::createLeftToolbars()
     });
     m_snapGridTB = m_leftNav->addAction(icon("snapgrid"), tr("Snap Grid"));
     m_snapGridTB->setCheckable(true);
-    m_snapGridTB->setChecked(QSettings().value("editor/snapToGrid", true).toBool());
+    m_snapGridTB->setChecked(QSettings().value("editor/snapToGrid", false).toBool());
     connect(m_snapGridTB, &QAction::toggled, [this](bool on) {
         auto *e = activeEditor(); auto *r = activeResults(); auto *s = activeScalarResults();
         if (e) e->setSnapToGrid(on); else if (r) r->setSnapToGrid(on); else if (s) s->setSnapToGrid(on);
@@ -2330,7 +2445,7 @@ void MainWindow::createLeftToolbars()
         // the same job FEMM 4.2's About box gave __DATE__. See common/
         // build_info.h; the title stays the bare version so the window caption
         // does not move about from build to build.
-        QMessageBox::about(this, QString("femm %1").arg(femm_version()),
+        showAbout(this, QString("femm %1").arg(femm_version()),
             QString("Finite Element Method Magnetics, Version %1 %2\n")
                 .arg(femm_version(), femm_build_date()) +
             "Copyright © 2026 David Meeker and contributors\n\n"
@@ -2523,13 +2638,10 @@ void MainWindow::onMirror()
 
 void MainWindow::onDeleteSelected()
 {
-    auto *e = activeEditor(); if (!e || !e->document()) return;
-    e->document()->pushUndo();
-    e->document()->DeleteSelectedSegments();
-    e->document()->DeleteSelectedArcSegments();
-    e->document()->DeleteSelectedNodes();
-    e->document()->DeleteSelectedBlockLabels();
-    e->update();
+    // Toolbar Delete button. Same implementation as Edit|Delete Selected and
+    // as Backspace in the drawing, so the three cannot drift apart.
+    auto *e = activeEditor();
+    if (e) e->deleteSelected();
 }
 
 void MainWindow::showPyConsole()
@@ -2551,6 +2663,22 @@ void MainWindow::clearPyConsole()
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 {
+    // macOS never puts a document on the command line. Double-clicking a .fem
+    // in Finder, or dropping one on the Dock icon, arrives as a QFileOpenEvent
+    // on the application instead -- at launch as well as while running -- and
+    // the Info.plist already registers us as the editor for all four problem
+    // types, so without this Finder starts FEMM and the file is dropped on the
+    // floor. Deferred for the same reason as dropEvent. Other platforms never
+    // send it.
+    if (event->type() == QEvent::FileOpen && obj == qApp) {
+        const QString f = static_cast<QFileOpenEvent *>(event)->file();
+        if (!f.isEmpty() && femmOpenable(f)) {
+            QTimer::singleShot(0, this, [this, f]() {
+                if (!py_is_running()) openPath(f);
+            });
+            return true;
+        }
+    }
     // While a script is running, Esc interrupts it (application-wide). The GUI
     // is otherwise blocked in the interpreter; PyConsole's VM-loop event pump
     // dispatches this keypress, which raises KeyboardInterrupt at the next VM

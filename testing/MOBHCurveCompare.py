@@ -5,7 +5,8 @@ MOBHCurveCompare.py -- diff two MOBHCurveTest runs.
 block.fem is a prescribed-A cube of M-19 Steel, so B == Bdes everywhere with zero
 mesh dependence -- mo_getpointvalues(0,0) isolates the B-H curve / permeability
 evaluation. femm-qt and OF must therefore agree to solver precision at every
-Bdes, so this is a *tight* check (default 1e-5 = 0.001% tol), unlike the mesh-
+Bdes at DC (the f>0 rows are skipped: OF's effective AC curve is wrong, see
+of_ac_curve.py and ACBHCurveTest.py), so this is a *tight* check (default 1e-5 = 0.001% tol), unlike the mesh-
 dependent point suite. Measured agreement is ~4e-7, limited only by the near-zero
 B1 cross-component; the meaningful values (mu, H, E) agree tighter. It exists
 because it caught a real bug: the DC GetMu double-counted the lamination fill

@@ -26,6 +26,7 @@
 #include <QWheelEvent>
 #include <QInputDialog>
 #include <QMessageBox>
+#include "mouse_release_gate.h"
 #include <QKeyEvent>
 #include <QFormLayout>
 #include <QVBoxLayout>
@@ -101,6 +102,17 @@ void EditorWidget::setEditAction(int action)
     m_editAction = action;
     m_firstPoint = -1;
     emit editActionChanged(action);
+    update();
+}
+
+void EditorWidget::deleteSelected()
+{
+    if (!m_doc) return;
+    m_doc->pushUndo();
+    m_doc->DeleteSelectedSegments();
+    m_doc->DeleteSelectedArcSegments();
+    m_doc->DeleteSelectedNodes();
+    m_doc->DeleteSelectedBlockLabels();
     update();
 }
 
@@ -505,33 +517,40 @@ void EditorWidget::mousePressEvent(QMouseEvent *event)
                 update();
             } else {
                 int n1 = m_doc->ClosestNode(cx, cy);
-                m_doc->nodelist[m_firstPoint].ToggleSelect();
-                if (n1 >= 0 && n1 != m_firstPoint) {
-                    // Collect boundary names from document
-                    std::vector<std::string> bdryNames;
-                    for (int i = 0; i < m_doc->numBoundaries(); i++)
-                        bdryNames.push_back(m_doc->boundaryName(i));
-
-                    ArcDialog dlg(bdryNames, m_arcAngle, m_arcMaxSeg,
-                                  m_arcBdryIdx, this);
-                    if (dlg.exec() == QDialog::Accepted) {
-                        m_arcAngle = dlg.arcAngle();
-                        m_arcMaxSeg = dlg.maxSeg();
-                        m_arcBdryIdx = dlg.boundaryIndex();
-
-                        m_doc->pushUndo();
-                        FArcSegment asegm;
-                        asegm.n0 = m_firstPoint;
-                        asegm.n1 = n1;
-                        asegm.ArcLength = m_arcAngle;
-                        asegm.MaxSideLength = m_arcMaxSeg;
-                        if (m_arcBdryIdx > 0 && m_arcBdryIdx - 1 < (int)bdryNames.size())
-                            asegm.BoundaryMarker = bdryNames[m_arcBdryIdx - 1];
-                        m_doc->AddArcSegment(asegm);
-                    }
-                }
+                int n0 = m_firstPoint;
+                m_doc->nodelist[n0].ToggleSelect();
                 m_firstPoint = -1;
                 update();
+                if (n1 >= 0 && n1 != n0) {
+                    // After the button-up, never here: mouse_release_gate.cpp.
+                    femmAfterMouseRelease(this, [this, n0, n1]() {
+                        if (!m_doc || n0 >= (int)m_doc->nodelist.size() ||
+                            n1 >= (int)m_doc->nodelist.size()) return;
+                        // Collect boundary names from document
+                        std::vector<std::string> bdryNames;
+                        for (int i = 0; i < m_doc->numBoundaries(); i++)
+                            bdryNames.push_back(m_doc->boundaryName(i));
+
+                        ArcDialog dlg(bdryNames, m_arcAngle, m_arcMaxSeg,
+                                      m_arcBdryIdx, this);
+                        if (dlg.exec() == QDialog::Accepted) {
+                            m_arcAngle = dlg.arcAngle();
+                            m_arcMaxSeg = dlg.maxSeg();
+                            m_arcBdryIdx = dlg.boundaryIndex();
+
+                            m_doc->pushUndo();
+                            FArcSegment asegm;
+                            asegm.n0 = n0;
+                            asegm.n1 = n1;
+                            asegm.ArcLength = m_arcAngle;
+                            asegm.MaxSideLength = m_arcMaxSeg;
+                            if (m_arcBdryIdx > 0 && m_arcBdryIdx - 1 < (int)bdryNames.size())
+                                asegm.BoundaryMarker = bdryNames[m_arcBdryIdx - 1];
+                            m_doc->AddArcSegment(asegm);
+                            update();
+                        }
+                    });
+                }
             }
         }
 
@@ -702,7 +721,10 @@ void EditorWidget::mouseDoubleClickEvent(QMouseEvent *event)
 
     if (!info.isEmpty()) {
         update();
-        QMessageBox::information(this, tr("Properties"), info);
+        // After the button-up, never here: mouse_release_gate.cpp.
+        femmAfterMouseRelease(this, [this, info]() {
+            QMessageBox::information(this, tr("Properties"), info);
+        });
     }
 }
 
@@ -842,6 +864,21 @@ void EditorWidget::keyPressEvent(QKeyEvent *event)
     switch (event->key()) {
     case Qt::Key_Space:
         openSelected();
+        break;
+
+    case Qt::Key_Backspace:
+        // Same as Delete. A Mac laptop keyboard has no forward-delete (the key
+        // labelled "delete" IS Backspace), so Edit|Delete Selected's shortcut --
+        // QKeySequence::Delete, which macOS resolves to the forward-delete key --
+        // cannot be typed there at all.
+        //
+        // Deliberately handled here rather than as a second shortcut on that
+        // action: shortcuts are resolved before the focused widget sees the key,
+        // and the Python console dock lives in this same window, where Backspace
+        // edits the input line (py_console.cpp:341). A window-level Backspace
+        // shortcut would eat it. As a key event it only fires when the drawing
+        // has focus, which is the same condition under which Escape works.
+        deleteSelected();
         break;
 
     case Qt::Key_Escape:

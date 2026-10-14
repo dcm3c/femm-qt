@@ -1,0 +1,423 @@
+% SPDX-License-Identifier: CC-BY-4.0
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+\documentclass[
+  11pt,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
+\hypersetup{
+  pdftitle={Generating B-H Curves for Nonoriented Silicon Steels},
+  pdfauthor={David Meeker},
+  colorlinks=true,
+  linkcolor={Maroon},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Generating B-H Curves for Nonoriented Silicon Steels}
+\author{David Meeker}
+\date{23 September 2026}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}\label{introduction}
+
+The companion page on low-carbon steels {[}1{]} set out to replace undocumented B-H tables with curves regressed from citable measurements. The nonoriented silicon steels --- the M-grades that most motor and transformer laminations are cut from --- are in the same position.
+
+This page applies the same method to fourteen DC magnetization curves from a 1978 US Steel catalog {[}2{]}: seven M-grades, and seven pages of the catalog's cold-rolled lamination sheet --- Stator B at two gauges, and at one of them both as sheared and after a decarburizing anneal, and Q-Core and Type 2-S at two gauges. The obstacle is that the catalog states no chemical composition at all, and composition is what the method needs: the saturation level is computed rather than fitted, and the approach to saturation is fixed by the anisotropy field, which also depends on composition. Both would ordinarily have to be assumed.
+
+They do not have to be. The catalog states a resistivity and a density for every grade, and it prints, in its own Section 5, the two formulas relating those quantities to composition. The composition can therefore be solved for out of the book itself. That turns out to be the single most useful thing in the document, and everything else here rests on it.
+
+Three independent sources arrived after the model was fitted and are used only to check it: a Metals Handbook table that states silicon, resistivity, density and saturation together for the same grade names {[}3{]}; a set of curve sheets from a second mill six years later {[}4{]}; and the modern product bulletin for the descendant product line {[}5{]}.
+
+\section{Composition from
+Resistivity}\label{composition-from-resistivity}
+
+The catalog gives, per grade, an electrical resistivity to 1 \(\mu\Omega\)·cm and a density to 0.05 g/cm\(^{3}\). Its p.116 formula is linear in every alloying element,
+
+\begin{equation}\label{eq1}
+\rho\;[\mu\Omega\,\mathrm{cm}] = 10.45 + 6.0\,\mathrm{C} + 4.5\,\mathrm{Mn} + 13.7\,\mathrm{P} - 10.4\,\mathrm{S} + 11.6\,\mathrm{Si} + 3.1\,\mathrm{Cu} + 2.4\,\mathrm{Ni} + 4.7\,\mathrm{Cr} + 2.8\,\mathrm{Mo} + 13.2\,\mathrm{Al}
+\end{equation}
+
+and its p.115 formula gives the density,
+
+\begin{equation}\label{eq2}
+\delta\;[\mathrm{g/cm^3}] = 7.865 - 0.065\,(\mathrm{Si} + 1.7\,\mathrm{Al})
+\end{equation}
+
+Between them these could in principle give silicon and aluminium separately. Hold the minor elements, and each formula becomes one linear relation between the two: the resistivity weights aluminium 13.2/11.6 = 1.14 times silicon, the density weights it 1.7 times. The weights differ, so the relations are independent and the pair is solvable.
+
+In practice it is not. The densities the catalog quotes are the ASTM \emph{assumed} densities of its own p.115 table, banded in 0.05 steps by silicon content, so a quoted density says only which band the grade fell in and Eq.~\eqref{eq2} adds nothing to Eq.~\eqref{eq1}. The resistivity alone still yields the one combination the magnetics need. Holding the minor elements at the book's own worked example (0.005 C, 0.25 Mn, 0.007 S, contributing 1.08 \(\mu\Omega\)·cm in all),
+
+\begin{equation}\label{eq3}
+\mathrm{Si} + 1.14\,\mathrm{Al} = \frac{\rho - 11.53}{11.6}
+\end{equation}
+
+The coefficient ratio 13.2/11.6 = 1.14 is within 1\% of the ratio of the saturation-attenuation coefficients for aluminium and silicon, 0.055/0.048 = 1.15 {[}6{]}. Both numbers are ratios of coefficients, not of contents: they say how strongly a weight percent of aluminium acts beside a weight percent of silicon, in resistivity and in saturation respectively. Neither says how much aluminium any grade contains, and nothing here does. That is exactly why the coordinate works. If the two coefficient ratios agree, then whatever the aluminium fraction happens to be, the combination a resistivity fixes is the combination a saturation needs, and the fraction never has to be known. It is not a law. Resistivity dilution and moment dilution are different physics and nothing requires them to agree; the agreement is a coincidence this coordinate exploits. What it does do is disqualify any coefficient set whose ratio is far off, which is taken up with the saturation coefficient below. The one combination a resistivity can fix is therefore, to within a per cent, exactly the one combination the saturation level needs. Silicon and aluminium separately are not recoverable and are not required. Throughout, \emph{silicon-equivalent} means Si + 1.14 Al in weight per cent.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Grade
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Gauge
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\(\rho\), \(\mu\Omega\)·cm
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Si-eq, wt\%
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+J\_s, T
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+\(\sigma\), MS/m
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+M-19, M-22 & 29 ga & 52 & 3.49 & 1.984 & 1.92 \\
+M-27, M-36 & 29 ga & 49 & 3.23 & 1.996 & 2.04 \\
+M-43 & 26 ga & 39 & 2.37 & 2.038 & 2.56 \\
+M-45 & 26 ga & 35 & 2.02 & 2.054 & 2.86 \\
+M-47, Stator B & 26 ga (Stator B also 24 ga) & 23 & 0.99 & 2.104 & 4.35 \\
+Q-Core, Type 2-S & 0.018 and 0.024 in & 16 & 0.39 & 2.133 & 6.25 \\
+\end{longtable}
+}
+
+The grades come in \textbf{alloy pairs}. M-19 and M-22 share a resistivity, hence a composition; so do M-27 and M-36, M-47 and Stator B, Q-Core and Type 2-S. Whatever separates the two members of a pair is processing, and the catalog says nothing about it. This is not an artifact of the inference --- the modern bulletin {[}5{]} shows the same practice carried further, with M-27, M-36 and M-43 all at one resistivity. The lamination-sheet pages add two more kinds of pair at one composition: one grade at two gauges (Q-Core and Type 2-S at 0.018 and 0.024 in, Stator B at 26 and 24 gauge), and one grade processed two ways (Stator B at 24 gauge, fully processed and tested as sheared, and semiprocessed and tested after the 1450 °F decarburizing anneal).
+
+A useful by-product: the conductivity of each entry follows from the same stated resistivity, rather than from a single stock figure applied to every grade.
+
+\section{Saturation from Composition}\label{saturation-from-composition}
+
+With the silicon-equivalent known, the saturation polarization follows from the dilution rule used in {[}1{]},
+
+\begin{equation}\label{eq4}
+J_s(\mathrm{Si_{eq}}) = J_{s,0} - k_{\mathrm{Si}}\,\mathrm{Si_{eq}}, \qquad J_{s,0} = J_{s,\mathrm{Fe}} - k_{\mathrm{C}}\,\mathrm{C} - k_{\mathrm{Mn}}\,\mathrm{Mn} = 2.151\ \mathrm{T}
+\end{equation}
+
+with J\_s,Fe = 2.158 T for pure iron from Sanford and Bennett {[}7{]}, and the carbon and manganese coefficients of {[}1{]}, 0.1736 and 0.0228 T/wt\%, applied to the same minor elements Eq.~\eqref{eq3} holds. They cost 6.6 mT, 5.7 of it the manganese. Leaving them out would count those elements in the resistivity but not in the saturation, and set every level 0.3\% high. The silicon coefficient is the one number here taken from outside the project, and the literature disagrees about it by a factor of three: Maurer and Schroeter give 0.073 T/wt\%, Exner 0.048, Hoselitz 0.024, all collected in {[}6{]}. Exner's value is adopted, and two tests narrow the field to it. The first is structural. Eq.~\eqref{eq3} buys one composition coordinate out of a resistivity, and that coordinate serves the saturation only if aluminium carries the same weight beside silicon in both relations --- again a ratio of coefficients, not of contents. In the resistivity formula it is 13.2/11.6 = 1.14. Maurer and Schroeter's coefficients give 7.98/9.25 = 0.86, inverted: a weight percent of their aluminium costs less saturation than a weight percent of their silicon, where the resistivity says it does more, so their set would take away the single coordinate this note runs on. Exner's 6.92/6.04 = 1.15 and Hoselitz's 3.27/3.02 = 1.08 both survive, to 0.7\% and 5\%, so this test disqualifies a candidate rather than selecting one.
+
+The second test is magnitude, and it removes Hoselitz. The modern bulletin {[}5{]} tabulates a resistivity and a saturation together for each grade; reducing the first through Eq.~\eqref{eq3} gives k\_Si = 0.033 to 0.043 T/wt\% through the intercept of Eq.~\eqref{eq4}, and Hoselitz's 0.024 lies well below all of it. What survives both tests is Exner, and four further lines of evidence support it.
+
+First, the catalog's own curves. Each page reaches 989 Oe, which is 1.8 to 2.4 times the anisotropy field of its grade, so its own saturation can be read off it through the law of approach discussed below. Fitting Eq.~\eqref{eq4} through its intercept over the twelve pages whose curve top agrees with their resistivity to 1.5\% gives k\_Si = 0.0507 T/wt\%, rms residual 15 mT. The intercept matters: through pure iron the same twelve pages give 0.0532, the minor elements' 6.6 mT absorbed as extra slope.
+
+Second, Metals Handbook {[}3{]} tabulates a nominal silicon content and a saturation induction for nine M-grades. Eq.~\eqref{eq4} sits within 1.2\% of all eight tabulated saturations, rms 18 mT; forcing its intercept through the handbook's own points gives k\_Si = 0.0469.
+
+Third, a measurement from outside the catalog and the handbook alike. Burrows plots Gumlich's iron-silicon series {[}10{]}; over the 0 to 3.5 wt\% these grades occupy, its points lie on a straight line to 0.1 mT and give k\_Si = 0.0506 T/wt\%. Two limits come with it. Above about 4\% the relation steepens and one line no longer serves, which is outside the range here. And its zero-silicon intercept is 2.139 T against Sanford and Bennett's 2.158, so Gumlich's levels run low. The 19 mT is about what 0.1\% carbon or 0.8\% manganese would cost at the coefficients of {[}1{]}, so his base iron may simply have been less pure rather than his measurement low; either way it is the slope that is usable --- the same pattern the carbon figure of the same source shows in {[}1{]}.
+
+Fourth, the same handbook table states a resistivity \emph{range} and a density \emph{range} per grade, which tests Eq.~\eqref{eq1} and Eq.~\eqref{eq2} directly. Both catalog formulas land inside the handbook's stated range for eight of nine grades. The single miss in each is M-50, quoted as a single value and described by the handbook itself as ``not subject to magnetic requirements''.
+
+Maurer's coefficient and Hoselitz's are excluded outright. The three estimates made here, 0.0469, 0.0506 and 0.0507, bracket Exner's 0.048, and nothing distinguishes among the four: they span 13 mT at 3.5\% silicon, well inside the heat-to-heat scatter of the steel itself.
+
+\section{Anisotropy and the Rotation
+Field}\label{anisotropy-and-the-rotation-field}
+
+The approach to saturation is governed by the anisotropy field H\_a = 2\(K_1\)/J\_s, and \(K_1\) falls with silicon. Bozorth's Fig. 12-16 {[}8{]} plots Tarasov's crystal anisotropy measurements against silicon and draws a line through them; read off its own grid, that line is \(K_1\) = (487 \(-\) 44.2 Si) \(\times 10^{3}\) erg/cm\(^{3}\). Two checks confirm the reading. It extrapolates to zero at 11.0 wt\%, and Bozorth's text says ``about 11--12\% (20--22 atomic per cent)''. Its intercept, \(4.87\times10^{4}\) J/m\(^{3}\), sits inside the accepted 4.8 \(\times 10^{4}\) for pure iron {[}9{]}, which {[}1{]} already uses. It is therefore taken as a fractional law anchored on the better-determined value,
+
+\begin{equation}\label{eq5}
+K_1(\mathrm{Si_{eq}}) = K_{1,\mathrm{Fe}}\left(1 - \frac{\mathrm{Si_{eq}}}{11.0}\right), \qquad H_a = \frac{2K_1}{J_s}
+\end{equation}
+
+H\_a runs from 43.3 kA/m at the lean end of the set to 32.9 kA/m at M-19. Above H\_a the polarization follows Akulov's law of approach,
+
+\begin{equation}\label{eq6}
+J(H) = J_s\left(1-\frac{a}{H^{2}}\right), \qquad a = \frac{8}{105}\left(\frac{K_1}{J_s}\right)^{2} = \frac{2}{105}H_a^{2}
+\end{equation}
+
+One caveat is carried openly. The 8/105 coefficient assumes a random cubic polycrystal with \(K_2\) = 0. Bozorth's own 3.85\% silicon crystal has \(K_2\) = \(1\times10^{4}\) J/m\(^{3}\) against \(K_1\) = \(2.87\times10^{4}\), where pure iron has \(K_2\) = 0 ± \(0.5\times10^{4}\), so at the high-silicon end Eq.~\eqref{eq6} is good to perhaps 10--20\%. These are all nonoriented grades, so the random-polycrystal assumption itself is sound; grain-oriented material would need a different treatment.
+
+\section{Structure of the Magnetization
+Curve}\label{structure-of-the-magnetization-curve}
+
+The simplest form in the spirit of {[}1{]} uses three additive processes: a Rayleigh toe, a single Burr type XII wall-motion term, and a rotation term pinned by Eq.~\eqref{eq6}. Applied to these curves it fails, and the way it fails is instructive.
+
+Fitted to ten of these pages it reaches an RMS of 0.215 in ln H, with 87\% of the squared error in the bottom decade of the chart, where it is wrong by a factor of two to four in field for M-47 and Stator B. The cause is structural. Low-carbon steel has a soft knee and a long wall tail, so its Burr term covers the whole approach and leaves the Rayleigh term free to be a toe. Silicon steel has a \textbf{sharp} knee, which forces the wall tail exponent to 2.2--2.6; the Burr term then dies soon after the knee, and something else must carry the long shoulder between 1 and 30 kA/m. The Rayleigh term gets conscripted for it --- the fit puts its scale at 800--3100 A/m, an order of magnitude \emph{above} the wall pinning field --- and nothing is left for the initial permeability.
+
+The data say plainly that a toe is needed. M-47 and Stator B show a decade and a half of nearly constant permeability, 462 to 747, before a hard knee; M-19 and Type 2-S show none at all. Two cheaper repairs were tried and both failed: giving each grade its own knee width made the fit worse, and freeing the Rayleigh scale per grade changed nothing, because the fit still needed it for the shoulder. Dropping the bottom decade of the chart removed the residuals only by removing the evidence.
+
+So the shoulder keeps its own scale and is named for what it is --- a harder wall population --- and a fourth, reversible process is added. The wall motion is thus split into two populations, as it is in {[}1{]}, but differently: there the second population is softer than the knee and supplies Rayleigh's quadratic rise, while here it is harder and carries the shoulder above the knee. The shoulder keeps the rational form \(H/(H+h_s)\), whose linear onset and \(1/H\) approach are what these pages ask for; the soft-wall kernel of {[}1{]}, which starts as \(H^{2}\), fits them worse.
+
+The toe is the algebraic sigmoid of {[}1{]}, \(P(u) = u/\sqrt{1+u^{2}}\), which supplies the initial permeability and has no quadratic term. Its scale is tied to the wall pinning field by one global ratio, \(h_t = q\,h_W\), as the toe scale of {[}1{]} is a fitted ratio to its wall scale, so the toe costs three parameters per test condition rather than a scale per grade: a share, its silicon slope, and q. The ratio matters. At \(h_t = h_W\) the toe rolls off before the knee, whose onset goes as \(H^{5}\) to \(H^{6}\), has begun to rise, and the model's permeability dips between the origin and the knee on the low-silicon grades: by 0.5\% with this toe, and by up to 12\% with the rational toe \(u/(1+u)\), whose slope falls from the origin. The pages show no dip: M-47's permeability rises steadily from 590 at 10 A/m to 990 at 40 A/m. For material tested as sheared the fit puts q at 4.2, and the toe's share at 0.12 for Stator B rising to 0.17 at 3.5\% silicon. With its scale at 210 to 650 A/m the toe is therefore a reversible, linear-onset population reaching into the knee, not only the Rayleigh region, and it should be read that way.
+
+The catalog tests its steel in two conditions, and they are two kinds of material. The fully processed grades are tested as sheared, with the cold-worked edge the shearing leaves; the lamination sheet is tested after a decarburizing anneal at 1450 °F, which removes it. Stator B at 24 gauge, tested both ways at one composition and gauge, needs 2.6 times the field as sheared that it needs annealed. One set of wall parameters cannot serve both: fitted that way, the fourteen pages reach an RMS of 0.088 in ln H. So every wall parameter --- the shares and scale ratios of the toe, shoulder and knee, their silicon slopes, the knee width and the wall tail --- is carried per test condition, and only the rotation term and the composition laws are shared, since anisotropy and saturation belong to the alloy and not to its processing. That sharing is tested rather than assumed: fitted on their own, the five annealed pages pull the rotation field scale 26\% away from its anisotropy value, while shared it lands within 1\%. The catalog's own grouping is not the dividing line. Stator B fully processed is filed with the lamination sheet, but tested as sheared it behaves as an M-grade, and giving it wall parameters of its own gains nothing.
+
+Annealed material then takes the structure of the low-carbon model {[}1{]}. The soft wall population of {[}1{]}, \(1-1/\sqrt{1+(H/h_o)^{2}}\), which starts as \(H^{2}\) at a scale \(h_o\) below the knee, is added in both conditions. Annealed, the toe's share falls to 0.005 and the soft population, 4\% of saturation at 0.39 \(h_W\), carries the rise in permeability from the origin into the knee; as sheared the toe keeps its share and the soft population takes 3\%.
+
+\section{The Assembled Model}\label{the-assembled-model}
+
+With F the Burr type XII distribution of {[}1{]},
+
+\begin{equation}\label{eq7}
+F(H;a,k,m) = 1-\left(1+(H/a)^{k}\right)^{-m}
+\end{equation}
+
+the polarization is
+
+\begin{equation}\label{eq8}
+\begin{split}
+\frac{J(H)}{J_s} = {} & f_t\frac{H/h_t}{\sqrt{1+(H/h_t)^{2}}} + f_s\frac{H}{H+h_s} + f_o\left(1-\frac{1}{\sqrt{1+(H/h_o)^{2}}}\right) \\
+& + (1-f_t-f_s-f_o-f_r)\,F(H;h_W,k_W,m_W) + f_r\,F(H;h_R,k_R,m_R)
+\end{split}
+\end{equation}
+
+with \(h_t = q\,h_W\) and \(h_o = q_o\,h_W\), and B = J + \(\mu_{0}\)H. The rotation scale is \textbf{not} a free parameter. Eq.~\eqref{eq6} relates it to the anisotropy field and the rotation share, so it is imposed per grade with a single global multiplier,
+
+\begin{equation}\label{eq9}
+h_R = H_a(\mathrm{Si_{eq}})\sqrt{\frac{2/105}{f_r}}\;e^{\lambda}, \qquad \lambda \sim N(0,\,0.1)
+\end{equation}
+
+The silicon dependence of the rotation term is thus dictated by Eq.~\eqref{eq5}, and only its overall level can move.
+
+The pinning scales are a composition law plus a penalized per-grade residual,
+
+\begin{equation}\label{eq10}
+\ln h_W = \ln h_{W0}[\text{cond}] + b_W[\text{cond}]\,\mathrm{Si_{eq}} + e_W, \qquad e_W \sim N(0,\,0.30)
+\end{equation}
+
+and likewise for h\_s. Each grade contributes exactly one curve, so a free per-grade scale would fit each curve alone and leave nothing for a law to explain; shrinking the residuals toward zero identifies the law, and the residuals themselves are the processing axis the catalog never describes. Within an alloy pair they are the entire difference between the two grades. Here [cond] is the test condition, as sheared or decarburize-annealed, and every wall parameter --- the shares and scale ratios of the toe, shoulder and soft population, the silicon slopes, the knee width and the wall tail --- is one constant per condition, shared by all the pages tested that way. The rotation share and exponents are shared by all fourteen. All the pages in one condition therefore claim one knee shape and one approach to saturation, differing only in where the knee sits, how high it goes, and a silicon-scaled knee width, and that is the falsifiable content of the model.
+
+The two conditions are the catalog's own: fully processed sheet tested as sheared, and sheet tested after the decarburizing anneal. All the M-grades and Stator B fully processed are in the first; Stator B semiprocessed, Q-Core and Type 2-S are in the second.
+
+\section{Source Data}\label{source-data}
+
+Fourteen pages of {[}2{]}, scanned at 600 dpi and digitized.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Grades
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Gauge
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Condition
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Catalog pages
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+M-19, M-22, M-27, M-36 & 29 ga & fully processed, half lengthwise and half transverse, tested as sheared & 19, 27, 35, 43 \\
+M-43, M-45, M-47, Stator B & 26 ga & as above & 59, 69, 79, 85 \\
+Stator B & 24 ga & fully processed, tested as sheared & 87 \\
+Stator B & 24 ga & semiprocessed, tested after a decarburizing anneal at 1450 °F & 89 \\
+Q-Core, Type 2-S & 0.018 in & cold rolled lamination sheet, tested after a decarburizing anneal at 1450 °F & 95, 101 \\
+Q-Core, Type 2-S & 0.024 in & as above & 97, 103 \\
+\end{longtable}
+}
+
+Each page carries \textbf{two} curves --- magnetization, and normal permeability on a second scale of the same vertical axis --- and the second one is not decoration. It is an independent reading of the same quantity, since B = \(\mu\)H, and the two are resolved differently. The axis carries 500 permeability units per kilogauss, and that ratio alone fixes the field at which a one-pixel reading of each is worth the same:
+
+\begin{equation}\label{eq11}
+H_\times = \frac{1000}{500} = 2.00\ \mathrm{oersted}
+\end{equation}
+
+The pixel calibration cancels, so Eq.~\eqref{eq11} holds on every page and involves no per-grade number. Below 2 Oe the magnetization curve is drawn \emph{on} the axis, where a pen width is the whole value: at the left-hand edge it implies initial permeabilities between 1100 and 5200, against 460 to 1750 from the permeability curve, and for M-43 it reads four times high. Above 2 Oe the permeability curve is the compressed one. Since both errors are one pixel and therefore constant in B, the inverse-variance combination is parameter-free,
+
+\begin{equation}\label{eq12}
+B = \frac{(H_\times/H)^{2}\,\mu H + B_{\text{mag}}}{(H_\times/H)^{2} + 1}
+\end{equation}
+
+which is the permeability curve at low field, the magnetization curve at high field, and an even average where they cross. Where they overlap they agree to 1--4\%, so Eq.~\eqref{eq12} has nothing to smooth over.
+
+\section{What the Induction Means}\label{what-the-induction-means}
+
+This matters more for a finite element model than it first appears. The catalog's B is flux divided by \textbf{net metal area}, and net area is the specimen's mass divided by an assumed density --- which is why p.115 states that density is ``necessary for magnetics testing'' and quotes the ASTM assumed-density table. The bulletin for the descendant product line {[}5{]} says it in full: \emph{``Induction is calculated from the net cross-sectional area of the specimen. Net area is determined from the actual weight of the specimen and the assumed specific gravity values (as specified by ASTM). Designers may approximate net area by multiplying gross area of the compacted core by its lamination factor.''}
+
+The core-plate coating's thickness therefore never enters, and the lamination factor is explicitly a separate multiplier. The emitted tables are solid-metal curves, as the Metglas entries of this library are, and \texttt{LamFill} carries a stacking factor on top of them, as the Metglas entries carry Metglas's own. The steel's maker states none, so each entry suggests one by gauge: the midpoint of the stacking-factor table on femm.info {[}11{]}, which collects Tarter, Constantinides, Nasar and Magnetics Inc., at the nearest tabulated thickness. That is 0.955 for 14 mil (the sources give 0.95--0.96), 0.965 for 18 and 18.5 mil (0.96--0.97), and 0.975 for 24 and 25 mil (0.97--0.98). It is set because an entry left at 1 is one few users ever change, and it is a suggestion: a designer who knows the core's own factor should enter it, and the same page notes factors about 5\% lower for interleaved transformer stacks. There is no double-counting, because the curves themselves carry no fill. A thickness argument would have suggested about 1.4\% for 29 gauge; the coating in fact enters only as \emph{mass}, 0.06--0.11\% at 3 g/m\(^{2}\), both sides together, against 2.7--5.0 kg/m\(^{2}\) of steel. Neither the catalog nor the bulletin states a coating weight, so 3 g/m\(^{2}\) is a sensitivity value, not a sourced one; at twice that the bias is still under a quarter of a per cent.
+
+The catalog pages nevertheless run short of their own composition's saturation at their tops, by up to 2.4\%, median 0.42\%, twelve of the fourteen short. That is not the coating, which would make the coated pages run shorter: the nine fully processed pages, which carry core plate, average 0.52\% short, the five decarburize-annealed lamination pages 0.83\%, and the correlation of shortfall with being coated is \(-\)0.16. The lamination pages are also the least consistent: at 0.018 in Q-Core and Type 2-S run 1.4 and 2.3\% short, at 0.024 in 0.9\% over and 0.4\% short. Nor is it the banded assumed density, worth at most 0.35\% and of the opposite sign. Nor is it the saturation law. An error in k\_Si would make the shortfall grow or shrink with silicon across the 0.4 to 3.5\% the pages span, and the correlation of shortfall with silicon-equivalent is \(-\)0.07. One mechanism with the right sign remains for the annealed pages alone: anything the anneal leaves on the sheet that is weighed but is not steel enters exactly as the coating does, as mass, but only on those pages. A layer of fixed mass per unit area would make the shortfall scale as 1/thickness. Across the five annealed pages it does lean that way, correlation +0.74 with 1/thickness, the 0.018 in page shorter than the 0.024 in page for both grades. But the spread is too large for a layer alone: the implied layer runs from 17 to 80 g/m\(^{2}\), and Q-Core at 0.024 in would need a negative one. It is a candidate, not an attribution. Beyond it, the remainder is the drawn curves falling short, and the same effect appears independently in Metals Handbook, whose Fig. 17 curves end 3--5\% below its own Table 1 saturations.
+
+\section{Regression}\label{regression}
+
+Levenberg-Marquardt from six starts, with a soft-L1 polish, against the residual in ln H used in {[}1{]}. The level of each page carries a nuisance parameter at \(\sigma\) = 0.02 T; unlike {[}1{]} there is no field-scale nuisance, because there is only one source, one set of axes, calibrated to about two pixels. The wall tail exponent \(k_W m_W\) is held near 2 with \(\sigma\) = 0.3, as in {[}1{]}, and the rotation's \(k_R m_R\) near Akulov's 2 with \(\sigma\) = 0.05, also as in {[}1{]}. A looser exponent prior lets the rotation level and the exponent slide together along a ridge the pages cannot resolve, which is the reason {[}1{]} gives for the same choice; at \(\sigma\) = 0.2 the level, freed, ran to 1.17 with the exponent at 2.51.
+
+The per-page level nuisance describes the \textbf{page}, not the steel, and is deliberately not carried into the emitted curves. Including it put M-47, at 0.99\% silicon, above Type 2-S at 0.39\%, and M-36 above M-43 --- a 1978 draughtsman's ink overriding the resistivity the same book states. The shape is what the page measured and is kept; the level comes from composition.
+
+\section{Results}\label{results}
+
+Five of the six starts converge on the same optimum and the sixth stops at a higher cost. RMS error is \textbf{0.072 in ln H}, against 0.158 for the low-carbon family. Twelve of the fourteen pages are within 0.090; the two exceptions are the 0.024 in lamination pages, Q-Core at 0.111 and Type 2-S at 0.150, taken up with the gauge pairs below. The fourteen emitted tables pass the single-curve gates of {[}1{]}: B strictly increasing, dB/dH not less than \(\mu_0\), and a single maximum in the differential permeability, counted with the interval from the origin included.
+
+The rotation term is consistent with the anisotropy, but the pages do not pin its level. The multiplier of Eq.~\eqref{eq9} comes out 0.999 against a prior width of 0.10, with the Akulov tail exponent at 2.003, and freed of its prior it moves only to 0.994. That is the exponent prior at work, not the data. Held at 0.9, 1.0, 1.1 and 1.2 in turn, the RMS error falls steadily, 0.0746, 0.0722, 0.0713, 0.0711, and the cost rises on both sides of 1.0 only because the exponent has to leave 2 to follow a higher level. The pages lean mildly toward more rotation deficit at their tops than the law gives, and cannot localize it. Even that lean is mostly the page levels: with their prior loosened from 0.02 to 0.05 T, the RMS error at 1.0 and 1.2 is 0.0714 and 0.0710. At their tops a short level and an extra inverse-square deficit look alike, and the rotation level is the only other term acting there. What they do show is that a field scale dictated by a 1951 anisotropy figure, across a range over which H\_a falls by a quarter, costs the fit almost nothing. The low-carbon family {[}1{]}, under the same two priors, is pushed harder, and there most of the push traces to two curves from one laboratory.
+
+The fitted knee width at zero silicon is 6.5 as sheared and 5.1 annealed, and the wall tail exponent 2.01 and 2.23. As sheared, where the pages span 0.99 to 3.49\% silicon, the knee narrows by 16\% and the wall pinning field falls by 31\% per weight per cent, from 156 A/m for Stator B at 24 gauge to 49 A/m for M-22. The annealed pages sit at only two compositions, 0.39 and 0.99\%, so their silicon slopes are weakly determined.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Each catalog page against the entry regressed from it. Upper rows: the blended page trace (markers) and the emitted entry (line). Lower rows: error in field at fixed induction, drawn dotted above the field where the page's own level uncertainty dominates.}]{out/cmp_si_grade.png}}
+\caption{Each catalog page against the entry regressed from it. Upper
+rows: the blended page trace (markers) and the emitted entry (line). Lower rows: error in field at fixed induction, drawn dotted above the field where the page's own level uncertainty dominates.}
+\end{figure}
+
+Within the alloy pairs, where composition is identical and only processing differs, the pages separate the two grades by 3\% in field for M-19/M-22, 9\% for M-27/M-36, 8\% for M-47/Stator B, and 9\% and 18\% for Q-Core/Type 2-S at 0.018 and 0.024 in. The model reproduces all five medians within 1.5\%, but not how the Q-Core/Type 2-S difference changes across the knee, from 0 to 22\% at 0.018 in, where it can only offer a constant 10\%: a single scale shift cannot express a difference that changes with induction.
+
+The same-grade pairs measure gauge and the anneal directly. Going from 0.018 to 0.024 in, or from 26 to 24 gauge, needs 9\% more field for Q-Core, 19\% for Type 2-S and 24\% for Stator B at the median, and the thicker lamination pages have visibly rounder knees. The model offers 17 to 24\%, again as a constant, and cannot round the knee, which is why the two 0.024 in pages are its worst fits. The anneal is the larger effect by far: Stator B at 24 gauge needs 2.6 times the field as sheared that it needs annealed, and the model, with its per-condition wall parameters, reproduces that median to within a per cent.
+
+\section{Validation Against a Second
+Mill}\label{validation-against-a-second-mill}
+
+Armco published DC magnetization curves at high induction for the same AISI grade names in 1984 {[}4{]}. Armco was a competitor of US Steel rather than its successor, which is what makes the comparison worth anything: a continuation of the same product line would corroborate nothing.
+
+Each sheet states its own test condition, and they differ --- as sheared on the fully processed grades, quality annealed on the semi-processed M-43 and M-47 --- so only M-19, M-22, M-36 and M-45 are like-for-like. Compared in B at fixed H, which is the well-conditioned metric above the knee, Armco's steel reads \textbf{0.20 kG above} US Steel's at the median, ranging from \(-\)0.53 to +1.07 kG, about 1.5\% of 20 kG. M-19 and M-22 agree to within 0.6 kG at every field; M-36 and M-45 run 0.5 to 1.1 kG higher. The family, fitted to the US Steel pages alone, tracks the Armco curves too.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Armco DI-MAX (1984) against US Steel (1978) for the same grade names, with the family regressed from the US Steel pages alone. M-43 and M-47 are not like-for-like: those Armco sheets are quality annealed. M-15 has no US Steel page; its dashed line is the composition-law entry.}]{out/cmp_dimax.png}}
+\caption{Armco DI-MAX (1984) against US Steel (1978) for the same grade
+names, with the family regressed from the US Steel pages alone. M-43 and M-47 are not like-for-like: those Armco sheets are quality annealed. M-15 has no US Steel page; its dashed line is the composition-law entry.}
+\end{figure}
+
+The two grades that are \emph{not} like-for-like behave exactly as their labels predict. The quality-annealed sheets need 0.4 times the field below the knee, then converge on the as-sheared curves above about 1 kA/m --- the signature of the cold-worked sheared edge, which matters below the knee and not above it, appearing independently in another mill's data.
+
+The same comparison checks an entry the catalog cannot supply. M-15 has no US Steel page, so its entry is the composition law alone: the curve the family predicts for a silicon-equivalent at average processing, as sheared, with no per-grade residual. An M-number is a core-loss grade and not a composition (see \emph{Grade Names and Test Condition} below), so the composition has to come from a named source. The Cleveland-Cliffs DI-MAX bulletin {[}5{]} states 50 \(\mu\Omega\)·cm for fully processed M-15, which Eq.~\eqref{eq3} makes a silicon-equivalent of 3.32\%, inside the range the catalog spans. The same bulletin gives a saturation of 20.1 kG and a typical maximum permeability of 8000 on as-sheared specimens; the law entry has 19.9 kG and 7200. Armco's M-15 sheet, from the same product line and also tested as sheared, reads \textbf{0.33 kG above} the law entry at the median, from +0.11 to +1.14 kG, the largest differences in the knee near 200 A/m and the curves converging above about 1 kA/m. For the four like-for-like grades the same law, at their catalog resistivities, sits between \(-\)0.02 and +0.22 kG from Armco, so M-15 is a little further off than the grades the family was fitted to, but by the amount two mills differ on one grade. Metals Handbook's range for M-15, 45 to 69 \(\mu\Omega\)·cm {[}3{]}, would put it anywhere from 2.9 to 5.0\% silicon-equivalent, the upper half beyond anything fitted, which is why the entry names the resistivity it was made from.
+
+\section{Grade Names and Test Condition}\label{grade-names-and-test-condition}
+
+An M-number is a maximum core loss, not a composition, and it does not travel between sources. Metals Handbook {[}3{]} states a resistivity range for each M-grade, and those ranges place the 1978 catalog's M-19 (52 \(\mu\Omega\)·cm) and M-22 (52) inside the handbook's own range for those names, but its M-27 (49), M-36 (49) and M-43 (39) outside. Metals Handbook M-43 and US Steel 1978 M-43 are different materials, and a curve for one is not a curve for the other.
+
+The catalog's specimens were tested as sheared, with the cold-worked edge left in, and the pages give M-47 a maximum permeability of 3925. Anyone modelling stress-relief-annealed laminations should expect softer material than these curves.
+
+\section{Limitations}\label{limitations}
+
+The composition coordinate is a silicon-equivalent, not a silicon content, and the minor elements behind Eq.~\eqref{eq3} are assumed at the book's own example rather than measured. The coordinate absorbs most of an error in them, because the same error moves the true saturation too: what matters for each element is whether its resistivity weight beside silicon matches its saturation weight, the test aluminium passes at 1\%. Manganese carries 4.5/11.6 = 0.39 silicon-equivalents in resistivity and 0.0228/0.048 = 0.48 in saturation, so an error of 0.35\% Mn moves the equivalent by 0.14 wt\% but the predicted saturation, net, by only 1.5 mT. Carbon fails badly, 0.52 against 3.6, but these pages are fully processed or decarburized, so it is present at the few-thousandths level and costs nothing. Phosphorus, held at zero, carries 1.18 in resistivity. Of the three coefficient sets in {[}6{]} only Hoselitz's has a phosphorus entry, and his magnitudes were excluded above; his ratio to his own silicon, 1.25, survives the same test aluminium passes, so on the one model that covers it phosphorus follows the coordinate too. That is a single source, and the lean end of the set, Q-Core and Type 2-S, is where an unstated phosphorus addition would matter most.
+
+The set spans 0.39 to 3.49\% silicon-equivalent in two test conditions, the annealed one at only two compositions, and the family should not be asked for a grain-oriented grade, for which Eq.~\eqref{eq6} does not hold.
+
+The processing axis is one number per grade with no external meaning. The family can say what a silicon content it was never shown will do at \emph{average} processing; it cannot say what a particular mill's M-36 will do, and the Armco comparison shows mills differing by 0.5--1 kG on that grade.
+
+About 0.4\% of the top-end shortfall survives after the minor elements, the coating and the density band are accounted for. It does not track composition, so it belongs to the pages, but what in them causes it is unattributed. A flat deficit, as a mass or area error would give, and one proportional to \(\mu_0\)H, as an error in air-flux compensation would give, cannot be told apart within a page. Fitting each page's top as \(\alpha J + \beta\mu_0 H\) above half the anisotropy field gives a \(\beta\) whose sign flips when the Akulov coefficient is moved within the rotation level's own uncertainty, because over that range the law of approach's \(1/H^{2}\) term and \(\mu_0\)H are nearly collinear. M-43 and the 0.018 in Q-Core and Type 2-S remain level outliers at 1.4--2.4\%.
+
+The cross-curve ordering gate required three qualifications before it measured what it claims to, each added after an unqualified version reported disagreements that proved to be artifacts. It is a gate tuned against its own output, and is weak evidence. It reports two defects, both involving Type 2-S at 0.024 in and both below 0.7 T: there the model orders it the wrong way against Stator B semiprocessed, and against M-43 over 0.30 to 0.35 T.
+
+Gauge is not in the model. The thicker lamination pages have rounder knees than the thinner ones at the same composition and anneal, and the model can give a grade its own field scale but not its own knee shape; the two 0.024 in pages are its worst fits for that reason. A per-grade knee width would reach it, but together with the soft population it makes the fit unstable. The annealed condition's toe has fallen to a share of 0.005, so its three toe parameters are unconstrained and carry no information.
+
+The Armco sheets begin at 6 kG, so they say nothing about the toe or the initial permeability, and they are not folded into the fit. For the low-field end the US Steel pages remain the only source.
+
+\section{Implementation}\label{implementation}
+
+The model form is in \texttt{simodel.py}, the grade table and composition laws in \texttt{silib.py}, the regression in \texttt{bh\_fit\_si.py}. Curves are emitted as a materials library and as a geometry-free problem file. Both carry the fourteen regressed entries, the fourteen digitized pages, and M-15 from the composition law, whose source resistivity is kept with it in \texttt{silib.py}; the problem file carries, in addition, five composition-law entries at silicon contents the catalog never shows. The cross-checks are \texttt{si\_crosscheck.py} against {[}3{]} and \texttt{compare\_dimax.py} against {[}4{]}.
+
+\section{Conclusions}\label{conclusions}
+
+A model of five magnetization processes fitted jointly to fourteen catalog pages reproduces them to 7.2\% in field, better than the low-carbon family manages on its own sources, with the saturation level computed from composition rather than fitted and the approach to saturation imposed rather than extrapolated.
+
+The composition came out of the catalog itself. A book that states no chemistry states a resistivity and the formula relating it to chemistry, and the one combination a resistivity can fix is within a per cent of the one combination the saturation level needs. Three later sources agree with what that inference produced: the catalog's own resistivity and density formulas land inside Metals Handbook's stated ranges for eight of nine grades, the saturation law sits within 1.2\% of the handbook's tabulated saturations, and a second mill's curves for four grades agree with the first's to about 1.5\%.
+
+The rotation term's field scale is not fitted but dictated by an anisotropy constant read off a 1951 figure, and imposing it costs the fit nothing across a range over which the anisotropy field falls by a quarter, in both test conditions at once. The pages accept that constraint; they are not precise enough to have found it on their own.
+
+What divides the material is processing, not the catalog's own grouping. Stator B, filed with the lamination sheet, behaves as an M-grade when it is tested as sheared, where it needs 2.6 times the field it needs after the decarburizing anneal. Annealed, it and the other lamination grades take the structure of the low-carbon model, a soft wall population in place of the toe; as sheared they keep the toe the M-grades need. The rotation term and the composition laws hold across both.
+
+One finding concerns the sources rather than the steel. Drawn magnetization curves run short at their tops: by up to 2.4\% in the 1978 catalog and 3--5\% in the 1961 handbook, in two unrelated documents, which is worth knowing before trusting the top of any published curve.
+
+\section{References}\label{references}
+
+{[}1{]} ``Generating B-H Curves for Low-Carbon Steels,'' companion page.
+
+{[}2{]} United States Steel, \emph{Nonoriented Sheet Steel for Magnetic Applications}, ADUSS 31-7103-01, May 1978.
+
+{[}3{]} \emph{Metals Handbook}, 8th ed., Vol. 1, American Society for Metals, p.~788 (Tables 1 and 2) and p.~792 (Fig. 17).
+
+{[}4{]} ARMCO, \emph{ARMCO Nonoriented Electrical Steels}, ARMCO Specialty Steels Division, Middletown, OH, 1984. DC magnetization curves at high induction for the DI-MAX grades, catalog pages 20--56, curve numbers 8288--8324. The same design-manual series was catalogued in 1976 as Source 51 of the NBS survey of magnetic data sources (NBS Special Publication 396-4), which describes it as covering ``hot and cold rolled fully processed and semiprocessed sheet steel'' --- the distinction the sheets' own FP and SP labels carry, and the reason only four of the seven are like-for-like against {[}2{]}.
+
+{[}5{]} Cleveland-Cliffs, \href{https://www.clevelandcliffs.com/_assets/_92ef20feb08a1fc0de91b85887c0f9e4/clevelandcliffs/db/1190/10494/file/CLF_ProductData_DiMaxM15M47_042026.pdf}{\emph{DI-MAX Non-Oriented Electrical Steels}}, product data bulletin, April 2026.
+
+{[}6{]} K. Ouda, H. Danninger and C. Gierl-Mayer, \href{https://doi.org/10.1080/00325899.2018.1530850}{``Magnetic measurement of retained austenite in sintered steels,''} \emph{Powder Metallurgy}, 2018, Table 1, collecting Maurer and Schroeter (1929), Exner (1960) and Hoselitz.
+
+{[}7{]} R. L. Sanford and E. G. Bennett, \href{https://nvlpubs.nist.gov/nistpubs/jres/26/jresv26n1p1_a1b.pdf}{``Determination of the magnetic saturation induction of iron,''} NBS Research Paper RP1354, 1941.
+
+{[}8{]} R. M. Bozorth, \href{https://doi.org/10.1109/9780470544624}{\emph{Ferromagnetism}}, Van Nostrand, 1951, Fig. 12-16 (after L. P. Tarasov, 1939) and Fig. 12-9.
+
+{[}9{]} \href{https://en.wikipedia.org/wiki/Magnetocrystalline_anisotropy}{``Magnetocrystalline anisotropy,''} Wikipedia, accessed 25 September 2026: iron \(K_1\) = 4.8 \(\times 10^{4}\) J/m\(^{3}\) at room temperature, \(K_2\) within ±0.5 \(\times 10^{4}\), after \emph{Introduction to Magnetic Materials}, Cullity and Graham, 2nd ed., 2008.
+
+{[}10{]} C. W. Burrows, \href{https://nvlpubs.nist.gov/nistpubs/bulletin/13/nbsbulletinv13n2p173_A2b.pdf}{``Correlation of the Magnetic and Mechanical Properties of Steel,''} \emph{Bulletin of the Bureau of Standards}, 13(2):173--247, 1915. Fig. 4, saturation against silicon, stated there to be from the data of Gumlich; digitized points in \texttt{out/burrows\_fig4\_si.csv}.
+
+{[}11{]} FEMM wiki, \href{https://www.femm.info/doku/doku.php?id=stackingfactor}{``Stacking Factor,''} saved 2 October 2026. Stacking factors against lamination thickness after Tarter, Constantinides, Nasar and Magnetics Inc.
+
+\noindent Copyright 2026 David Meeker. This document is licensed under the \href{https://creativecommons.org/licenses/by/4.0/}{Creative Commons Attribution 4.0 International License (CC BY 4.0)}.
+
+\end{document}

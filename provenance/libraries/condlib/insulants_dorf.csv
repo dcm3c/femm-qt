@@ -1,0 +1,24 @@
+name,er_60Hz,df_60Hz,er_1kHz,df_1kHz,er_1MHz,df_1MHz,rho_ohm_m,note
+Alumina (Al2O3),8.5,1e-3,8.5,1e-3,8.5,1e-3,1e13,rho: Callister B.9 aluminum oxide 99.9% >10^13 ohm-m (bound)
+Porcelain (mullite),8.2,1.4e-3,8.2,5.7e-4,8.2,2e-4,,
+Steatite,5.5,1.3e-3,5.0,4.5e-4,5.0,3.7e-4,,
+Magnesium oxide (MgO),9.65,3e-4,9.65,3e-4,9.69,3e-4,,dissipation factor <3 x 10^-4 (bound used)
+Glass (soda lime),6.25,5.0e-3,6.16,4.2e-3,6.00,2.7e-3,3.16e10,rho: Callister B.9 10^10-10^11 ohm-m (geometric middle)
+Mica,6.9,1.5e-3,6.9,2.0e-4,5.4,3.5e-4,,
+SiO2 film,,,3.9,7e-4,,,1e18,rho: Callister B.9 fused silica >10^18 ohm-m (bound)
+Si3N4,,,12.7,1e-4,,,1e12,dissipation factor <1 x 10^-4 (bound used); rho: Callister B.9 silicon nitride >10^12 ohm-m (bound)
+Ta2O5,,,28,1e-2,,,,
+HfO2,,,35,1e-2,,,,
+Polyethylene (LDPE),2.3,2e-4,2.3,2e-4,2.3,2e-4,7.07e15,rho: Callister B.9 10^15-5x10^16 ohm-m (geometric middle)
+Polyethylene (MDPE),2.3,2e-4,2.3,2e-4,2.3,2e-4,7.07e15,rho: Callister B.9 LDPE/HDPE range 10^15-5x10^16 ohm-m (geometric middle)
+Polyethylene (HDPE),2.35,2e-4,2.35,2e-4,2.35,2e-4,7.07e15,rho: Callister B.9 10^15-5x10^16 ohm-m (geometric middle)
+Cross-linked polyethylene (XLPE),2.3,3e-4,,,2.28,4e-4,,
+EPR,3.25,4e-3,,,,,,dielectric constant 3.0-3.5 given at 1 kHz only (middle used); dissipation factor at 60 Hz
+Polypropylene,2.25,2.5e-4,2.25,2.75e-4,2.25,4.6e-4,1e14,ranges 2.22-2.28 / 2-3 x 10^-4 / 2.5-3.0 x 10^-4 (middles used); rho: Callister B.9 >10^14 ohm-m (bound)
+PTFE,2.0,2e-4,2.0,2e-4,2.0,2e-4,1e17,dissipation factor <2 x 10^-4 (bound used); rho: Callister B.9 10^17 ohm-m
+Glass-reinforced polyester premix,6.3,2.5e-2,,,5.7,1.5e-2,1e13,ranges 5.3-7.3 / 1-4 x 10^-2 / 5.0-6.4 / 0.8-2.2 x 10^-2 (middles used); rho: Callister B.9 thermoset polyester 10^13 ohm-m
+Thermoplastic polyester,3.55,1.75e-3,,,,,,dielectric constant 3.3-3.8 given at 100 Hz (middle used); dissipation factor 1.5-2.0 x 10^-3 at 60 Hz (middle used)
+Polycarbonate,3.17,9e-4,,,2.96,1e-2,2e14,rho: Callister B.9 2 x 10^14 ohm-m
+Epoxy (mineral filler),5.0,4.7e-2,4.55,0.80e-1,4.35,0.77e-1,3.16e11,ranges 4.4-5.6 / 1.1-8.3 x 10^-2 / 4.2-4.9 / 0.19-1.4 x 10^-1 / 4.1-4.6 / 0.13-1.4 x 10^-1 (middles used); rho: Callister B.9 epoxy 10^10-10^13 ohm-m (geometric middle)
+Epoxy (silica filler),3.85,1.9e-2,3.6,1.9e-2,3.4,3e-2,3.16e11,ranges 3.2-4.5 / 0.8-3.0 x 10^-2 / 3.2-4.0 / 0.8-3.0 x 10^-2 / 3.0-3.8 / 2-4 x 10^-2 (middles used); rho: Callister B.9 epoxy 10^10-10^13 ohm-m (geometric middle)
+Silicone rubber,3.65,2.25e-2,,,3.4,4e-3,1e13,ranges 3.3-4.0 / 1.5-3.0 x 10^-2 / 3.1-3.7 / 3.0-5.0 x 10^-3 (middles used); rho: Callister B.9 silicone elastomer 10^13 ohm-m

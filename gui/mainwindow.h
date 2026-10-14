@@ -36,6 +36,10 @@ public:
     // Called by script callbacks
     EditorWidget *addEditorTab(DocumentBase *doc, const QString &title);
     void openResultsFile(const QString &ansPath, void *scriptDoc = nullptr);
+    // Open a FEMM document or solution by path, dispatched by extension exactly
+    // as File>Open does. The one entry point for File>Open, files dropped on the
+    // window, and macOS Finder/Dock opens (QFileOpenEvent).
+    void openPath(const QString &path);
     EditorWidget *activeEditorWidget() const;
     OutputDialog *outputDialog();
     void addToRecentFiles(const QString &path);
@@ -110,6 +114,9 @@ protected:
     // Application-wide event filter: while a script is running, Esc interrupts
     // it (works regardless of focus or whether the console is visible).
     bool eventFilter(QObject *obj, QEvent *event) override;
+    // Drop a .fem/.fee/.feh/.fec or a solution file on the window to open it.
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
 
 private:
     void createCommonMenus();
@@ -162,7 +169,8 @@ private:
     // Preprocessor UI
     QToolBar *m_preTopBar1 = nullptr;  // File: New, Open
     QToolBar *m_preTopBar2 = nullptr;  // Editor: modes, mesh, solve, etc.
-    QAction *m_actProblem = nullptr;   // menu-bar item that opens Problem Definition directly
+    QMenu *m_preMenuProblem = nullptr; // "Problem" -- a MENU, not a bare action: see
+                                       // createPreprocessorUI() for why macOS needs one
     QMenu *m_preMenuView = nullptr;
     QMenu *m_preMenuGrid = nullptr;
     QMenu *m_preMenuOperation = nullptr;

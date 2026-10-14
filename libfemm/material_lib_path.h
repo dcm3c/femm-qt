@@ -5,6 +5,7 @@
 // to, on every platform.
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 // The four libraries are the only files femm-qt writes beside itself, and they
@@ -54,6 +55,18 @@ std::string materialLibWritePath(const char *name);
 // prompt driven by mtime both misses real updates and cries wolf on ones that
 // never happened.
 bool materialLibUpdateAvailable(const char *name);
+
+// Content-level questions about the user's copy, for the cases the seed cannot
+// decide (material_lib_path.cpp, "Content-level comparison"):
+//   IsPristine     -- unedited: every block matches a shipped block, or the
+//                     canonical hash is one of the libraries shipped before.
+//   MatchesShipped -- same materials and values as the current shipped library,
+//                     whatever the bytes look like.
+//   CanonicalHash  -- the hash tools/matlib_canon_hash.py also computes; what
+//                     kKnownShippedLibraries holds.
+bool materialLibCopyIsPristine(const char *name);
+bool materialLibCopyMatchesShipped(const char *name);
+uint64_t materialLibCanonicalHash(const char *utf8Path);
 
 // Record the shipped library as seen, so the user is not asked about this
 // version again -- whether they took the update or declined it.

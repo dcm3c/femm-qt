@@ -211,6 +211,34 @@ outputs is the code you would write anywhere.
 Note that these are {\em paths}: both processes see the same filesystem, so
 the worker opens the files itself and nothing large crosses between them.
 
+Finally {\tt pandas}, for anyone who would rather group and pivot a sweep than
+index it by hand.  It is forwarded like the others, but unlike them it is not
+usually installed --- if it is missing, the error names the interpreter to
+install it into.
+
+\begin{verbatim}
+    import pandas as pd
+    df = pd.DataFrame({"angle": angle, "torque": torque})
+    print(df["torque"].describe())
+    peak = df[df.torque > 0.9 * df.torque.max()]
+\end{verbatim}
+
+A data frame lives in the other process, so a single number comes back as a
+number --- \verb+float(df["torque"].mean())+ is an ordinary float --- but a
+whole column stays put.  To work on one with FEMM's own {\tt numpy}, fetch it:
+
+\begin{verbatim}
+    arr = pybridge.fetch(df["torque"].to_numpy())   # a numpy array, here
+    np.mean(arr)
+\end{verbatim}
+
+\noindent
+Going the other way is automatic: a FEMM array handed to {\tt pd.DataFrame}
+crosses in bulk.  The usual rule applies with force --- summing a 50,000-row
+column in the worker takes under a millisecond and fetching those 50,000
+numbers takes two, but reading them one at a time with {\tt .iloc[i]} takes
+the better part of a second.
+
 \subsection*{What crosses, and what does not}
 
 Numbers, strings, arrays and containers of those cross by value; anything else

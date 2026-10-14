@@ -1,0 +1,713 @@
+<BeginBlock>
+<BlockName> = "Vacuum"
+<ex> = 1
+<ey> = 1
+<qv> = 0
+<EndBlock>
+
+<BeginFolder>
+<FolderName> = "Gases (20 C, 1 atm)"
+<BeginBlock>
+<BlockName> = "Helium"
+<ex> = 1.000065
+<ey> = 1.000065
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Hydrogen"
+<ex> = 1.0002538
+<ey> = 1.0002538
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Oxygen"
+<ex> = 1.0004947
+<ey> = 1.0004947
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Argon"
+<ex> = 1.0005172
+<ey> = 1.0005172
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Air (dry, CO2-free)"
+<ex> = 1.0005364
+<ey> = 1.0005364
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Nitrogen"
+<ex> = 1.000548
+<ey> = 1.000548
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Carbon dioxide"
+<ex> = 1.000922
+<ey> = 1.000922
+<qv> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Liquids"
+<BeginFolder>
+<FolderName> = "Water (high-frequency limit; DC: use current flow)"
+<BeginBlock>
+<BlockName> = "Water, 20 C"
+<ex> = 80.37
+<ey> = 80.37
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Water, 25 C"
+<ex> = 78.54
+<ey> = 78.54
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Water, 50 C"
+<ex> = 70
+<ey> = 70
+<qv> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Polar Organic Liquids (high-frequency limit)"
+<BeginBlock>
+<BlockName> = "Methanol"
+<ex> = 33.62
+<ey> = 33.62
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Ethanol"
+<ex> = 24.3
+<ey> = 24.3
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "1-Propanol"
+<ex> = 20.1
+<ey> = 20.1
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "2-Propanol"
+<ex> = 18.3
+<ey> = 18.3
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Glycerol"
+<ex> = 42.5
+<ey> = 42.5
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Acetone"
+<ex> = 20.7
+<ey> = 20.7
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Formamide"
+<ex> = 109
+<ey> = 109
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "1,2-Dichloroethane"
+<ex> = 10.65
+<ey> = 10.65
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Nitrobenzene"
+<ex> = 35.74
+<ey> = 35.74
+<qv> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Low-Permittivity Organic Liquids"
+<BeginBlock>
+<BlockName> = "Diethyl ether"
+<ex> = 4.335
+<ey> = 4.335
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Benzene"
+<ex> = 2.2811
+<ey> = 2.2811
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Toluene"
+<ex> = 2.379
+<ey> = 2.379
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Hexane"
+<ex> = 1.89
+<ey> = 1.89
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Cyclohexane"
+<ex> = 2.023
+<ey> = 2.023
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Carbon tetrachloride"
+<ex> = 2.238
+<ey> = 2.238
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Chlorobenzene"
+<ex> = 5.708
+<ey> = 5.708
+<qv> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Insulating Oils"
+<BeginBlock>
+<BlockName> = "Capacitor oil"
+<ex> = 2.2
+<ey> = 2.2
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Pipe cable oil"
+<ex> = 2.15
+<ey> = 2.15
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Self-contained cable oil"
+<ex> = 2.3
+<ey> = 2.3
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Heavy cable oil"
+<ex> = 2.23
+<ey> = 2.23
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Transformer oil"
+<ex> = 2.25
+<ey> = 2.25
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Alkyl benzene"
+<ex> = 2.1
+<ey> = 2.1
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polybutene pipe cable oil"
+<ex> = 2.14
+<ey> = 2.14
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polybutene capacitor oil"
+<ex> = 2.22
+<ey> = 2.22
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Silicone fluid"
+<ex> = 2.7
+<ey> = 2.7
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Castor oil"
+<ex> = 3.74
+<ey> = 3.74
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "C8F16O fluorocarbon"
+<ex> = 1.86
+<ey> = 1.86
+<qv> = 0
+<EndBlock>
+
+<EndFolder>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Solid Insulation"
+<BeginFolder>
+<FolderName> = "Ceramics, Glass and Stone"
+<BeginBlock>
+<BlockName> = "Alumina (Al2O3)"
+<ex> = 8.5
+<ey> = 8.5
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Porcelain (mullite)"
+<ex> = 8.2
+<ey> = 8.2
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Steatite"
+<ex> = 5.5
+<ey> = 5.5
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Magnesium oxide (MgO)"
+<ex> = 9.65
+<ey> = 9.65
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Glass (soda lime)"
+<ex> = 6.25
+<ey> = 6.25
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Mica"
+<ex> = 6.9
+<ey> = 6.9
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Porcelain"
+<ex> = 6
+<ey> = 6
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Fused silica"
+<ex> = 4
+<ey> = 4
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Pyrex 7740 borosilicate glass"
+<ex> = 4.6
+<ey> = 4.6
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Marble, dolomitic (USGS sample, New York)"
+<ex> = 7.7
+<ey> = 7.7
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Marble, pink (USGS sample, Colorado)"
+<ex> = 11.7
+<ey> = 11.7
+<qv> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Polymers"
+<BeginBlock>
+<BlockName> = "Polyethylene (LDPE)"
+<ex> = 2.3
+<ey> = 2.3
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyethylene (MDPE)"
+<ex> = 2.3
+<ey> = 2.3
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyethylene (HDPE)"
+<ex> = 2.35
+<ey> = 2.35
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Cross-linked polyethylene (XLPE)"
+<ex> = 2.3
+<ey> = 2.3
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "EPR"
+<ex> = 3.25
+<ey> = 3.25
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polypropylene"
+<ex> = 2.25
+<ey> = 2.25
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "PTFE"
+<ex> = 2
+<ey> = 2
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Glass-reinforced polyester premix"
+<ex> = 6.3
+<ey> = 6.3
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Thermoplastic polyester"
+<ex> = 3.55
+<ey> = 3.55
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polycarbonate"
+<ex> = 3.17
+<ey> = 3.17
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Epoxy (mineral filler)"
+<ex> = 5
+<ey> = 5
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Epoxy (silica filler)"
+<ex> = 3.85
+<ey> = 3.85
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Silicone rubber"
+<ex> = 3.65
+<ey> = 3.65
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Phenol-formaldehyde"
+<ex> = 5.3
+<ey> = 5.3
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Nylon 6,6"
+<ex> = 4
+<ey> = 4
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polystyrene"
+<ex> = 2.6
+<ey> = 2.6
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Kapton HN polyimide film"
+<ex> = 3.4
+<ey> = 3.4
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Delrin 150 acetal (POM-H)"
+<ex> = 3.7
+<ey> = 3.7
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Mylar polyester film (PET)"
+<ex> = 3.3
+<ey> = 3.3
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Kapton FN 120FN616 (FEP-coated polyimide)"
+<ex> = 3.1
+<ey> = 3.1
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Kapton FN 150FN019 (FEP-coated polyimide)"
+<ex> = 2.7
+<ey> = 2.7
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Kapton FN 250FN029 (FEP-coated polyimide)"
+<ex> = 3
+<ey> = 3
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "PVC, rigid (Trovidur PN)"
+<ex> = 3.2
+<ey> = 3.2
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Kraft paper, oil-impregnated"
+<ex> = 3.3
+<ey> = 3.3
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Natural rubber (polyisoprene)"
+<ex> = 2.6
+<ey> = 2.6
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Neoprene (polychloroprene)"
+<ex> = 6.6
+<ey> = 6.6
+<qv> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Thin-Film Dielectrics"
+<BeginBlock>
+<BlockName> = "SiO2 film"
+<ex> = 3.9
+<ey> = 3.9
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Si3N4"
+<ex> = 12.7
+<ey> = 12.7
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Ta2O5"
+<ex> = 28
+<ey> = 28
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "HfO2"
+<ex> = 35
+<ey> = 35
+<qv> = 0
+<EndBlock>
+
+<EndFolder>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Circuit Board Laminates"
+<BeginBlock>
+<BlockName> = "FR-4 epoxy-glass"
+<ex> = 4.35
+<ey> = 4.35
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyfunctional FR-4"
+<ex> = 4.35
+<ey> = 4.35
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Multifunctional FR-4"
+<ex> = 4.35
+<ey> = 4.35
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyimide-glass"
+<ex> = 4
+<ey> = 4
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "BT epoxy"
+<ex> = 3.975
+<ey> = 3.975
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Cyanate ester-glass"
+<ex> = 3.55
+<ey> = 3.55
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "PPO epoxy"
+<ex> = 4
+<ey> = 4
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "PTFE-glass"
+<ex> = 2.5
+<ey> = 2.5
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Alumina substrate"
+<ex> = 8.9
+<ey> = 8.9
+<qv> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Semiconductors"
+<BeginBlock>
+<BlockName> = "Silicon"
+<ex> = 11.7
+<ey> = 11.7
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Germanium"
+<ex> = 16.2
+<ey> = 16.2
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Gallium arsenide (GaAs)"
+<ex> = 12.9
+<ey> = 12.9
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Indium phosphide (InP)"
+<ex> = 12.5
+<ey> = 12.5
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Gallium nitride (GaN, wurtzite)"
+<ex> = 8.9
+<ey> = 8.9
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Silicon carbide, 6H (c-axis along y)"
+<ex> = 9.66
+<ey> = 10.03
+<qv> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Diamond"
+<ex> = 5.7
+<ey> = 5.7
+<qv> = 0
+<EndBlock>
+
+<EndFolder>
+

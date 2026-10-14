@@ -1,0 +1,20 @@
+folder,name,eps,temp_C,note
+Water,"Water, 20 C",80.37,20,Section A standard liquid
+Water,"Water, 25 C",78.54,25,Section A standard liquid
+Water,"Water, 50 C",70.00,50,"from 78.54 at 25 C and the circular's coefficient a = 0.00200 per C, log10(eps) = log10(eps25) - a (t - 25); ITU-R P.527-6 eq. 8 gives 70.3"
+Organic Liquids,Methanol,33.62,20,Section A standard liquid (32.63 at 25 C)
+Organic Liquids,Ethanol,24.30,25,
+Organic Liquids,1-Propanol,20.1,25,
+Organic Liquids,2-Propanol,18.3,25,
+Organic Liquids,Glycerol,42.5,25,
+Organic Liquids,Acetone,20.70,25,
+Organic Liquids,Formamide,109,20,
+Organic Liquids,Diethyl ether,4.335,20,
+Organic Liquids,Benzene,2.2811,20,Section A standard liquid (2.274 at 25 C)
+Organic Liquids,Toluene,2.379,25,
+Organic Liquids,Hexane,1.890,20,
+Organic Liquids,Cyclohexane,2.023,20,Section A standard liquid (2.015 at 25 C)
+Organic Liquids,Carbon tetrachloride,2.238,20,Section A standard liquid (2.228 at 25 C)
+Organic Liquids,Chlorobenzene,5.708,20,Section A standard liquid (5.621 at 25 C)
+Organic Liquids,"1,2-Dichloroethane",10.65,20,Section A standard liquid (10.36 at 25 C)
+Organic Liquids,Nitrobenzene,35.74,20,Section A standard liquid (34.82 at 25 C)

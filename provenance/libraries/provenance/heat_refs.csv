@@ -1,0 +1,337 @@
+name,src,T_K,k,row
+"Iron, Armco",R232,293.15,73.169,"Iron (Armco) 99.92%"
+"Iron, Armco",R232,373.15,67.454,"Iron (Armco) 99.92%"
+"Iron, Armco",R232,473.15,61.639,"Iron (Armco) 99.92%"
+"Iron, Armco",R232,673.15,48.846,"Iron (Armco) 99.92%"
+"Iron, Armco",R232,873.15,38.379,"Iron (Armco) 99.92%"
+"Iron, Armco",R232,1073.15,29.075,"Iron (Armco) 99.92%"
+"Iron, Wrought",R232,273.15,59.313,"Iron, wrought, pure"
+"Iron, Wrought",R232,373.15,56.987,"Iron, wrought, pure"
+"Iron, Wrought",R232,473.15,52.335,"Iron, wrought, pure"
+"Iron, Wrought",R232,673.15,44.194,"Iron, wrought, pure"
+"Iron, Wrought",R232,873.15,37.216,"Iron, wrought, pure"
+Nichrome,R234,273.15,12.212,"Nickel-chrome 80 Ni, 20 Cr"
+Nichrome,R234,293.15,12.560,"Nickel-chrome 80 Ni, 20 Cr"
+Nichrome,R234,373.15,13.840,"Nickel-chrome 80 Ni, 20 Cr"
+Nichrome,R234,473.15,15.584,"Nickel-chrome 80 Ni, 20 Cr"
+Nichrome,R234,573.15,17.212,"Nickel-chrome 80 Ni, 20 Cr"
+Nichrome,R234,673.15,18.957,"Nickel-chrome 80 Ni, 20 Cr"
+Nichrome,R234,873.15,22.562,"Nickel-chrome 80 Ni, 20 Cr"
+304 Stainless Steel,R234,293.15,14.538,"Chrome-nickel steel 17-19 Cr, 8 Ni, 0.1-0.2 C (18-8 type)"
+304 Stainless Steel,R234,373.15,15.701,"Chrome-nickel steel 17-19 Cr, 8 Ni, 0.1-0.2 C (18-8 type)"
+304 Stainless Steel,R234,473.15,16.864,"Chrome-nickel steel 17-19 Cr, 8 Ni, 0.1-0.2 C (18-8 type)"
+304 Stainless Steel,R234,573.15,18.608,"Chrome-nickel steel 17-19 Cr, 8 Ni, 0.1-0.2 C (18-8 type)"
+304 Stainless Steel,R234,773.15,20.934,"Chrome-nickel steel 17-19 Cr, 8 Ni, 0.1-0.2 C (18-8 type)"
+Beryllium,R232,273.15,160.494,"Beryllium, 99.5%"
+Beryllium,R232,373.15,190.732,"Beryllium, 99.5%"
+Beryllium,R232,473.15,215.155,"Beryllium, 99.5%"
+Beryllium,KC4,298.15,218,Beryllium (2.18 W/cm C at 25 C)
+Cadmium,R232,273.15,93.040,"Cadmium, pure"
+Cadmium,R232,373.15,91.877,"Cadmium, pure"
+Cadmium,R232,473.15,91.296,"Cadmium, pure"
+Cadmium,KC4,298.15,93,Cadmium (0.93 W/cm C at 25 C)
+Cobalt,R232,293.15,69.780,"Cobalt, 97.1%"
+Cobalt,KC4,298.15,69,Cobalt (0.69 W/cm C at 25 C)
+Lithium,R232,273.15,70.943,"Lithium, pure"
+Lithium,R232,373.15,70.943,"Lithium, pure"
+Manganese,R232,273.15,50.242,Manganese
+Rhodium,R232,273.15,88.388,"Rhodium, pure"
+Rhodium,R232,373.15,80.247,"Rhodium, pure"
+Rhodium,KC4,298.15,150,Rhodium (1.50 W/cm C at 25 C)
+Sodium,R232,273.15,100.018,"Sodium, pure"
+Sodium,R232,323.15,93.040,"Sodium, pure"
+Sodium,KC4,298.15,134,Sodium (1.34 W/cm C at 25 C)
+Vanadium,KC4,298.15,60,Vanadium (0.60 W/cm C at 25 C)
+"Brick, Common",R235,300,0.72,"Brick, common"
+"Brick, Common",KC1,300,0.71,"Brick, common"
+"Brick, Chrome",R235,473,2.3,Chrome brick
+"Brick, Chrome",R235,823,2.5,Chrome brick
+"Brick, Fireclay",R235,773,1.0,"Fire clay, burnt 1600 K"
+"Brick, Fireclay",R235,1073,1.1,"Fire clay, burnt 1600 K"
+"Brick, Magnesite",R235,478,3.8,Magnesite
+"Brick, Magnesite",R235,922,2.8,Magnesite
+Cement Mortar,R235,300,0.72,Cement mortar
+Concrete,R235,300,1.4,Concrete (stone mix)
+Concrete,KC1,300,1.7,"Concrete, stone"
+Clay,R235,300,1.3,Clay
+Diatomaceous Earth,R235,300,0.069,"Diatomaceous silica, coarse powder, 350 kg/m3"
+Corning Pyrex 7740,R235,300,1.4,"Glass, Pyrex"
+Window,R235,300,1.4,"Glass, plate (soda lime)"
+Window,KC1,300,0.96,"Glass, window"
+Ice,KC1,273,2.2,Ice (32 F)
+"Cork, granular",R235,300,0.045,"Cork, granulated"
+Corkboard,R235,300,0.039,Cork (board and slab)
+Corkboard,KC1,300,0.04,Corkboard
+"Cellulose, loose",R235,300,0.039,"Cellulose, wood, or paper pulp (loose fill)"
+Glass Fiber,R235,300,0.036,"Glass fiber, organic bonded (board)"
+Glass Wool,R235,300,0.038,"Glass fiber, paper faced, 28 kg/m3 (blanket)"
+"Magnesia, 85%",R235,310,0.051,"Magnesia, 85%"
+"Magnesia, 85%",R235,365,0.055,"Magnesia, 85%"
+"Magnesia, 85%",R235,420,0.061,"Magnesia, 85%"
+"Magnesia, 85%",KC1,300,0.071,Magnesia (85%)
+Polystyrene,R235,300,0.027,"Polystyrene, extruded (R-12), 56 kg/m3"
+"Rubber, Foam",R235,270,0.029,"Rubber, rigid foamed"
+"Rubber, Foam",R235,285,0.030,"Rubber, rigid foamed"
+"Rubber, Foam",R235,300,0.032,"Rubber, rigid foamed"
+Rock Wool,KC1,300,0.04,Mineral wool blanket
+Sawdust,KC1,300,0.08,Sawdust
+"Vermiculite, loose",R235,300,0.068,"Vermiculite, flakes, 80 kg/m3"
+"Vermiculite, loose",KC1,300,0.058,Vermiculite
+Limestone,KC1,300,1.9,Limestone
+Marble,KC1,300,2.6,Marble
+Sandstone,KC1,300,1.7,Sandstone
+Plywood,R235,300,0.12,Plywood
+Oak,R235,300,0.16,"Hardwoods (oak, maple)"
+Oak,KC1,300,0.17,"Wood, oak"
+Maple,R235,300,0.16,"Hardwoods (oak, maple)"
+Fir,R235,300,0.12,"Softwoods (fir, pine)"
+"Pine, white",R235,300,0.12,"Softwoods (fir, pine)"
+"Pine, white",KC1,300,0.12,"Wood, white pine"
+Balsa-min-heat-capacity,KC1,300,0.050,"Wood, balsa"
+Balsa-max-heat-capacity,KC1,300,0.050,"Wood, balsa"
+"Bismuth, liquid",R229,589,16.4,Bismuth
+"Bismuth, liquid",R229,811,15.6,Bismuth
+"Bismuth, liquid",R229,1033,15.6,Bismuth
+"Potassium, liquid",R229,422,45.0,Potassium
+"Potassium, liquid",R229,700,39.5,Potassium
+"Potassium, liquid",R229,977,33.1,Potassium
+"Sodium, liquid",R229,366,86.2,Sodium
+"Sodium, liquid",R229,644,72.3,Sodium
+"Sodium, liquid",R229,977,59.7,Sodium
+Ethyl Alcohol,KB2,300,0.171,"Alcohol, ethyl"
+Ethylene Glycol,KB2,300,0.258,Ethylene glycol
+Glycerin,KB2,300,0.287,Glycerine
+Silver,C219,300,429,Ag (1200 K extrapolated)
+Silver,C219,400,425,Ag (1200 K extrapolated)
+Silver,C219,600,412,Ag (1200 K extrapolated)
+Silver,C219,800,396,Ag (1200 K extrapolated)
+Silver,C219,1000,379,Ag (1200 K extrapolated)
+Silver,C219,1200,361,Ag (1200 K extrapolated)
+"Aluminum, Pure",C219,300,237,Al
+"Aluminum, Pure",C219,400,240,Al
+"Aluminum, Pure",C219,600,231,Al
+"Aluminum, Pure",C219,800,218,Al
+Gold,C219,300,317,Au
+Gold,C219,400,311,Au
+Gold,C219,600,298,Au
+Gold,C219,800,284,Au
+Gold,C219,1000,270,Au
+Gold,C219,1200,255,Au
+Diamond Type I,C219,300,895,Diamond type I (400 K extrapolated)
+Diamond Type I,C219,400,650,Diamond type I (400 K extrapolated)
+Diamond Type IIa,C219,300,2300,Diamond type IIa (400 K extrapolated)
+Diamond Type IIa,C219,400,1540,Diamond type IIa (400 K extrapolated)
+Diamond Type IIb,C219,300,1350,Diamond type IIb (400 K extrapolated)
+Diamond Type IIb,C219,400,932,Diamond type IIb (400 K extrapolated)
+Chromium,C219,300,93.7,Cr
+Chromium,C219,400,90.9,Cr
+Chromium,C219,600,80.7,Cr
+Chromium,C219,800,71.3,Cr
+Chromium,C219,1000,65.4,Cr
+Chromium,C219,1200,61.9,Cr
+"Copper, Pure",C219,300,401,Cu
+"Copper, Pure",C219,400,393,Cu
+"Copper, Pure",C219,600,379,Cu
+"Copper, Pure",C219,800,366,Cu
+"Copper, Pure",C219,1000,352,Cu
+"Copper, Pure",C219,1200,339,Cu
+"Iron, Pure",C219,300,80.2,Fe
+"Iron, Pure",C219,400,69.5,Fe
+"Iron, Pure",C219,600,54.7,Fe
+"Iron, Pure",C219,800,43.3,Fe
+"Iron, Pure",C219,1000,32.3,Fe
+"Iron, Pure",C219,1200,28.3,Fe
+Germanium,C219,300,59.9,Ge
+Germanium,C219,400,43.2,Ge
+Germanium,C219,600,27.3,Ge
+Germanium,C219,800,19.8,Ge
+Germanium,C219,1000,17.4,Ge
+Magnesium,C219,300,156,Mg (800 K extrapolated)
+Magnesium,C219,400,153,Mg (800 K extrapolated)
+Magnesium,C219,600,149,Mg (800 K extrapolated)
+Magnesium,C219,800,146,Mg (800 K extrapolated)
+"Nickel, Pure",C219,300,90.7,Ni
+"Nickel, Pure",C219,400,80.2,Ni
+"Nickel, Pure",C219,600,65.6,Ni
+"Nickel, Pure",C219,800,67.6,Ni
+"Nickel, Pure",C219,1000,71.8,Ni
+"Nickel, Pure",C219,1200,76.2,Ni
+Lead,C219,300,35.3,Pb
+Lead,C219,400,34,Pb
+Lead,C219,500,32.8,Pb
+"Platinum, Pure",C219,300,71.6,Pt
+"Platinum, Pure",C219,400,71.8,Pt
+"Platinum, Pure",C219,600,73.2,Pt
+"Platinum, Pure",C219,800,75.6,Pt
+"Platinum, Pure",C219,1000,78.7,Pt
+"Platinum, Pure",C219,1200,82.6,Pt
+Silicon,C219,300,148,Si
+Silicon,C219,400,98.9,Si
+Silicon,C219,600,61.9,Si
+Silicon,C219,800,42.2,Si
+Silicon,C219,1000,31.2,Si
+Silicon,C219,1200,25.7,Si
+Tin,C219,300,66.6,Sn
+Tin,C219,400,62.2,Sn
+Tin,C219,500,59.6,Sn
+Titanium,C219,300,21.9,Ti
+Titanium,C219,400,20.4,Ti
+Titanium,C219,600,19.4,Ti
+Titanium,C219,800,19.7,Ti
+Titanium,C219,1000,20.7,Ti
+Titanium,C219,1200,22,Ti
+Tungsten,C219,300,174,W
+Tungsten,C219,400,159,W
+Tungsten,C219,600,137,W
+Tungsten,C219,800,125,W
+Tungsten,C219,1000,118,W
+Tungsten,C219,1200,112,W
+"Iron, Armco",C221,273,76,"Iron, commercial pure iron"
+"Iron, Armco",C221,373,66,"Iron, commercial pure iron"
+"Iron, Armco",C221,573,54,"Iron, commercial pure iron"
+"Iron, Armco",C221,973,34,"Iron, commercial pure iron"
+"Steel, 1% Carbon",C221,273,45,Plain carbon steel (AISI 1095)
+304 Stainless Steel,C221,273,14,Stainless steel (grade not stated)
+304 Stainless Steel,C221,373,16,Stainless steel (grade not stated)
+304 Stainless Steel,C221,573,19,Stainless steel (grade not stated)
+304 Stainless Steel,C221,973,25,Stainless steel (grade not stated)
+Nichrome,C221,273,12,Nickel: 80% Ni; 20% Cr
+Nichrome,C221,373,14,Nickel: 80% Ni; 20% Cr
+Nichrome,C221,573,17,Nickel: 80% Ni; 20% Cr
+Nichrome,C221,973,23,Nickel: 80% Ni; 20% Cr
+Constantan,C221,273,22,Copper: constantan
+Brass,C221,273,110,"Copper: 'bronze, 68% Cu; 32% Zn' (a brass)"
+"Aluminum, 2024-T3",C221,273,130,Aluminum 2024 (temper not stated)
+"Aluminum, 2024-T351",C221,273,130,Aluminum 2024 (temper not stated)
+"Aluminum, 2024-T4",C221,273,130,Aluminum 2024 (temper not stated)
+Aluminum Oxide,C222,273,35,"Aluminum oxide, Al2O3 (sintered)"
+Aluminum Oxide,C222,373,26,"Aluminum oxide, Al2O3 (sintered)"
+Aluminum Oxide,C222,973,8,"Aluminum oxide, Al2O3 (sintered)"
+Beryllium Oxide,C222,373,210,"Beryllium oxide, BeO"
+Beryllium Oxide,C222,573,120,"Beryllium oxide, BeO"
+Beryllium Oxide,C222,1273,29,"Beryllium oxide, BeO"
+Ice,C222,273,2.2,"Ice, H2O"
+"Quartz, fused",C222,273,1.4,"Silicon dioxide (vitreous), fused silica"
+"Quartz, fused",C222,373,1.6,"Silicon dioxide (vitreous), fused silica"
+"Quartz, fused",C222,673,1.8,"Silicon dioxide (vitreous), fused silica"
+Aluminum Oxide,C224,373,30,"Alumina (Al2O3), 3.8 g/cm3"
+Aluminum Oxide,C224,673,13,"Alumina (Al2O3), 3.8 g/cm3"
+Beryllium Oxide,C224,373,210,"Beryllia (BeO), 2.8 g/cm3"
+Beryllium Oxide,C224,673,90,"Beryllia (BeO), 2.8 g/cm3"
+Beryllium Oxide,C224,1273,20,"Beryllia (BeO), 2.8 g/cm3"
+Asbestos,C224,273,0.09,"Asbestos, 0.4 g/cm3"
+Asbestos,C224,373,0.1,"Asbestos, 0.4 g/cm3"
+"Magnesia, 85%",C224,303,0.08,"Asbestos + 85% MgO, 0.3 g/cm3"
+"Brick, Fireclay",C224,673,1,"Brick, refractory, fireclay, 2 g/cm3"
+"Brick, Fireclay",C224,1273,1.2,"Brick, refractory, fireclay, 2 g/cm3"
+Cement Mortar,C224,363,0.55,"Cement mortar, 2 g/cm3"
+Coal,C224,293,0.26,"Coal, 1.35 g/cm3"
+Concrete,C224,273,0.8,"Concrete, 1.6 g/cm3"
+Diatomaceous Earth,C224,273,0.09,"Diatomite, 0.5 g/cm3 (0.05-0.09 at 0.2 g/cm3)"
+Diatomaceous Earth,C224,673,0.16,"Diatomite, 0.5 g/cm3 (0.05-0.09 at 0.2 g/cm3)"
+"Rubber, hard",C224,273,0.16,"Ebonite, 1.2 g/cm3"
+Glass Wool,C224,323,0.04,"Glass wool, 0.2 g/cm3"
+Glass Wool,C224,373,0.05,"Glass wool, 0.2 g/cm3"
+Magnesium Oxide,C224,373,36,Magnesia (MgO)
+Magnesium Oxide,C224,673,18,Magnesia (MgO)
+Rock Wool,C224,303,0.04,"Mineral wool, 0.15 g/cm3"
+Teflon-min-heat-capacity,C224,298,0.26,"Plastics, polytetrafluoroethylene"
+Teflon-max-heat-capacity,C224,298,0.26,"Plastics, polytetrafluoroethylene"
+Granite,C224,293,2.2,"Rock, granite, 2.8 g/cm3"
+Limestone,C224,293,1,"Rock, limestone, 2 g/cm3"
+Sandstone,C224,293,1.3,"Rock, sandstone, 2.2 g/cm3"
+"Rubber, Foam",C224,293,0.05,"Rubber, sponge, 0.2 g/cm3"
+Sand,C224,293,0.33,"Sand, dry, 1.5 g/cm3"
+Sawdust,C224,303,0.06,"Sawdust, 0.2 g/cm3"
+Balsa-min-heat-capacity,C224,303,0.04,"Wood, balsa, perpendicular, 0.11 g/cm3"
+Balsa-max-heat-capacity,C224,303,0.04,"Wood, balsa, perpendicular, 0.11 g/cm3"
+Fir,C224,293,0.14,"Wood, fir, perpendicular, 0.54 g/cm3"
+Oak,C224,293,0.16,"Wood, oak"
+Plywood,C224,293,0.11,"Wood, plywood"
+"Pine, white",C224,333,0.11,"Wood, pine, perpendicular, 0.45 g/cm3"
+Wool,C224,303,0.04,"Wool, 0.09 g/cm3"
+"Quartz, fused",C226,273,1.3,Vitreous silica
+"Quartz, fused",C226,323,1.4,Vitreous silica
+"Quartz, fused",C226,373,1.5,Vitreous silica
+Corning Pyrex 7740,C226,273,1.1,Pyrex type chemically resistant borosilicate
+Corning Pyrex 7740,C226,373,1.25,Pyrex type chemically resistant borosilicate
+Window,C226,273,1,"Soda-lime glass, 72 SiO2, 15 Na2O, 11 CaO, 2 Al2O3"
+Window,C226,373,1.15,"Soda-lime glass, 72 SiO2, 15 Na2O, 11 CaO, 2 Al2O3"
+Air,C6252,100,0.0095,Air
+Air,C6252,200,0.0185,Air
+Air,C6252,300,0.0264,Air
+Air,C6252,400,0.0335,Air
+Air,C6252,500,0.0399,Air
+Air,C6252,600,0.046,Air
+Ammonia (gas),C6252,300,0.0251,Ammonia
+Ammonia (gas),C6252,400,0.0372,Ammonia
+Ammonia (gas),C6252,500,0.0531,Ammonia
+Ammonia (gas),C6252,600,0.0686,Ammonia
+Argon,C6252,100,0.0063,Argon
+Argon,C6252,200,0.0124,Argon
+Argon,C6252,300,0.0177,Argon
+Argon,C6252,400,0.0224,Argon
+Argon,C6252,500,0.0265,Argon
+Argon,C6252,600,0.0303,Argon
+Carbon Dioxide,C6252,200,0.0096,Carbon dioxide
+Carbon Dioxide,C6252,300,0.0168,Carbon dioxide
+Carbon Dioxide,C6252,400,0.0252,Carbon dioxide
+Carbon Dioxide,C6252,500,0.0335,Carbon dioxide
+Carbon Dioxide,C6252,600,0.0416,Carbon dioxide
+Carbon Monoxide,C6252,300,0.025,Carbon monoxide
+Carbon Monoxide,C6252,400,0.0323,Carbon monoxide
+Carbon Monoxide,C6252,500,0.0392,Carbon monoxide
+Carbon Monoxide,C6252,600,0.0457,Carbon monoxide
+Helium,C6252,100,0.0747,Helium
+Helium,C6252,200,0.1183,Helium
+Helium,C6252,300,0.1557,Helium
+Helium,C6252,400,0.1896,Helium
+Helium,C6252,500,0.2214,Helium
+Helium,C6252,600,0.2516,Helium
+Hydrogen,C6252,100,0.0682,Hydrogen
+Hydrogen,C6252,200,0.1328,Hydrogen
+Hydrogen,C6252,300,0.1866,Hydrogen
+Hydrogen,C6252,400,0.2309,Hydrogen
+Hydrogen,C6252,500,0.2709,Hydrogen
+Hydrogen,C6252,600,0.3091,Hydrogen
+Nitrogen,C6252,100,0.0094,Nitrogen
+Nitrogen,C6252,200,0.0183,Nitrogen
+Nitrogen,C6252,300,0.026,Nitrogen
+Nitrogen,C6252,400,0.0328,Nitrogen
+Nitrogen,C6252,500,0.039,Nitrogen
+Nitrogen,C6252,600,0.0448,Nitrogen
+Oxygen,C6252,100,0.0091,Oxygen
+Oxygen,C6252,200,0.0182,Oxygen
+Oxygen,C6252,300,0.0265,Oxygen
+Oxygen,C6252,400,0.034,Oxygen
+Oxygen,C6252,500,0.041,Oxygen
+Oxygen,C6252,600,0.0477,Oxygen
+Steam at 373.15 K,C6252,400,0.0261,Water (zero pressure)
+Steam at 373.15 K,C6252,500,0.0356,Water (zero pressure)
+Steam at 373.15 K,C6252,600,0.0462,Water (zero pressure)
+Ethyl Alcohol,C6254,248.15,0.181,Ethanol
+Ethyl Alcohol,C6254,273.15,0.174,Ethanol
+Ethyl Alcohol,C6254,298.15,0.167,Ethanol
+Ethyl Alcohol,C6254,323.15,0.16,Ethanol
+Ethyl Alcohol,C6254,348.15,0.153,Ethanol
+Ethyl Alcohol,C6254,373.15,0.148,Ethanol
+Ethylene Glycol,C6254,273.15,0.248,"1,2-Ethanediol"
+Ethylene Glycol,C6254,298.15,0.254,"1,2-Ethanediol"
+Ethylene Glycol,C6254,323.15,0.258,"1,2-Ethanediol"
+Ethylene Glycol,C6254,348.15,0.261,"1,2-Ethanediol"
+Ethylene Glycol,C6254,373.15,0.261,"1,2-Ethanediol"
+Glycerin,C6254,298.15,0.285,Glycerol
+Glycerin,C6254,323.15,0.288,Glycerol
+Glycerin,C6254,348.15,0.292,Glycerol
+Glycerin,C6254,373.15,0.296,Glycerol
+Water,C6254,273.15,0.5562,Water
+Water,C6254,298.15,0.6062,Water
+Water,C6254,323.15,0.6423,Water
+Water,C6254,348.15,0.6643,Water
+Water,C6254,373.15,0.6729,Water
+Mercury,C6254,248.15,7.85,Mercury
+Mercury,C6254,273.15,8.175,Mercury
+Mercury,C6254,298.15,8.514,Mercury
+Mercury,C6254,323.15,8.842,Mercury
+Mercury,C6254,348.15,9.161,Mercury
+Mercury,C6254,373.15,9.475,Mercury

@@ -856,15 +856,19 @@ int CBigComplexLinProb::PBCGSolve(int flag)
 	for(i=0;i<n;i++) P[i]=Z[i];
 	res=Dot(Z,R);
 
-	// Breakdown/stall guard. Unconjugated complex-symmetric BiCG has genuine
-	// breakdown modes (pAp -> 0 blows up del); a non-finite er makes the loop
-	// condition below FALSE, which would return "converged" with garbage in V.
-	// Bail with failure instead. Likewise bail after a long run of iterations
-	// with no new best residual -- the same stall logic the real-valued
-	// QMRSolve has via bBail -- rather than spinning forever.
-	double erBest=er;
-	int nStall=0;
-	const int stallLimit=(n/2>200)?(n/2):200;
+	// Breakdown guard. Unconjugated complex-symmetric BiCG breaks down by
+	// construction, independently of the matrix or the preconditioner: the
+	// bilinear form P'AP is taken WITHOUT conjugation, so it can vanish for
+	// P != 0 even when A is perfectly nonsingular, and del = res/pAp then
+	// blows up. (That failure is why QMR and look-ahead Lanczos exist.) A
+	// non-finite er makes the loop condition below FALSE, which would return
+	// "converged" with garbage in V. Bail with failure instead.
+	//
+	// No stall counter: FEMM 4.3's csolv has none in PBCGSolve, QMRSolve or
+	// PCGSQSolve -- the loop runs until it converges. The one added in
+	// efc24b7 copied bBail from a different algorithm in a different matrix
+	// class, and under ILDL it refuses slow-but-solvable problems. See the
+	// matching note in common/spars.cpp PCGSolve.
 
 	do{
 		MultA(P,U);
@@ -880,8 +884,6 @@ int CBigComplexLinProb::PBCGSolve(int flag)
 
 		er=nrm(R)/normb;
 		if (!std::isfinite(er)) return 0;
-		if (er<erBest) { erBest=er; nStall=0; }
-		else if (++nStall>=stallLimit) return 0;
 		prg2=(int)(20.*log10(er)/(log10(Precision)));
 		if(prg2>prg1){
 			prg1=prg2;

@@ -222,7 +222,7 @@ An equivalent form is:\n
 CICopyTranslate[{dx,dy},copies,(editaction)]"
 
 CICreateMesh::usage =
-"CICreateMesh[] runs triangle to create a mesh. Note that this is not a
+"CICreateMesh[] runs the mesher to create a mesh. Note that this is not a
 necessary precursor of performing an analysis, as CIAnalyze[] will make
 sure the mesh is up to date before running an analysis. Returns the number
 of elements in the mesh."
@@ -908,7 +908,7 @@ An equivalent form is:\n
 HICopyTranslate[{dx,dy},copies,(editaction)]"
 
 HICreateMesh::usage =
-"HICreateMesh[] runs triangle to create a mesh. Note that this is not a
+"HICreateMesh[] runs the mesher to create a mesh. Note that this is not a
 necessary precursor of performing an analysis, as HIAnalyze[] will make
 sure the mesh is up to date before running an analysis. Returns the number
 of elements in the mesh."
@@ -1545,7 +1545,7 @@ An equivalent form is:\n
 EICopyTranslate[{dx,dy},copies,(editaction)]"
 
 EICreateMesh::usage =
-"EICreateMesh[] runs triangle to create a mesh. Note that this is not a
+"EICreateMesh[] runs the mesher to create a mesh. Note that this is not a
 necessary precursor of performing an analysis, as EIAnalyze[] will make
 sure the mesh is up to date before running an analysis. Returns the number
 of elements in the mesh."
@@ -2210,7 +2210,7 @@ An equivalent form is:\n
 MICopyTranslate[{dx,dy},copies,(editaction)]"
 
 MICreateMesh::usage =
-"MICreateMesh[] runs triangle to create a mesh. Note that this is not a
+"MICreateMesh[] runs the mesher to create a mesh. Note that this is not a
 necessary precursor of performing an analysis, as MIAnalyze[] will make
 sure the mesh is up to date before running an analysis. Returns the number
 of elements in the mesh."
@@ -2652,7 +2652,7 @@ MOGetPh::usage =
 density at point {x,y}. An equivalent form is:\n MOGetPh[{x,y}]"
 
 MOGetFill::usage =
-"MOGetFill[x,y] returns the winding fill factor at point {x,y}. 
+"MOGetFill[x,y] returns the fill factor at point {x,y}: the winding fill for a wire material, the lamination fill for a laminated one, otherwise -1 (solid) or 1 (multi-turn). 
 An equivalent form is:\n MOGetFill[{x,y}]"
 
 MOGetPointValues::usage =
@@ -3092,9 +3092,9 @@ MOGetAllElements::usage = "MOGetAllElements[] returns an N x 7 matrix of data fo
 MOGetAllNodes::usage = "MOGetAllNodes[] returns an N x 2 matrix of the coordinates of every mesh node."
 MOGetAllB::usage = "MOGetAllB[] returns an N x 2 matrix of the flux density at every element centroid. Complex at a nonzero frequency."
 MOGetAllA::usage = "MOGetAllA[] returns the vector potential at every element centroid. Complex at a nonzero frequency."
-MOGetAllGapB::usage = "MOGetAllGapB["BdryName"] or MOGetAllGapB["BdryName",npts] returns an npts x 2 matrix of Br and Btheta around an air gap element."
-MOGetAllGapA::usage = "MOGetAllGapA["BdryName"] or MOGetAllGapA["BdryName",npts] returns the vector potential at npts points around an air gap element."
-MOGetAllGapHarmonics::usage = "MOGetAllGapHarmonics["BdryName"] returns an N x 6 matrix of air gap element harmonic coefficients."
+MOGetAllGapB::usage = "MOGetAllGapB[\"BdryName\"] or MOGetAllGapB[\"BdryName\",npts] returns an npts x 2 matrix of Br and Btheta around an air gap element."
+MOGetAllGapA::usage = "MOGetAllGapA[\"BdryName\"] or MOGetAllGapA[\"BdryName\",npts] returns the vector potential at npts points around an air gap element."
+MOGetAllGapHarmonics::usage = "MOGetAllGapHarmonics[\"BdryName\"] returns an N x 6 matrix of air gap element harmonic coefficients."
 EOGetAllElements::usage = "EOGetAllElements[] returns an N x 7 matrix of data for every mesh element."
 EOGetAllNodes::usage = "EOGetAllNodes[] returns an N x 2 matrix of the coordinates of every mesh node."
 EOGetAllD::usage = "EOGetAllD[] returns an N x 2 matrix of the electric displacement at every element."

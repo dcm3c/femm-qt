@@ -36,7 +36,7 @@ TESTING = os.path.abspath(os.path.join(HERE, ".."))
 SCENARIOS = [
     ("condprop", "l2_condprop", "CondPropCompare.py", "OF_eic_result.txt", 4),
     ("circuitprop", "l2_circuitprop", "MOCircuitPropCompare.py",
-     "OF_circ_result.txt", 105),
+     "OF_circ_result.txt", 72),
     # A golden prefixed with @ is not a file but an in-process script: it is run
     # through femm_headless and its output becomes the reference. Needed where a
     # scenario has no Original FEMM counterpart, which is the case for anything
@@ -177,6 +177,44 @@ def _first(paths):
         if os.path.exists(p):
             return p
     return None
+
+
+# Diagnostic shapes, per host language. Anchored and punctuated so they cannot
+# match the data: every captured line is either "===  section  ===" or
+# "  name = re im | re im", and none of these patterns can occur in those.
+_DIAG = [
+    ("Mathematica", re.compile(r"^\s*[A-Za-z$][A-Za-z0-9$]*::[a-zA-Z]+:")),
+    ("Octave/MATLAB", re.compile(r"^\s*(?:error|warning):", re.I)),
+    ("Julia", re.compile(r"^\s*(?:ERROR|WARNING):|^\s*[┌│└]\s*(?:Warning|Error)")),
+    ("Python", re.compile(r"^Traceback \(most recent call last\)|^\s*\w*(?:Error|Exception):")),
+    ("Scilab", re.compile(r"^\s*!--error|^\s*at line\s+\d+\s+of")),
+]
+
+
+def _diagnostics(text):
+    """Lines in a host's captured output that look like a complaint.
+
+    The suite compares what a binding COMPUTES and ignores everything else in
+    the capture, so a host that loads with errors and then produces correct
+    numbers passes silently. That is not hypothetical: mathfemm printed
+
+        MessageName::messg: MOGetAllGapB::usage cannot be set to ...
+
+    on every load for the life of a release, and those four lines sat in
+    l2_*_mathfemm.txt -- read by the harness, discarded, row green -- until a
+    user opened Mathematica and saw them. Nothing was ever going to catch it.
+
+    Mathematica cannot help from its side: under `math -script` everything
+    goes to stdout, $Messages is ignored, and even an explicit
+    WriteString["stderr", ...] comes out on stdout. So the scan is here.
+    """
+    hits = []
+    for line in (text or "").splitlines():
+        for lang, rx in _DIAG:
+            if rx.search(line):
+                hits.append((lang, line.strip()))
+                break
+    return hits
 
 
 def _why(cmd, r):
@@ -322,8 +360,27 @@ def main():
             ok = ("0 flagged" in verdict) and n >= expect
             if m and n < expect:
                 verdict += "   <-- SHORT: expected %d" % expect
+            # Right numbers are not the same as a clean run. A host that
+            # complains on the way in and then computes correctly used to pass.
+            diag = _diagnostics(r.stdout)
+            if diag:
+                ok = False
+                verdict += "   <-- %d diagnostic line(s) from the host" % len(diag)
             print("  %-11s %-5s %s" % (label, "ok" if ok else "FAIL", verdict))
             if not ok:
+                if diag:
+                    # These first: when the numbers agreed, they ARE the
+                    # finding, and burying them under a stdout dump is how
+                    # this went unnoticed the first time.
+                    seen = set()
+                    for lang, line in diag:
+                        if line in seen:
+                            continue
+                        seen.add(line)
+                        print("      %s: %s" % (lang, line[:100]))
+                        if len(seen) >= 8:
+                            print("      ... %d more" % (len(diag) - len(seen)))
+                            break
                 for line in _why(argv(exe, driver), r):
                     print(line)
                 rc = 1

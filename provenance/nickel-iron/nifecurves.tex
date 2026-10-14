@@ -1,0 +1,277 @@
+% SPDX-License-Identifier: CC-BY-4.0
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+\documentclass[
+  11pt,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{2} % number sections and subsections
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
+\hypersetup{
+  pdftitle={B-H Curves for Nickel-Iron Alloys},
+  pdfauthor={David Meeker},
+  colorlinks=true,
+  linkcolor={Maroon},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+\renewcommand{\today}{%
+  \the\day\ %
+  \ifcase\month\or
+  Jan\or Feb\or Mar\or Apr\or May\or Jun\or
+  Jul\or Aug\or Sep\or Oct\or Nov\or Dec\fi
+  \ \the\year
+}
+
+\title{B-H Curves for Nickel-Iron Alloys}
+\author{David Meeker}
+\date{\today}
+
+% article.cls sets the bibliography heading with \section*, which would
+% leave the references the one unnumbered heading in a numbered document.
+\usepackage{etoolbox}
+\patchcmd{\thebibliography}{\section*{\refname}}{\section{\refname}}{}{\GenericWarning{}{bhcurves: bibliography heading not numbered}}
+\begin{document}
+\maketitle
+
+\section{Introduction}\label{introduction}
+
+Nickel-iron alloys have the highest permeability of any common soft magnetic material, and they are used where a small field must carry a large flux: magnetic shields, instrument and pulse transformers, sensitive relays and tape-wound cores. Two families matter. Alloys of about 48\% nickel saturate near 1.6 T, the highest of the nickel-irons, with permeabilities in the hundred thousands. Alloys of about 80\% nickel with 4--5\% molybdenum saturate at only 0.8 T, but reach permeabilities of several hundred thousand at inductions of a few tenths of a tesla.
+
+Both families reach those permeabilities only after a final anneal in dry hydrogen at about 2000 to 2150 °F, done after all cutting, forming and machining. The difference is not a few per cent. The same 48\% nickel alloy, as supplied, has a maximum permeability of about 4,000, and after the anneal about 120,000; at 10 A/m it carries 0.02 T as supplied and 1.04 T annealed. A part modelled with the annealed curve and built without the anneal will not behave anything like the model.
+
+This page gives four entries built from Carpenter's published DC magnetization curves: the 48\% nickel alloy after the hydrogen anneal and as received, and the 80\% nickel alloys with 4\% and with 5\% molybdenum after the hydrogen anneal. As for the other pages \cite{meeker-lowcarbon,meeker-iron,meeker-cofe}, saturation is given rather than fitted, and every table passes the same gates.
+
+\section{Older Curves, and a Name That Moved}\label{older-curves}
+
+The Metals Handbook \cite{mh8} gives curves for Supermalloy, Mumetal and Moly-Permalloy, with its 4750 alloy and 78 Permalloy, as the record of material of about 1960. They are used below as checks, and one of them carries a warning about names.
+
+The Handbook's Mumetal levels off at J = 0.67 T. That is the saturation Bozorth gives for Mumetal, 6,500 G, an alloy of 77\% nickel with 5\% copper and 2\% chromium (\cite{bozorth1951}, App. 4, Table 2). An alloy of 80\% nickel and 4\% molybdenum saturates near 0.82 T (Section~\ref{saturation}). The material sold as MuMETAL today is of the second kind, 80--81\% nickel with 4.5--6\% molybdenum \cite{mumetal-usa}, sold to ASTM A753 Alloy 4 \cite{mumetal-uk}: between Carpenter's HyMu 80, with 4.2\% molybdenum, and HyMu 800, with 5\% and itself sold to Alloy 4 \cite{carpenter-hymu800}. The name has moved from one alloy to another, and a shield modelled with the older curve under the modern name is 0.15 T short at saturation and, at low field, about five times too hard (Section~\ref{results}).
+
+\section{Heat Treatment}\label{heat-treatment}
+
+Carpenter's High Permeability 49 data sheet \cite{carpenter-hp49} draws, on one chart (p. 4), the DC normal induction of a 0.060 in ring in the ``typical mill process annealed'' condition, the condition in which the material is supplied, and after dry hydrogen anneals at four temperatures; p. 5 gives the remanence and coercivity of the same rings:
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+Condition & \(\mu_{\max}\) & H at 1.0 T (A/m) & \(B_r\) (G) & \(H_c\) (Oe) \\
+\midrule
+Mill process annealed (as received) & 3,900 & 301 & 6,300 & 0.85 \\
+1450 °F (788 °C), 2 h, dry H\(_2\) & 11,700 & 74 & 9,900 & 0.48 \\
+1600 °F (871 °C), 2 h, dry H\(_2\) & 16,700 & 53 & 10,200 & 0.32 \\
+1750 °F (954 °C), 2 h, dry H\(_2\) & 30,100 & 29 & 10,300 & 0.18 \\
+2050 °F (1121 °C), 4 h, dry H\(_2\) & 118,000 & 8.9 & 10,900 & 0.05 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The maximum permeabilities and fields are read from the chart (Section~\ref{sources}); \(B_r\) and \(H_c\) are Carpenter's, measured from 13,000 G. Each step up in temperature helps, and the last step helps most: the field needed for 1 T falls by a factor of 34 from the as-received ring to the 2050 °F anneal. By 10 Oe all five are within 0.12 T of one another near 1.5 T, because the anneal changes how easily domain walls move, not the saturation of the alloy.
+
+The makers' recipes are specific. For High Permeability 49 (p. 15): an oxygen-free, dry hydrogen atmosphere with a dew point below $-40$ °F ($-40$ °C), 2 to 4 hours at 2150 °F (1177 °C), furnace cooled at 100--200 °F (55--110 °C) per hour to 800 °F (427 °C), and at any rate after that. For HyMu 80 \cite{carpenter-hymu80} (p. 7): the same atmosphere, 2 to 4 hours at 2050--2150 °F (1121--1177 °C), furnace cooled to 1100 °F (593 °C), then cooled at 350--600 °F per hour from 1100 to 700 °F (593 to 371 °C); shields are to be annealed at 1900 °F (1040 °C) or higher after all fabricating operations have been completed (p. 5). For HyMu 800 \cite{carpenter-hymu800} (p. 5): 2 to 4 hours, cooled at 300--600 °F per hour through 1200--800 °F, at 2050--2150 °F for low-frequency response or 1350--1650 °F for very high-frequency response. The lower temperatures are anneals to soften the metal for forming, not to develop its magnetic properties: 1450--1600 °F for not more than an hour for High Permeability 49, 1450--1850 °F for HyMu 80.
+
+No as-received curve is held for the 80\% nickel alloys. What is held points the same way. HyMu 800's initial permeability at 40 G in 0.002 in strip, read from Carpenter's chart at low frequency (p. 2), is about 95,000 after 2150 °F, 70,000 after 1950 °F, 50,000 after 1750 °F, 22,000 after 1550 °F and 15,000 after 1350 °F; and Bozorth, of the iron-nickel alloys generally, that after a material has been work-hardened by fabrication its permeability is ``greatly reduced'' (\cite{bozorth1951}, p. 115). An unannealed 80\% nickel part should be expected to be at least as far from its annealed curve as the 48\% alloy is from its own.
+
+\section{Saturation}\label{saturation}
+
+The charted curves stop at 10 Oe (796 A/m), and saturation is given for each entry from Bozorth \cite{bozorth1951}, as for the other pages.
+
+For the 48\% alloy, 1.60 T. Bozorth's saturation of iron-nickel alloys at 20 °C (Fig. 5-8, p. 109) peaks at about 16,000 G between 45 and 50\% nickel, and his table of commercial materials gives 16,000 G for 45 Permalloy and for Hipernik, 50\% nickel (App. 4, Table 2). Carpenter's text says ``about 16000 gauss (1.6 Tesla)'' \cite{carpenter-hp49}.
+
+For the 80\% alloys molybdenum decides it. Bozorth's Fig. 5-41 (p. 136) gives the polarization at 1500 Oe of 78.5\% nickel alloys against molybdenum content, falling from about 10,800 G with none to 8,200 G at 4.2\%, HyMu 80's content \cite{carpenter-hymu80}, and 7,800 G at 5\%, HyMu 800's \cite{carpenter-hymu800}. His table gives 7,900 G for Supermalloy, 79\% nickel and 5\% molybdenum, nearly the composition of HyMu 800 (App. 4, Table 2). So 0.82 T for 80Ni-4Mo and 0.79 T for 80Ni-5Mo. The same table gives 8,700 G for 4-79 Permalloy, which would be 0.87 T; that value is not used, because it disagrees with his own Fig. 5-41 and because the Metals Handbook's Moly-Permalloy reaches 0.824 T at 8 kA/m and levels off there.
+
+The 48\% alloy has a disagreement of its own. The Metals Handbook's 4750 alloy reaches only 1.54 T at 8 kA/m, and Carpenter's property table gives 15,000 G ``from H-100 oersteds''. But Carpenter's own curve for the 2050 °F anneal is already at 1.55 T at 10 Oe and still rising, and the table's round number is below that; and the Handbook's 4750 alloy is lower than the entry everywhere, by a factor of two to three in field on the knee, so it is a different grade of material rather than a measure of this one's saturation. Bozorth's value is kept.
+
+\section{Sources}\label{sources}
+
+Every entry is built from curves the maker draws, not from tabulated points; unlike the cobalt-iron makers, Carpenter publishes few DC tables for these alloys and many curves. Carpenter's current data sheets for High Permeability 49 \cite{carpenter-hp49} and HyMu 80 \cite{carpenter-hymu80} draw their charts as vector graphics, so no curve is traced from an image: each curve is read from the path in the PDF itself, told from its neighbours by its dash pattern, and placed on the chart's axes by its own gridlines. The gridlines are not a uniform logarithmic scale (the artwork has been redrawn), so each is matched to its labelled value and positions are interpolated between them. The HyMu 800 data sheet \cite{carpenter-hymu800} is older and its charts are scanned images. Its DC curve is traced from the pixels: the strokes are thinned, which removes the grid and leaves each curve's centre line, and the DC curve is the upper-left edge of the bundle, since at every field it lies above the curves for 60 to 1600 Hz. Above 1 Oe the scan draws that curve as a ruled line at 7,750 G, flat to one pixel (2\% in B); the trace stops where it reaches the line.
+
+\begin{center}
+\begin{tabular}{p{0.28\linewidth}p{0.62\linewidth}}
+\toprule
+Entry & Curves (Carpenter; DC normal induction) \\
+\midrule
+48Ni, hydrogen anneal & High Permeability 49: 0.060 in ring, 2050 °F, 4 h (p. 4); upper and lower bounds of the ``typical DC permeability range'', 0.014--0.062 in, 2150 °F (p. 13) \\
+48Ni, mill anneal (as received) & High Permeability 49: 0.060 in ring, typical mill process annealed (p. 4) \\
+80Ni-4Mo, hydrogen anneal & HyMu 80: 0.006 and 0.014 in rings and 0.004 in tape toroid, 2150 °F, 4 h, cooled at 600 °F/h (p. 4) \\
+80Ni-5Mo, hydrogen anneal & HyMu 800: 0.004 in tape toroid (p. 4) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The charts run from 0.001 to 10 Oe (0.08 to 796 A/m). Two curves are shown but not used: High Permeability 49 in its rotor grade, an isotropic strip, at 0.014 and 0.007 in (pp. 7, 11). They reach 0.1 T less than the other curves at 10 Oe and describe a different product.
+
+\section{Construction}\label{construction}
+
+These are dense curves, not scattered points, and a smooth formula of the kind used for the cobalt-iron entries \cite{meeker-cofe} could not follow them: the 80\% nickel alloys turn a sharp knee near 0.5 T and then climb the last fifth of their saturation over three decades of field, and the formula could do one or the other. So each entry is the maker's curve itself, extended where the chart stops.
+
+Where an entry uses several curves, they are averaged in ln H at fixed J, which keeps the knee as sharp as the curves it comes from; averaging B at fixed H would smear it. The 48Ni entry therefore runs down the middle of Carpenter's typical range, and the 80Ni-4Mo entry between Carpenter's three specimens.
+
+Above 10 Oe each curve is carried to its given saturation by a tail whose deficit from \(J_s\) falls as a power of field,
+
+\begin{equation}\label{eq:tail}
+J(H) = J_s - (J_s - J_e)\left[(2-n)\,\frac{H_e}{H} + (n-1)\left(\frac{H_e}{H}\right)^{2}\right], \qquad H > H_e,\quad 1 \le n \le 2,
+\end{equation}
+
+from the curve's last point \((H_e, J_e)\), where \(n = (dJ/d\ln H)_e/(J_s - J_e)\) is the exponent the curve itself ends at. This is Bozorth's two-term law of approach, \(a_0/H + b_0/H^{2}\) \cite{bozorth1951}, with both coefficients non-negative and fixed by matching the curve's value and slope at its end, so the curve's own slope decides how much of what remains is the fast-falling \(1/H^{2}\) term. A curve ending steeper than \(n = 2\) gets \(b_0/H^{2}\) alone. One ending shallower than \(n = 1\) cannot be met by any choice of the two, since the law of approach these pages use, Bozorth's two-term law for crystalline material, has no term slower than \(1/H\); there the exponent is raised smoothly from the curve's value to 1, at \(dn/d\ln H = n(n+1)/2\), half the rate at which the differential permeability would begin to rise again, and the tail then continues as \(a_0/H\). The 80\% nickel curves end that way, about 0.05 T below 0.82 T and rising by 0.04 T or less per unit of ln H at 10 Oe, at \(n\) of 0.18 to 0.85; so do two of the three 48Ni curves, at 0.36 and 0.75.
+
+The as-received entry is extended differently. Its own \(1/H^{2}\) tail from 10 Oe would cross above the annealed entry between 1 and 10 kA/m. It follows the annealed entry instead, with the gap at 10 Oe, $-0.011$ T, added back and decaying as \(1/H\): the anneal changes how easily walls move, whose term in the law of approach goes as \(1/H\), and not the rotation that carries both toward saturation \cite{meeker-iron}.
+
+Each table is then smoothed, ln J against log H, with the narrowest Gaussian that lets it pass the gates: none for the 48Ni and 80Ni-4Mo entries, 0.05 decade for the as-received entry and 0.07 decade for 80Ni-5Mo. Below the lowest charted point (0.001 Oe, where the 80\% alloys are already at about 0.01 T) each entry is a straight line from the origin at the permeability of that point. The tables start at 0.05 A/m and run to 400 kA/m, 91 points each.
+
+Conductivity is from Carpenter's resistivities: 48 \(\mu\Omega\)·cm (2.08 MS/m) for High Permeability 49, 58 (1.72 MS/m) for HyMu 80, and 370--380 \(\Omega\)·cmil/ft, 62.3 \(\mu\Omega\)·cm (1.61 MS/m), for HyMu 800.
+
+\section{Results}\label{results}
+
+\begin{center}
+\begin{tabular}{lrrrrrrr}
+\toprule
+B (T) at H (A/m) & 1 & 4 & 10 & 40 & 100 & 800 & 8000 \\
+\midrule
+48Ni, hydrogen anneal & 0.033 & 0.737 & 1.068 & 1.280 & 1.367 & 1.520 & 1.604 \\
+48Ni, mill anneal (as received) & 0.002 & 0.006 & 0.016 & 0.151 & 0.489 & 1.485 & 1.603 \\
+80Ni-4Mo, hydrogen anneal & 0.463 & 0.606 & 0.650 & 0.705 & 0.729 & 0.771 & 0.822 \\
+80Ni-5Mo, hydrogen anneal & 0.481 & 0.619 & 0.685 & 0.753 & 0.780 & 0.790 & 0.800 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The maximum permeabilities are 150,000 at 3.6 A/m for the annealed 48Ni entry, 3,900 at 90 A/m as received, and 420,000 and 440,000 near 0.7 A/m for 80Ni-4Mo and 80Ni-5Mo. All four tables pass the gates: B strictly increasing, dB/dH not less than \(\mu_0\), and a single maximum of the differential permeability, counted from the origin.
+
+The two single-curve entries reproduce their curves to an RMS of 0.018 (as received) and 0.027 (80Ni-5Mo) in ln H below 0.95 \(J_s\); the as-received entry is 0.025 T below its curve at 10 Oe, where the smoothing rounds the join to the tail. For the pooled entries the same number measures the curves' spread about their average, not a misfit: 0.44 for 48Ni, whose typical range spans a factor of 3.6 in field at 1 T, and 0.39 for 80Ni-4Mo, whose three specimens differ by up to 0.06 T on the shoulder between 2 and 60 A/m.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={The four entries, and the anneal series of the 48 percent nickel alloy.}]{out/nifecurves_fig1.png}}
+\caption{Left: the four entries, with Carpenter's intermediate hydrogen anneals of the 48\% alloy (dotted; not entries) between the as-received and annealed entries. Right: relative permeability B/(\(\mu_0\)H) against B.}
+\end{figure}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Each entry against the curves it is built from.}]{out/nife_fit.png}}
+\caption{Each entry (black) against the curves it is built from, and, in gray, curves shown but not used. Lower row: each curve's distance from the entry in ln H, below 0.95 \(J_s\).}
+\end{figure}
+
+The entries can be checked against sources that played no part in them. The Metals Handbook's Supermalloy \cite{mh8}, material of about 1960, and the 80Ni-5Mo entry from Carpenter's HyMu 800 agree within 0.035 T from 0.8 A/m to 8 kA/m, with maximum permeabilities of 425,000 and 440,000: they are the same alloy, and the two share no source. The Handbook's Moly-Permalloy, the composition of HyMu 80, agrees with the 80Ni-4Mo entry at high field, 0.824 T against 0.822 in \(B\) at 8 kA/m, which supports both the 0.82 T saturation and the tail. At low field it is much harder, with a maximum permeability of 79,000 against 420,000, as are Bozorth's 100,000 for 4-79 Permalloy (App. 4, Table 2) and Carpenter's own 200,000 for HyMu 80 bar (p. 3); the thin rings and toroid behind the entry are the best case the maker shows.
+
+At low field the 80Ni-4Mo entry's permeability, 98,000 at 0.001 Oe, where it carries 98 G, agrees with the 105,000 at 100 G that MuMETAL USA gives for annealed 0.014 in sheet \cite{mumetal-usa}. Magnetic Shields Ltd's curve for ASTM A753 Alloy 4 \cite{mumetal-uk}, from rings of 0.34 mm sheet annealed at 1150 °C, reads about 0.69 T at 10 A/m and 0.75 T at 60 A/m from its plot, 0.03--0.04 T above the entry and between it and the 80Ni-5Mo entry, as its molybdenum content is between theirs. The same company's curve for 50\% nickel-iron, ASTM A753 Alloy 2, reads about 1.05 T at 10 A/m and 1.16 T at 60 A/m; that is Carpenter's rotor grade at the same thickness (1.03 and 1.18 T at 0.014 in), not the 48Ni entry (1.07 and 1.32 T). NiWire's minimum properties for 49\% nickel strip \cite{niwire}, a maximum permeability of at least 28,000--50,000 for strip, by thickness, and saturation of at least 1.5 T, are met.
+
+\section{Limitations}\label{limitations}
+
+These are typical curves for the best condition the maker shows, and each maker's own figures should be used when a design depends on them. The 48Ni and 80Ni-4Mo entries describe the middle of a range; High Permeability 49 in bar is rated at a maximum permeability of 75,000, half the entry's, and HyMu 80 bar at 200,000.
+
+The as-received entry is one ring, and ``typical mill process annealed'' is the maker's description of the stock, not of any part cut from it. Parts that are stamped, machined or formed after delivery carry further work hardening near their edges and surfaces, and can be worse. No as-received curve is held for the 80\% nickel alloys; for those, only the annealed entries are given.
+
+Above 10 Oe every entry is the tail of Eq.~\eqref{eq:tail} to a saturation from Bozorth, not measurement. For the 80\% nickel alloys and the 48Ni typical range, whose curves end climbing more slowly than the law of approach allows, the tail starts at the curve's own pace and is raised to \(a_0/H\) over up to a decade of field, a decade for the 80\% nickel curves that end at \(n\) near 0.2; it matches the Metals Handbook's Moly-Permalloy within 0.01 T at 8 kA/m. The 48Ni saturation is disputed at the 4\% level by the Handbook's 4750 alloy and Carpenter's rounded table value (Section~\ref{saturation}). Below 0.001 Oe each entry is a straight line, not measurement.
+
+The HyMu 800 curve is traced from a scan of about 120 pixels per decade, about 2\% in field or induction per pixel. The comparisons with the MuMetal web curves are read by eye from their plots, to about 0.02 T.
+
+\section{Implementation}\label{implementation}
+
+\texttt{dig\_nife.py} reads every curve used or shown from the data sheets, from the PDF paths or, for HyMu 800, the scanned image, into \texttt{out/nife\_curves.csv}. \texttt{nife\_build.py} builds the four entries and writes their tables, \texttt{femm\_nife\_*.csv}, the staging library \texttt{nife\_fit.dat} (folder ``Nickel Iron (Carpenter data)''), and the second figure; \texttt{emit\_nife\_fem.py} writes the geometry-free problem file \texttt{nife\_fit\_materials.fem}, which round-trips through FEMM unchanged; \texttt{make\_nifefig.py} draws the first figure.
+
+\section{Conclusions}\label{conclusions}
+
+Carpenter's curves, read directly from its data sheets and carried to Bozorth's saturation, give four nickel-iron entries with a stated source for every point. Where independent measurements exist they agree: the 80Ni-5Mo entry and the Metals Handbook's Supermalloy to within a few hundredths of a tesla, and the 80Ni-4Mo entry and the Handbook's Moly-Permalloy at high field.
+
+The name Mumetal has moved: the Metals Handbook's copper-chromium Mumetal is 0.15 T lower at saturation and several times harder at low field than the molybdenum alloy the name means now. And the heat treatment is not a detail. The 48\% nickel alloy as received needs 34 times the field for 1 T that it needs after the hydrogen anneal, and its maximum permeability is 30 times lower. A model is only as good as the anneal the part actually gets.
+
+\begin{thebibliography}{99}\label{references}
+
+\bibitem{meeker-lowcarbon} ``Generating B-H Curves for Low-Carbon Steels,'' companion page. The law of approach and the gates.
+
+\bibitem{meeker-iron} ``B-H Curves for Commercially Pure Iron,'' companion page. The join of a curve to its tail with the gap decaying as \(1/H\).
+
+\bibitem{meeker-cofe} ``B-H Curves for Cobalt-Iron Alloys,'' companion page.
+
+\bibitem{carpenter-hp49} Carpenter Electrification, High Permeability 49 datasheet, undated. Type analysis (p. 1); physical properties (p. 3); DC normal induction after four hydrogen anneals and as mill process annealed (p. 4); DC properties, remanence and coercivity against anneal (p. 5); rotor-grade curves (pp. 7, 11); typical DC permeability range (p. 13); heat treatment (p. 15).
+
+\bibitem{carpenter-hymu80} Carpenter Electrification, HyMu 80 datasheet, undated. Type analysis (p. 1); physical properties (p. 2); DC and AC properties (p. 3); DC magnetization curves (p. 4); shielding and annealing (p. 5); heat treatment (p. 7).
+
+\bibitem{carpenter-hymu800} Carpenter Technology Corp., CarTech HyMu ``800'' Alloy technical datasheet, undated. Type analysis and resistivity (p. 1); permeability against anneal temperature and frequency (p. 2); magnetization curves of 0.002 and 0.004 in tape toroids (pp. 3--4); heat treatment (p. 5).
+
+\bibitem{mumetal-usa} Magnetic Shield Corp., ``Technical Data --- MuMETAL,'' web page, mumetal-usa.com, printed 27 Sep 2026. Composition and typical magnetic properties of 0.014 in annealed sheet.
+
+\bibitem{mumetal-uk} Magnetic Shields Ltd, ``B(H) Curve --- Mu Metal ASTM A753 Alloy 4'' and ``B(H) Curve --- 50\% Nickel Iron to ASTM A753 Alloy 2,'' web posts, mumetal.co.uk, 9 Dec 2012, printed 27 Sep 2026.
+
+\bibitem{niwire} NiWire Industries, Mu49 Soft Magnetic Alloy datasheet, undated. Minimum DC magnetic properties by thickness.
+
+\bibitem{mh8} \emph{Metals Handbook}, 8th ed., Vol. 1, American Society for Metals, 1961, Fig. 17, p. 792, ``Direct-current magnetization curves for various magnetic materials.''
+
+\bibitem{bozorth1951} R. M. Bozorth, \href{https://doi.org/10.1109/9780470544624}{\emph{Ferromagnetism}}, Van Nostrand, New York, 1951; reissued by IEEE Press, 1993. Ch. 5, iron-nickel alloys: saturation against nickel content (Fig. 5-8, p. 109), annealing of work-hardened material (p. 115), saturation against molybdenum content (Fig. 5-41, p. 136); App. 4, Table 2, properties of commercial magnetic materials (pp. 870--871).
+
+\end{thebibliography}
+
+\noindent Copyright 2026 David Meeker. This document is licensed under the \href{https://creativecommons.org/licenses/by/4.0/}{Creative Commons Attribution 4.0 International License (CC BY 4.0)}.
+
+\end{document}

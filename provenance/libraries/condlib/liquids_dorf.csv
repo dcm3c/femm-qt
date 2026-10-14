@@ -1,0 +1,12 @@
+name,er_60Hz,df_60Hz,note
+Capacitor oil,2.2,0.001,
+Pipe cable oil,2.15,0.001,
+Self-contained cable oil,2.3,0.001,
+Heavy cable oil,2.23,0.001,
+Transformer oil,2.25,0.001,
+Alkyl benzene,2.1,0.0004,
+Polybutene pipe cable oil,2.14,0.0003,dielectric constant given at 1 MHz
+Polybutene capacitor oil,2.22,0.0005,dielectric constant given at 1 MHz
+Silicone fluid,2.7,0.00015,
+Castor oil,3.74,0.06,
+C8F16O fluorocarbon,1.86,0.0005,dissipation factor <0.0005 (bound used)

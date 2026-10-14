@@ -1,0 +1,250 @@
+====== FEMM 5.0 Binding Setup ======
+
+FEMM 5.0 supports the following bindings:
+
+  * OctaveFEMM (Matlab, Octave)
+  * [[pyFEMM]] (Python)
+  * MathFEMM (Mathematica)
+  * SciFEMM (Scilab)
+  * JuliaFEMM (Julia)
+  * [[https://www.femm.info/doku/lib/exe/fetch.php?media=femm-qt:docs:femm-lua.pdf | luaFEMM]] (Lua 4)
+
+Each platform has a slightly different setup procedure for each binding.  Separate instructions for Windows, macOS, Linux, and [[https://www.ghostbsd.org/ | FreeBSD]] follow below.
+
+Every binding finds FEMM by itself, so in a normal installation there is nothing to configure beyond pointing the language at the binding file.  The exception is if you have moved FEMM, or have more than one copy: then define an environment variable ''FEMM_DIR'' pointing at the directory holding the FEMM executables, and every binding will use that one.
+
+===== Windows =====
+
+It is assumed that the installation is in the default directory, ''c:\femm-qt''.  If you have FEMM installed in a non-standard directory, you'll have to define an environment variable, ''FEMM_DIR'', that points to the directory where the FEMM 5.0 executables are installed.  Otherwise, the bindings won't know where to look for the FEMM executables.
+
+===OctaveFEMM (Windows)===
+
+Octave on Windows requires a modern JDK for socket communication ([[https://adoptium.net/temurin/releases | Adoptium Temurin 25]]). Set the ''JAVA_HOME'' environment variable to point at the JDK, e.g.: \\
+''set JAVA_HOME="C:\Program Files\Eclipse Adoptium\jdk-25.0.2.10-hotspot\"''
+\\prior to opening Octave. Matlab has a built-in Java installation, so Adoptium is not required for Matlab.
+
+  - Start Matlab or Octave
+  - If you already have paths set up for FEMM 4.2, type ''rmpath('C:/femm42/mfiles')''
+  - At the command line then type, ''addpath('C:/femm-qt/mfiles')''
+  - To save this new configuration, permanently type ''savepath''
+  - Test to see if the installation works by typing ''openfemm''.  A FEMM 5.0 window should appear.
+  - If you want to have concurrent installations of FEMM 4.2 and FEMM 5.0, you can put ''rmpath('C:/femm42/mfiles'); addpath('C:/femm-qt/mfiles');'' at the beginning of your scripts.
+
+===pyFEMM (Windows)===
+
+The FEMM 5.0 version of pyFEMM is not presently released in [[https://pypi.org/ | PyPi]].  Therefore, the version of pyFEMM distributed with FEMM 5.0 must be installed using a different procedure than a released package.
+
+The most straightforward way to install is to have only one pyfemm installation that works with FEMM 5.0. For instructions on concurrent installations, see [[pyfemm-qt]].
+
+If pyfemm for FEMM 4.2 is installed, you should first uninstall it with: \\
+''pip uninstall pyfemm'' \\
+Then, install the FEMM 5.0 version with: \\
+''pip install c:/femm-qt/pyfemm'' \\
+
+Examples that are meant to run in pyfemm are in ''C:\femm-qt\pyfemm\examples''.  Scripts written for FEMM's own console are a different thing, with a different set of modules available -- see [[micropython]].
+
+===mathFEMM (Windows)===
+
+At the beginning of a Mathematica script, load mathfemm with the line:
+
+''<<"c:\\femm-qt\\mathfemm\\mathfemm.m"''
+
+Example scripts with the ''*.nb'' extension are located in ''c:\femm-qt\examples''.  However, these scripts may need the path to mathfemm.m to be updated to the proper directory.
+
+===sciFEMM (Windows)===
+
+At the beginning of a Scilab script, load scifemm with the line:
+
+''exec('c:/femm-qt/scifemm/scifemm.sci');''
+
+Example scripts with the ''*.sce'' extension are located in ''c:\femm-qt\examples''. However, these scripts may need the path to scifemm to be updated to the proper directory.
+
+===juliaFEMM (Windows)===
+
+At the beginning of a Julia script, load juliafemm with the line:
+
+''include("c:/femm-qt/juliafemm/juliafemm.jl")''
+
+Example scripts with the ''*.jl'' extension are located in ''c:\femm-qt\examples''. However, these scripts may need the path to juliafemm to be updated to the proper directory.
+
+===luaFEMM (Windows)===
+
+luaFEMM is different from the other five bindings.  It is not loaded into a program you already have; the Lua 4 interpreter ships **with** FEMM, so there is nothing to install or configure at all.
+
+Run a legacy FEMM 4.2 Lua script with: \\
+''c:\femm-qt\bin\femm-lua.bat myscript.lua''
+
+Running ''femm-lua'' with no script argument opens an interactive Lua prompt already connected to FEMM.  There is also a **femm-lua (Lua console)** shortcut in the FEMM 5.0 Start Menu group.
+
+Useful options:
+
+  * ''-h'' drives the headless engine, with no FEMM window
+  * ''-p PORT'' uses a port other than the default 48015, which is what lets two ''femm-lua'' runs proceed at the same time
+
+Example scripts with the ''*.lua'' extension are located in ''c:\femm-qt\examples''.  The Lua scripting guide is at ''c:\femm-qt\luafemm\femm-lua.pdf'', in the FEMM 5.0 Start Menu group, and online as [[https://www.femm.info/doku/lib/exe/fetch.php?media=femm-qt:docs:femm-lua.pdf | femm-lua.pdf]].
+
+If ''c:\femm-qt\bin'' is on your PATH -- the installer offers this as an option -- then ''femm-lua'' can be run by name from any folder.
+
+===== macOS =====
+
+The macOS disk image contains two things to drag: **femm_gui.app**, which goes into Applications, and a folder named **FEMM**, which goes into Documents.  That folder is where the bindings and examples live:
+
+  * ''~/Documents/FEMM/bindings'' -- the six binding files
+  * ''~/Documents/FEMM/examples'' -- the example scripts and models
+  * ''~/Documents/FEMM/docs'' -- the manual and the language guides
+
+Copies of the bindings and examples are also inside the application bundle, but those are **read-only masters**.  Use the ones in Documents: an example script does ''open("model.fem")'' followed by ''mi_saveas("temp.fem")'', both relative to its own directory, so it has to live somewhere writable.
+
+===OctaveFEMM (macOS)===
+
+Octave needs a Java runtime for socket communication.  If ''openfemm'' reports a Java error, install a JDK ([[https://adoptium.net/temurin/releases | Adoptium Temurin]]) and set ''JAVA_HOME'' before starting Octave.  Matlab has its own Java and needs nothing.
+
+  - Start Matlab or Octave
+  - Type ''addpath('~/Documents/FEMM/bindings/mfiles')''
+  - Type ''savepath'' to make it permanent, or put the ''addpath'' line in ''~/.octaverc''
+  - Test with ''openfemm''
+
+===pyFEMM (macOS)===
+
+Point Python at the binding directory: \\
+''sys.path.append('~/Documents/FEMM/bindings/pyfemm')''
+
+or install it, which on macOS needs a little care about **which** Python:
+
+''/usr/bin/python3 -m pip install --user ~/Documents/FEMM/bindings/pyfemm''
+
+If ''pip'' answers ''error: externally-managed-environment'', that interpreter is owned by Homebrew or by the system and refuses to be written to -- including with ''--user''.  Either use the interpreter you actually run your scripts with, or create a virtual environment.  Whichever you choose, it must be the **same** interpreter you run FEMM scripts with, or ''import femm'' will fail while the install reports success.
+
+If FEMM 4.2's pyFEMM is also present, read the **Alongside FEMM 4.2** section of ''pyfemm.md'' first: both provide a module named ''femm'', so installing one takes over ''import femm'' for that interpreter.
+
+Examples meant for pyFEMM are in ''~/Documents/FEMM/bindings/pyfemm/examples''.  They are kept apart from the shared examples folder because both contain ''*.py'' files and they are for different interpreters -- the shared ones run inside FEMM's own script console, these run under CPython.  For what that console can import, see [[micropython]].
+
+===mathFEMM (macOS)===
+
+At the beginning of a Mathematica script, load mathfemm with the line:
+
+''Get["~/Documents/FEMM/bindings/mathfemm/mathfemm.m"]''
+
+Example notebooks with the ''*.nb'' extension are in ''~/Documents/FEMM/examples''.
+
+===sciFEMM (macOS)===
+
+At the beginning of a Scilab script, load scifemm with the line:
+
+''exec('~/Documents/FEMM/bindings/scifemm/scifemm.sci');''
+
+SciFEMM communicates with FEMM through Java, because Scilab has no sockets of its own.  That matters if you run Scilab from the command line rather than from its window: use ''scilab-adv-cli'', which has a JVM.  The shorter ''scilab-cli'' does not, and SciFEMM stops with //"jimport function disabled in -nogui or -nwni mode"//.  On macOS these are inside the Scilab application, e.g. ''/Applications/scilab-2026.1.0.app/Contents/bin/scilab-adv-cli''.
+
+Example scripts with the ''*.sce'' extension are in ''~/Documents/FEMM/examples''.
+
+===juliaFEMM (macOS)===
+
+At the beginning of a Julia script, load juliafemm with the line:
+
+''include("~/Documents/FEMM/bindings/juliafemm/juliafemm.jl")''
+
+Example scripts with the ''*.jl'' extension are in ''~/Documents/FEMM/examples''.
+
+===luaFEMM (macOS)===
+
+As on Windows, nothing needs installing: the Lua 4 interpreter ships inside the application bundle.  The launcher is at:
+
+''/Applications/femm_gui.app/Contents/MacOS/femm-lua.sh''
+
+Run a legacy script with: \\
+''/Applications/femm_gui.app/Contents/MacOS/femm-lua.sh myscript.lua''
+
+A disk image is a drag install and cannot put anything on your PATH, so the full path is given here.  If you use it often, add an **alias** to it in a folder of your own -- not a symbolic link, because the launcher finds ''femm.lua'' and ''lua4'' relative to its own directory.
+
+The ''-h'' and ''-p PORT'' options work as on Windows.  Example scripts with the ''*.lua'' extension are in ''~/Documents/FEMM/examples''.  The Lua scripting guide is in ''~/Documents/FEMM/docs'', and online as [[https://www.femm.info/doku/lib/exe/fetch.php?media=femm-qt:docs:femm-lua.pdf | femm-lua.pdf]].
+
+===== Linux =====
+
+Building from source produces an install step: ''./linux_build.sh install'', or ''packaging/unix_install.sh'' directly.  It installs **per user** by default, into ''~/.local'', and refuses to run as root.  A different location can be given as an argument, e.g. ''packaging/unix_install.sh /usr/local''.
+
+After installing:
+
+  * ''~/.local/opt/femm-qt/bindings'' -- the six binding files
+  * ''~/Documents/FEMM/examples'' -- a writable copy of the example scripts and models
+  * ''~/Documents/FEMM/docs'' -- the manual and the language guides
+
+The installer prints the exact lines for your machine at the end, so if you installed somewhere other than the default, use what it printed rather than the paths below.
+
+===OctaveFEMM (Linux)===
+
+Octave needs a Java runtime for socket communication; install a JDK from your distribution if ''openfemm'' reports a Java error.  On Debian and Ubuntu that is ''sudo apt install default-jdk''.
+
+  - Start Matlab or Octave
+  - Type ''addpath('~/.local/opt/femm-qt/bindings/mfiles')''
+  - Put that line in ''~/.octaverc'' to make it permanent, or use ''savepath''
+  - Test with ''openfemm''
+
+===pyFEMM (Linux)===
+
+Point Python at the binding directory: \\
+''sys.path.append('~/.local/opt/femm-qt/bindings/pyfemm')''
+
+or install it: \\
+''pip install --user ~/.local/opt/femm-qt/bindings/pyfemm''
+
+Many Linux distributions now refuse that with ''error: externally-managed-environment'', because the system Python is managed by the package manager.  A virtual environment is the tidy way around it:
+
+''python3 -m venv ~/.venvs/femm'' \\
+''~/.venvs/femm/bin/pip install ~/.local/opt/femm-qt/bindings/pyfemm''
+
+Examples meant for pyFEMM are in ''~/.local/opt/femm-qt/bindings/pyfemm/examples'', and a writable copy is placed in ''~/Documents/FEMM/examples/pyfemm''.  Scripts written for FEMM's own console are a different thing, with a different set of modules available -- see [[micropython]].
+
+===mathFEMM (Linux)===
+
+At the beginning of a Mathematica script, load mathfemm with the line:
+
+''Get["~/.local/opt/femm-qt/bindings/mathfemm/mathfemm.m"]''
+
+Example notebooks with the ''*.nb'' extension are in ''~/Documents/FEMM/examples''.
+
+===sciFEMM (Linux)===
+
+At the beginning of a Scilab script, load scifemm with the line:
+
+''exec('~/.local/opt/femm-qt/bindings/scifemm/scifemm.sci');''
+
+If you run Scilab from the command line, use ''scilab-adv-cli'' rather than ''scilab-cli''.  SciFEMM talks to FEMM through Java, and only ''scilab-adv-cli'' has a JVM; with ''scilab-cli'' the script stops at ''openfemm'' with //"jimport function disabled in -nogui or -nwni mode"//.
+
+Example scripts with the ''*.sce'' extension are in ''~/Documents/FEMM/examples''.
+
+===juliaFEMM (Linux)===
+
+At the beginning of a Julia script, load juliafemm with the line:
+
+''include("~/.local/opt/femm-qt/bindings/juliafemm/juliafemm.jl")''
+
+Example scripts with the ''*.jl'' extension are in ''~/Documents/FEMM/examples''.
+
+===luaFEMM (Linux)===
+
+Nothing needs installing: the Lua 4 interpreter is built and installed along with FEMM, and the installer puts a ''femm-lua'' command in ''~/.local/bin''.
+
+Run a legacy script with: \\
+''femm-lua myscript.lua''
+
+If that reports //command not found//, ''~/.local/bin'' is not on your PATH.  The installer says so when it finishes and prints the line to add to your shell startup file.
+
+The ''-h'' and ''-p PORT'' options work as on Windows.  Example scripts with the ''*.lua'' extension are in ''~/Documents/FEMM/examples''.  The Lua scripting guide is in ''~/Documents/FEMM/docs'', and online as [[https://www.femm.info/doku/lib/exe/fetch.php?media=femm-qt:docs:femm-lua.pdf | femm-lua.pdf]].
+
+===== FreeBSD =====
+
+FreeBSD is set up exactly as Linux: build from source, then ''./freebsd_build.sh install'' or ''packaging/unix_install.sh''.  The default install location, the binding paths and the example paths are all the same as the Linux section above, and the instructions for OctaveFEMM, pyFEMM, mathFEMM, juliaFEMM and luaFEMM apply unchanged.
+
+Note that Matlab and Mathematica are not available for FreeBSD, so OctaveFEMM is used with Octave, and MathFEMM is of no practical use.
+
+===SciFEMM (FreeBSD)===
+
+**SciFEMM does not work on FreeBSD**, for reasons that have nothing to do with FEMM.
+
+SciFEMM needs a Scilab with a Java virtual machine, because Scilab has no sockets of its own.  Of the two command-line binaries, ''scilab-cli'' has no JVM, and ''scilab-adv-cli'' -- the one that does -- crashes on startup in the Scilab package tested (Scilab 6.1.1 on GhostBSD, FreeBSD 15.0-RELEASE).  It fails on something as simple as:
+
+''scilab-adv-cli -quit -e "disp(1+1)"''
+
+so no FEMM code is involved.  This is not a Java problem on the machine either: OctaveFEMM also uses Java for its sockets and works normally.
+
+The other five bindings are unaffected.

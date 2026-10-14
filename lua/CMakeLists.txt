@@ -59,6 +59,9 @@ target_include_directories(lua PRIVATE "${LUA_DIR}" "${COMMON_DIR}" "${SOCKET_DI
 # colliding with the static-library target "lua4" (different artifact types,
 # so the .exe and the .a/.lib never clash on disk).
 set_target_properties(lua PROPERTIES OUTPUT_NAME lua4)
+# No femm_add_version_resource here: lua4 is the bundled Lua 4.0 interpreter
+# (TeCGraf, PUC-Rio), not part of the FEMM product, and FEMM's version and
+# copyright strings would misattribute it.
 
 # The client-side halves of the Lua interface -- the binding femm.lua and the
 # launcher -- staged beside the interpreter that runs them. lua4 alone is not

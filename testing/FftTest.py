@@ -289,38 +289,56 @@ if abs(got - amp) > 1e-9:
 # Bluestein transforms a length-M >= 2N-1 buffer, so it cannot be as quick as
 # the native transform of the same N.  If a change ever routed everything
 # through it the results would stay right and only the speed would tell.
-# BEST-of-N, not a mean, and ticks_us rather than time.time(). Both matter,
-# and GhostBSD demonstrated why: there time.time() is coarse enough that 200
-# power-of-two transforms measured as 0 s, so the `t_pow2 > 0` guard silently
-# skipped this check entirely -- while under the full suite's load the same
-# measurement came out non-zero, one scheduling hiccup inflated the MEAN, the
-# ratio fell under 1.5, and the row failed. Passing alone and failing in the
-# suite is the signature of a timing assertion, not of a bug.
+# MEDIAN of interleaved batches, and ticks_us rather than time.time(). Both
+# matter, and two BSD incidents showed why:
 #
-# A minimum is the right statistic for "how fast can this go": noise only ever
-# adds. Batches are also sized to clear the clock rather than assumed to.
-def timeit(n, batches=5, floor_us=20000):
-    x = np.array(sample(n))
+#   * GhostBSD, time.time(): coarse enough that 200 power-of-two transforms
+#     measured as 0 s, so a `t_pow2 > 0` guard silently skipped the check --
+#     while under the full suite's load the same measurement came out
+#     non-zero, one scheduling hiccup inflated the MEAN, the ratio fell under
+#     1.5, and the row failed.
+#   * FreeBSD guest with its window minimised, ticks_us, best-of-N MINIMUM:
+#     the hypervisor stole time in lumps and the monotonic clock skipped
+#     forward past part of a batch, so one 250-point batch measured an order
+#     of magnitude shorter than the calibration batch that preceded it. The
+#     minimum picked exactly that batch and reported Bluestein FASTER than the
+#     native transform (2.6 us against 3.7 us), which no implementation can
+#     produce. A minimum assumes the clock only ever adds noise; a stolen or
+#     jumping clock subtracts.
+#
+# So: the two lengths are timed in alternating batches, so throttling and CPU
+# frequency changes land on both alike, and each length's figure is the
+# median of its batches, which shrugs off a few bad ones in either direction.
+# Passing alone and failing in the suite is still the signature of a timing
+# assertion, not of a bug. Batches are sized to clear the clock rather than
+# assumed to.
+def calibrate(x, floor_us=20000):
     reps = 50
     while True:                       # grow until a batch clears the clock
         t0 = time.ticks_us()
         for _ in range(reps):
             np.fft.fft(x)
         if time.ticks_diff(time.ticks_us(), t0) >= floor_us or reps >= 12800:
-            break
+            return reps
         reps *= 2
-    best = None
-    for _ in range(batches):
-        t0 = time.ticks_us()
-        for _ in range(reps):
-            np.fft.fft(x)
-        dt = time.ticks_diff(time.ticks_us(), t0)
-        if best is None or dt < best:
-            best = dt
-    return float(best) / reps          # microseconds per transform
 
-t_pow2 = timeit(256)
-t_blue = timeit(250)
+def timeit_pair(n1, n2, batches=9):
+    xs = (np.array(sample(n1)), np.array(sample(n2)))
+    reps = (calibrate(xs[0]), calibrate(xs[1]))
+    per = ([], [])
+    for _ in range(batches):
+        for k in (0, 1):
+            t0 = time.ticks_us()
+            for _ in range(reps[k]):
+                np.fft.fft(xs[k])
+            per[k].append(float(time.ticks_diff(time.ticks_us(), t0)) / reps[k])
+    med = []
+    for k in (0, 1):
+        v = sorted(per[k])
+        med.append(v[len(v) // 2])   # microseconds per transform
+    return med[0], med[1]
+
+t_pow2, t_blue = timeit_pair(256, 250)
 if t_pow2 <= 0:
     fails.append("cannot time the fft: 256-point transforms measured as zero "
                  "even after growing the batch")

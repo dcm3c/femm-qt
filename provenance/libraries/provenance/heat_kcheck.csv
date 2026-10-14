@@ -1,0 +1,44 @@
+name,status,detail
+"Aluminum, Pure",checked,0.0% (Table A.1)
+"Aluminum, 6061-T6",checked,0.0% (Table A.1)
+"Aluminum, 7075-T6",checked,0.0% (Table A.1)
+Chromium,checked,1.2% (Table A.1)
+"Copper, Pure",checked,0.0% (Table A.1)
+Brass,checked,3.8% (Table A.1)
+Constantan,replaced,"White App. C gives 26 at 200 C, Lienhard's 100 C value; Lienhard's 22/26/35 at 273/373/473 K used (Table A.1)"
+Gold,checked,3.4% (Table A.1)
+"Iron, Pure",checked,6.7% (Table A.1; edition difference)
+"Iron, Cast (4% C)",checked,0.0% (Table A.1)
+"Steel, 1% Carbon",replaced,"White App. C drops the 600 C value, putting 29 and 28 a column early; Lienhard's 43/42/36/33/29/28 at 273-1273 K used (Table A.1)"
+Lead,checked,0.0% (Table A.1)
+Magnesium,checked,0.7% (Table A.1)
+Molybdenum,checked,0.0% (Table A.1)
+"Nickel, Pure",checked,1.6% (Table A.1)
+Inconel-X,checked,2.7% (Table A.1)
+"Platinum, Pure",checked,1.3% (Table A.1)
+Silicon,checked,13% at 200 C (Table A.1; edition difference)
+Silver,checked,"White App. C without its 1000 C point (355, a solid above the 962 C melting point); within 4% (Table A.1)"
+Tin,checked,0.0% (Table A.1)
+Titanium,checked,4.8% (Table A.1)
+Tungsten,checked,3.3% (Table A.1)
+Uranium,checked,4.9% (Table A.1)
+Zinc,checked,2.0% (Table A.1)
+"Lead, liquid",checked,7.5% at 1000 K (Table A.3; older data)
+Mercury,replaced,"Lienhard's k, 6.97-12.0 W/m/K (Table A.3); White's App. E k (7.3-14.2) is older"
+Ammonia (liquid),replaced,Lienhard Table A.3 values; White App. F data are older (up to 13% off)
+Freon-12,replaced,Lienhard Table A.3 values; White App. F data are older (up to 24% off; wrong trend)
+Water,checked,2.9% (Table A.3)
+Air,checked,4.1% (Table A.6); points above 1500 K not checkable
+Ammonia (gas),checked,6.9% at 700 K (Table A.6); points outside 240-700 K not checkable
+Argon,checked,1.5% (Table A.6); points above 700 K not checkable
+Carbon Dioxide,checked,1.8% (Table A.6); points outside 220-600 K not checkable
+Carbon Monoxide,checked,4.5% (Table A.6)
+Helium,checked,5.3% (Table A.6)
+Hydrogen,checked,7.0% at 1000 K (Table A.6; older data)
+Nitrogen,checked,4.7% (Table A.6)
+Oxygen,checked,0.6% (Table A.6)
+Steam at 373.15 K,checked,10% at 1000 K (Table A.6; older data)
+Diatomaceous Earth,replaced,"from CRC 12-224 diatomite, 0.5 g/cm3: 0.09 and 0.16 at 273 and 673 K; White's 1.3 is ten times diatomite powders' 0.05-0.16"
+Teflon-min-heat-capacity,replaced,"from CRC 12-225 PTFE at 25 C, 0.26; White gives 0.35"
+Teflon-max-heat-capacity,replaced,"from CRC 12-225 PTFE at 25 C, 0.26; White gives 0.35"
+Window,replaced,"from CRC 12-227 soda-lime glass (72 SiO2, 15 Na2O, 11 CaO, 2 Al2O3): 1.00 and 1.15 at 273 and 373 K; White gives 0.84"

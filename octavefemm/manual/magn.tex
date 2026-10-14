@@ -235,7 +235,7 @@ it appears on the window's title bar.
 \subsection{Mesh Commands}
 
 \begin{itemize}
-\item{\tt mi\_createmesh} runs triangle to create a mesh. Note that this is not a
+\item{\tt mi\_createmesh} runs the mesher to create a mesh. Note that this is not a
 necessary precursor of performing an analysis, as {\tt
 mi\_analyze} will make sure the mesh is up to date before running
 an analysis. The number of elements in the mesh is pushed back onto
@@ -424,6 +424,8 @@ properties:
                 \item 4 -- plain stranded wire
                 \item 5 -- Litz wire
                 \item 6 -- square wire
+                \item 7 -- 10\% copper-clad aluminum (CCA) wire
+                \item 8 -- 15\% copper-clad aluminum (CCA) wire
                 \end{itemize}
         \item{\tt Phi\_hx} Hysteresis lag in degrees in the x-direction for linear problems.
         \item{\tt Phi\_hy} Hysteresis lag in degrees in the y-direction for linear problems.
@@ -731,7 +733,7 @@ Symbol & Definition \\ \hline
  Mu2 & $\mu_y$ if planar, $\mu_z$ if axisymmetric \\
  Pe & Power density dissipated through ohmic losses \\
  Ph & Power density dissipated by hysteresis \\
- ff & Winding fill factor \\ \hline
+ ff & Fill factor: lamination fill for laminated materials, winding fill for wire materials, otherwise $-1$ (solid region) or 1 (multi-turn region) \\ \hline
  \end{tabular}
 \end{center}
 The following series of functions retrieves smaller subsets of
@@ -766,7 +768,7 @@ problems.
 
 \item{\tt mo\_getph(x,y)} Get the hysteresis/laminated eddy current loss density associated with the point at (x,y).
 
-\item{\tt mo\_getfill(x,y)} Get the winding factor ({\em i.e.} the average fraction of the volume filled with conductor) associated with the point at (x,y).
+\item{\tt mo\_getfill(x,y)} Get the fill factor associated with the point at (x,y): for a wire material, the winding fill ({\em i.e.} the average fraction of the volume filled with conductor); for a laminated material, the lamination fill; otherwise $-1$ for a solid region or 1 for a multi-turn region.
 
 \item \verb+mo_makeplot(PlotType,NumPoints,Filename,FileFormat)+
 Allows Octave access to FEMM's X-Y plot routines.  If only {\tt PlotType} or only {\tt PlotType}

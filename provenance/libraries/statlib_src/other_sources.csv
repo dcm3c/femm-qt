@@ -1,0 +1,26 @@
+folder,name,ex,ey,src,note
+"Ceramics, Glass and Stone",Porcelain,6.0,6.0,CALL184,"60 Hz; Dorf Table 55.2 gives 8.2 for mullite porcelain"
+"Ceramics, Glass and Stone",Fused silica,4.0,4.0,CALL184,60 Hz
+Polymers,Phenol-formaldehyde,5.3,5.3,CALL184,60 Hz
+Polymers,"Nylon 6,6",4.0,4.0,CALL184,60 Hz
+Polymers,Polystyrene,2.6,2.6,CALL184,60 Hz
+Polymers,"Kapton HN polyimide film",3.4,3.4,KAPTON,"1 kHz, 25 and 50 um film (3.5 for 75 and 125 um), ASTM D150"
+Polymers,"Delrin 150 acetal (POM-H)",3.7,3.7,DELRIN,"60 Hz, 73 F, ASTM D150"
+Polymers,"Mylar polyester film (PET)",3.3,3.3,MYLAR,"100 Hz, 25 C, read from Figure 6 (Mylar C, 25 um); about 3.28 at 1 kHz"
+"Ceramics, Glass and Stone","Pyrex 7740 borosilicate glass",4.6,4.6,PYREX,"1 MHz, 20 C"
+Semiconductors,Silicon,11.7,11.7,IOFFE,300 K
+Semiconductors,Germanium,16.2,16.2,IOFFE,300 K
+Semiconductors,Gallium arsenide (GaAs),12.9,12.9,IOFFE,"static, 300 K"
+Semiconductors,Indium phosphide (InP),12.5,12.5,IOFFE,"static, 300 K"
+Semiconductors,"Gallium nitride (GaN, wurtzite)",8.9,8.9,IOFFE,"static, 300 K"
+Semiconductors,"Silicon carbide, 6H (c-axis along y)",9.66,10.03,IOFFE,"static, 300 K; 9.66 perpendicular to c, 9.66/0.9631 = 10.03 parallel to c"
+Semiconductors,Diamond,5.7,5.7,IOFFE,10^2-10^4 Hz
+Polymers,"Kapton FN 120FN616 (FEP-coated polyimide)",3.1,3.1,KAPTONFN,"frequency not stated; ASTM D150"
+Polymers,"Kapton FN 150FN019 (FEP-coated polyimide)",2.7,2.7,KAPTONFN,"frequency not stated; ASTM D150"
+Polymers,"Kapton FN 250FN029 (FEP-coated polyimide)",3.0,3.0,KAPTONFN,"frequency not stated; ASTM D150"
+Polymers,"PVC, rigid (Trovidur PN)",3.2,3.2,TROVIDUR,"frequency not stated; IEC 60250 (dissipation factor given at 1 MHz)"
+Polymers,"Kraft paper, oil-impregnated",3.3,3.3,DORFTEXT,"frequency not stated; approximately 3.1-3.5 (middle used); impregnant about 2.2, dried cellulose 6.5-10"
+"Ceramics, Glass and Stone","Marble, dolomitic (USGS sample, New York)",7.7,7.7,USGS,"1 kHz, dry; tan delta 0.0137; single sample"
+"Ceramics, Glass and Stone","Marble, pink (USGS sample, Colorado)",11.7,11.7,USGS,"1 kHz, dry; tan delta 0.0213; single sample"
+Polymers,"Natural rubber (polyisoprene)",2.6,2.6,CRC1317,"1 kHz, 27 C; CRC gives typical values (2.5 at 1 MHz)"
+Polymers,"Neoprene (polychloroprene)",6.6,6.6,CRC1317,"1 kHz, 25 C; CRC gives typical values (6.3 at 1 MHz)"

@@ -28,7 +28,7 @@ def check(label, got, want, tol=1e-9):
 
 
 # --- magnetics: mi_getmaterial ---------------------------------------------
-# Air is mu_r = 1 exactly; Pure Iron is a nonlinear B-H material, so it also
+# Air is mu_r = 1 exactly; ARMCO Pure Iron is a nonlinear B-H material, so it also
 # exercises the inline BH table, which the parser reads with a nested fgets loop
 # of its own. Values are checked by saving the document and reading the material
 # back out of it -- "it did not throw" would pass even if every field were zero.
@@ -37,7 +37,7 @@ import tempfile
 
 newdocument(0)
 mi_getmaterial("Air")
-mi_getmaterial("Pure Iron")
+mi_getmaterial("ARMCO Pure Iron")
 femfile = os.path.join(tempfile.gettempdir(), "_matlibtest.fem")
 mi_saveas(femfile)
 mi_close()
@@ -52,8 +52,8 @@ except OSError:
 
 if '"Air"' not in text:
     fails.append("Air did not reach the saved document")
-if '"Pure Iron"' not in text:
-    fails.append("Pure Iron did not reach the saved document")
+if '"ARMCO Pure Iron"' not in text:
+    fails.append("ARMCO Pure Iron did not reach the saved document")
 
 # Air's permeability must have come across as 1, not as a default-constructed 0.
 block = text.split('"Air"', 1)[-1].split("<BlockName>", 1)[0] if '"Air"' in text else ""
@@ -66,18 +66,32 @@ else:
     except (ValueError, IndexError):
         fails.append("could not parse Air's <Mu_x>: %r" % mu[0])
 
-# Pure Iron is only useful if its B-H curve came with it.
-iron = text.split('"Pure Iron"', 1)[-1] if '"Pure Iron"' in text else ""
+# ARMCO Pure Iron is only useful if its B-H curve came with it.
+iron = text.split('"ARMCO Pure Iron"', 1)[-1] if '"ARMCO Pure Iron"' in text else ""
 bh = [l for l in iron.split(chr(10)) if l.strip().lower().startswith("<bhpoints>")]
 if not bh:
-    fails.append("no <BHPoints> in Pure Iron's saved block")
+    fails.append("no <BHPoints> in ARMCO Pure Iron's saved block")
 else:
     try:
         n = int(bh[0].split("=", 1)[1])
-        if n < 2:
-            fails.append("Pure Iron came through with %d B-H points" % n)
+        # The library entry carries 74 points (matlibs/matlib.dat; 61 in the
+        # 2026-09-30 reorganisation that replaced the old "Pure Iron", 74 after
+        # the 2026-10 peer review). Update this when the entry is revised. The
+        # whole table must come across, not merely "some" of it -- a parser
+        # that stopped early at a blank or odd line would still give n >= 2.
+        if n != 74:
+            fails.append("ARMCO Pure Iron came through with %d B-H points, want 74" % n)
     except (ValueError, IndexError):
-        fails.append("could not parse Pure Iron's <BHPoints>: %r" % bh[0])
+        fails.append("could not parse ARMCO Pure Iron's <BHPoints>: %r" % bh[0])
+    # Conductivity too, so a scalar field after the table is known to survive.
+    sg = [l for l in iron.split(chr(10)) if l.strip().lower().startswith("<sigma>")]
+    if not sg:
+        fails.append("no <Sigma> in ARMCO Pure Iron's saved block")
+    else:
+        try:
+            check("ARMCO Pure Iron sigma", float(sg[0].split("=", 1)[1]), 9.35, 1e-9)
+        except (ValueError, IndexError):
+            fails.append("could not parse ARMCO Pure Iron's <Sigma>: %r" % sg[0])
 
 newdocument(0)
 try:
@@ -88,11 +102,11 @@ except Exception:
 mi_close()
 
 # --- the three scalar physics ----------------------------------------------
-for doctype, getter, closer, name in ((1, "ei_getmaterial", "ei_close", "Air"),
+for doctype, getter, closer, name in ((1, "ei_getmaterial", "ei_close", "Vacuum"),
                                       (2, "hi_getmaterial", "hi_close",
                                        "Aluminum, Pure"),
                                       (3, "ci_getmaterial", "ci_close",
-                                       "Copper")):
+                                       "Copper (IACS standard)")):
     newdocument(doctype)
     try:
         globals()[getter](name)

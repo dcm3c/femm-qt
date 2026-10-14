@@ -229,12 +229,24 @@ template<typename... Ts> struct caster<std::tuple<Ts...>> {
 
 // std::vector<T> <-> Python list.
 template<typename T> struct caster<std::vector<T>> {
+    // Build the Python list FIRST and fill it in place. Each element's cast()
+    // allocates, and any allocation can run a collection; bdwgc scans the C
+    // stack, registers and static data but never malloc'd memory, so elements
+    // parked in a std::vector<mp_obj_t> until the list was built were
+    // invisible to it and were freed while still referenced -- os.listdir on a
+    // big directory came back with names that were never created, or crashed
+    // (testing/ListdirGcTest.py). Here every element is reachable from the
+    // moment it exists: the list lives in `lst` on the stack, and its item
+    // array is collector memory that IS scanned. The slots start zeroed
+    // (GC_MALLOC clears), i.e. MP_OBJ_NULL, so a collection mid-fill meets
+    // nothing it can misread. See also the root rule at py_state.cpp's
+    // store_global.
     static mp_obj_t cast(const std::vector<T> &v) {
-        std::vector<mp_obj_t> items;
-        items.reserve(v.size());
-        for (const auto &e : v)
-            items.push_back(caster<T>::cast(e));
-        return mp_obj_new_list(items.size(), items.data());
+        mp_obj_t lst = mp_obj_new_list(v.size(), nullptr);
+        mp_obj_list_t *l = (mp_obj_list_t *)MP_OBJ_TO_PTR(lst);
+        for (size_t i = 0; i < v.size(); i++)
+            l->items[i] = caster<T>::cast(v[i]);
+        return lst;
     }
     static std::vector<T> load(mp_obj_t o) {
         size_t n = 0;

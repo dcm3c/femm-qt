@@ -1,0 +1,12 @@
+folder,name,sigma_S_m,er,figure
+Water,"Sea water, low salinity (ITU-R P.368)",1,80,1
+Water,"Sea water, average salinity (ITU-R P.368)",5,70,2
+Water,"Fresh water (ITU-R P.368)",3e-3,80,3
+Soil and Ground,"Land, sigma 3e-2 S/m (ITU-R P.368)",3e-2,40,4
+Soil and Ground,"Wet ground (ITU-R P.368)",1e-2,30,5
+Soil and Ground,"Land, sigma 3e-3 S/m (ITU-R P.368)",3e-3,22,6
+Soil and Ground,"Medium dry ground (ITU-R P.368)",1e-3,15,7
+Soil and Ground,"Dry ground (ITU-R P.368)",3e-4,7,8
+Soil and Ground,"Very dry ground (ITU-R P.368)",1e-4,3,9
+Soil and Ground,"Fresh water ice, -1 C (ITU-R P.368)",3e-5,3,10
+Soil and Ground,"Fresh water ice, -10 C (ITU-R P.368)",1e-5,3,11

@@ -17,6 +17,8 @@
 #include "StdAfx.h"
 #include <math.h>
 #include <cmath>
+#include <cfloat>
+#include <algorithm>
 #include <stdio.h>
 #include <stdlib.h>
 #include "fknDlg.h"
@@ -743,12 +745,31 @@ int CBigLinProb::PCGSolve(int flag)
 	for (i = 0; i < n; i++) P[i] = Z[i];
 	res = Dot(Z, R);
 
-	// Breakdown/stall guard: a non-finite er makes the while() below false,
-	// which would return "converged" with garbage in V. The stall counter
-	// mirrors QMRSolve's bBail; PCG previously had no such protection.
-	double erBest=1e300;
-	int nStall=0;
-	const int stallLimit=(n/2>200)?(n/2):200;
+	// Breakdown guard: a non-finite er makes the while() below false, which
+	// would return "converged" with garbage in V. FEMM 4.3 has that hole;
+	// bailing with failure instead is a correctness fix and stays.
+	//
+	// It is the PRECONDITIONER that can get us here, not a singular A. CG
+	// needs M positive definite. FactorPCOnce decides posDiag once, from
+	// A's diagonal; when it holds, a nonpositive pivot is refused outright
+	// and the accepted factor has icD > 0 throughout. When it does NOT --
+	// a floating node, a zero diagonal -- the other branch tests only
+	// fabs(dk) > 1e-8*scale, so icD can come back MIXED SIGN and MultPC
+	// then applies an indefinite preconditioner. res = Dot(Z,R) is then
+	// R'M^-1 R, which can vanish or change sign at a nonzero residual, and
+	// rho = res_new/res divides through zero. That branch has never been
+	// reached by the corpus, which is exactly why the guard is worth its
+	// one comparison: the failure it prevents is silent, not loud.
+	//
+	// There is deliberately NO stall counter here. One was added in 876c0e9
+	// because QMRSolve had bBail, which was the wrong reason: bBail is
+	// Meeker's, it belongs to a different algorithm, and upstream pairs it
+	// with an SSOR preconditioner that cannot degrade. Under the ILDL
+	// preconditioner the factor's QUALITY varies with which rung of
+	// FactorPC's ladder happened to factor, so a stall counter fires on a
+	// merely slow solve of a well-posed problem and turns it into
+	// "Couldn't solve the problem". Slow is not wrong; a user can cancel a
+	// slow solve and cannot recover a refused one.
 
 	// do iteration
 	do {
@@ -775,8 +796,6 @@ int CBigLinProb::PCGSolve(int flag)
 		// have we converged yet?
 		er = sqrt(fabs(res / res_o));
 		if (!std::isfinite(er)) return 0;
-		if (er < erBest) { erBest = er; nStall = 0; }
-		else if (++nStall >= stallLimit) return 0;
 
 		prg2 = (int)(20. * log10(er) / (log10(Precision)));
 		if (prg2 > prg1) {
@@ -793,13 +812,69 @@ int CBigLinProb::PCGSolve(int flag)
 }
 
 // QMR solver (symmetric-indefinite systems: circuit constraints).
+//
+// Preconditioned CG on the indefinite system with QMR smoothing of the
+// iterate (Freund's quasi-minimal residual laid over the Lanczos/CG
+// recurrence). Two of its divisions are by INDEFINITE bilinear forms:
+// res = R'M^-1 R and pAp = P'A P. Both can vanish for a nonzero vector,
+// because A carries the negative flux block and the ILDL factor carries
+// signed pivots. That is not a preconditioner defect: it is symmetric
+// Lanczos in an indefinite inner product, and the recurrence breaks down
+// on that product's isotropic vectors.
+//
+// Where it bites in practice (measured 2026-09 on myTestProblem with a
+// manufactured isotropic warm start; the bench lives outside the tree):
+// a WARM start whose error e has (Ae)'M^-1(Ae) ~ 0. Written out, that form
+// is field-error energy MINUS circuit-error energy, so a cold start (e = x*,
+// field-dominated) is safe while a transient step's warm start crosses zero
+// at random -- the one-in-a-thousand transient failures. Three things
+// follow, each measured:
+//
+//   * er = sqrt(|res/res_o|) is not a norm on that path. It read 9e-9 at a
+//     step where the true residual was 8e-3, so the loop returned
+//     "converged" after one iteration with the warm start as the answer and
+//     the circuit current 0.5% off. The exit test below is sqrt(tau/tau_b):
+//     tau is the QMR quasi-residual of the PRECONDITIONED residual, a norm
+//     that bounds the residual it stands for (up to the usual sqrt(k)), and
+//     tau_b = |M^-1 b|^2 is a cold start's initial tau. A warm start is
+//     measured against that same absolute scale on purpose: its own initial
+//     tau would demand Precision relative to an already-small residual.
+//     Cost: one extra iteration on a healthy solve.
+//
+//   * The breakdown is visible at once. |res|/(|R||M^-1 R|) is a cosine in
+//     the M^-1 form, and it drops below sqrt(eps) exactly when the next
+//     division loses half its digits: >= 1e-8 solved normally, ~1e-9
+//     degraded, <= 1e-10 stalled or lied. Healthy solves stay above 1e-2.
+//     One extra Dot(R,R) per iteration buys the test; the other two dot
+//     products are already computed.
+//
+//   * Restarting from the SAME iterate reproduces the same R and the same
+//     breakdown. Restarting from zero works (b's form is far from zero) but
+//     discards the warm start. One minimal-residual step V += a*M^-1 R with
+//     a = (Az.R)/(Az.Az) moves the residual off the isotropic surface, and
+//     a fresh Lanczos sequence from there converges in the iteration count
+//     of a healthy warm start: 23 against 23, where zero cost 30 and the
+//     previous code took 3372 or returned garbage.
+//
+// Recovery is therefore a BOUNDED chain, so a genuinely unsolvable system
+// still fails loudly: up to kMaxNudge nudges from the current iterate, then
+// zero, then nudges from zero, then failure. Non-finite state, a frozen tau
+// (the smoothing factor saturates at 1 when |M^-1 R|^2 >> tau, seen on a
+// diverging trajectory), and Meeker's bBail stagnation count (n/2 steps
+// without |res| improving, the backstop that rescued stalls before the
+// detector existed) all route to the same chain. Restart on the bBail path
+// used to be a recursive QMRSolve(0); it is the zero rung here.
 int CBigLinProb::QMRSolve(int flag)
 {
 	int i;
-	double res, res_o, res_new, tau, tta, tta_new, cn;
-	double er, del, rho, pAp;
-	double erLast=0;
-	int bBail=0;
+	double res, res_new, tau, tau_b, tta, tta_new, cn;
+	double er, del, rho, pAp, rr, zz, resBest;
+	int bBail;
+	const int stallLimit = std::max(n / 2, 1);
+	const double kappaMin = sqrt(DBL_EPSILON);   // half the digits gone
+	const int kMaxNudge = 3;
+	int nudges = 0;
+	bool fromZero = (flag == 0), nudge = false;
 
 	TheView->SetDlgItemText(IDC_FRAME1, "QMR Solver");
 	TheView->m_prog1.SetPos(0);
@@ -808,19 +883,12 @@ int CBigLinProb::QMRSolve(int flag)
 	if(!finalized) Finalize();
 
 	MultPC(b, Z);
-	res_o = Dot(Z, b);
+	tau_b = Dot(Z, Z);
+
 	// A zero RHS has the exact solution V = 0, whatever V currently holds.
 	// The warm-start paths (flag != 0) arrive here with a previous iterate or
 	// an initial guess loaded from a previous solution, so returning without
 	// clearing V would hand that guess back as though it had been solved for.
-	// The complex twin (cspars.cpp PBCGSolve) already zeroes V here.
-	//
-	// Test the RHS directly rather than inferring emptiness from res_o: the
-	// two agree only while the preconditioner is definite, and QMRSolve's
-	// constraint rows give the incomplete factorization signed pivots. If
-	// res_o is zero for a NONZERO b, falling through is the right thing --
-	// the isfinite guard in the iteration below turns the resulting division
-	// into an honest failure instead of a false claim of convergence.
 	if (Dot(b, b) == 0) {
 		for (i = 0; i < n; i++) V[i] = 0;
 		return 1;
@@ -830,17 +898,42 @@ int CBigLinProb::QMRSolve(int flag)
 		for (i = 0; i < n; i++) V[i] = 0;
 	}
 
+restart:
+	// Residual of the current iterate. V is the QMR-smoothed iterate, so a
+	// restart here is a genuine fresh start from the best point we have,
+	// not a continuation of the Lanczos sequence that just broke.
 	MultA(V, R);
+	for (i = 0; i < n; i++) R[i] = b[i] - R[i];
 
-	for (i = 0; i < n; i++) {
-		R[i] = b[i] - R[i];
-		U[i] = 0;
+	if (nudge) {
+		nudge = false;
+		MultPC(R, Z);
+		MultA(Z, U);
+		double az = Dot(U, U);
+		if (az > 0) {
+			double al = Dot(U, R) / az;
+			for (i = 0; i < n; i++) V[i] += al * Z[i];
+			MultA(V, R);
+			for (i = 0; i < n; i++) R[i] = b[i] - R[i];
+		}
 	}
 
+	for (i = 0; i < n; i++) U[i] = 0;
 	MultPC(R, P);
 	tau = Dot(P, P);
 	res = Dot(P, R);
-	tta=0;
+	tta = 0;
+	rr = Dot(R, R);
+	zz = tau;
+	resBest = fabs(res);
+	bBail = 0;
+
+	// A warm start can already be the answer.
+	if (rr == 0) return 1;
+	if (sqrt(tau / tau_b) <= Precision) return 1;
+
+	// The start itself may be isotropic: that is the warm-start case.
+	if (zz == 0 || fabs(res) < kappaMin * sqrt(rr * zz)) goto recover;
 
 	do {
 		MultA(P, Z);
@@ -853,7 +946,8 @@ int CBigLinProb::QMRSolve(int flag)
 		res_new = Dot(Z, R);
 		rho = res_new / res;
 		res = res_new;
-		tta_new = Dot(Z, Z) / tau;
+		zz = Dot(Z, Z);
+		tta_new = zz / tau;
 		cn = 1. / sqrt(1. + tta_new * tta_new);
 		tau *= (tta_new * cn);
 
@@ -862,24 +956,15 @@ int CBigLinProb::QMRSolve(int flag)
 			V[i] += U[i];
 			P[i] = Z[i] + (rho * P[i]);
 		}
-		tta=tta_new;
+		tta = tta_new;
 
-		er = sqrt(fabs(res / res_o));
-		if (!std::isfinite(er)) return 0;
+		rr = Dot(R, R);
+		er = sqrt(tau / tau_b);
 
-		if (erLast==0) erLast=er;
-		if (er<erLast) { erLast=er; bBail=0; }
-		else bBail++;
-
-		if (bBail==(n/2)) {
-			if (flag!=0){
-				TheView->m_prog1.SetPos(0);
-				TheView->InvalidateRect(NULL, FALSE);
-				TheView->UpdateWindow();
-				return QMRSolve(0);
-			}
-			else return 0;
-		}
+		if (!std::isfinite(er) || !std::isfinite(res) || (tau == 0 && rr > 0)) goto recover;
+		if (rr > 0 && (zz == 0 || fabs(res) < kappaMin * sqrt(rr * zz))) goto recover;
+		if (fabs(res) < resBest) { resBest = fabs(res); bBail = 0; }
+		else if (++bBail >= stallLimit) goto recover;
 
 		prg2 = (int)(20. * log10(er) / (log10(Precision)));
 		if (prg2 > prg1) {
@@ -893,4 +978,22 @@ int CBigLinProb::QMRSolve(int flag)
 	} while (er > Precision);
 
 	return 1;
+
+recover:
+	if (nudges < kMaxNudge) {
+		nudges++;
+		nudge = true;
+		goto restart;
+	}
+	if (!fromZero) {
+		fromZero = true;
+		nudges = 0;
+		for (i = 0; i < n; i++) V[i] = 0;
+		prg1 = 0;
+		TheView->m_prog1.SetPos(0);
+		TheView->InvalidateRect(NULL, FALSE);
+		TheView->UpdateWindow();
+		goto restart;
+	}
+	return 0;
 }

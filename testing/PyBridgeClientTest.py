@@ -320,6 +320,71 @@ def main():
         # stdlib), so this is a real failure rather than a skip.
         check("zipfile shim is importable", False, str(e))
 
+    # --- a missing module must name the interpreter that lacks it --------------
+    #
+    # "No module named 'pandas'" alone sends a user to the wrong python. It is
+    # the wrong one surprisingly often: discovery prefers an interpreter that
+    # can PLOT, and FEMMQT_PYTHON is only a preference, so aiming it at a venv
+    # with pandas but no matplotlib silently selects a different python. The
+    # message therefore has to carry the path actually in use. Tested with a
+    # name no interpreter can have, so this runs on every machine rather than
+    # only where some optional package happens to be absent.
+    try:
+        pybridge.import_module("femmqt_no_such_module_xyz")
+        check("a missing module should raise", False)
+    except ImportError as e:
+        msg = str(e)
+        exe = pybridge.info().get("executable", "")
+        check("missing-module error names the interpreter",
+              bool(exe) and exe in msg, msg)
+        check("missing-module error gives the pip line",
+              "-m pip install femmqt_no_such_module_xyz" in msg, msg)
+        check("missing-module error keeps the original text",
+              "femmqt_no_such_module_xyz" in msg.split("\n")[0], msg)
+    except pybridge.BridgeError:
+        print("  (skipped missing-module message: no usable Python worker)")
+
+    # --- the pandas shim -------------------------------------------------------
+    #
+    # Shimmed for the usual reason: 635k lines of Python on 13 MB of Cython
+    # written against the CPython C API, so there is nothing to port and
+    # nothing in-process to shadow. Unlike zipfile, pandas is genuinely
+    # optional -- most machines will take the skip branch.
+    try:
+        import pandas
+    except ImportError:
+        check("pandas shim is importable", False)
+    else:
+        try:
+            from pandas import DataFrame        # __getattr__: first worker contact
+            check("pandas version through the shim", "." in pandas.__version__,
+                  str(pandas.__version__))
+            df = DataFrame({"freq": [50.0, 60.0, 400.0],
+                            "loss": [1.25, 1.80, 12.4]})
+            check("frame length crosses", len(df) == 3)
+            # A scalar must arrive BY VALUE -- a proxy here would poison every
+            # arithmetic expression a user writes against a result.
+            m = df["loss"].mean()
+            check("aggregate is a real float, not a proxy",
+                  isinstance(m, float) and abs(m - 5.15) < 1e-12, repr(m))
+            check("boolean mask filters server-side", len(df[df.freq > 55]) == 2)
+            # The crossing into ulab, which is the point of the whole thing.
+            arr = pybridge.fetch(df["loss"].to_numpy())
+            check("to_numpy fetches as a ulab array",
+                  arr.shape == (3,) and abs(arr[2] - 12.4) < 1e-12, str(arr.shape))
+            # ...and back the other way, by value over the binary path.
+            v = np.linspace(0.0, 1.0, 1000)
+            check("a ulab array crosses into a frame",
+                  len(DataFrame({"v": v})) == 1000)
+        except ImportError as e:
+            if "pandas" not in str(e):
+                raise
+            print("  (skipped pandas: not installed in the worker)")
+        except pybridge.BridgeError as e:
+            if "pandas" not in str(e):
+                raise
+            print("  (skipped pandas: no usable Python worker)")
+
     # A callable gets the OTHER remedy, which is what made the single shared
     # hint wrong: it advised pybridge.exec() for files too.
     try:

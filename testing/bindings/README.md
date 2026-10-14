@@ -166,7 +166,7 @@ of components the in-process run compares. Adding a scenario is a row plus one
 driver per binding.
 
     condprop      EOCondPropTest        4 components   real in, real pair back
-    circuitprop   MOCircuitPropTest   105 components   complex results back
+    circuitprop   MOCircuitPropTest    72 components   complex results back
 
 The component count is not decoration. The comparers SKIP reference keys absent
 from the test file (`if k not in tv: continue`), so a driver that died after two

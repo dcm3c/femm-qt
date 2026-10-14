@@ -23,6 +23,7 @@
 
 #include <QPainter>
 #include <QMessageBox>
+#include "mouse_release_gate.h"
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QKeyEvent>
@@ -1217,8 +1218,11 @@ void ScalarResultsWidget::mouseDoubleClickEvent(QMouseEvent *event)
         int i = ppClosestNode(xd, yd, *m_view.nodelist);
         if (i >= 0) {
             auto &n = (*m_view.nodelist)[i];
-            QMessageBox::information(this, tr("Closest Input Node"),
-                QString("Closest input node:\n(%1,%2)").arg(n.x).arg(n.y));
+            const QString msg = QString("Closest input node:\n(%1,%2)").arg(n.x).arg(n.y);
+            // After the button-up, never here: mouse_release_gate.cpp.
+            femmAfterMouseRelease(this, [this, msg]() {
+                QMessageBox::information(this, tr("Closest Input Node"), msg);
+            });
         }
         return;
     }

@@ -69,7 +69,9 @@ void CMaterialProp::GetSlopes(double omega)
 		// this one convolves B(H) where H is sinusoidal with
 		// a sine at the same frequency to get the effective
 		// amplitude of B
-		double munow,mumax=0;
+        
+        // Original buggy version
+/* 		double munow,mumax=0;
 		for(i=1;i<BHpoints;i++)
 		{
 			hn[i]=Hdata[i];
@@ -82,8 +84,42 @@ void CMaterialProp::GetSlopes(double omega)
 					Hdata[i]*(-sin((Hdata[k-1]*PI)/Hdata[i]) +
 					sin((Hdata[k]*PI)/Hdata[i]))))/ ((Hdata[k-1] - Hdata[k])*PI));
 			}
-		}
+		} */
 
+        // revised version where we are taking fundamental of B(H*sin(tta))
+        double munow,mumax=0;
+        double p,q,ttl,ttr;
+        for(i=1;i<BHpoints;i++)
+        {
+            hn[i]=Hdata[i];
+            for(k=1,bn[i]=0;k<=i;k++)
+            {
+                if (Re(Hdata[k])==Re(Hdata[k-1])) continue;
+                ttl=asin(Re(Hdata[k-1])/Re(Hdata[i]));
+                ttr=asin(Re(Hdata[k])/Re(Hdata[i]));
+                p=(-2*ttl + 2*ttr + sin(2*ttl) - sin(2*ttr))/PI;
+                q=4*(cos(ttl) - cos(ttr))/PI;
+                bn[i]+=Re((Bdata[k]*(-(p*Hdata[i]) + q*Hdata[-1 + k]) + Bdata[-1 + k]*(p*Hdata[i] - q*Hdata[k]))/(Hdata[-1 + k] - Hdata[k]));
+            }
+        }
+/*
+        // alt version where we are taking fundamental of H(B*sin(tta))
+        double munow,mumax=0;
+        double p,q,ttl,ttr;
+        for(i=1;i<BHpoints;i++)
+        {
+            bn[i]=Bdata[i];
+            for(k=1,hn[i]=0;k<=i;k++)
+            {
+                if (Re(Bdata[k])==Re(Bdata[k-1])) continue;
+                ttl=asin(Bdata[k-1]/Bdata[i]);
+                ttr=asin(Bdata[k]/Bdata[i]);
+                p=(-2*ttl + 2*ttr + sin(2*ttl) - sin(2*ttr))/PI;
+                q=4*(cos(ttl) - cos(ttr))/PI;
+                hn[i]+=(Hdata[k]*(-(p*Bdata[i]) + q*Bdata[-1 + k]) + Hdata[-1 + k]*(p*Bdata[i] - q*Bdata[k]))/(Bdata[-1 + k] - Bdata[k]);
+            }
+        }
+*/
 		for(i=1;i<BHpoints;i++)
 		{
 			Bdata[i]=bn[i];

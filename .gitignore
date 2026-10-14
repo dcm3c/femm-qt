@@ -14,6 +14,11 @@ packaging/output/
 
 # FEMM model files and solver output — except the tracked example sets
 *.fem
+# ...except the material-library deliverables in the vendored provenance
+# release: every .fem there is a FEMM library file the papers produce. Kept
+# HERE, not in provenance/.gitignore, because that file is replaced wholesale
+# each time a new release is dropped in.
+!provenance/**/*.fem
 *.fee
 *.feh
 *.fec
@@ -68,6 +73,46 @@ packaging/output/
 !docs/electrostatics-file-formats.pdf
 !docs/heatflow-file-formats.pdf
 !docs/currentflow-file-formats.pdf
+# The provenance papers (vendored release in provenance/, CC BY 4.0). Named one
+# by one ON PURPOSE: provenance/SOURCES.md lists third-party scans and books
+# that may sit in that tree beside the papers and must never be committed, and
+# a blanket !provenance/**/*.pdf would take them in. Kept here rather than in
+# provenance/.gitignore, which each new release replaces. A new paper needs a
+# line here.
+!provenance/ceramic/ceramiccurves.pdf
+!provenance/cobalt-iron/cofecurves.pdf
+!provenance/iron/ironcurves.pdf
+!provenance/libraries/provenance/condlib_provenance.pdf
+!provenance/libraries/provenance/heatlib_provenance.pdf
+!provenance/libraries/provenance/statlib_provenance.pdf
+!provenance/low-carbon/bhcurves.pdf
+!provenance/magnets/AlnicoProperties.pdf
+!provenance/magnets/BondedNdFeB.pdf
+!provenance/magnets/SinteredNdFeBProperties.pdf
+!provenance/magnets/SmCoProperties.pdf
+!provenance/metglas/metglascurves.pdf
+!provenance/nickel-iron/nifecurves.pdf
+!provenance/silicon/sicurves.pdf
+!provenance/stainless/sscurves.pdf
+# The register of source documents itself stays a local file: it records where
+# the maintainer's own copies of the third-party scans and books are held,
+# which is not for publication. The papers cite every source. It is ignored
+# here, not merely untracked, so a re-vendored release cannot bring it back.
+provenance/SOURCES.md
+# Likewise local, for the same reason: these two notebooks keep saved output
+# cells that show the maintainer's own folder paths.
+provenance/magnets/alnico_scanned/LNG40.nb
+provenance/magnets/alnico_scanned/ProcessScannedCurve.nb
+# An internal working note that names the maintainer's folder layout.
+docs/pyfemm-inprocess-compat.md
+# Maintainer working notes and scratch, kept local: the figure-regeneration
+# notes (they drive scripts outside the repository), two handoff/procedure
+# notes, an unbuilt debug program and a leftover test file.
+manual/dialogs.md
+docs/bdwgc-handoff-plan.md
+docs/macos-verification.md
+solvers/common/find_close.cpp
+testing/myTestProblem.tmp
 *.png
 !gui/icons/*.png
 # The manual's figures are sources, not build products: since the manual moved

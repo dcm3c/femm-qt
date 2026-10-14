@@ -5,8 +5,10 @@
 #  Usage:  ./macos_build.sh [clean]
 #
 #  Run from anywhere; builds into femm-qt/build/.  Pass "clean" to delete
-#  the build directory first.  Qt 6 is located via Homebrew (see
-#  docs/macos-build.pdf for prerequisites).
+#  the build directory first.  Qt 6 comes from either the official qt.io
+#  distribution (~/Qt/<version>/macos) or Homebrew -- see "Locate Qt 6" below
+#  for how the choice is made and overridden, and docs/macos-build.pdf for
+#  prerequisites.
 # ======================================================================
 set -euo pipefail
 
@@ -37,25 +39,117 @@ fi
 # packaging/macos_sign.sh for what they mean and how to create the profile.
 . "packaging/macos_sign.sh"
 
-# ---- Locate Qt 6 via Homebrew (try qt@6, then qt) --------------------
+# ---- Locate Qt 6: official distribution or Homebrew ---------------------
+#
+# Two Qts can build this, and they are not interchangeable in what they
+# produce:
+#
+#   official  qt.io's binaries, installed to ~/Qt/<version>/macos (the Qt
+#             online installer, or `aqt install-qt mac desktop <ver> clang_64`).
+#             Built against the system frameworks, universal, and with Qt's
+#             own minimum macOS -- 14.0 for Qt 6.11. A bundle made from it
+#             runs on every macOS from that floor up.
+#   homebrew  `brew install qt`. Built for THIS macOS only: every bottle
+#             declares the host version as its minimum, and macdeployqt drags
+#             ~22 of them (glib, ICU, harfbuzz, freetype, pcre2, dbus ...) into
+#             the bundle. Fine for development; a DMG from it will not launch
+#             on any older macOS. (Found 2026-10-05: the whole bundle declared
+#             minos 26.0 and nobody had noticed.)
+#
+# So the choice is explicit, printed, and recorded in the bundle:
+#
+#   FEMM_QT=official|homebrew   which flavour. Default: official if ~/Qt holds
+#                               one, otherwise Homebrew.
+#   FEMM_QT_PREFIX=<dir>        use exactly this Qt (.../6.11.3/macos, or a
+#                               brew prefix); overrides FEMM_QT.
+#   FEMM_MACOS_MIN=<version>    deployment target. Default: the Qt's own floor,
+#                               read from QtCore itself, so it tracks the Qt
+#                               version rather than a number written here.
+#
+# The deployment target is passed to CMake for every binary we compile AND
+# written to Info.plist as LSMinimumSystemVersion, and step 4b refuses a
+# bundle in which any Mach-O declares a higher minimum than that -- so "runs
+# on macOS N" is something the build measured, not something it hoped.
+qt_floor() {   # minimum macOS a Mach-O declares (LC_BUILD_VERSION minos)
+    otool -l "$1" 2>/dev/null | awk '/LC_BUILD_VERSION/{f=1} f && /minos/{print $2; exit}'
+}
 QT_PREFIX=""
-for formula in qt@6 qt; do
-    prefix=$(brew --prefix "$formula" 2>/dev/null || true)
-    if [ -n "$prefix" ] && [ -d "$prefix" ]; then
-        QT_PREFIX="$prefix"
-        break
+QT_FLAVOUR=""
+want="${FEMM_QT:-auto}"
+if [ -n "${FEMM_QT_PREFIX:-}" ]; then
+    QT_PREFIX="$FEMM_QT_PREFIX"
+    QT_FLAVOUR="${FEMM_QT:-explicit}"
+else
+    case "$want" in
+        official|homebrew|auto) ;;
+        *) echo "ERROR: FEMM_QT must be 'official' or 'homebrew' (got '$want')"; exit 1 ;;
+    esac
+    if [ "$want" = official ] || [ "$want" = auto ]; then
+        # Newest version under ~/Qt. `sort -V` so 6.11.3 beats 6.9.3.
+        cand=$(ls -d "$HOME"/Qt/[0-9]*.[0-9]*/macos 2>/dev/null | sort -V | tail -1 || true)
+        if [ -n "$cand" ] && [ -x "$cand/bin/macdeployqt" ]; then
+            QT_PREFIX="$cand"; QT_FLAVOUR=official
+        elif [ "$want" = official ]; then
+            echo "ERROR: FEMM_QT=official but no Qt under ~/Qt/<version>/macos."
+            echo "       Install one with the Qt online installer, or:"
+            echo "         pip install aqtinstall && aqt install-qt mac desktop 6.11.3 clang_64 -O ~/Qt"
+            exit 1
+        fi
     fi
-done
-if [ -z "$QT_PREFIX" ]; then
-    echo "ERROR: Qt 6 not found.  Install it with:  brew install qt@6"
+    if [ -z "$QT_PREFIX" ]; then
+        for formula in qt@6 qt; do
+            prefix=$(brew --prefix "$formula" 2>/dev/null || true)
+            if [ -n "$prefix" ] && [ -d "$prefix" ]; then
+                QT_PREFIX="$prefix"; QT_FLAVOUR=homebrew
+                break
+            fi
+        done
+    fi
+fi
+if [ -z "$QT_PREFIX" ] || [ ! -d "$QT_PREFIX/lib/QtCore.framework" ]; then
+    echo "ERROR: Qt 6 not found.  Either:"
+    echo "         pip install aqtinstall && aqt install-qt mac desktop 6.11.3 clang_64 -O ~/Qt"
+    echo "       or:  brew install qt"
     exit 1
 fi
-echo "Qt: $QT_PREFIX"
+QT_VERSION=$("$QT_PREFIX/bin/qmake" -query QT_VERSION 2>/dev/null || echo "?")
+QT_FLOOR=$(qt_floor "$QT_PREFIX/lib/QtCore.framework/Versions/A/QtCore")
+if [ -z "$QT_FLOOR" ]; then
+    echo "ERROR: could not read a minimum macOS from $QT_PREFIX/lib/QtCore.framework; set FEMM_MACOS_MIN"
+    exit 1
+fi
+# Our own floor, independent of Qt: libc++ makes std::to_chars for floating
+# point available from macOS 13.3 (common/complex.cpp, tangle/tangle.cpp use
+# it), and with a lower deployment target clang refuses to compile them.
+# Raise this when the code starts needing something newer; the build will
+# say which symbol and which macOS introduced it.
+FEMM_CODE_MIN=13.3
+# The target is the higher of the two floors, unless overridden.
+MACOS_MIN=$(printf '%s\n%s\n' "$QT_FLOOR" "$FEMM_CODE_MIN" | sort -V | tail -1)
+MACOS_MIN="${FEMM_MACOS_MIN:-$MACOS_MIN}"
+echo "Qt: $QT_FLAVOUR $QT_VERSION at $QT_PREFIX"
+echo "    Qt's minimum macOS $QT_FLOOR, femm-qt's $FEMM_CODE_MIN; building for macOS $MACOS_MIN${FEMM_MACOS_MIN:+ (FEMM_MACOS_MIN)}"
+if [ "$QT_FLAVOUR" = homebrew ]; then
+    echo "    NOTE: a Homebrew-built bundle runs only on this macOS; build with the"
+    echo "    official Qt (FEMM_QT=official) for anything you intend to ship."
+fi
 
 # ---- Configure -------------------------------------------------------
 mkdir -p build
+# Switching Qt with a build directory in place is not a reconfigure CMake
+# can do: Qt6_DIR and friends are cached from the old Qt. Drop the cache (not
+# the objects; ninja recompiles what the new headers touch).
+# The deployed bundle has to go too: macdeployqt only ADDS to Contents/
+# Frameworks and PlugIns, so the other Qt's frameworks and dylibs would stay
+# behind and step 4c would (rightly) refuse the result. Found the first time
+# the flavour was switched without `clean`.
+if [ -f build/CMakeCache.txt ] && ! grep -q "^Qt6_DIR:PATH=$QT_PREFIX/" build/CMakeCache.txt; then
+    echo "Qt changed since the last configure -- resetting the CMake cache and the bundle."
+    rm -rf build/CMakeCache.txt build/CMakeFiles build/bin/femm_gui.app   # APP is defined later; literal on purpose
+fi
 cd build
-cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$QT_PREFIX"
+cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$QT_PREFIX" \
+         -DCMAKE_OSX_DEPLOYMENT_TARGET="$MACOS_MIN" -DFEMM_MACOS_MIN="$MACOS_MIN"
 
 # ---- Build -----------------------------------------------------------
 ninja
@@ -79,7 +173,7 @@ APP_RES="$APP/Contents/Resources"
 
 # ---- 1. Bundle Qt frameworks and dependent dylibs --------------------
 # macdeployqt is noisy: it prints a wall of "Cannot resolve rpath" and
-# "codesign verification error" lines for the Homebrew dylibs it copies, yet
+# "codesign verification error" lines for the dylibs it copies, yet
 # still exits 0.  Those are harmless here — step 5 re-signs the bundle and we
 # verify the result — but they alarm people.  So capture macdeployqt's output
 # in a log, show it only if macdeployqt actually fails (non-zero exit) or if
@@ -154,7 +248,7 @@ if [ -x "$DEPLOYQT" ]; then
     fi
 else
     echo "WARNING: macdeployqt not found — Qt libraries not bundled."
-    echo "The app will only run on machines with Qt installed via Homebrew."
+    echo "The app will only run on machines with the same Qt installed."
 fi
 
 # ---- 2. Copy solver and headless executables into the bundle ---------
@@ -369,6 +463,38 @@ for fw in $PRUNE_FRAMEWORKS; do
     [ "${CONDEMNED#* $fw }" != "$CONDEMNED" ] || continue   # reprieved; keep it
     rm -rf "$APP_FRAMEWORKS/$fw"
 done
+
+# ---- 2c. Thin every binary to the architectures we actually build ------
+# The official Qt ships universal (x86_64 + arm64) frameworks and plugins;
+# femm-qt is built for Apple Silicon only (decision of 2026-09-15), so half
+# of every Qt binary would be dead weight nobody can execute -- ~20 MB of a
+# 72 MB bundle. Thin everything to the slices femm_gui itself carries: if
+# the project ever builds universal, this step keeps the matching slices and
+# the gate in step 4e has nothing to object to. Homebrew's Qt is single-arch
+# already, so this is a no-op there. Done BEFORE signing (step 5): lipo
+# invalidates signatures, and the codesign pass later re-signs everything.
+WANT_ARCHS=$(lipo -archs "$APP_BIN/femm_gui" 2>/dev/null || true)
+if [ -n "$WANT_ARCHS" ]; then
+    THINNED=0
+    while IFS= read -r -d '' _f; do
+        file -b "$_f" 2>/dev/null | grep -q "Mach-O" || continue
+        _have=$(lipo -archs "$_f" 2>/dev/null || true)
+        [ "$_have" = "$WANT_ARCHS" ] && continue
+        _keep=""
+        for a in $WANT_ARCHS; do
+            case " $_have " in *" $a "*) _keep="$_keep $a";; esac
+        done
+        [ -n "$_keep" ] || continue      # nothing of ours in it: step 4e will say so
+        # shellcheck disable=SC2086
+        if [ "$(echo $_keep | wc -w | tr -d ' ')" -eq 1 ]; then
+            lipo "$_f" -thin $_keep -output "$_f.thin" && mv "$_f.thin" "$_f"
+        else
+            lipo "$_f" $(for a in $_keep; do printf ' -extract %s' "$a"; done) -output "$_f.thin" && mv "$_f.thin" "$_f"
+        fi
+        THINNED=$((THINNED + 1))
+    done < <(find "$APP/Contents" -type f -print0 2>/dev/null)
+    echo "Thinned $THINNED binaries to: $WANT_ARCHS"
+fi
 
 # ---- 3. Material libraries (read-only seeds) ------------------------
 # These four are the only files femm-qt WRITES beside itself, and the write is
@@ -589,6 +715,97 @@ if [ -n "$BROKEN_REFS" ]; then
     exit 1
 fi
 echo "  no unresolved dependencies."
+
+# ---- 4c. Every binary must honour the declared minimum macOS -------------
+# A bundle is only as portable as its least portable Mach-O: dyld refuses the
+# first one it meets that was built for a newer macOS than it is running on.
+# Info.plist says LSMinimumSystemVersion = $MACOS_MIN (gui/Info.plist.in via
+# FEMM_MACOS_MIN); everything inside must declare that or lower. Homebrew
+# dylibs declare the host version, which is why a Homebrew build is dev-only.
+echo "Checking every binary against the declared minimum macOS ($MACOS_MIN)..."
+PLIST_MIN=$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$APP/Contents/Info.plist" 2>/dev/null || true)
+if [ "$PLIST_MIN" != "$MACOS_MIN" ]; then
+    echo "ERROR: Info.plist LSMinimumSystemVersion is '$PLIST_MIN', expected '$MACOS_MIN'"
+    exit 1
+fi
+TOO_NEW=$(
+    find "$APP/Contents" -type f -print0 2>/dev/null |
+    while IFS= read -r -d '' _f; do
+        file -b "$_f" 2>/dev/null | grep -q "Mach-O" || continue
+        _m=$(qt_floor "$_f")
+        [ -n "$_m" ] || continue
+        # numeric compare on major.minor
+        if [ "$(printf '%s\n%s\n' "$MACOS_MIN" "$_m" | sort -V | tail -1)" != "$MACOS_MIN" ]; then
+            echo "  ${_f#"$APP"/}  minos $_m"
+        fi
+    done | sort
+)
+if [ -n "$TOO_NEW" ]; then
+    if [ "$QT_FLAVOUR" = homebrew ]; then
+        # Expected: Homebrew's bottles are built for this macOS only. Rather
+        # than ship a plist that lies, declare what the bundle actually needs
+        # -- the highest minimum found -- and say so. Our own code was still
+        # compiled for $MACOS_MIN, which is harmless.
+        HB_MIN=$(printf '%s\n' "$TOO_NEW" | awk '{print $NF}' | sort -V | tail -1)
+        /usr/libexec/PlistBuddy -c "Set :LSMinimumSystemVersion $HB_MIN" "$APP/Contents/Info.plist"
+        echo "  Homebrew build: $(printf '%s\n' "$TOO_NEW" | wc -l | tr -d ' ') dylibs need macOS $HB_MIN (this machine's bottles);"
+        echo "  Info.plist now declares LSMinimumSystemVersion $HB_MIN. This bundle is for this Mac;"
+        echo "  build with the official Qt to ship:  FEMM_QT=official ./macos_build.sh clean"
+        MACOS_MIN="$HB_MIN"
+    else
+        echo "ERROR: these binaries require a newer macOS than the bundle declares ($MACOS_MIN):"
+        printf '%s\n' "$TOO_NEW"
+        echo "       Nothing is signed or shipped in this state."
+        exit 1
+    fi
+else
+    echo "  every binary declares macOS $MACOS_MIN or lower."
+fi
+
+# ---- 4d. What the bundle carries, and what it must not ------------------
+# Printed on every build so a module creeping back in is visible in the log;
+# the forbidden set is what step 2b exists to remove, so its presence means
+# the prune lists have gone stale (as they did on 2026-09-09) and is an error,
+# not a fatter bundle.
+echo "Frameworks: $(ls "$APP_FRAMEWORKS" | wc -l | tr -d ' ') -> $(ls "$APP_FRAMEWORKS" | tr '\n' ' ')"
+echo "PlugIns:    $(for d in "$APP"/Contents/PlugIns/*/; do [ -d "$d" ] && printf '%s(%s) ' "$(basename "$d")" "$(ls "$d" | wc -l | tr -d ' ')"; done)"
+FORBIDDEN_PRESENT=""
+for fw in libssl.3.dylib libcrypto.3.dylib QtNetwork.framework QtQml.framework QtQuick.framework \
+          QtPdf.framework QtSvg.framework QtVirtualKeyboard.framework QtOpenGL.framework; do
+    [ -e "$APP_FRAMEWORKS/$fw" ] && FORBIDDEN_PRESENT="$FORBIDDEN_PRESENT $fw"
+done
+if [ -n "$FORBIDDEN_PRESENT" ]; then
+    echo "ERROR: pruned-by-design frameworks are in the bundle:$FORBIDDEN_PRESENT"
+    echo "       Step 2b's lists are stale for this Qt -- see its comments. Not shipping this."
+    exit 1
+fi
+for fw in QtCore.framework QtGui.framework QtWidgets.framework; do
+    [ -e "$APP_FRAMEWORKS/$fw" ] || { echo "ERROR: $fw missing from the bundle"; exit 1; }
+done
+
+# ---- 4e. No binary may carry an architecture we do not ship ----------------
+# Step 2c should have left only $WANT_ARCHS everywhere. Anything else -- an
+# x86_64 slice that survived, or a binary with none of our slices -- is an
+# error: it is either dead weight or something the build would load and
+# fail on, and in neither case should it be signed and shipped.
+if [ -n "${WANT_ARCHS:-}" ]; then
+    echo "Checking every binary carries exactly: $WANT_ARCHS..."
+    FOREIGN=$(
+        find "$APP/Contents" -type f -print0 2>/dev/null |
+        while IFS= read -r -d '' _f; do
+            file -b "$_f" 2>/dev/null | grep -q "Mach-O" || continue
+            _have=$(lipo -archs "$_f" 2>/dev/null || true)
+            [ "$_have" = "$WANT_ARCHS" ] || echo "  ${_f#"$APP"/}  has: $_have"
+        done | sort
+    )
+    if [ -n "$FOREIGN" ]; then
+        echo "ERROR: binaries whose architectures differ from femm_gui's ($WANT_ARCHS):"
+        printf '%s\n' "$FOREIGN"
+        echo "       Nothing is signed or shipped in this state."
+        exit 1
+    fi
+    echo "  every binary is $WANT_ARCHS only."
+fi
 
 # ---- 5. Re-sign the whole bundle --------------------------------------
 # Two things broke the signature macdeployqt applied: adding/rewriting the

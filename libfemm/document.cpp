@@ -128,6 +128,19 @@ bool DocumentBase::getBoundingBox(double &xmin, double &ymin, double &xmax, doub
 
 bool DocumentBase::AddNode(double x, double y, double d)
 {
+    FNode pt;
+    pt.x = x; pt.y = y;
+    return AddNode(pt, d);
+}
+
+// Adds the node itself, properties and all, as OF's AddNode(CNode&) does
+// (bd_movecopy.cpp:1308). EnforcePSLG rebuilds the node list through here
+// after every move and copy; re-adding by coordinates alone reset the group,
+// point property, conductor and mesh size of every node in the model.
+bool DocumentBase::AddNode(FNode &node, double d)
+{
+    const double x = node.x, y = node.y;
+
     // test to see if "too close" to existing node
     for (size_t i = 0; i < nodelist.size(); i++)
         if (nodelist[i].GetDistance(x, y) < d) return false;
@@ -136,9 +149,7 @@ bool DocumentBase::AddNode(double x, double y, double d)
     for (size_t i = 0; i < blocklist.size(); i++)
         if (blocklist[i].GetDistance(x, y) < d) return false;
 
-    FNode pt;
-    pt.x = x; pt.y = y;
-    nodelist.push_back(pt);
+    nodelist.push_back(node);
     int newIdx = (int)nodelist.size() - 1;
 
     // if node lands on an existing segment, split into two
@@ -175,11 +186,6 @@ bool DocumentBase::AddNode(double x, double y, double d)
         }
     }
     return true;
-}
-
-bool DocumentBase::AddNode(FNode &node, double d)
-{
-    return AddNode(node.x, node.y, d);
 }
 
 bool DocumentBase::AddSegment(int n0, int n1, FSegment *parsegm, double tol)

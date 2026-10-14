@@ -1,0 +1,249 @@
+% SPDX-License-Identifier: CC-BY-4.0
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+\documentclass[
+  11pt,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{2} % number sections and subsections
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
+\hypersetup{
+  pdftitle={B-H Curves for Commercially Pure Iron},
+  pdfauthor={David Meeker},
+  colorlinks=true,
+  linkcolor={Maroon},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+\renewcommand{\today}{%
+  \the\day\ %
+  \ifcase\month\or
+  Jan\or Feb\or Mar\or Apr\or May\or Jun\or
+  Jul\or Aug\or Sep\or Oct\or Nov\or Dec\fi
+  \ \the\year
+}
+
+\title{B-H Curves for Commercially Pure Iron}
+\author{David Meeker}
+\date{\today}
+
+% article.cls sets the bibliography heading with \section*, which would
+% leave the references the one unnumbered heading in a numbered document.
+\usepackage{etoolbox}
+\patchcmd{\thebibliography}{\section*{\refname}}{\section{\refname}}{}{\GenericWarning{}{bhcurves: bibliography heading not numbered}}
+\begin{document}
+\maketitle
+
+\section{Introduction}\label{introduction}
+
+Commercially pure iron is bought by trade name, not by grade number, and the name comes with a curve. AK Steel publishes magnetization curves for ARMCO Pure Iron and for ARMCO Telar 57, a machinable high-purity iron for relays and pole pieces, each measured after an anneal the bulletin specifies \cite{armco-iron,armco-telar}. What a designer needs is those curves carried to saturation in a form FEMM can use, with a record of where each number came from.
+
+That is a different job from the two companion pages. The low-carbon steels \cite{meeker-lowcarbon} and the nonoriented silicon steels \cite{meeker-silicon} are families: many grades along a composition axis and a few processing conditions, regressed together so the grades check one another and the model can speak for grades nobody measured. Pure iron has no such axis. Its composition is fixed near the limit of commercial refining, and its magnetic properties below saturation are set almost entirely by the anneal. So nothing is regressed here. Each entry is the manufacturer's measurement, joined across the bulletin's figures and extended above them by the same physics the families use, and held to the same gates.
+
+\section{Why the Low-Carbon Model Does Not Serve}\label{why-the-low-carbon-model-does-not-serve}
+
+The low-carbon family can be evaluated at ARMCO grade 2's composition, C \(\le\) 0.010 and Mn \(\le\) 0.100, and it is right where composition governs and wrong where the anneal does. Its saturation, 2.154 T, matches the 2.15 T the bulletin states, and from 17 kA/m up it agrees with the pure iron entry to within 13 mT at every field. Below the knee, even in its softest condition, 1500 °F, it needs 4.5 times the field ARMCO's curve needs at 0.5 T and 3.3 times at 1.5 T, and its peak permeability is 4,400 against 18,300. Removing essentially all the carbon and manganese changes this by a few per cent: in the model, carbon's hardening fades toward zero carbon and leaves the pinning of the condition itself, which was learned from U.S. Steel's furnace anneals of commercial plate.
+
+The bulletin's own table places the model \cite{armco-iron}. It gives a maximum relative permeability of 1,000 to 2,500 for ARMCO as received and 5,000 to 19,000 after its recrystallization anneal; the model's 4,400 falls between, which is what well-annealed commercial low-carbon steel is. What makes ARMCO softer is not a variable the model has: purity beyond carbon and manganese, grain size, and an anneal in a controlled atmosphere. Roters said as much of the same product in 1941. American ingot iron, at about 0.01\% carbon, should be annealed at 1400 °F and cooled slowly, and ``in sheet form this iron can be obtained hydrogen-annealed, a form having much higher permeability'' \cite{roters1941}. Telar 57's anneal is of that kind: 815 °C for at least an hour and a half in dry hydrogen, which grows its grains to 200--300 \(\mu\)m \cite{armco-telar}.
+
+Telar 57 tests the same boundary from another side. It is the one material here with low carbon and high manganese, C \(\le\) 0.02 and Mn 0.35 to 0.5, so it separates two variables that rise together in every curve the family was fitted to. The family at Telar's composition needs 1.3 to 2.0 times Telar's field below 1.5 T, then agrees to within 40 mT above 1.6 T and to 2 mT by 40 kA/m. A wrong manganese term in the saturation law would show at high field, where composition alone governs; the disagreement instead lives in the wall region and dies at the top, as it should if only the pinning differs.
+
+\section{Sources}\label{sources}
+
+Both are AK Steel product data bulletins. From the ARMCO Pure Iron bulletin \cite{armco-iron}: Figure 7, representative low and medium induction values after a recrystallization anneal; Figure 8, the high-induction intrinsic curve; Figures 14 and 15, curves for 2 mm cold-rolled and 3 mm hot-rolled sheet as sheared and after anneals at 700 to 1150 °C, used here only as checks; Table 5, the resistivity; and Table 6, representative magnetic properties by condition. The composition is grade 2, C \(\le\) 0.010, Mn \(\le\) 0.100, at least 99.85\% iron.
+
+From the ARMCO Telar 57 bulletin \cite{armco-telar}: Figures 10, 11 and 12, D-C magnetization curves of 8, 10 and 12 mm cold-drawn bar after the magnetic anneal, each the average of two samples tested to IEC 60404-4; Figure 5, the high-induction intrinsic curve; and Table 4, representative properties after the anneal. Figure 9, the 4 mm bar, is not used: the bulletin says bar of that size comes from heavier cold drawing and is not regarded as representative of the material, and it digitizes about 80\% harder in field at 0.1 T. The composition, 57S, is C 0.02, Mn 0.35 to 0.5, S 0.015 to 0.03, Si 0.08 and Al 0.05 to 0.1.
+
+\section{Construction}\label{construction}
+
+Each entry is a table of B against H from the origin to \(4\times10^{5}\) A/m on the companion pages' grid, extended below 10 A/m to carry the toe, and built in four regions.
+
+\subsection{The medium-induction curve}\label{the-medium-induction-curve}
+
+For pure iron this is Figure 7, digitized from 5 to 17,186 A/m, where it reaches 2.00 T; its points below 8 A/m sit on the chart floor and are not used. It is corroborated by the bulletin's own Figure 15 curve C, 3 mm hot-rolled sheet annealed at 820 °C, to an RMS of 0.041 in ln H over 0.01 to 1.49 T.
+
+For Telar 57 it is the geometric mean in H, at fixed B, of the three bars. The average is taken in H because the bars differ by a field scale rather than a level; they scatter by 9\% at the median and 14\% at most, and the mean covers 0.02 to 1.83 T. It is therefore not any one measurement, and the name of the entry says so.
+
+\subsection{Joining the high-induction curve}\label{joining-the-high-induction-curve}
+
+Above the medium curve, each entry takes the approach to saturation from the bulletin's high-induction figure, which for pure iron reaches 786 kA/m and for Telar 68 kA/m. The medium curve stays authoritative over its whole range, and above it the high-induction curve is used with the gap at the join added back and decaying as \(1/H\):
+
+\begin{equation}\label{eq:join}
+J(H) = J_h(H) + \Delta J_0\,\frac{H_e}{H}, \qquad H > H_e
+\end{equation}
+
+where \(H_e\) is the medium curve's last point, \(J_h\) the high-induction curve, and \(\Delta J_0\) the difference between the two curves at \(H_e\).
+
+The reason is Figure 8, whose specimen condition the bulletin does not state. At 17 kA/m it runs 47.6 mT below Figure 7, and at 1 kA/m it reads 1.55 T, below every annealed curve of Figures 14 and 15 (1.60 to 1.66 T) and near their as-sheared ones (1.51 T). It is a harder specimen. From there it converges: it sits 47, 15, 7 and 3 mT below the low-carbon family at 17, 40, 70 and 150 kA/m, while the family agrees with Figure 7 at 17 kA/m to 4 mT. A gap that closes with field is a difference in wall pinning, which Bozorth's law of approach carries as an \(a_0/H\) term \cite{bozorth1951}; rotation, which carries the curve into saturation, does not depend on processing. Equation~\eqref{eq:join} is that term, with its size fixed by the measured gap, and it keeps the whole entry in the condition it is named for. Crossfading the two figures instead puts 8 to 40 kA/m partly in Figure 8's condition, and leaves the entry at 2.020 T at 24 kA/m, outside the 2.05 to 2.10 T the bulletin tabulates for its recrystallization anneal; with Eq.~\eqref{eq:join} it reads 2.055 T. For Telar the gap is \(-2.5\) mT, and the join changes nothing visible.
+
+\subsection{Above and below the data}\label{above-and-below-the-data}
+
+Figure 8 reaches 786 kA/m, beyond the table, where it reads J = 2.153 T against the 2.15 T the bulletin states; the pure iron entry needs no extension. Telar's data stop at 68 kA/m, where J = 2.114 T, and the top ten table points follow the law of approach of the companion page \cite{meeker-lowcarbon}, \(J = J_s(1 - a/H^{2})\), with \(a\) fixed by continuity. \(J_s\) is given, never fitted: 2.137 T, from the low-carbon saturation law at C 0.02 and Mn 0.425, less 8 mT for the 0.08\% silicon and 0.075\% aluminium the analysis lists, with the silicon family's coefficients \cite{meeker-silicon}. Its 0.07\% copper and 0.02\% phosphorus are left out: Exner's coefficient set, the one the silicon and aluminium terms come from, has no entry for either, and the only set that does is one the silicon page excludes on magnitude \cite{meeker-silicon}. Taken from it anyway, they would lower the saturation by about 2 mT. The Telar bulletin's own 2.15 T is stated in one sentence for Telar and pure iron together \cite{armco-telar}, and a figure that ignores 0.35 to 0.5\% manganese is not one to adopt.
+
+The coefficient continuity asks for is a check on the extension. It comes out at \(5.0\times10^{7}\) A\(^2\)/m\(^2\), against \((2/105)H_a^{2} = 3.8\times10^{7}\) from the anisotropy alone at Telar's composition, \(H_a = 2K_1/J_s\) = 44.9 kA/m with the companion page's \(K_1 = 4.8\times10^{4}\) J/m\(^3\): 1.3 times the rotation coefficient. Wall motion still contributes a little at 68 kA/m, so continuity overstates the rotation part, and an excess of that size is what the companion page finds: its fitted families want somewhat more inverse-square deficit than \(K_1\) gives, the silicon steels barely and the carbon steels more \cite{meeker-lowcarbon}. In that page's terms, which scale the rotation field rather than the coefficient, 1.3 is a level of 1.14.
+
+Below the first point used, each entry follows Rayleigh's relation for the initial permeability, \(\mu = \mu_i + \nu H\), with Bozorth's \(\mu_i\) = 200 for annealed iron \cite{bozorth1951} and \(\nu\) matched so that B is continuous there. For pure iron the first point used is 8.2 A/m. Figure 7 is digitized from 5 A/m, but its bottom is unreliable: across 5 to 8 A/m its induction rises from 11 to 35 mT, an average differential permeability of about 6,200, while its first digitized interval reads 2,300, which is what points on the chart floor reading high look like. Those points are dropped, \(\nu\) comes out at 408 per A/m, and the toe's differential permeability at the join, 6,860, rises into the figure's next interval, so the single maximum the gates require holds. With the floor points kept, matching at 5 A/m, it would not. Telar's three bars are averaged from 0.02 T up, which avoids the same floor; its first point is about 26 A/m, and \(\nu\) = 16 per A/m. Two caveats go with the form. Bozorth's \(\mu_i\) is for ordinary annealed iron, and a hydrogen anneal may start higher. And Rayleigh's law strictly holds only to a few hundredths of a tesla, while the joins sit at 0.02 and 0.036 T. It is an interpolation between a physical anchor and the data, which a constant permeability is not.
+
+\subsection{Smoothing and gates}\label{smoothing-and-gates}
+
+Each table must pass the gates the families are held to: B strictly increasing, dB/dH not less than \(\mu_0\), and a single maximum in the differential permeability, counted with the interval from the origin included \cite{meeker-lowcarbon}. As digitized, neither entry does. Where the curve is nearly flat, digitizing bumps of a few per cent in slope turn the differential permeability more than once --- Figure 7 at 3.4 to 4.9 kA/m, Figure 5 at 17 to 21 kA/m --- and Telar's join to its law of approach at 68 kA/m is a kink in slope. So J is smoothed with a Gaussian in log H, above 1.5 T only and blended in over 0.3 decade, at the narrowest width that passes: 0.10 decade for pure iron and 0.07 for Telar. That changes B by at most 6.8 mT and 3.7 mT, 0.31\% and 0.17\%, less than the scatter between Telar's bars. The knee and everything below it are untouched.
+
+\section{Validation}\label{validation}
+
+Each bulletin tabulates representative properties for its anneal, and each entry lands inside them.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+ARMCO Pure Iron, recrystallization anneal (Table 6) & Bulletin range & Entry \\
+\midrule
+Maximum relative permeability & 5,000--19,000 & 18,340 \\
+B at 40 A/m & 0.03--0.85 T & 0.813 T \\
+B at 1.2 kA/m & 1.60--1.68 T & 1.650 T \\
+B at 24 kA/m & 2.05--2.10 T & 2.055 T \\
+Relative permeability at 8 A/m & 250--5,000 & 3,470 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+ARMCO Telar 57, magnetic anneal (Table 4) & Bulletin range & Entry \\
+\midrule
+Maximum relative permeability & 5,000--10,000 & 7,985 \\
+B at 1.2 kA/m & 1.55--1.60 T & 1.584 T \\
+B at 24 kA/m & 2.02--2.05 T & 2.034 T \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Every value lies inside its range. The 8 A/m value falls just below the join to the Rayleigh toe and is within 2\% of Figure 7's own reading there. Figure 7 is the bulletin's representative curve and sits toward the soft end of every range it can be compared with, and the entry follows it.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={The two entries against the bulletin curves they are built from and the low-carbon family at the same composition.}]{out/ironcurves_fig1.png}}
+\caption{Each entry (points) against the bulletin curves it is built from and against the low-carbon family at the same composition in its softest condition (dashed). Lower panels: the approach to saturation, J = B -- \(\mu_0\)H from 3 to 400 kA/m, where the medium-induction curves hand over to the high-induction ones.}
+\end{figure}
+
+\section{Conductivity}\label{conductivity}
+
+Pure iron's resistivity is 10.7 \(\mu\Omega\)·cm at room temperature \cite{armco-iron}, a conductivity of 9.35 MS/m. It matters only for eddy currents, where it scales the loss directly.
+
+The Telar bulletin gives no resistivity, so Telar's is computed from its analysis with the resistivity formula of the U.S. Steel catalog, which is linear in each element \cite{meeker-silicon}:
+
+\begin{equation}\label{eq:rho}
+\rho\;[\mu\Omega\,\mathrm{cm}] = 10.45 + 6.0\,\mathrm{C} + 4.5\,\mathrm{Mn} + 13.7\,\mathrm{P} - 10.4\,\mathrm{S} + 11.6\,\mathrm{Si} + 3.1\,\mathrm{Cu} + 13.2\,\mathrm{Al}
+\end{equation}
+
+(the nickel, chromium and molybdenum terms are zero here). At ARMCO grade 2's specification limits, C 0.010 and Mn 0.100, it gives 11.0 \(\mu\Omega\)·cm, against the pure iron bulletin's own 10.7 and within the \(\pm\)0.7 the catalog states for the formula, which is the check that it applies to this material. At Telar's analysis, C 0.02, Mn 0.425, P 0.02, S 0.0225, Si 0.08, Cu 0.07 and Al 0.075 --- the middle of each stated range, and the stated value otherwise --- it gives 14.7 \(\mu\Omega\)·cm, a conductivity of 6.8 MS/m, 27\% below pure iron, most of the difference being the manganese, silicon and aluminium; the phosphorus and copper add 0.5 between them. The single values in the analysis are probably maxima, so the true resistivity may be a little lower, 14.0 to 14.7 \(\mu\Omega\)·cm. Some supplier listings give 0.24 \(\Omega\)·mm\(^2\)/m, which is 24 \(\mu\Omega\)·cm; that is the resistivity of steel with about 1\% silicon, and pure iron itself reaches it only near 200 °C \cite{armco-iron}, so it is not used.
+
+\section{Limitations}\label{limitations}
+
+These are representative curves for one anneal each, not guaranteed properties, and a part annealed differently will not follow them. The Table 6 ranges for pure iron after its recrystallization anneal span a factor of four in maximum permeability, and the entry sits at the soft end.
+
+Figure 8's specimen condition is not stated. The join treats its offset from Figure 7 as wall pinning that fades as \(1/H\); the offset is measured, and the convergence is what the family and the figure both show, but the form of the fade between 17 and about 70 kA/m is an assumption. The four gaps to the low-carbon family close faster than \(1/H\), as about \(H^{-1.26}\), so if the family's convergence is right the entry sits about 5, 5 and 2 mT high at 40, 70 and 150 kA/m. Fitting the exponent to those gaps would remove that, at the price of making the entry depend on the regressed family, which this page otherwise avoids; the \(1/H\) is kept, and errs those few millitesla on the soft side.
+
+Telar 57's entry is an average of three bars, its top ten points are extrapolated from a saturation computed, not measured, and its conductivity is computed from its analysis, not measured.
+
+Below 8 A/m for pure iron and 26 A/m for Telar the entries are Rayleigh's relation, not data. Its initial permeability is Bozorth's for ordinary annealed iron; neither bulletin gives one, a hydrogen anneal may start higher, and Telar's manganese may move it either way. Almost no FEMM problem works at those fields, but a weak-field shielding problem rests on that one number.
+
+\section{Implementation}\label{implementation}
+
+The entries are built by \texttt{emit\_measured.py} on the table builder shared with the other emitters, \texttt{femm\_table.py}, and are carried in both library files of the low-carbon page, in a folder of their own, as ``ARMCO Pure Iron (AK Steel data)'' and ``ARMCO Telar 57 (AK Steel data, 3-bar mean)''. The figure is \texttt{make\_ironfig.py}.
+
+\section{Conclusions}\label{conclusions}
+
+For commercially pure iron the manufacturer's curve is the right starting point, and composition physics is the right way to finish it. The low-carbon model, evaluated at pure iron's composition, reproduces the saturation and the approach to it and misses the knee by a factor of three to five, because what makes pure iron soft is its purity and its anneal, not its carbon. The bulletin curves carry that; the law of approach and the saturation law carry them past their last point.
+
+Joining a bulletin's figures is where the care goes. Two figures of one bulletin need not describe one specimen, and treating their difference as what it physically is --- wall pinning that fades with field --- keeps the entry in the condition it is named for and puts it inside the bulletin's own tabulated ranges, where a plain crossfade had put it outside.
+
+\begin{thebibliography}{99}\label{references}
+
+\bibitem{armco-iron} AK Steel International, \href{https://www.aksteel.nl/files/downloads/clf_productdata__armco_pure_iron_pdb_euro_final_072022_92.pdf}{``ARMCO Pure Iron,''} product data bulletin. Figures 7, 8, 14 and 15; Table 5, resistivity; Table 6, representative magnetic properties by condition.
+
+\bibitem{armco-telar} AK Steel International, ``ARMCO Telar 57 Magnetic Iron,'' product data bulletin. Figures 5 and 9 to 12; Table 4, representative magnetic properties as received and after the magnetic anneal.
+
+\bibitem{meeker-lowcarbon} ``Generating B-H Curves for Low-Carbon Steels,'' companion page. The saturation law, Eq.~(5) there; the law of approach; the gates.
+
+\bibitem{meeker-silicon} ``Generating B-H Curves for Nonoriented Silicon Steels,'' companion page. The silicon and aluminium saturation coefficients, 0.048 and 0.055 T per weight per cent.
+
+\bibitem{roters1941} H. C. Roters, \href{https://archive.org/details/in.ernet.dli.2015.205551}{\emph{Electromagnetic Devices}}, John Wiley \& Sons, New York, 1941, Art. 311.
+
+\bibitem{bozorth1951} R. M. Bozorth, \href{https://doi.org/10.1109/9780470544624}{\emph{Ferromagnetism}}, Van Nostrand, New York, 1951; reissued by IEEE Press, 1993. Pp. 484--488, the law of approach to saturation and its \(a_0/H\) term; Table 2, p.~494, the Rayleigh constants of annealed iron.
+
+\end{thebibliography}
+
+\noindent Copyright 2026 David Meeker. This document is licensed under the \href{https://creativecommons.org/licenses/by/4.0/}{Creative Commons Attribution 4.0 International License (CC BY 4.0)}.
+
+\end{document}

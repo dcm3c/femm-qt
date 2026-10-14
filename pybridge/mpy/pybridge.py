@@ -477,7 +477,28 @@ _install_operators()
 def import_module(name):
     """The CPython module `name`, as a proxy. The escape hatch for anything
     without a shim: pybridge.import_module("scipy.optimize")."""
-    return _rpc("import", name=name)
+    try:
+        return _rpc("import", name=name)
+    except ImportError as e:
+        # CPython's "No module named 'pandas'" never says WHICH python was
+        # asked, and that is the whole difficulty: discovery may have passed
+        # over the interpreter the user had in mind -- it prefers one that can
+        # also plot -- so the module really is installed, just not in the
+        # interpreter that answered. Name it, and give the pip line for it.
+        exe = ""
+        try:
+            exe = info().get("executable", "") or interpreter()
+        except Exception:
+            pass
+        if not exe:
+            raise
+        raise ImportError(
+            "%s\nThe bridge is using %s -- install it there with:\n"
+            "    \"%s\" -m pip install %s\n"
+            "If you meant a different interpreter: pybridge.set_interpreter("
+            "path) is authoritative, while FEMMQT_PYTHON is only a preference "
+            "and is passed over if that interpreter cannot plot."
+            % (e, exe, exe, name.split(".")[0]))
 
 
 def eval(code):

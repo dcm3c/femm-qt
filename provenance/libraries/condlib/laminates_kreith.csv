@@ -1,0 +1,10 @@
+name,er_1MHz,df_1MHz,note
+FR-4 epoxy-glass,4.35,0.029,ranges 4.10-4.60 / 0.028-0.030 (middles used)
+Polyfunctional FR-4,4.35,0.029,ranges 4.10-4.60 / 0.028-0.030 (middles used)
+Multifunctional FR-4,4.35,0.029,ranges 4.10-4.60 / 0.028-0.030 (middles used)
+Polyimide-glass,4.0,0.0125,ranges 3.95-4.05 / 0.01-0.015 (middles used)
+BT epoxy,3.975,0.012,ranges 3.85-4.10 / 0.011-0.013 (middles used)
+Cyanate ester-glass,3.55,0.006,ranges 3.50-3.60 / 0.005-0.007 (middles used)
+PPO epoxy,4.0,0.0085,ranges 3.80-4.20 / 0.008-0.009 (middles used)
+PTFE-glass,2.5,0.002,ranges 2.45-2.55 / 0.001-0.003 (middles used)
+Alumina substrate,8.9,0.00085,dissipation factor .0002-.0015 (middle used)

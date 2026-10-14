@@ -1,0 +1,254 @@
+% SPDX-License-Identifier: CC-BY-4.0
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+\documentclass[
+  11pt,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{2} % number sections and subsections
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
+\hypersetup{
+  pdftitle={B-H Curves for Amorphous Ribbon (Metglas)},
+  pdfauthor={David Meeker},
+  colorlinks=true,
+  linkcolor={Maroon},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+\renewcommand{\today}{%
+  \the\day\ %
+  \ifcase\month\or
+  Jan\or Feb\or Mar\or Apr\or May\or Jun\or
+  Jul\or Aug\or Sep\or Oct\or Nov\or Dec\fi
+  \ \the\year
+}
+
+\title{B-H Curves for Amorphous Ribbon (Metglas)}
+\author{David Meeker}
+\date{\today}
+
+% article.cls sets the bibliography heading with \section*, which would
+% leave the references the one unnumbered heading in a numbered document.
+\usepackage{etoolbox}
+\patchcmd{\thebibliography}{\section*{\refname}}{\section{\refname}}{}{\GenericWarning{}{bhcurves: bibliography heading not numbered}}
+\begin{document}
+\maketitle
+
+\section{Introduction}\label{introduction}
+
+Amorphous iron-boron-silicon ribbon is the core material of the low-loss distribution transformer. It is cast directly from the melt as a strip about 25 \(\mu\)m thick, has no crystal anisotropy, and after a field anneal reaches permeabilities of several hundred thousand; Metglas puts its core loss at 35\% of an M3-grade grain-oriented steel core \cite{metglas-power}. Its saturation is lower than silicon steel's, 1.56 T for Metglas 2605SA1 and 1.63 T for 2605HB1M, and its resistivity, 1.2--1.3 \(\mu\Omega\)·m, is two and a half times that of the library's M-19.
+
+The data that exist do not look like the data behind the other pages \cite{meeker-lowcarbon,meeker-nife}. The steel and nickel-iron entries are built from normal magnetization curves that run to \(10^{3}\)--\(10^{5}\) A/m. Metglas publishes, for these two alloys, hysteresis loops at peak fields of 8 and 80 A/m and nothing above \cite{metglas2011}. There is no normal curve, and the highest field measured is two to four orders of magnitude below where the other entries end.
+
+This page builds entries for 2605SA1 and 2605HB1M from those loops. The normal curve is taken from the two loop tips, which lie on it by definition, and from the shape of the 80 A/m loop between them. Above 80 A/m the curve is not measured. It is an assumed tail to the given saturation, and the page bounds how wrong it can be. The bound is narrow because these alloys are already 92--96\% saturated at 80 A/m.
+
+\section{What Metglas Publishes}\label{what-metglas-publishes}
+
+Metglas's document \emph{Amorphous Alloys for Transformer Cores} \cite{metglas2011} covers both alloys. Its first page gives the properties used here:
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+& 2605SA1 & 2605HB1M \\
+\midrule
+Saturation induction (T) & 1.56 & 1.63 \\
+Electrical resistivity (\(\mu\Omega\)·m) & 1.3 & 1.2 \\
+Density (g/cm\(^{3}\)) & 7.18 & 7.33 \\
+Thickness (\(\mu\)m) & 25 ± 4 & 25 ± 4 \\
+Lamination factor (\%) & \(\ge 84\) & \(\ge 84\) \\
+Anneal & 370 °C, 2 h & 340 °C, 2 h \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Both anneals are made with 2400 A/m applied along the ribbon, to relieve casting stress and induce an anisotropy along its length. The DC curves are measured on single straight strips, 25.4 mm wide and 200 mm long. Pages 5 (2605SA1) and 10 (2605HB1M) chart the upper half of two loops each, \(H_m\) = 8 and 80 A/m, on a linear field axis from \(-10\) to 80 A/m. The other charts are 60 Hz core loss, exciting power and exciting current against induction, saturation against temperature, and DC loops of finished transformer cores. The core loops include the lap joints, which add an air gap, so they describe a core, not the ribbon, and are not used.
+
+The charts are vector graphics. Each loop is read from the path in the PDF, and the axes are placed by the chart's own gridlines, each matched to its tick label and fitted by least squares. The fit leaves residuals below 0.0012 T on the induction axis and 0.05 A/m on the field axis.
+
+Metglas's bulletins for its other magnetic alloys, 2605S3A, 2714A and 2826MB, and the 2705M bulletin, chart their loops as raster images of about 300 by 230 pixels \cite{metglas-bulletins}. No entries are built from them.
+
+\section{The Normal Curve from Two Loops}\label{the-normal-curve}
+
+The normal magnetization curve is the locus of the tips of symmetric hysteresis loops. Each chart therefore gives two points on it, the tips of the 8 and 80 A/m loops:
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+& 8 A/m loop tip & 80 A/m loop tip \\
+\midrule
+2605SA1 & 7.97 A/m, 1.297 T & 79.6 A/m, 1.436 T \\
+2605HB1M & 7.94 A/m, 1.428 T & 80.0 A/m, 1.567 T \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Between and below the tips the usual stand-in for a normal curve is the centre line of the loop, the average of its two branches at each induction. For these alloys it is the wrong choice. The 8 A/m tips lie at the ascending branch of the 80 A/m loop, not on its centre line: for 2605HB1M within 0.02 A/m of it, and for 2605SA1 0.16 A/m beyond it, about three times the chart's calibration in field. Symmetric loops of one specimen in one run should nest, so the 2605SA1 offset most likely means the two loops are separate measurement runs. At 1.3 T the centre line needs 5.66 A/m for 2605SA1 and 2.83 A/m for 2605HB1M, while a curve through the tips needs 8.33 and 4.03 A/m. A centre-line entry would understate the field at the inductions these cores are designed for by about 30\%.
+
+So the entry is placed between the centre line \(H_c(B)\) and the ascending branch \(H_a(B)\) of the 80 A/m loop,
+
+\begin{equation}\label{eq:weight}
+H(B) = H_c(B) + f(B)\,\bigl(H_a(B) - H_c(B)\bigr), \qquad f(B) = f_8 \min\!\left(1, \frac{B}{B_8}\right),
+\end{equation}
+
+where \(B_8\) is the induction at the 8 A/m tip and \(f_8\) is the weight that puts the curve through that tip: 1.07 for 2605SA1 and 1.01 for 2605HB1M; a weight above 1 places the curve just outside the 80 A/m loop near the 8 A/m tip, by the offset above. The two branches meet at the 80 A/m tip, so the curve passes through that tip for any \(f\). The weight falls to zero at zero induction because the ascending branch there sits at the coercive field, 1--2 A/m, and a normal curve starts at the origin.
+
+Below 0.2 T the centre line lies at 0.05--0.3 A/m. That is no larger than the field-axis calibration error, so the entry starts at 0.2 T and runs below it as a straight line from the origin. There the relative permeability is about \(2\times10^{5}\) (2605SA1) and \(4\times10^{5}\) (2605HB1M), and a FEMM model is insensitive to its exact value.
+
+\section{Above 80 A/m}\label{above-80-am}
+
+Nothing is measured above 80 A/m, so the curve from there to saturation has to be assumed. What makes the assumption tolerable is how little is left. At its 80 A/m tip 2605SA1 is at J = 1.436 T against \(J_s\) = 1.56 T, and 2605HB1M at 1.567 T against 1.63 T, short by 0.125 T and 0.063 T. Above the tip J cannot fall, and it cannot pass \(J_s\). So the entry is bounded below by J held at its 80 A/m value and above by \(J_s\), and B by those plus \(\mu_0 H\). The bounds are 0.125 and 0.063 T apart, at every field above the tip. An M-19 curve that stopped at 80 A/m would leave its whole knee unknown.
+
+The tail chosen within the bounds follows the law of approach for amorphous alloys as Pietrusiewicz et al. give it after Kronmüller \cite{pietrusiewicz2014},
+
+\begin{equation}\label{eq:kronmuller}
+M(H) = M_s\left[1 - \frac{a_{1/2}}{(\mu_0 H)^{1/2}} - \frac{a_1}{\mu_0 H} - \frac{a_2}{(\mu_0 H)^{2}}\right] + b\,(\mu_0 H)^{1/2}.
+\end{equation}
+
+There the \(H^{-1/2}\) term arises from rotation of the magnetization near point defects (free volume), the \(1/H\) and \(1/H^{2}\) terms from quasi-dislocation dipoles, and the last from the Holstein-Primakoff paraprocess. In their annealed Fe\(_{61}\)Co\(_{10}\)Y\(_{8}\)Ni\(_{1}\)B\(_{20}\) ribbon the \(H^{-1/2}\) term alone describes the approach from 0.005 to 0.39 T, 4 to 310 kA/m. The entry keeps the first two terms,
+
+\begin{equation}\label{eq:tail}
+J(H) = J_s - a\left(\frac{H_e}{H}\right)^{1/2} - c\,\frac{H_e}{H}, \qquad H > H_e,
+\end{equation}
+
+from the 80 A/m tip \((H_e, J_e)\), with \(a + c = J_s - J_e\) and \(a/2 + c\) equal to the curve's own slope \(dJ/d\ln H\) over its last 0.3 decade, so J and dJ/dH are continuous at the join. For 2605SA1, \(a\) = 0.172 T and \(c\) = \(-0.047\) T; for 2605HB1M, 0.061 and 0.003 T. These coefficients are set by the join, not fitted to high-field data, and a negative \(c\) has no meaning as a defect density. The tail borrows the law's form, not its physics. The paraprocess term, which carries M above \(M_s\) at high field, is left out, so the entry tends to \(J_s\) and no higher.
+
+The steeper laws of the other pages would reach saturation sooner. A tail falling as \(1/H\) from the same point, joined in value only, puts 2605SA1 at 1.551 T at 1 kA/m and a \(1/H^{2}\) tail at 1.560 T, against the entry's 1.516 T; for 2605HB1M, 1.626 and 1.631 T against 1.614 T. By 10 kA/m all three are within 0.015 T of one another. The entry's slower approach is what the charts end on. Both curves are still climbing at 80 A/m at 0.03--0.04 T per unit of ln H, and the steeper laws joined there directly would put a second hump in the differential permeability. The nickel-iron and stainless pages meet the same situation with a shared rule \cite{meeker-nife}: a curve ending at an exponent below 1 has it raised smoothly to 1 and then approaches as \(1/H\). These curves end at 0.31 (2605SA1) and 0.52 (2605HB1M), so that rule would give both a \(1/H\) tail. This page uses the \(H^{-1/2}\) form instead, deliberately: those pages describe crystalline material, for which Bozorth's two-term law has no term slower than \(1/H\), and amorphous ribbon is the case where the law of approach has one.
+
+\section{Construction}\label{construction}
+
+The curve of Eq.~\eqref{eq:weight}, carried by Eq.~\eqref{eq:tail} to 400 kA/m, is smoothed in ln J against log H with the narrowest Gaussian that lets it pass the gates of the other pages: 0.05 decade for 2605SA1 and 0.10 decade for 2605HB1M. It is then sampled on their grid, 91 points from 0.05 A/m to 400 kA/m. After smoothing, the entries pass within 0.004 T of all four tips.
+
+Conductivity is the inverse of Metglas's resistivity: 0.769 MS/m for 2605SA1 and 0.833 MS/m for 2605HB1M. The lamination thickness is the ribbon's, 0.025 mm. The curve itself is solid metal: the single-strip measurement identifies the alloy at 100\% fill. The fill factor rides on top of it, the library's convention for laminated material, as in the silicon-steel entries: Metglas's lamination factor for these two alloys, at least 84\% \cite{metglas2011}, entered at the bound, 0.84, as a suggested starting value, so that a model of a stacked or wound core cannot reach inductions the core cannot. Generic stacking-factor tables give less for laminations 0.001 in thick, 0.75--0.80 on the FEMM wiki's stacking-factor page \cite{femm-stacking}, and Metglas's other bulletins say more than 75\%. A designer who knows the core's own factor should enter it, and one who accounts for stacking elsewhere in the model should set it to 1.
+
+\section{Results}\label{results}
+
+\begin{center}
+\begin{tabular}{lrrrrrrr}
+\toprule
+B (T) at H (A/m) & 1 & 4 & 10 & 40 & 80 & 800 & 8000 \\
+\midrule
+Metglas 2605SA1, field annealed & 0.346 & 1.161 & 1.319 & 1.408 & 1.435 & 1.511 & 1.553 \\
+Metglas 2605HB1M, field annealed & 0.616 & 1.298 & 1.450 & 1.541 & 1.566 & 1.611 & 1.634 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Values up to 80 A/m are measurement; values above are the tail. The maximum relative permeabilities are 298,000 at 2.1 A/m (0.80 T) for 2605SA1 and 490,000 at 1.0 A/m (0.64 T) for 2605HB1M. Both tables pass the gates: B strictly increasing, dB/dH not less than \(\mu_0\), and a single maximum of the differential permeability, counted from the origin.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={The two entries against their loops, and the tails with their bounds.}]{out/metglascurves_fig1.png}}
+\caption{Left and centre: the 8 and 80 A/m loops (gray), the centre line of the 80 A/m loop (dashed), the measured loop tips (circles) and the entry (black). Right: above 80 A/m, the entries, their bounds (shaded), and tails falling as \(1/H\) (dotted) and \(1/H^{2}\) (dash-dot) from the same point.}
+\end{figure}
+
+\section{Limitations}\label{limitations}
+
+Above 80 A/m both entries are an assumption, not measurement: J between its 80 A/m value and \(J_s\), placed in that band by Eq.~\eqref{eq:tail}. Given Metglas's saturations, the most it can be wrong by is 0.125 T for 2605SA1 and 0.063 T for 2605HB1M. Those saturations are Metglas's stated values, not computed from composition, and an error in them moves the upper bound by as much. Tails following the other laws of approach differ from it by up to 0.044 and 0.017 T at 1 kA/m and by 0.015 T or less at 10 kA/m, but that spread measures the choice of law, not the error. A single magnetization measurement of either alloy to a few kA/m would replace the assumption with data.
+
+Between the tips the entry depends on a construction. Equation~\eqref{eq:weight} is pinned at two measured points and follows the 80 A/m loop's shape, but the normal curve between 8 and 80 A/m, and below 8 A/m, is inferred from one loop, not measured. Below 0.2 T it is a straight line.
+
+The curves are for single strips after Metglas's field anneal. A wound or stacked core adds joints, stress and its own stacking factor, as Metglas's transformer-core loops show, and an unannealed or differently annealed ribbon has a different loop.
+
+As for the other entries, FEMM's harmonic solver gives no core loss beyond a hysteresis lag angle and the lamination's eddy currents, and neither is fitted to Metglas's 60 Hz loss curves.
+
+\section{Implementation}\label{implementation}
+
+\texttt{dig\_metglas.py} reads the four loops from the PDF paths into \texttt{out/metglas\_loops.csv}. \texttt{metglas\_build.py} builds the two entries and writes their tables (\texttt{femm\_metglas\_*.csv}) and the staging library \texttt{metglas\_fit.dat}, in the folder ``Amorphous Ribbon (Metglas data)''. \texttt{emit\_metglas\_fem.py} writes the geometry-free problem file \texttt{metglas\_fit\_materials.fem}, which round-trips through FEMM unchanged. \texttt{make\_metglasfig.py} draws the figure.
+
+\section{Conclusions}\label{conclusions}
+
+Metglas's two loops are enough for an entry, but not by the route the other pages take. Their tips fix two points of the normal curve, and those points rule out the usual centre-line shortcut, which would be 30\% low in field at 1.3 T. The 80 A/m loop supplies the shape between them.
+
+What the data cannot supply is anything above 80 A/m, and the page does not pretend otherwise. The tail is an assumption with a stated form and stated bounds. The bounds are narrow because the alloys are within 4--8\% of Metglas's stated saturation where the measurement stops: 0.125 T for 2605SA1 and 0.063 T for 2605HB1M, against a whole knee for a steel curve cut off at the same field. A model that runs these cores at their design inductions of 1.3--1.4 T stays within the measured range. A model that drives corners and gap edges far into saturation inherits the bound, and now knows its size.
+
+\begin{thebibliography}{99}\label{references}
+
+\bibitem{meeker-lowcarbon} ``Generating B-H Curves for Low-Carbon Steels,'' companion page. The law of approach and the gates.
+
+\bibitem{meeker-nife} ``B-H Curves for Nickel-Iron Alloys,'' companion page. Entries built from a maker's dense curves, carried past the chart to a given saturation.
+
+\bibitem{metglas2011} Metglas, Inc., \emph{Amorphous Alloys for Transformer Cores}, 29 April 2011, 25 pp., \url{https://metglas.com/wp-content/uploads/2021/06/2605SA1-Magnetic-Alloy-Updated.pdf}. Specification and properties of 2605SA1 and 2605HB1M (p. 1); DC hysteresis curves, single strip (pp. 5, 10); saturation against temperature (pp. 6, 11); transformer-core DC loops (pp. 18, 25).
+
+\bibitem{metglas-bulletins} Metglas, Inc., technical bulletins for Magnetic Alloys 2605S3A, 2714A and 2826MB (2016 and 2021 versions) and 2705M (2014), \url{https://metglas.com/brochures/}.
+
+\bibitem{metglas-power} Metglas, Inc., \emph{Metglas Power} brochure, 12 pp., \url{https://metglas.com/wp-content/uploads/2021/06/Metglas-Power-Brochure-Updated.pdf}. Core loss ``35\% of M3-Grade GOES core'' (p. 8).
+
+\bibitem{pietrusiewicz2014} P. Pietrusiewicz, M. Nabiałek, M. Szota, M. Dośpiał, K. Błoch, J. Gondro and K. Gruszka, \href{https://doi.org/10.2478/amm-2014-0108}{``Influence of Annealing on the Microstructure and Magnetic Properties in Amorphous Alloys,''} \emph{Archives of Metallurgy and Materials}, 59(2):663--666, 2014. Eq. (1), the law of approach after Kronmüller, and Fig. 3.
+
+\bibitem{femm-stacking} FEMM wiki, \href{https://www.femm.info/doku/doku.php?id=stackingfactor}{``Stacking Factor,''} saved 2 October 2026. Stacking factors against lamination thickness after Tarter, Constantinides, Nasar and Magnetics Inc.
+
+\end{thebibliography}
+
+\noindent Copyright 2026 David Meeker. This document is licensed under the \href{https://creativecommons.org/licenses/by/4.0/}{Creative Commons Attribution 4.0 International License (CC BY 4.0)}.
+
+\end{document}

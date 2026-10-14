@@ -1,0 +1,247 @@
+% SPDX-License-Identifier: CC-BY-4.0
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+\documentclass[
+  11pt,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{2} % number sections and subsections
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
+\hypersetup{
+  pdftitle={B-H Curves for Cobalt-Iron Alloys},
+  pdfauthor={David Meeker},
+  colorlinks=true,
+  linkcolor={Maroon},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+\renewcommand{\today}{%
+  \the\day\ %
+  \ifcase\month\or
+  Jan\or Feb\or Mar\or Apr\or May\or Jun\or
+  Jul\or Aug\or Sep\or Oct\or Nov\or Dec\fi
+  \ \the\year
+}
+
+\title{B-H Curves for Cobalt-Iron Alloys}
+\author{David Meeker}
+\date{\today}
+
+% article.cls sets the bibliography heading with \section*, which would
+% leave the references the one unnumbered heading in a numbered document.
+\usepackage{etoolbox}
+\patchcmd{\thebibliography}{\section*{\refname}}{\section{\refname}}{}{\GenericWarning{}{bhcurves: bibliography heading not numbered}}
+\begin{document}
+\maketitle
+
+\section{Introduction}\label{introduction}
+
+Iron-cobalt alloys reach the highest saturation of any soft magnetic material, and they are used where that matters more than cost: aircraft generators, high-speed motors, actuators and pole pieces. Like commercially pure iron \cite{meeker-iron}, they are bought by trade name, and each maker publishes typical values of induction at stated fields for stated heat treatments.
+
+This page gives four entries built from the makers' own tables: 49Co-49Fe-2V after the anneal for magnetic properties, the same alloy as a rotor grade after a strength anneal, the same alloy at high strength, and a 27\% cobalt alloy. Each entry pools the typical values of several makers for one class of material, so the entry describes the class rather than any one product, and the disagreements between makers are measured instead of inherited. As for the other pages, saturation is given rather than fitted, the curve above the data follows the law of approach, and every table passes the same gates \cite{meeker-lowcarbon}.
+
+\section{Saturation}\label{saturation}
+
+One independent curve runs to high field. Fig. 17 of the Metals Handbook, 8th edition \cite{mh8}, plots intrinsic induction against field for 36 materials, and its Vanadium Permendur is material of about 1960: at 300 A/m it gives 1.32 T where modern annealed strip gives 1.90 T, and it saturates at J = 2.40 T. Its shape above about 10 kA/m is nonetheless useful, and it is used below as a check.
+
+The sources split into two camps for 49Co-49Fe-2V. The Metals Handbook curve, the summary table in Bozorth's first chapter, Carpenter's nominal 24 kG for Hiperco 50 \cite{carpenter-brochure}, and Carpenter's Hiperco 50 strip table above 50 Oe \cite{carpenter-h50} put saturation near 2.40 T. Vacuumschmelze states 2.30 T \cite{vac2021,vacvf50}, Aperam Imphy 2.35 T \cite{imphy}, and Carpenter's own measured tables for Hiperco 50A and 50 HS \cite{carpenter-h50a,carpenter-h50hs} level off at J = 2.28 to 2.33 T by 200 Oe. The difference is real, not one of definition: at 40 kA/m the Handbook curve gives J = 2.39 T and Vacuumschmelze's bar-stock table 2.29 T.
+
+Bozorth's chapter on iron-cobalt alloys decides it \cite{bozorth1951}. His Table 1 (Ch. 6, p. 200) gives the saturation of equal-parts iron and cobalt with 2\% of various additions, from a study in which every addition lowered saturation linearly: 24,000 G with nothing added, 23,000 G with 2\% vanadium. So 49Co-49Fe-2V saturates near 2.30 T, and 24,000 G, which his first chapter lists for 2V-Permendur, is his value for the alloy without vanadium. That is 0.05 T per weight per cent of vanadium. The attenuation coefficients the other pages use cannot give this a second, independent leg: they are for dilution of iron, and vanadium's there is 0.012 T/wt\% (Exner) or 0.028 (Maurer and Schroeter) \cite{ouda}, which would put the alloy at 2.34 to 2.38 T. In equal-parts iron-cobalt vanadium costs two to four times what it costs in iron, and Bozorth's direct measurement on that alloy, not the iron coefficient, is what fixes the level. The 2.30 T level is used here for the magnetically annealed alloy, 2.29 T for the rotor grades pooled (Vacuumschmelze gives 2.30 T for VACODUR 49 and 2.28 T for VACODUR 50), and 2.25 T for the high-strength grade, whose tantalum and zirconium additions cost a little more.
+
+The 27\% alloy saturates higher, at 2.38 T by Vacuumschmelze's and Imphy's figures. That is as it should be. Bozorth puts the maximum saturation of iron-cobalt alloys at about 35\% cobalt, the highest of any material: 24,600 G extrapolated to absolute zero, and 24,300 G at room temperature (Ch. 6, pp. 193--194). A 27\% alloy is near that peak where a 50\% alloy is past it; his Fig. 6-4, read at 27\%, gives 23,950 G at room temperature. At moderate fields the order reverses: the maximum of induction moves to about 50\% cobalt at H = 100 Oe and below (p. 195), because the equal-parts alloy has nearly no crystal anisotropy and approaches saturation quickly. The makers' tables show exactly this, Vacuumschmelze's bar values for the two alloys crossing between 20 and 40 kA/m, and so do the entries.
+
+\section{Sources}\label{sources}
+
+Every point used is a tabulated value of induction at a stated field; no curve is taken from a figure.
+
+Vacuumschmelze's product information \cite{vac2021} gives, for 0.35 mm strip after the final anneal, induction at 300, 800, 1600, 4000, 8000 and 16,000 A/m, with separate rows for the anneal for optimum magnetic and for optimum mechanical properties, and polarization at 10 to 40 kA/m for bar. Carpenter's data sheets give induction at 10 to 200 Oe for Hiperco 50 strip after 1600 °F (871 °C) \cite{carpenter-h50}, at 2 to 200 Oe for Hiperco 50A strip and bar after four heat treatments \cite{carpenter-h50a}, at 10 to 200 Oe for Hiperco 50 HS at three yield strengths \cite{carpenter-h50hs}, and at 10 to 250 Oe for Hiperco 27 strip and bar \cite{carpenter-h27}. Imphy's brochure \cite{imphy} gives induction at 2500 and 10,000 A/m for AFK 502 R, AFK 502 FP and AFK 1; its tables on different pages disagree with each other, so only the fullest one (p. 4) is used, with the values for AFK 502 FP from p. 5. The points are grouped by class of material:
+
+\begin{center}
+\begin{tabular}{p{0.30\linewidth}p{0.46\linewidth}p{0.16\linewidth}}
+\toprule
+Entry & Grades pooled & Yield strength \\
+\midrule
+49Co-2V, magnetic anneal & VACOFLUX 50, VACODUR 49; Hiperco 50, 50A; AFK 502 R & 210--420 MPa \\
+49Co-2V, rotor grade & VACODUR 49 and 50 after strength anneal; Hiperco 50 HS & 390--600 MPa \\
+49Co-2V, high strength & VACODUR S Plus after strength anneal; AFK 502 FP & 800--950 MPa \\
+27Co & VACOFLUX 27; Hiperco 27; AFK 1 & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Four sets of points are shown but not fitted. Carpenter's Hiperco 50 strip table is kept at 10 Oe only. At 100 and 200 Oe it implies J of 2.34 to 2.42 T, above the saturation it is held to, and at 200 Oe it is 0.07 to 0.14 T above every other source at that field; its 50 Oe values do not violate the bound by themselves, but belong to the same upper part of the table and are set aside with it. Plain annealed bar is 0.5 T harder than strip at 160 A/m and is left out of the strip entries; Carpenter's duplex-treated bar, which behaves as strip, is kept. AFK 502 FP at 600 MPa sits 0.1 T below the other rotor-grade sources at 10 kA/m, and Hiperco 50 HS at 683 MPa sits with the rotor grade rather than the high-strength one.
+
+\section{Construction}\label{construction}
+
+Each entry is one smooth curve through its pooled points,
+
+\begin{equation}\label{eq:form}
+\frac{J(H)}{J_s} = (1-f_r)\left[1-\left(1+(H/a)^{k}\right)^{-m}\right] + f_r\,\frac{H/a_r}{\sqrt{1+(H/a_r)^{2}}}
+\end{equation}
+
+a Burr knee of scale \(a\) and sharpness \(k\), and a term that starts linearly and whose deficit falls as \(1/H^{2}\), the law of approach. Both start with zero or falling slope from the origin, so the differential permeability has one peak. \(J_s\) is given for each entry, as above. The residual at each point is horizontal, a distance in ln H, except near saturation where a few millitesla would be a large distance in field:
+
+\begin{equation}\label{eq:resid}
+r = w\,\frac{J_{\text{model}}(H) - J}{\sqrt{\left(dJ/d\ln H\right)^{2} + \sigma_J^{2}}}, \qquad \sigma_J = 0.02\ \mathrm{T}
+\end{equation}
+
+with 0.02 T the spread between makers near saturation. The weight \(w\) gives every source-and-condition set the same total weight, so that Carpenter's many Hiperco 50A columns do not outvote Vacuumschmelze's one row. Two soft constraints complete the fit. The makers' maximum permeability, 12,000 for the magnetic anneal (Vacuumschmelze 15,000, Imphy 8,000--11,000), 6,300 for the rotor grade, 1,100 for the high-strength grade and 2,800 for 27Co, is held within 0.3 in its logarithm, because for the magnetic anneal the permeability peak lies below the lowest tabulated field. And ln \(k\) is held near ln 1.5 with a width of 0.5, the value the well-sampled entries choose for themselves; without it the high-strength entry, with no point below 800 A/m, turned its knee into a step.
+
+Two properties of the fitted terms matter above the data. The Burr term's deficit falls as \(H^{-km}\), and nothing in the fit holds \(km\); had any entry fitted it below 1, its tail would approach saturation more slowly than the two-term law of approach the other pages use allows, the defect the nickel-iron and stainless pages had to remove. None did: \(km\) is 1.05 for the magnetic anneal, 1.28 for the rotor grade, 2.33 for the high-strength grade and 1.44 for 27Co. The second term's scale \(a_r\) sets both its slope at the origin and its \(1/H^{2}\) coefficient, \(f_r a_r^{2}/2\). Those are unrelated physics tied to one number, so the fit cannot steepen the foot of the knee without changing the approach to saturation, which may be part of why the bottom of the knee comes out too gentle. The coefficient can be set against the crystal anisotropy, which for these alloys is held: Bozorth's Table 2 of iron-cobalt anisotropy constants, Shih's measurements as summarized by McKeehan \cite{bozorth1951}, gives \(K_1\) = 1.02 \(\times 10^{4}\) J/m\(^3\) at 30\% cobalt, \(0.45\times10^{4}\) at 40\% and \(-0.68\times10^{4}\) at 50\%, passing through zero near 45\%. Interpolated, that is about \(1.2\times10^{4}\) J/m\(^3\) at 27\% and \(-0.57\times10^{4}\) at 49\%, so \(H_a\) is about 10 kA/m for 27Co and 5 kA/m for the equal-parts alloy, and Akulov's coefficient \((2/105)H_a^{2}\) is about \(1.9\times10^{6}\) and \(0.46\times10^{6}\) A\(^2\)/m\(^2\). The fitted coefficients are 5.5 and 4.7 times the latter for the magnetic anneal and rotor grade, 15 times the former for 27Co, and about a thousand times the equal-parts value for the high-strength grade: crystal anisotropy is the smaller part of every entry's approach to saturation, and for the high-strength grade a negligible one.
+
+Conductivity is from the makers' resistivities: 41 \(\mu\Omega\)·cm (2.44 MS/m) for the magnetic anneal (Vacuumschmelze 42, Carpenter 40, Imphy 40), 42 (2.38 MS/m) for the rotor and high-strength grades, and 18 (5.56 MS/m) for 27Co, whose sources differ with their chemistry, from 15 for VACOFLUX 27 to 19 for Hiperco 27, which carries chromium, nickel, silicon and manganese.
+
+\section{Results}\label{results}
+
+\begin{center}
+\begin{tabular}{lrrrrrrr}
+\toprule
+B (T) at H (A/m) & 100 & 300 & 800 & 1600 & 4000 & 40,000 & 100,000 \\
+\midrule
+49Co-2V, magnetic anneal & 1.26 & 1.88 & 2.13 & 2.21 & 2.26 & 2.35 & 2.42 \\
+49Co-2V, rotor grade & 0.79 & 1.57 & 1.97 & 2.09 & 2.19 & 2.34 & 2.42 \\
+49Co-2V, high strength & 0.08 & 0.37 & 1.08 & 1.65 & 2.03 & 2.21 & 2.33 \\
+27Co & 0.33 & 0.97 & 1.52 & 1.73 & 1.92 & 2.39 & 2.50 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All four tables pass the gates: B strictly increasing, dB/dH not less than \(\mu_0\), and a single maximum of the differential permeability, counted from the origin. The fits reproduce their points to an RMS of 0.136 in ln H on the knee for the magnetic anneal (12 points) and 16 mT near saturation (15 points); 0.287 and 25 mT for the rotor grade, whose sources span a class from 390 to 600 MPa rather than one product; 0.114 for the high-strength grade (6 points, none near saturation); and 0.132 and 48 mT for 27Co. Most of the last is Vacuumschmelze's bar value at 40 kA/m, J = 2.38 T, already at its own stated saturation, where the entry gives 2.34 T. The law of approach favours the entry, though not through the anisotropy, which on its own would leave only about 3 mT at 40 kA/m. Vacuumschmelze's own row has J = 2.27 T at 20 kA/m. Against a saturation of 2.38 T that is 0.11 T short, and even the fastest physical approach, \(1/H^{2}\), would still leave 27 mT of it at 40 kA/m, so its 40 kA/m value cannot be read at face value beside its 20 kA/m one. There are two ways out. Either the 40 kA/m value is high, or the saturation is higher than the makers state: taken both as right, with a \(1/H^{2}\) approach, the two points put it at 2.42 T. Bozorth chooses between them. Weiss and Forrer's room-temperature curve at 17,000 Oe, which he calls substantially the saturation curve, gives 2.395 T for the binary alloy at 27\% cobalt (Fig. 6-4) \cite{bozorth1951}, and the commercial alloys' small additions of chromium and the like can only take something off that. A saturation of 2.42 T would need the commercial alloy above the binary one, so the 40 kA/m value is the outlier and the makers' 2.38 T stands.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Each entry against its pooled points, with residuals.}]{out/cofe_fit.png}}
+\caption{Each entry (line) against the points it pools, by source; points shown but not fitted are crosses. Lower row: the residual of Eq.~\eqref{eq:resid}.}
+\end{figure}
+
+The 27\% alloy overtakes the magnetically annealed 49\% alloy at 24.8 kA/m, between Vacuumschmelze's bar values at 20 and 40 kA/m. Below that field the equal-parts alloy is the better material, by 0.34 T at 4 kA/m; in hard saturation the 27\% alloy wins, by 0.07 T at 100 kA/m. The choice between them depends on where the design works.
+
+The high-field end of the magnetic-anneal entry can be checked against the one dense measurement that runs to high field. Scaled from its own saturation to 2.30 T, the Metals Handbook curve gives 2.343 T at 40 kA/m and 2.425 T at 100 kA/m; the entry gives 2.345 and 2.424. The two share nothing but the alloy.
+
+The high-strength entry approaches saturation slowly, still 0.09 T short of \(J_s\) at 40 kA/m where the magnetically annealed entry is within 0.01. That is expected, and it is not crystal anisotropy, which is a thousandth of its \(1/H^{2}\) coefficient. Stress acting through magnetostriction adds an anisotropy of about \(\tfrac{3}{2}\lambda_s\sigma\) \cite{bozorth1951}. The yield strength bounds the internal stress rather than measuring it, and these grades take their strength mostly from fine grains and suppressed ordering rather than from stress locked in near yield. But the bound is generous: with Vacuumschmelze's \(\lambda_s\) = +70 ppm, even a fraction of the 800 MPa yield gives an anisotropy field of tens of kA/m, 75 kA/m at the full value, which is enough to make the approach to saturation slow at 40 kA/m.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={The four entries, with the Metals Handbook Vanadium Permendur.}]{out/cofecurves_fig2.png}}
+\caption{The four entries, with the Metals Handbook Vanadium Permendur (dashed). Right: polarization from 1 to 400 kA/m, where the saturation levels separate.}
+\end{figure}
+
+\section{Limitations}\label{limitations}
+
+These are typical values, pooled across makers, not guaranteed properties of any product, and each maker's own figures should be used when a design depends on one. The rotor grade in particular represents the middle of a class that spans 390 to 600 MPa.
+
+Below the lowest tabulated field --- 160 A/m for the magnetic anneal, 300 A/m for the rotor grade, 800 A/m for the high-strength grade and for 27Co --- each curve's shape is the fitted form constrained by the stated maximum permeability, not measurement. That shape is probably too gentle: the magnetic-anneal entry reaches its permeability peak at 43 A/m and 0.65 T, while the curves Vacuumschmelze draws for its best-annealed grade (Fig. 1 of \cite{vac2021}) rise much more steeply there. Digitizing those curves, which this page has not done, is the way to settle the bottom of the knee. Above the highest --- 40 kA/m for the magnetic anneal and 27Co, 16 kA/m for the others --- it is the law of approach to a given saturation.
+
+The saturation level rests on Bozorth's additions study, which he says was not made with high precision, and on the makers who agree with it. Two sources that disagree were set aside with reasons, not refuted: the Metals Handbook curve and Carpenter's Hiperco 50 strip table.
+
+\section{Implementation}\label{implementation}
+
+\texttt{cofe\_points.py} collects every tabulated point, with its source and page, into \texttt{out/cofe\_points.csv}. \texttt{cofe\_build.py} fits the four entries and writes their tables, \texttt{femm\_cofe\_*.csv}, the staging library \texttt{cofe\_fit.dat}, and the first figure; \texttt{emit\_cofe\_fem.py} writes the geometry-free problem file \texttt{cofe\_fit\_materials.fem}, which round-trips through FEMM unchanged; \texttt{make\_cofefig.py} draws the second figure.
+
+\section{Conclusions}\label{conclusions}
+
+The makers' tables, pooled by class, give cobalt-iron curves that agree with one another to a few hundredths of a tesla wherever they overlap, and that agree with an independent measurement of the same alloy at high field. The one real disagreement, a tenth of a tesla in the saturation of 49Co-49Fe-2V, is settled by Bozorth's measurement of what 2\% vanadium does to equal-parts iron-cobalt, which puts it at 2.30 T with the modern makers.
+
+\begin{thebibliography}{99}\label{references}
+
+\bibitem{meeker-iron} ``B-H Curves for Commercially Pure Iron,'' companion page.
+
+\bibitem{meeker-lowcarbon} ``Generating B-H Curves for Low-Carbon Steels,'' companion page. The law of approach and the gates.
+
+\bibitem{vac2021} VACUUMSCHMELZE GmbH \& Co. KG, \emph{Soft Magnetic Cobalt-Iron Alloys VACOFLUX and VACODUR}, edition 2021. DC properties of strip after final annealing (p. 8), of solid material (p. 9), saturation and magnetostriction (p. 7), mechanical (p. 11) and physical (p. 12) properties.
+
+\bibitem{vacvf50} VACUUMSCHMELZE GmbH \& Co. KG, VACOFLUX 50 datasheet, Hanau, July 2022.
+
+\bibitem{mh8} \emph{Metals Handbook}, 8th ed., Vol. 1, American Society for Metals, 1961, Fig. 17, p. 792, ``Direct-current magnetization curves for various magnetic materials.''
+
+\bibitem{carpenter-brochure} Carpenter Technology Corp., \emph{Leadership in Soft Magnetic Alloys}, brochure, undated. Alloy table of nominal composition, saturation, coercivity and resistivity.
+
+\bibitem{carpenter-h50} Carpenter Technology Corp., Hiperco 50 Alloy technical datasheet, edition 12/01/1990.
+
+\bibitem{carpenter-h50a} Carpenter Technology Corp., Hiperco Alloy 50A, Alloy Data sheets, print code 6-90 (June 1990); also sheet 7 of the binder \emph{Alloy Data --- Soft Magnetic Alloys}, 1991. Typical DC properties after four heat treatments, and DC magnetization curves.
+
+\bibitem{carpenter-h50hs} Carpenter Technology Corp., Hiperco 50 HS Alloy technical datasheet, edition 08/01/1995.
+
+\bibitem{carpenter-h27} Carpenter Technology Corp., Hiperco 27 Alloy technical datasheet, edition 08/01/1995.
+
+\bibitem{imphy} Aperam Alloys Imphy, \emph{Iron Cobalt Alloys --- IMPHY AFK}, brochure, September 2022.
+
+\bibitem{bozorth1951} R. M. Bozorth, \href{https://doi.org/10.1109/9780470544624}{\emph{Ferromagnetism}}, Van Nostrand, New York, 1951; reissued by IEEE Press, 1993. Ch. 6, iron-cobalt alloys: saturation against composition (pp. 193--195; Fig. 6-4, intrinsic induction against cobalt content, read at 27\%) and Table 1, saturation of equal-parts iron-cobalt with 2\% additions (p. 200); Ch. 12, Table 2, anisotropy constants of iron-cobalt alloys (p. 570); magnetostriction and stress.
+
+\bibitem{ouda} K. Ouda, H. Danninger and C. Gierl-Mayer, \href{https://doi.org/10.1080/00325899.2018.1530850}{``Magnetic measurement of retained austenite in sintered steels --- benefits and limitations,''} \emph{Powder Metallurgy}, published online 9 October 2018. Table 1, attenuation coefficients after Maurer and Schroeter (1929), Exner (1960) and Hoselitz.
+
+\end{thebibliography}
+
+\noindent Copyright 2026 David Meeker. This document is licensed under the \href{https://creativecommons.org/licenses/by/4.0/}{Creative Commons Attribution 4.0 International License (CC BY 4.0)}.
+
+\end{document}

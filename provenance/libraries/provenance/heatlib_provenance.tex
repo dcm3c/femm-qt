@@ -1,0 +1,246 @@
+% SPDX-License-Identifier: CC-BY-4.0
+\documentclass[10pt]{article}
+\usepackage[margin=0.8in]{geometry}
+\usepackage{longtable,booktabs,array}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{textcomp}
+\usepackage[hidelinks]{hyperref}
+\setlength{\LTcapwidth}{\textwidth}
+\renewcommand{\arraystretch}{1.08}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\title{Provenance of the Heat-Flow Material Library}
+\author{David Meeker}
+\date{1 October 2026}
+\begin{document}
+\maketitle
+
+\section*{The library}
+
+\texttt{matlibs/heatlib\_fixed.dat} is a heat-flow material library for FEMM, 136 entries. Each entry carries a thermal conductivity $k$ (W/m\,K), as a constant or as a table of $k$ against temperature, and a volumetric heat capacity $K_t$ (MJ/m$^3$\,K).
+
+\textbf{Heat capacity.} Every $K_t$ is documented row by row on the FEMM wiki's ``Specific Heat'' page \cite{specheat}, which names its source; the table's $K_t$ column shows it. All agree with the page to 0.5\%.
+
+\textbf{Thermal conductivity: source.} The page does not cover $k$. It comes from F. M. White's \emph{Heat and Mass Transfer} \cite{white}, Appendices C (metals), D (nonmetals), E (liquid metals) and F (saturated liquids): the library's points at 273, 473, 673\ldots\ K are White's 0, 200, 400\ldots\ \textdegree C columns, and 115 entries take their $k$ from White, point for point, except those described below that take it from another source. Two entries hold fewer points than White (Fireclay brick, engine oil), within 4\% of White when interpolated. The ``$k$ src.'' column gives White's appendix. The gases were not compared (White's gas appendix was not among the pages scanned), 6061-T6 and 7075-T6 (not in White) match Lienhard's Table A.1 exactly, and the other aluminium tempers (2024-T3, -O, -T351, -T4, 6061-T651, 7075-T651), HyMu 80, Carpenter 49 and 17-4 PH have no $k$ source recorded.
+
+\textbf{Thermal conductivity: checks.} Independently of White, $k$ was checked against Lienhard's \emph{A Heat Transfer Textbook}, 6th ed. \cite{lienhard6}, against the \emph{CRC Handbook of Chemistry and Physics} \cite{crc}, and against two older handbooks \cite{rohsenow,kreithhb}. Of the 136 entries, 65 agree with a check source (the worst difference over their points is given), 9 take $k$ from Lienhard or CRC instead of White (``replaced''), 16 are mixed (one check source agrees within 10\%, another does not), 18 disagree with every check source by more than 10\%, and 28 have no independent check.
+
+Where White's $k$ is wrong or outdated, another source is used. Three cases are errors in White's own table: White gives constantan 26 at 200~\textdegree C, which is Lienhard's 100~\textdegree C value (Lienhard: 35); it drops 1\% carbon steel's 600~\textdegree C value, so that its 800 and 1000~\textdegree C values sit a column early; and it gives solid silver 355 at 1000~\textdegree C, above silver's melting point (silver keeps White's other points and omits that one). For these Lienhard's values are used. White's R-12 and liquid-ammonia data are older than Lienhard's, and Lienhard's are used; White's mercury $k$ (7.3--14.2) is also older, and Lienhard's is used. Three more take their values from the CRC Handbook \cite{crc}: Diatomaceous Earth (White's 1.3 is more than ten times the 0.05--0.16 that CRC gives for diatomite and Incropera for the powders), Teflon (0.35; CRC gives 0.26 for PTFE) and Window glass (0.84; CRC gives 1.00 at 0~\textdegree C for a window-type soda-lime glass).
+
+The CRC Handbook is the best sourced of these. Its metals table is Ho, Powell and Liley's recommended values (J.~Phys.\ Chem.\ Ref.\ Data, 1972) for high-purity specimens; its gas table is from modern reference correlations (Huber and Harvey), and every library gas agrees with it within 6\%; its liquids table agrees within 2\% for water, ethanol, ethylene glycol and glycerin. Its ceramics table calls itself ``only \ldots\ a rough guide''. Where a library entry has only 0 and 200~\textdegree C points (silicon, germanium, the diamonds, magnesium oxide), FEMM interpolates linearly across a conductivity that falls roughly as $1/T$, so it overestimates at 400~K by 12--22\% against CRC even where the tabulated points agree.
+
+The two older handbooks are secondary compilations of older data and only flag entries; a disagreement means White and they differ, not that White was copied wrongly. Rohsenow's element and alloy tables (2.32, 2.34) are round values in kcal/(m\,h\,\textdegree C) converted to W/m\,K, and several of their pure-metal values sit well below modern ones (rhodium 88 against 150, sodium 100 against 134). Its Table 2.35 is Incropera and DeWitt's Table A.3 reprinted, with some decimal slips in the reprint (ice 0.188, paper 0.011 W/m\,K), which were not used. Many disagreements are a choice of variety rather than an error (``Concrete'', ``Window'' glass, ``Sandstone''). Besides the three replaced from CRC, the ones where White itself may be off are Cobalt (White's 104 against 69--70 in the older handbooks; not in CRC) and Vanadium (White's 31 against Kreith's 60; not in CRC), both left as White gives them; White's footnote warns that nonmetal properties are ``subject to large uncertainty (up to 50\%)''.
+
+\section*{Fluids}
+
+The heat-flow solver models conduction only. A fluid entry is therefore right only where the fluid cannot move, as in a thin gap or a sealed cavity too small to convect. A fluid that flows or convects carries heat far faster than its conductivity alone allows; it belongs in a convection boundary condition (a heat-transfer coefficient $h$) on the surface it cools, not in a region of its own. The three fluid folders are named ``Liquid Metals (stagnant only)'', ``Saturated Liquids (stagnant only)'' and ``Gases at 1 atm (stagnant only)''. A library entry carries no comment, so the folder name is the only warning a user sees.
+
+\section*{Entries}
+
+The $k$ column is the constant value (FEMM uses the table when one is given; ``Pts.'' is its length).
+
+{\small
+\begin{longtable}[l]{@{}L{1.35in}rrrL{0.55in}L{0.55in}L{0.62in}L{1.4in}@{}}
+\toprule
+\textbf{Entry} & \textbf{$k$} & \textbf{$K_t$} & \textbf{Pts.} & \textbf{$K_t$ src.} & \textbf{$k$ src.} & \textbf{$k$ check} & \textbf{Detail} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+\multicolumn{8}{@{}l}{\textit{Metallic Solids / Aluminum}} \\
+Aluminum, Pure & 236 & 2.45 & 4 & \cite{lienhard4} & \cite{white}~C & checked & 0.0\% (Table A.1); CRC 12-219 -1\% \\
+Aluminum, 2024-T3 & 121 & 2.433 & -- & \cite{matweb} & -- & checked & CRC 12-221 -7\% \\
+Aluminum, 2024-O & 193 & 2.433 & -- & \cite{matweb} & -- & none &  \\
+Aluminum, 2024-T351 & 121 & 2.433 & -- & \cite{matweb} & -- & checked & CRC 12-221 -7\% \\
+Aluminum, 2024-T4 & 121 & 2.433 & -- & \cite{matweb} & -- & checked & CRC 12-221 -7\% \\
+Aluminum, 2024-T6 & 171 & 2.433 & 2 & \cite{matweb} & \cite{white}~C & none &  \\
+Aluminum, 6061-T6 & 167 & 2.419 & -- & \cite{matweb} & -- & checked & 0.0\% (Table A.1) \\
+Aluminum, 6061-T651 & 167 & 2.419 & -- & \cite{matweb} & -- & none &  \\
+Aluminum, 7075-T6 & 130 & 2.698 & -- & \cite{matweb} & -- & checked & 0.0\% (Table A.1) \\
+Aluminum, 7075-T651 & 130 & 2.698 & -- & \cite{matweb} & -- & none &  \\
+\multicolumn{8}{@{}l}{\textit{Metallic Solids}} \\
+Beryllium & 218 & 3.402 & 6 & \cite{thermtest} & \cite{white}~C & mixed & Rohsenow T2.32 +36\% at 273 K; Kreith C.4 -4\% \\
+Boron & 31.7 & 2.825 & 6 & \cite{thermtest} & \cite{white}~C & none &  \\
+Cadmium & 104 & 1.99 & 2 & \cite{thermtest} & \cite{white}~C & \textit{disagrees} & Rohsenow T2.32 +12\% at 273 K; Kreith C.4 +11\% at 298 K \\
+Chromium & 95 & 3.257 & 6 & \cite{lienhard4} & \cite{white}~C & checked & 1.2\% (Table A.1); CRC 12-219 -2\% \\
+Cobalt & 104 & 3.748 & 2 & \cite{thermtest} & \cite{white}~C & \textit{disagrees} & Rohsenow T2.32 +45\% at 293 K; Kreith C.4 +46\% at 298 K \\
+\multicolumn{8}{@{}l}{\textit{Metallic Solids / Copper}} \\
+Constantan & 22 & 3.658 & 3 & \cite{lienhard4} & \cite{white,lienhard6}~C & \textbf{replaced} & White App. C gives 26 at 200 C, Lienhard's 100 C value; Lienhard's 22/26/35 at 273/373/473 K used (Table A.1); CRC 12-221 +0\% \\
+Copper, Pure & 401 & 3.438 & 6 & \cite{lienhard4} & \cite{white}~C & checked & 0.0\% (Table A.1); CRC 12-219 +1\% \\
+Brass & 110 & 3.281 & 3 & \cite{lienhard4} & \cite{white}~C & checked & 3.8\% (Table A.1); CRC 12-221 +0\% \\
+Bronze & 49 & 3.696 & 3 & \cite{white} & \cite{white}~C & none &  \\
+\multicolumn{8}{@{}l}{\textit{Metallic Solids / Core-materials}} \\
+HyMu80 & 34.6 & 4.321 & -- & \cite{carpenter} & -- & none &  \\
+Carpenter49 & 13 & 4.125 & -- & \cite{carpenter} & -- & none &  \\
+\multicolumn{8}{@{}l}{\textit{Metallic Solids}} \\
+Germanium & 67 & 1.715 & 4 & \cite{thermtest} & \cite{white}~C & \textit{disagrees} & CRC 12-219 +15\% at 400 K \\
+Gold & 318 & 2.492 & 6 & \cite{lienhard4} & \cite{white}~C & checked & 3.4\% (Table A.1); CRC 12-219 +3\% \\
+\multicolumn{8}{@{}l}{\textit{Metallic Solids / Iron}} \\
+Iron, Wrought & 59 & 3.542 & 4 & \cite{thermtest} & \cite{white}~C & \textit{disagrees} & Rohsenow T2.32 -11\% at 873 K \\
+Iron, Pure & 83 & 3.53 & 6 & \cite{lienhard4} & \cite{white}~C & checked & 6.7\% (Table A.1; edition difference); CRC 12-219 +9\% \\
+Iron, Cast (4\% C) & 52 & 3.054 & 5 & \cite{lienhard4} & \cite{white}~C & checked & 0.0\% (Table A.1) \\
+Iron, Armco & 75 & 3.634 & 6 & \cite{doiarmco,white} & \cite{white}~C & checked & Rohsenow T2.32 +2\%; CRC 12-221 +4\% \\
+\multicolumn{8}{@{}l}{\textit{Metallic Solids / Steels}} \\
+Steel, 1\% Chrome & 62 & 3.616 & 5 & \cite{thermtest} & \cite{white}~C & none &  \\
+Steel, 1\% Carbon & 43 & 3.69 & 6 & \cite{lienhard4} & \cite{white,lienhard6}~C & \textbf{replaced} & White App. C drops the 600 C value, putting 29 and 28 a column early; Lienhard's 43/42/36/33/29/28 at 273-1273 K used (Table A.1); CRC 12-221 -4\% \\
+347 Stainless Steel & 14 & 3.829 & 6 & \cite{white} & \cite{white}~C & none &  \\
+304 Stainless Steel & 14 & 3.768 & 5 & \cite{white} & \cite{white}~C & checked & Rohsenow T2.34 +7\%; CRC 12-221 +3\% \\
+SST 17Cr-4Ni, Cond H900 & 17.9 & 3.268 & 4 & \cite{matweb} & -- & none &  \\
+\multicolumn{8}{@{}l}{\textit{Metallic Solids}} \\
+Lead & 36 & 1.478 & 2 & \cite{lienhard4} & \cite{white}~C & checked & 0.0\% (Table A.1); CRC 12-219 +1\% \\
+Lithium & 79 & 1.863 & -- & \cite{thermtest} & \cite{white}~C & \textit{disagrees} & Rohsenow T2.32 +11\% at 273 K \\
+Magnesium & 157 & 1.786 & 4 & \cite{lienhard4} & \cite{white}~C & checked & 0.7\% (Table A.1); CRC 12-219 -0\% \\
+Manganese & 7.7 & 3.559 & -- & \cite{thermtest} & \cite{white}~C & \textit{disagrees} & Rohsenow T2.32 -85\% at 273 K \\
+Molybdenum & 139 & 2.565 & 6 & \cite{lienhard4} & \cite{white}~C & checked & 0.0\% (Table A.1) \\
+\multicolumn{8}{@{}l}{\textit{Metallic Solids / Nickel}} \\
+Nickel, Pure & 94 & 3.963 & 6 & \cite{lienhard4} & \cite{white}~C & checked & 1.6\% (Table A.1); CRC 12-219 +4\% \\
+Nichrome & 12 & 3.696 & 4 & \cite{lienhard4} & \cite{white}~C & checked & Rohsenow T2.34 -5\%; CRC 12-221 -4\% \\
+Inconel-X & 11 & 3.761 & 6 & \cite{lienhard4} & \cite{white}~C & checked & 2.7\% (Table A.1) \\
+\multicolumn{8}{@{}l}{\textit{Metallic Solids / Platinum}} \\
+Platinum, Pure & 72 & 2.853 & 6 & \cite{lienhard4} & \cite{white}~C & checked & 1.3\% (Table A.1); CRC 12-219 +1\% \\
+60\% Pt, 40\% Rh & 46 & 2.694 & 6 & \cite{cengel} & \cite{white}~C & none &  \\
+\multicolumn{8}{@{}l}{\textit{Metallic Solids}} \\
+Rhenium & 49 & 2.898 & 6 & \cite{thermtest} & \cite{white}~C & none &  \\
+Rhodium & 151 & 3.013 & 6 & \cite{thermtest} & \cite{white}~C & mixed & Rohsenow T2.32 +82\% at 373 K; Kreith C.4 -0\% \\
+Silicon & 168 & 1.644 & 6 & \cite{lienhard4} & \cite{white}~C & checked & 13\% at 200 C (Table A.1; edition difference); CRC 12-219 +22\% at 400 K \\
+Silver & 428 & 2.484 & 5 & \cite{lienhard4} & \cite{white}~C & checked & White App. C without its 1000 C point (355, a solid above the 962 C melting point); within 4\% (Table A.1); CRC 12-219 -2\% \\
+Sodium & 135 & 1.177 & -- & \cite{thermtest} & \cite{white}~C & mixed & Rohsenow T2.32 +45\% at 323 K; Kreith C.4 +1\% \\
+Tin & 68 & 1.659 & 2 & \cite{cengel} & \cite{white}~C & checked & 0.0\% (Table A.1); CRC 12-219 +1\% \\
+Titanium & 22 & 2.374 & 6 & \cite{lienhard4} & \cite{white}~C & checked & 4.8\% (Table A.1); CRC 12-219 +2\% \\
+Tungsten & 182 & 2.574 & 6 & \cite{lienhard4} & \cite{white}~C & checked & 3.3\% (Table A.1); CRC 12-219 +3\% \\
+Uranium & 27 & 2.169 & 5 & \cite{lienhard4} & \cite{white}~C & checked & 4.9\% (Table A.1) \\
+Vanadium & 31 & 2.806 & 6 & \cite{thermtest} & \cite{white}~C & \textit{disagrees} & Kreith C.4 -48\% at 298 K \\
+Zinc & 122 & 2.772 & 3 & \cite{lienhard4} & \cite{white}~C & checked & 2.0\% (Table A.1) \\
+Zirconium & 23 & 1.853 & 6 & \cite{thermtest} & \cite{white}~C & none &  \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids}} \\
+Aluminum Oxide & 40 & 3.038 & 6 & \cite{lienhard4} & \cite{white}~D & mixed & CRC 12-222 +19\% at 373 K; CRC 12-224 +3\% \\
+Asbestos & 0.11 & 0.313 & -- & \cite{white} & \cite{white}~D & \textit{disagrees} & CRC 12-224 +22\% at 273 K \\
+Beryllium Oxide & 302 & 3.09 & 6 & \cite{white} & \cite{white}~D & mixed & CRC 12-222 +10\%; CRC 12-224 +50\% at 1273 K \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids / Bricks}} \\
+Brick, Common & 0.7 & 1.344 & -- & \cite{holman} & \cite{white}~D & checked & Rohsenow T2.35 -3\%; Kreith C.1 -1\% \\
+Brick, Chrome & 2.2 & 2.52 & 5 & \cite{holman} & \cite{white}~D & checked & Rohsenow T2.35 -4\% \\
+Brick, Fireclay & 1 & 1.449 & 2 & \cite{thermtest} & \cite{white}~D & checked & Rohsenow T2.35 +5\%; CRC 12-224 -8\% \\
+Brick, Magnesite & 4 & 1.92 & 6 & \cite{holman} & \cite{white}~D & \textit{disagrees} & Rohsenow T2.35 -17\% at 922 K \\
+Brick, Masonry & 0.66 & 1.674 & -- & \cite{thermtest} & \cite{white}~D & none &  \\
+Brick, Silica & 1.1 & 1.355 & -- & \cite{ctherm} & \cite{white}~D & none &  \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids}} \\
+Carbon & 1.6 & 1.602 & 6 & \cite{spacemat} & \cite{white}~D & none &  \\
+Cement Mortar & 0.9 & 1.451 & -- & \cite{white} & \cite{white}~D & \textit{disagrees} & Rohsenow T2.35 +25\% at 300 K; CRC 12-224 +64\% at 363 K \\
+Concrete & 1 & 1.511 & -- & \cite{thermtest} & \cite{white}~D & \textit{disagrees} & Rohsenow T2.35 -29\% at 300 K; Kreith C.1 -41\% at 300 K; CRC 12-224 +25\% at 273 K \\
+Coal & 0.24 & 1.625 & -- & \cite{holman} & \cite{white}~D & checked & CRC 12-224 -8\% \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids / Diamonds}} \\
+Diamond Type I & 1000 & 1.776 & 2 & \cite{thermtest} & \cite{white}~D & \textit{disagrees} & CRC 12-219 -15\% at 400 K \\
+Diamond Type IIa & 2650 & 1.782 & 2 & \cite{holman} & \cite{white}~D & \textit{disagrees} & CRC 12-219 +16\% at 400 K \\
+Diamond Type IIb & 1510 & 1.658 & 2 & \cite{lienhard4} & \cite{white}~D & \textit{disagrees} & CRC 12-219 +12\% at 400 K \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids / Earths}} \\
+Clay & 1.4 & 1.285 & -- & \cite{rolle} & \cite{white}~D & checked & Rohsenow T2.35 +8\% \\
+Diatomaceous Earth & 0.09 & 0.35 & 2 & \cite{thermtest} & \cite{white,crc}~D & \textbf{replaced} & from CRC 12-224 diatomite, 0.5 g/cm3: 0.09 and 0.16 at 273 and 673 K; White's 1.3 is ten times diatomite powders' 0.05-0.16; Rohsenow T2.35 +37\% at 300 K; CRC 12-224 +0\% \\
+Sand & 0.3 & 1.205 & -- & \cite{thermtest} & \cite{white}~D & checked & CRC 12-224 -9\% \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids / Glasses}} \\
+Corning Pyrex 7740 & 1.1 & 1.616 & 4 & \cite{thermtest} & \cite{white}~D & mixed & Rohsenow T2.35 -19\% at 300 K; CRC 12-226 -4\% \\
+Pyroceram & 4.1 & 2.033 & 6 & \cite{thermtest} & \cite{white}~D & none &  \\
+Window & 1 & 2.268 & 2 & \cite{holman} & \cite{white,crc}~D & \textbf{replaced} & from CRC 12-227 soda-lime glass (72 SiO2, 15 Na2O, 11 CaO, 2 Al2O3): 1.00 and 1.15 at 273 and 373 K; White gives 0.84; Rohsenow T2.35 -26\% at 300 K; Kreith C.1 +8\%; CRC 12-226 +0\% \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids}} \\
+Ice & 2.2 & 1.756 & -- & \cite{holman} & \cite{white}~D & checked & Kreith C.1 +0\%; CRC 12-222 +0\% \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids / Insulations}} \\
+Cork, granular & 0.045 & 0.301 & -- & \cite{thermtest} & \cite{white}~D & checked & Rohsenow T2.35 +0\% \\
+Corkboard & 0.043 & 0.304 & -- & \cite{white} & \cite{white}~D & mixed & Rohsenow T2.35 +10\% at 300 K; Kreith C.1 +7\% \\
+Cellulose, loose & 0.038 & 0.093 & -- & \cite{greenspec} & \cite{white}~D & checked & Rohsenow T2.35 -3\% \\
+Feltboard & 0.035 & 0.179 & -- & \cite{tradekorea} & \cite{white}~D & none &  \\
+Glass Fiber & 0.035 & 0.02688 & -- & \cite{holman} & \cite{white}~D & checked & Rohsenow T2.35 -3\% \\
+Glass Wool & 0.038 & 0.0168 & -- & \cite{holman} & \cite{white}~D & mixed & Rohsenow T2.35 +0\%; CRC 12-224 -24\% at 373 K \\
+Kapok & 0.035 & 0.207 & -- & \cite{citeseer} & \cite{white}~D & none &  \\
+Magnesia, 85\% & 0.065 & 0.179 & 2 & \cite{chromalox} & \cite{white}~D & mixed & Rohsenow T2.35 +35\% at 365 K; Kreith C.1 -5\%; CRC 12-224 -15\% at 303 K \\
+Polystyrene & 0.025 & 0.05198 & -- & \cite{thermtest} & \cite{white}~D & checked & Rohsenow T2.35 -7\% \\
+Rubber, Foam & 0.03 & 0.2092 & -- & \cite{thermtest} & \cite{white}~D & mixed & Rohsenow T2.35 -6\%; CRC 12-224 -40\% at 293 K \\
+Rock Wool & 0.04 & 0.084 & -- & \cite{vdm} & \cite{white}~D & checked & Kreith C.1 +0\%; CRC 12-224 +0\% \\
+Sawdust & 0.059 & 0.336 & -- & \cite{greenspec} & \cite{white}~D & mixed & Kreith C.1 -26\% at 300 K; CRC 12-224 -2\% \\
+Vermiculite, loose & 0.058 & 0.1657 & -- & \cite{thermtest} & \cite{white}~D & mixed & Rohsenow T2.35 -15\% at 300 K; Kreith C.1 +0\% \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids}} \\
+Magnesium Oxide & 53 & 3.15 & 6 & \cite{lienhard4} & \cite{white}~D & \textit{disagrees} & CRC 12-224 +14\% at 373 K \\
+Plaster & 0.5 & 1.36 & -- & \cite{thermtest} & \cite{white}~D & none &  \\
+Quartz, fused & 1.3 & 1.639 & 6 & \cite{thermtest} & \cite{white}~D & checked & CRC 12-222 -9\%; CRC 12-226 -3\% \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids / Rocks}} \\
+Granite & 3 & 2.165 & -- & \cite{lienhard4} & \cite{white}~D & \textit{disagrees} & CRC 12-224 +36\% at 293 K \\
+Limestone & 2 & 2.07 & -- & \cite{lienhard4} & \cite{white}~D & mixed & Kreith C.1 +5\%; CRC 12-224 +100\% at 293 K \\
+Marble & 2.7 & 2.65 & -- & \cite{white} & \cite{white}~D & checked & Kreith C.1 +4\% \\
+Sandstone & 2.8 & 1.628 & -- & \cite{white} & \cite{white}~D & \textit{disagrees} & Kreith C.1 +65\% at 300 K; CRC 12-224 +115\% at 293 K \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids}} \\
+Rubber, hard & 0.16 & 2.4 & -- & \cite{holman} & \cite{white}~D & checked & CRC 12-224 +0\% \\
+Skin, human & 0.37 & 2.666 & -- & \cite{ncbi} & \cite{white}~D & none &  \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids / Snow}} \\
+Snow, loose & 0.05 & 0.2092 & -- & \cite{thermtest} & \cite{white}~D & none &  \\
+Snow, packed & 0.19 & 1.151 & -- & \cite{thermtest} & \cite{white}~D & none &  \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids}} \\
+Teflon-min-heat-capacity & 0.26 & 2.58 & -- & \cite{bearingworks} & \cite{white,crc}~D & \textbf{replaced} & from CRC 12-225 PTFE at 25 C, 0.26; White gives 0.35; CRC 12-224 +0\% \\
+Teflon-max-heat-capacity & 0.26 & 3.22 & -- & \cite{bearingworks} & \cite{white,crc}~D & \textbf{replaced} & from CRC 12-225 PTFE at 25 C, 0.26; White gives 0.35; CRC 12-224 +0\% \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids / Woods}} \\
+Balsa-min-heat-capacity & 0.055 & 0.2991 & -- & \cite{thermtest} & \cite{white}~D & mixed & Kreith C.1 +10\%; CRC 12-224 +38\% at 303 K \\
+Balsa-max-heat-capacity & 0.055 & 0.7363 & -- & \cite{thermtest} & \cite{white}~D & mixed & Kreith C.1 +10\%; CRC 12-224 +38\% at 303 K \\
+Fir & 0.11 & 1.632 & -- & \cite{lienhard4} & \cite{white}~D & mixed & Rohsenow T2.35 -8\%; CRC 12-224 -21\% at 293 K \\
+Cypress & 0.097 & 1.058 & -- & \cite{thermtest} & \cite{white}~D & none &  \\
+Maple & 0.17 & 1.634 & -- & \cite{thermtest} & \cite{white}~D & checked & Rohsenow T2.35 +6\% \\
+Oak & 0.17 & 1.434 & -- & \cite{lienhard4} & \cite{white}~D & checked & Rohsenow T2.35 +6\%; Kreith C.1 +0\%; CRC 12-224 +6\% \\
+Pine, yellow & 0.15 & 1.795 & -- & \cite{rolle} & \cite{white}~D & none &  \\
+Pine, white & 0.11 & 1.22 & -- & \cite{thermtest} & \cite{white}~D & checked & Rohsenow T2.35 -8\%; Kreith C.1 -8\%; CRC 12-224 +0\% \\
+Plywood & 0.12 & 0.66 & -- & \cite{lienhard4} & \cite{white}~D & checked & Rohsenow T2.35 +0\%; CRC 12-224 +9\% \\
+\multicolumn{8}{@{}l}{\textit{Nonmetallic Solids}} \\
+Wool & 0.038 & 0.041 & -- & \cite{greenspec} & \cite{white}~D & checked & CRC 12-224 -5\% \\
+\multicolumn{8}{@{}l}{\textit{Liquid Metals (stagnant only)}} \\
+Bismuth, liquid & 16.8 & 1.42 & 6 & \cite{thermtest} & \cite{white}~E & checked & Rohsenow T2.29 +0\% \\
+Lead, liquid & 15.5 & 1.601 & 5 & \cite{thermtest} & \cite{white}~E & checked & 7.5\% at 1000 K (Table A.3; older data) \\
+Mercury & 6.97 & 1.863 & 7 & \cite{thermtest} & \cite{white,lienhard6}~E & \textbf{replaced} & Lienhard's k, 6.97-12.0 W/m/K (Table A.3); White's App. E k (7.3-14.2) is older; CRC 6-254 -7\% \\
+Lithium, liquid & 43 & 2.147 & 7 & \cite{thermtest} & \cite{white}~E & none &  \\
+Potassium, liquid & 55 & 0.6724 & 8 & \cite{thermtest} & \cite{white}~E & \textit{disagrees} & Rohsenow T2.29 +14\% at 422 K \\
+Sodium, liquid & 88 & 1.284 & 8 & \cite{thermtest} & \cite{white}~E & checked & Rohsenow T2.29 +3\% \\
+\multicolumn{8}{@{}l}{\textit{Saturated Liquids (stagnant only)}} \\
+Ammonia & 0.586 & 2.88 & 5 & \cite{lienhard4} & \cite{white,lienhard6}~F & \textbf{replaced} & Lienhard Table A.3 values; White App. F data are older (up to 13\% off) \\
+Ethyl Alcohol & 0.186 & 1.89 & 7 & \cite{white} & \cite{white}~F & checked & Kreith B.2 -3\%; CRC 6-254 +1\% \\
+Ethylene Glycol & 0.254 & 2.66 & 6 & \cite{thermtest} & \cite{white}~F & checked & Kreith B.2 -0\%; CRC 6-254 +2\% \\
+Freon-12 & 0.0909 & 1.296 & 5 & \cite{lienhard4} & \cite{white,lienhard6}~F & \textbf{replaced} & Lienhard Table A.3 values; White App. F data are older (up to 24\% off; wrong trend) \\
+Glycerin & 0.282 & 3.016 & 4 & \cite{white} & \cite{white}~F & checked & Kreith B.2 +0\%; CRC 6-254 +1\% \\
+Unused Engine Oil & 0.147 & 1.669 & 2 & \cite{white} & \cite{white}~F & none &  \\
+Water & 0.564 & 4.184 & 12 & \cite{thermtest} & \cite{white}~F & checked & 2.9\% (Table A.3); CRC 6-254 +1\% \\
+\multicolumn{8}{@{}l}{\textit{Gases at 1 atm (stagnant only)}} \\
+Air & 0.0181 & 0.001185 & 18 & \cite{lienhard4} & -- & checked & 4.1\% (Table A.6); points above 1500 K not checkable; CRC 6-252 -2\% \\
+Ammonia & 0.0153 & 0.001683 & 9 & \cite{lienhard4} & -- & checked & 6.9\% at 700 K (Table A.6); points outside 240-700 K not checkable; CRC 6-252 -5\% \\
+Argon & 0.0124 & $8.47\times10^{-4}$ & 14 & \cite{lienhard4} & -- & checked & 1.5\% (Table A.6); points above 700 K not checkable; CRC 6-252 -1\% \\
+Carbon Dioxide & 0.0095 & 0.001533 & 7 & \cite{lienhard4} & -- & checked & 1.8\% (Table A.6); points outside 220-600 K not checkable; CRC 6-252 -4\% \\
+Carbon Monoxide & 0.0175 & 0.001184 & 6 & \cite{lienhard4} & -- & checked & 4.5\% (Table A.6); CRC 6-252 -3\% \\
+Helium & 0.115 & $8.44\times10^{-4}$ & 6 & \cite{lienhard4} & -- & checked & 5.3\% (Table A.6); CRC 6-252 -5\% \\
+Hydrogen & 0.128 & 0.001172 & 6 & \cite{lienhard4} & -- & checked & 7.0\% at 1000 K (Table A.6; older data); CRC 6-252 -6\% \\
+Nitrogen & 0.0183 & 0.001185 & 7 & \cite{lienhard4} & -- & checked & 4.7\% (Table A.6); CRC 6-252 -2\% \\
+Oxygen & 0.0182 & 0.001197 & 7 & \cite{lienhard4} & -- & checked & 0.6\% (Table A.6); CRC 6-252 -1\% \\
+Steam at 373.15 K & 0.0264 & 0.001243 & 7 & \cite{lienhard4} & -- & checked & 10\% at 1000 K (Table A.6; older data); CRC 6-252 +1\% \\
+\end{longtable}
+}
+
+\begin{thebibliography}{99}
+\bibitem{specheat} FEMM wiki, ``Specific Heat,'' \url{https://www.femm.info/doku/doku.php?id=specificheat}, saved 1 October 2026: the source of every Kt entry, row by row.
+\bibitem{lienhard6} J. H. Lienhard IV and J. H. Lienhard V, \emph{A Heat Transfer Textbook}, 6th ed., v6.00, 2024, \url{https://ahtt.mit.edu}, Tables A.1, A.3 and A.6. Used to check k, and the source of k for the entries marked ``replaced'' that cite it.
+\bibitem{crc} W. M. Haynes, ed., \emph{CRC Handbook of Chemistry and Physics}, 97th ed., CRC Press, 2016: Section 12, ``Thermal Conductivity of'' Metals and Semiconductors as a Function of Temperature (p.~12-219, from Ho, Powell and Liley, J.~Phys.\ Chem.\ Ref.\ Data 1, 279, 1972), Alloys (12-221), Crystalline Dielectrics (12-222), Ceramics and Other Insulating Materials (12-224) and Glasses (12-226); Section 6, Thermal Conductivity of Gases (6-252, M.~L. Huber and A.~H. Harvey) and of Liquids (6-254). Used to check k only.
+\bibitem{rohsenow} W. M. Rohsenow, J. P. Hartnett and Y. I. Cho, eds., \emph{Handbook of Heat Transfer}, 3rd ed., McGraw-Hill, 1998, Ch.~2: Table 2.29 (liquid metals, from the AEC/Navy \emph{Liquid Metals Handbook}, 1952), Tables 2.32 and 2.34 (elements and alloys) and Table 2.35 (miscellaneous materials, reprinted from Incropera and DeWitt, 3rd ed., 1990). Used to check k only.
+\bibitem{kreithhb} F. Kreith, ed., \emph{The CRC Handbook of Mechanical Engineering}, CRC Press, 1999, Appendix Tables B.2 (common liquids, 300 K), C.1 (common solids) and C.4 (pure metals, 25~\textdegree C). Used to check k only.
+\bibitem{lienhard4} J. H. Lienhard IV and J. H. Lienhard V, \emph{A Heat Transfer Textbook}, 4th ed., as cited by \cite{specheat} for most $K_t$ values. Not held.
+\bibitem{thermtest} Thermtest Inc., materials thermal property database, as cited by \cite{specheat}.
+\bibitem{white} F. M. White, \emph{Heat and Mass Transfer}, Addison-Wesley, 1988 (printed copy held; scans of Appendices C--F, pp.~672--681, in \texttt{Thermal/}). Source of the library's k; also a $K_t$ source cited by \cite{specheat}. White's values are transcribed in \texttt{provenance/white\_k.csv}.
+\bibitem{matweb} MatWeb material property data, as cited by \cite{specheat}.
+\bibitem{holman} J. P. Holman, \emph{Heat Transfer}, 8th ed., McGraw-Hill, 2001, pp.~640--642, as cited by \cite{specheat}.
+\bibitem{cengel} Y. A. \c{C}engel and A. J. Ghajar, \emph{Heat and Mass Transfer}, 4th ed., McGraw-Hill, 2011, as cited by \cite{specheat}.
+\bibitem{rolle} K. Rolle, \emph{Heat and Mass Transfer}, 2nd ed., Cengage Learning, 2015, as cited by \cite{specheat}.
+\bibitem{carpenter} Carpenter Technology catalog (HyMu 80, High Permeability 49), as cited by \cite{specheat}.
+\bibitem{ctherm} C-Therm Technologies, as cited by \cite{specheat}.
+\bibitem{greenspec} GreenSpec, insulation materials thermal properties, as cited by \cite{specheat}.
+\bibitem{spacemat} SpaceMatDB, as cited by \cite{specheat}.
+\bibitem{tradekorea} TradeKorea, rigid graphite felt board, as cited by \cite{specheat}.
+\bibitem{citeseer} CiteSeerX document 10.1.1.543.2996, as cited by \cite{specheat}.
+\bibitem{chromalox} Chromalox, as cited by \cite{specheat}.
+\bibitem{vdm} VDM Group and Newport City Council rock-wool documents, as cited by \cite{specheat}.
+\bibitem{ncbi} NCBI PMC3699319 and Loughborough University ICEE paper, as cited by \cite{specheat}.
+\bibitem{bearingworks} Bearing Works, as cited by \cite{specheat}.
+\bibitem{doiarmco} doi:10.1063/1.1710018 (Armco iron), as cited by \cite{specheat}.
+\end{thebibliography}
+
+\noindent Copyright 2026 David Meeker. This document is licensed under the \href{https://creativecommons.org/licenses/by/4.0/}{Creative Commons Attribution 4.0 International License (CC BY 4.0)}.
+
+\end{document}

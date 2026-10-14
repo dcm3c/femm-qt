@@ -30,6 +30,10 @@ public:
     void setEditAction(int action);
     int editAction() const { return m_editAction; }
 
+    // Delete everything currently selected. Shared by Edit|Delete Selected
+    // (bound to Delete) and by Backspace handled in keyPressEvent.
+    void deleteSelected();
+
     // Zoom/pan
     void zoomIn();
     void zoomOut();
@@ -120,7 +124,7 @@ private:
 
     // Grid
     bool m_showGrid = true;
-    bool m_snapToGrid = true;
+    bool m_snapToGrid = false;
     double m_gridSize = 1.0;
 
     // Display

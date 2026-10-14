@@ -1,0 +1,95 @@
+folder,name,eps_x,eps_y,frequency,source,note
+"Gases (20 C, 1 atm)",Helium,1.000065,1.000065,static,"NBS Circular 537 (1953), Sec. 2.2",(eps-1) x 10^6 = 65.0
+"Gases (20 C, 1 atm)",Hydrogen,1.0002538,1.0002538,static,"NBS Circular 537 (1953), Sec. 2.2",(eps-1) x 10^6 = 253.8
+"Gases (20 C, 1 atm)",Oxygen,1.0004947,1.0004947,static,"NBS Circular 537 (1953), Sec. 2.2",(eps-1) x 10^6 = 494.7
+"Gases (20 C, 1 atm)",Argon,1.0005172,1.0005172,static,"NBS Circular 537 (1953), Sec. 2.2",(eps-1) x 10^6 = 517.2
+"Gases (20 C, 1 atm)","Air (dry, CO2-free)",1.0005364,1.0005364,static,"NBS Circular 537 (1953), Sec. 2.2",(eps-1) x 10^6 = 536.4
+"Gases (20 C, 1 atm)",Nitrogen,1.000548,1.000548,static,"NBS Circular 537 (1953), Sec. 2.2",(eps-1) x 10^6 = 548.0
+"Gases (20 C, 1 atm)",Carbon dioxide,1.000922,1.000922,static,"NBS Circular 537 (1953), Sec. 2.2",(eps-1) x 10^6 = 922
+Liquids/Water (high-frequency limit; DC: use current flow),"Water, 20 C",80.37,80.37,static,NBS Circular 514 (1951),20 C; Section A standard liquid
+Liquids/Water (high-frequency limit; DC: use current flow),"Water, 25 C",78.54,78.54,static,NBS Circular 514 (1951),25 C; Section A standard liquid
+Liquids/Water (high-frequency limit; DC: use current flow),"Water, 50 C",70,70,static,NBS Circular 514 (1951),"50 C; from 78.54 at 25 C and the circular's coefficient a = 0.00200 per C, log10(eps) = log10(eps25) - a (t - 25); ITU-R P.527-6 eq. 8 gives 70.3"
+Liquids/Polar Organic Liquids (high-frequency limit),Methanol,33.62,33.62,static,NBS Circular 514 (1951),20 C; Section A standard liquid (32.63 at 25 C)
+Liquids/Polar Organic Liquids (high-frequency limit),Ethanol,24.3,24.3,static,NBS Circular 514 (1951),25 C
+Liquids/Polar Organic Liquids (high-frequency limit),1-Propanol,20.1,20.1,static,NBS Circular 514 (1951),25 C
+Liquids/Polar Organic Liquids (high-frequency limit),2-Propanol,18.3,18.3,static,NBS Circular 514 (1951),25 C
+Liquids/Polar Organic Liquids (high-frequency limit),Glycerol,42.5,42.5,static,NBS Circular 514 (1951),25 C
+Liquids/Polar Organic Liquids (high-frequency limit),Acetone,20.7,20.7,static,NBS Circular 514 (1951),25 C
+Liquids/Polar Organic Liquids (high-frequency limit),Formamide,109,109,static,NBS Circular 514 (1951),20 C
+Liquids/Polar Organic Liquids (high-frequency limit),"1,2-Dichloroethane",10.65,10.65,static,NBS Circular 514 (1951),20 C; Section A standard liquid (10.36 at 25 C)
+Liquids/Polar Organic Liquids (high-frequency limit),Nitrobenzene,35.74,35.74,static,NBS Circular 514 (1951),20 C; Section A standard liquid (34.82 at 25 C)
+Liquids/Low-Permittivity Organic Liquids,Diethyl ether,4.335,4.335,static,NBS Circular 514 (1951),20 C
+Liquids/Low-Permittivity Organic Liquids,Benzene,2.2811,2.2811,static,NBS Circular 514 (1951),20 C; Section A standard liquid (2.274 at 25 C)
+Liquids/Low-Permittivity Organic Liquids,Toluene,2.379,2.379,static,NBS Circular 514 (1951),25 C
+Liquids/Low-Permittivity Organic Liquids,Hexane,1.89,1.89,static,NBS Circular 514 (1951),20 C
+Liquids/Low-Permittivity Organic Liquids,Cyclohexane,2.023,2.023,static,NBS Circular 514 (1951),20 C; Section A standard liquid (2.015 at 25 C)
+Liquids/Low-Permittivity Organic Liquids,Carbon tetrachloride,2.238,2.238,static,NBS Circular 514 (1951),20 C; Section A standard liquid (2.228 at 25 C)
+Liquids/Low-Permittivity Organic Liquids,Chlorobenzene,5.708,5.708,static,NBS Circular 514 (1951),20 C; Section A standard liquid (5.621 at 25 C)
+Liquids/Insulating Oils,Capacitor oil,2.2,2.2,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.1",25 C
+Liquids/Insulating Oils,Pipe cable oil,2.15,2.15,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.1",25 C
+Liquids/Insulating Oils,Self-contained cable oil,2.3,2.3,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.1",25 C
+Liquids/Insulating Oils,Heavy cable oil,2.23,2.23,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.1",25 C
+Liquids/Insulating Oils,Transformer oil,2.25,2.25,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.1",25 C
+Liquids/Insulating Oils,Alkyl benzene,2.1,2.1,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.1",25 C
+Liquids/Insulating Oils,Polybutene pipe cable oil,2.14,2.14,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.1",25 C; dielectric constant given at 1 MHz
+Liquids/Insulating Oils,Polybutene capacitor oil,2.22,2.22,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.1",25 C; dielectric constant given at 1 MHz
+Liquids/Insulating Oils,Silicone fluid,2.7,2.7,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.1",25 C
+Liquids/Insulating Oils,Castor oil,3.74,3.74,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.1",25 C
+Liquids/Insulating Oils,C8F16O fluorocarbon,1.86,1.86,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.1",25 C; dissipation factor <0.0005 (bound used)
+"Solid Insulation/Ceramics, Glass and Stone",Alumina (Al2O3),8.5,8.5,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",
+"Solid Insulation/Ceramics, Glass and Stone",Porcelain (mullite),8.2,8.2,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",
+"Solid Insulation/Ceramics, Glass and Stone",Steatite,5.5,5.5,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",
+"Solid Insulation/Ceramics, Glass and Stone",Magnesium oxide (MgO),9.65,9.65,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",dissipation factor <3 x 10^-4 (bound used)
+"Solid Insulation/Ceramics, Glass and Stone",Glass (soda lime),6.25,6.25,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",
+"Solid Insulation/Ceramics, Glass and Stone",Mica,6.9,6.9,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",
+"Solid Insulation/Ceramics, Glass and Stone",Porcelain,6,6,60 Hz,Callister & Rethwisch 10th ed. (2018) Table 18.4,60 Hz; Dorf Table 55.2 gives 8.2 for mullite porcelain
+"Solid Insulation/Ceramics, Glass and Stone",Fused silica,4,4,60 Hz,Callister & Rethwisch 10th ed. (2018) Table 18.4,60 Hz
+"Solid Insulation/Ceramics, Glass and Stone",Pyrex 7740 borosilicate glass,4.6,4.6,1 MHz,"Corning, Glass Silicon Constraint Substrates (Pyrex 7740)","1 MHz, 20 C"
+"Solid Insulation/Ceramics, Glass and Stone","Marble, dolomitic (USGS sample, New York)",7.7,7.7,1 kHz,"G. R. Olhoeft, USGS Open-File Report 79-993 (1979), Table 2","1 kHz, dry; tan delta 0.0137; single sample"
+"Solid Insulation/Ceramics, Glass and Stone","Marble, pink (USGS sample, Colorado)",11.7,11.7,1 kHz,"G. R. Olhoeft, USGS Open-File Report 79-993 (1979), Table 2","1 kHz, dry; tan delta 0.0213; single sample"
+Solid Insulation/Polymers,Polyethylene (LDPE),2.3,2.3,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",
+Solid Insulation/Polymers,Polyethylene (MDPE),2.3,2.3,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",
+Solid Insulation/Polymers,Polyethylene (HDPE),2.35,2.35,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",
+Solid Insulation/Polymers,Cross-linked polyethylene (XLPE),2.3,2.3,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",
+Solid Insulation/Polymers,EPR,3.25,3.25,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",dielectric constant 3.0-3.5 given at 1 kHz only (middle used); dissipation factor at 60 Hz
+Solid Insulation/Polymers,Polypropylene,2.25,2.25,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",ranges 2.22-2.28 / 2-3 x 10^-4 / 2.5-3.0 x 10^-4 (middles used)
+Solid Insulation/Polymers,PTFE,2,2,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",dissipation factor <2 x 10^-4 (bound used)
+Solid Insulation/Polymers,Glass-reinforced polyester premix,6.3,6.3,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",ranges 5.3-7.3 / 1-4 x 10^-2 / 5.0-6.4 / 0.8-2.2 x 10^-2 (middles used)
+Solid Insulation/Polymers,Thermoplastic polyester,3.55,3.55,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",dielectric constant 3.3-3.8 given at 100 Hz (middle used); dissipation factor 1.5-2.0 x 10^-3 at 60 Hz (middle used)
+Solid Insulation/Polymers,Polycarbonate,3.17,3.17,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",
+Solid Insulation/Polymers,Epoxy (mineral filler),5,5,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",ranges 4.4-5.6 / 1.1-8.3 x 10^-2 / 4.2-4.9 / 0.19-1.4 x 10^-1 / 4.1-4.6 / 0.13-1.4 x 10^-1 (middles used)
+Solid Insulation/Polymers,Epoxy (silica filler),3.85,3.85,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",ranges 3.2-4.5 / 0.8-3.0 x 10^-2 / 3.2-4.0 / 0.8-3.0 x 10^-2 / 3.0-3.8 / 2-4 x 10^-2 (middles used)
+Solid Insulation/Polymers,Silicone rubber,3.65,3.65,60 Hz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",ranges 3.3-4.0 / 1.5-3.0 x 10^-2 / 3.1-3.7 / 3.0-5.0 x 10^-3 (middles used)
+Solid Insulation/Polymers,Phenol-formaldehyde,5.3,5.3,60 Hz,Callister & Rethwisch 10th ed. (2018) Table 18.4,60 Hz
+Solid Insulation/Polymers,"Nylon 6,6",4,4,60 Hz,Callister & Rethwisch 10th ed. (2018) Table 18.4,60 Hz
+Solid Insulation/Polymers,Polystyrene,2.6,2.6,60 Hz,Callister & Rethwisch 10th ed. (2018) Table 18.4,60 Hz
+Solid Insulation/Polymers,Kapton HN polyimide film,3.4,3.4,1 kHz,"DuPont, Kapton HN polyimide film data sheet","1 kHz, 25 and 50 um film (3.5 for 75 and 125 um), ASTM D150"
+Solid Insulation/Polymers,Delrin 150 acetal (POM-H),3.7,3.7,60 Hz,Delrin 150 NC010 technical data (ASTM D150),"60 Hz, 73 F, ASTM D150"
+Solid Insulation/Polymers,Mylar polyester film (PET),3.3,3.3,100 Hz,"DuPont Teijin Films, Mylar Electrical Properties, Fig. 6","100 Hz, 25 C, read from Figure 6 (Mylar C, 25 um); about 3.28 at 1 kHz"
+Solid Insulation/Polymers,Kapton FN 120FN616 (FEP-coated polyimide),3.1,3.1,frequency not stated,"DuPont, Kapton FN polyimide film technical data sheet",frequency not stated; ASTM D150
+Solid Insulation/Polymers,Kapton FN 150FN019 (FEP-coated polyimide),2.7,2.7,frequency not stated,"DuPont, Kapton FN polyimide film technical data sheet",frequency not stated; ASTM D150
+Solid Insulation/Polymers,Kapton FN 250FN029 (FEP-coated polyimide),3,3,frequency not stated,"DuPont, Kapton FN polyimide film technical data sheet",frequency not stated; ASTM D150
+Solid Insulation/Polymers,"PVC, rigid (Trovidur PN)",3.2,3.2,frequency not stated,"Roechling, Trovidur PN grey (PVC-U) technical data sheet",frequency not stated; IEC 60250 (dissipation factor given at 1 MHz)
+Solid Insulation/Polymers,"Kraft paper, oil-impregnated",3.3,3.3,frequency not stated,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Ch. 55 text, p. 1370","frequency not stated; approximately 3.1-3.5 (middle used); impregnant about 2.2, dried cellulose 6.5-10"
+Solid Insulation/Polymers,Natural rubber (polyisoprene),2.6,2.6,1 kHz,CRC Handbook of Chemistry and Physics 97th ed. (2016) p. 13-17,"1 kHz, 27 C; CRC gives typical values (2.5 at 1 MHz)"
+Solid Insulation/Polymers,Neoprene (polychloroprene),6.6,6.6,1 kHz,CRC Handbook of Chemistry and Physics 97th ed. (2016) p. 13-17,"1 kHz, 25 C; CRC gives typical values (6.3 at 1 MHz)"
+Solid Insulation/Thin-Film Dielectrics,SiO2 film,3.9,3.9,1 kHz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",
+Solid Insulation/Thin-Film Dielectrics,Si3N4,12.7,12.7,1 kHz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",dissipation factor <1 x 10^-4 (bound used)
+Solid Insulation/Thin-Film Dielectrics,Ta2O5,28,28,1 kHz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",
+Solid Insulation/Thin-Film Dielectrics,HfO2,35,35,1 kHz,"Dorf, Electrical Engineering Handbook 2nd ed. (2000) Table 55.2",
+Circuit Board Laminates,FR-4 epoxy-glass,4.35,4.35,1 MHz,"Kreith, CRC Handbook of Mechanical Engineering (1999) Table 10A.1.7",ranges 4.10-4.60 / 0.028-0.030 (middles used)
+Circuit Board Laminates,Polyfunctional FR-4,4.35,4.35,1 MHz,"Kreith, CRC Handbook of Mechanical Engineering (1999) Table 10A.1.7",ranges 4.10-4.60 / 0.028-0.030 (middles used)
+Circuit Board Laminates,Multifunctional FR-4,4.35,4.35,1 MHz,"Kreith, CRC Handbook of Mechanical Engineering (1999) Table 10A.1.7",ranges 4.10-4.60 / 0.028-0.030 (middles used)
+Circuit Board Laminates,Polyimide-glass,4,4,1 MHz,"Kreith, CRC Handbook of Mechanical Engineering (1999) Table 10A.1.7",ranges 3.95-4.05 / 0.01-0.015 (middles used)
+Circuit Board Laminates,BT epoxy,3.975,3.975,1 MHz,"Kreith, CRC Handbook of Mechanical Engineering (1999) Table 10A.1.7",ranges 3.85-4.10 / 0.011-0.013 (middles used)
+Circuit Board Laminates,Cyanate ester-glass,3.55,3.55,1 MHz,"Kreith, CRC Handbook of Mechanical Engineering (1999) Table 10A.1.7",ranges 3.50-3.60 / 0.005-0.007 (middles used)
+Circuit Board Laminates,PPO epoxy,4,4,1 MHz,"Kreith, CRC Handbook of Mechanical Engineering (1999) Table 10A.1.7",ranges 3.80-4.20 / 0.008-0.009 (middles used)
+Circuit Board Laminates,PTFE-glass,2.5,2.5,1 MHz,"Kreith, CRC Handbook of Mechanical Engineering (1999) Table 10A.1.7",ranges 2.45-2.55 / 0.001-0.003 (middles used)
+Circuit Board Laminates,Alumina substrate,8.9,8.9,1 MHz,"Kreith, CRC Handbook of Mechanical Engineering (1999) Table 10A.1.7",dissipation factor .0002-.0015 (middle used)
+Semiconductors,Silicon,11.7,11.7,static,Ioffe Institute NSM database (www.ioffe.ru/SVA/NSM/Semicond),300 K
+Semiconductors,Germanium,16.2,16.2,static,Ioffe Institute NSM database (www.ioffe.ru/SVA/NSM/Semicond),300 K
+Semiconductors,Gallium arsenide (GaAs),12.9,12.9,static,Ioffe Institute NSM database (www.ioffe.ru/SVA/NSM/Semicond),"static, 300 K"
+Semiconductors,Indium phosphide (InP),12.5,12.5,static,Ioffe Institute NSM database (www.ioffe.ru/SVA/NSM/Semicond),"static, 300 K"
+Semiconductors,"Gallium nitride (GaN, wurtzite)",8.9,8.9,static,Ioffe Institute NSM database (www.ioffe.ru/SVA/NSM/Semicond),"static, 300 K"
+Semiconductors,"Silicon carbide, 6H (c-axis along y)",9.66,10.03,static,Ioffe Institute NSM database (www.ioffe.ru/SVA/NSM/Semicond),"static, 300 K; 9.66 perpendicular to c, 9.66/0.9631 = 10.03 parallel to c"
+Semiconductors,Diamond,5.7,5.7,static,Ioffe Institute NSM database (www.ioffe.ru/SVA/NSM/Semicond),10^2-10^4 Hz

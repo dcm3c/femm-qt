@@ -28,6 +28,8 @@ import math
 import re
 import sys
 
+import of_ac_curve
+
 TOL   = 0.02
 FLOOR = 1e-9
 
@@ -95,12 +97,15 @@ def compare(ref_path, test_path, tol=TOL, floor=FLOOR):
         for s in range(len(rsec)):
             sdom[(s, cls)] = mag(lambda ss, l, s=s, cls=cls: ss == s and _class(l) == cls)
 
-    ok, flags = 0, []
+    ok, flags, ac_cut = 0, [], 0
     for k in sorted(rv, key=lambda x: (x[0], str(x[1]))):
         if k not in tv:
             continue
         s, label = k
         rc, tc = rv[k], tv[k]
+        if of_ac_curve.excluded(rsec[s]):
+            ac_cut += min(len(rc), len(tc))
+            continue
         cls = _class(label)
         for j in range(min(len(rc), len(tc))):
             if not (math.isfinite(rc[j].real) and math.isfinite(rc[j].imag)):
@@ -120,8 +125,8 @@ def compare(ref_path, test_path, tol=TOL, floor=FLOOR):
             else:
                 flags.append((s, label, j, rc[j], tc[j], err))
 
-    print("compared %d gap-integral components: %d agree (err <= %.1f%%), %d flagged"
-          % (ok + len(flags), ok, tol * 100, len(flags)))
+    print("compared %d gap-integral components: %d agree (err <= %.1f%%), %d flagged%s"
+          % (ok + len(flags), ok, tol * 100, len(flags), of_ac_curve.note(ac_cut)))
     if flags:
         print("\nFLAGGED (reference vs test):")
         for s, label, j, a, b, err in sorted(flags, key=lambda x: -x[5]):

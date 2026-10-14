@@ -1,0 +1,4 @@
+# Store every file byte for byte: several FEMM library files and generators
+# depend on their line endings (CRLF), and the regenerated outputs are
+# checked byte for byte against the committed ones.
+* -text

@@ -31,6 +31,8 @@ Exit status is nonzero if anything is flagged, so it can gate a build.
 import re
 import sys
 
+import of_ac_curve
+
 FORCE  = {3}
 TORQUE = {4}
 
@@ -81,12 +83,15 @@ def compare(ref_path, test_path, tol=TOL, floor=FLOOR):
     rsec, rv = parse(ref_path)
     _,    tv = parse(test_path)
 
-    ok, flags = 0, []
+    ok, flags, ac_cut = 0, [], 0
     for k in sorted(rv):
         if k not in tv:
             continue
         s, n = k
         rc, tc = rv[k], tv[k]
+        if of_ac_curve.excluded(rsec[s]):
+            ac_cut += min(len(rc), len(tc))
+            continue
         # scale for force/torque: the dominant component of this integral
         dom = max((abs(c) for c in rc), default=0.0) if n in FORCE or n in TORQUE else None
         for j in range(min(len(rc), len(tc))):
@@ -100,8 +105,8 @@ def compare(ref_path, test_path, tol=TOL, floor=FLOOR):
             else:
                 flags.append((k, j, rc[j], tc[j], err))
 
-    print("compared %d integral components: %d agree (err <= %.1f%%), %d flagged"
-          % (ok + len(flags), ok, tol * 100, len(flags)))
+    print("compared %d integral components: %d agree (err <= %.1f%%), %d flagged%s"
+          % (ok + len(flags), ok, tol * 100, len(flags), of_ac_curve.note(ac_cut)))
     if flags:
         print("\nFLAGGED (reference vs test):")
         for (s, n), j, a, b, err in sorted(flags, key=lambda x: -x[4]):

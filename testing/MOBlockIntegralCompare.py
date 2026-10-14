@@ -33,6 +33,8 @@ this same shape, each with its own integral classification.
 import re
 import sys
 
+import of_ac_curve
+
 # --- mo_blockintegral (magnetics) integral classification ---
 FORCE  = {11, 12, 13, 14, 18, 19, 20, 21, 25, 26, 28, 29}   # x/y force components
 TORQUE = {15, 16, 22, 23, 27, 30}
@@ -103,13 +105,16 @@ def compare(ref_path, test_path, tol=TOL, length=LENGTH, floor=FLOOR):
             return max(maxmag(s, TORQUE), maxmag(s, FORCE) * length)
         return abs(rv.get((s, n), 0.0))                          # scalar: relative to self
 
-    ok, flags, excluded = 0, [], 0
+    ok, flags, excluded, ac_cut = 0, [], 0, 0
     for k in sorted(rv):
         if k not in tv:
             continue
         s, n = k
         if n in OF_DEFECT:
             excluded += 1
+            continue
+        if of_ac_curve.excluded(rsec[s]):
+            ac_cut += 1
             continue
         sc = scale(s, n)
         ne = abs(tv[k] - rv[k]) / sc if sc > floor else 0.0
@@ -120,9 +125,10 @@ def compare(ref_path, test_path, tol=TOL, length=LENGTH, floor=FLOOR):
 
     print("compared %d integral values: %d agree (norm err <= %.1f%%), %d flagged%s"
           % (ok + len(flags), ok, tol * 100, len(flags),
-             "" if not excluded else
-             "; %d excluded (types %s: OF Jp defect, see IncrementalLorentzTest)"
-             % (excluded, ",".join(str(n) for n in sorted(OF_DEFECT)))))
+             ("" if not excluded else
+              "; %d excluded (types %s: OF Jp defect, see IncrementalLorentzTest)"
+              % (excluded, ",".join(str(n) for n in sorted(OF_DEFECT))))
+             + of_ac_curve.note(ac_cut)))
     if flags:
         print("\nFLAGGED (reference vs test):")
         for (s, n), a, b, ne in sorted(flags, key=lambda x: -x[3]):

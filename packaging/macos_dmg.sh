@@ -197,6 +197,15 @@ for doc in manual.pdf octavefemm.pdf femm-lua.pdf usage.nb readme.txt \
         cp "$APP/Contents/Resources/$doc" "$FOLDER/docs/"
 done
 
+# ...and the reference subfolders stage_extras.sh put in Resources/docs: the
+# file-format references and the material-library papers. Without this they
+# shipped only INSIDE the bundle, where nobody looks (the format references
+# were in that state from their first release until 2026-10).
+for sub in formats materials; do
+    [ -d "$APP/Contents/Resources/docs/$sub" ] &&
+        cp -R "$APP/Contents/Resources/docs/$sub" "$FOLDER/docs/$sub"
+done
+
 chmod -R u+w "$FOLDER"
 
 # ---- Read Me ---------------------------------------------------------

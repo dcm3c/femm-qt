@@ -79,14 +79,24 @@ CurveDataDialog::PlotData TKDataDialog::buildPlotData(const std::vector<double> 
     const int npts = (int)T.size();
     PlotData pd;
 
-    // 101 points across the curve, as Original FEMM draws it. Unlike the B-H
-    // curve, this one is plotted the usual way round: T across, k up.
-    double dt = (T[npts - 1] - T[0]) / 100.0;
-    for (int i = 0; i <= 100; i++) {
-        double t = T[0] + i * dt;
-        pd.cx.push_back(t);
-        pd.cy.push_back(getK(t, T, K));
+    // Sampled interval by interval, with a sample exactly on every defined
+    // point, for the same reason as the B-H curve (bh_dialog.cpp): 101
+    // evenly spaced samples, Original FEMM's choice, leave closely spaced
+    // low points off the end of the line once the log plot drops T = 0.
+    // The sub-samples are what bend a straight interval correctly on a log
+    // axis. Unlike the B-H curve, this one is plotted the usual way round:
+    // T across, k up.
+    const int sub = std::max(4, (100 + npts - 2) / std::max(1, npts - 1));
+    for (int i = 0; i < npts - 1; i++) {
+        const double dt = (T[i + 1] - T[i]) / sub;
+        for (int j = 0; j < sub; j++) {
+            double t = T[i] + j * dt;
+            pd.cx.push_back(t);
+            pd.cy.push_back(getK(t, T, K));
+        }
     }
+    pd.cx.push_back(T[npts - 1]);
+    pd.cy.push_back(getK(T[npts - 1], T, K));
 
     pd.mx = T;
     pd.my = K;

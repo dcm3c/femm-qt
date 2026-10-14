@@ -1,0 +1,701 @@
+% SPDX-License-Identifier: CC-BY-4.0
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+\documentclass[
+  11pt,
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{2} % number sections and subsections
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
+\hypersetup{
+  pdftitle={Generating B-H Curves for Low-Carbon Steels},
+  pdfauthor={David Meeker},
+  colorlinks=true,
+  linkcolor={Maroon},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+\renewcommand{\today}{%
+  \the\day\ %
+  \ifcase\month\or
+  Jan\or Feb\or Mar\or Apr\or May\or Jun\or
+  Jul\or Aug\or Sep\or Oct\or Nov\or Dec\fi
+  \ \the\year
+}
+
+\title{Generating B-H Curves for Low-Carbon Steels}
+\author{David Meeker}
+\date{\today}
+
+% article.cls sets the bibliography heading with \section*, which would
+% leave the references the one unnumbered heading in a numbered document.
+\usepackage{etoolbox}
+\patchcmd{\thebibliography}{\section*{\refname}}{\section{\refname}}{}{\GenericWarning{}{bhcurves: bibliography heading not numbered}}
+\begin{document}
+\maketitle
+
+\section{Introduction}\label{introduction}
+
+Due to its good DC magnetic properties and wide availability, low carbon steels (from commercially pure iron through 1040 steel) are widely used in many sorts of magnetic devices.  However, because low carbon steels are not primarily intended for magnetic applications, their magnetic properties are poorly characterized by existing references and datasheets.  Where data is available the data is often missing provenance that is important to recreating the same performance in a real device, for example, production methods and heat treat information.  Furthermore, data is often totally unavailable at high flux levels / hard saturation, a regime which is often intentionally part of the design in DC magnetic devices.
+
+In order to provide defensible magnetization curves for low carbon steel, this note first presents a model that can generate B-H curves of low carbon steels over a wide range of chemical compositions and heat treats.  The parameters of this model are fit by simultaneously considering all available historical low carbon steel B-H curve data.  Then, consistent B-H curves for typical low-carbon steel grades with typical heat treats are generated.  These low-carbon B-H curves replace older curves of unknown / poorly defined provenance in the FEMM materials library.
+
+\section{The Model}\label{the-model}
+
+A magnetization curve is the sum of the mechanisms that produce it. Bozorth\cite{bozorth1951} (\emph{Ferromagnetism}, Chap. 11, p.~481 and Fig.~11-4) identifies three mechanisms are needed to model magnetization through hard saturation:
+\begin{itemize}
+\item Low-Field Toe
+\item Intermediate-Field Wall Motion
+\item High-Field Rotation
+\end{itemize}
+Since measured magnetization curves rarely extend to exitation levels where material is completely polarized, saturation is anchored here by a composition-based saturation polarization model.  The following subsections explain the parts of this model and tie them together into one expression that defines the complete magnetization curve of the family of low carbon steels.
+
+\subsection{The Low-Field Toe}\label{the-low-field-toe}
+
+The toe is due to the reversible bowing of domain walls inside their pinning wells. Rayleigh's law of low-field magnetization \cite{wiki-rayleigh} has two terms: a linear one carrying the initial permeability, which is this reversible bowing, and a quadratic one carrying its first rise, which is irreversible, the first walls breaking loose. The model carries them in different terms. The reversible one is the algebraic sigmoid,
+
+\begin{equation}\label{eq:toe}
+P(H;h_S) \;=\; \frac{H/h_S}{\sqrt{1+(H/h_S)^{2}}}
+\end{equation}
+
+given a fraction \(f_i\) of the saturation. It rises with slope \(1/h_S\) and has no quadratic term, since its expansion is \(u - u^{3}/2\) with \(u = H/h_S\), so it supplies the initial permeability and nothing else; its deficit falls as \(1/2u^{2}\), so it adds nothing to the first-power term of the approach to saturation either. The irreversible term belongs to the soft wall population of the next section, and the two together give Rayleigh's initial relation, as shown there. The toe's scale is not fitted separately: it is the scale \(h_S\) of that soft population, since the walls that bow reversibly are the walls that then break loose. Supplying the initial slope is the toe's whole job, and nothing else in the model can do it, since every wall and rotation term leaves the origin with zero slope.
+
+The saturating rational form \(H/(H+h)\) is the obvious alternative and would not serve. Scaled by a saturation it is the Frölich-Kennelly relation, which Bozorth gives in its reluctivity form \(1/(\mu-1) = a + bH\) and attributes to Frölich (1881) and Kennelly (1891) \cite{bozorth1951}, and which Roters derives from the same starting point this note uses (Art.~23) \cite{roters1941}. Both apply it to a whole magnetization curve. Its expansion is \(H/h - H^{2}/h^{2}\), so its permeability falls away from the origin and it subtracts from Rayleigh's quadratic term; the algebraic sigmoid has the same initial slope without that curvature.
+
+The toe's share is not a free number either. No source used here measures the curve below about 30 A/m, so the initial permeability is anchored to a measurement of iron instead: Bozorth tabulates Rayleigh's two constants for annealed iron as \(\mu_i\) = 200 and \(\nu = d\mu/dH\) = 2000 per oersted (Table 2, p.~494) \cite{bozorth1951}, and the fit is held to them at the pure-iron end of the family, as described under regression.
+
+\subsection{Intermediate-Field Wall Motion}\label{intermediate-field-wall-motion}
+
+Wall motion carries the bulk of the curve, roughly three quarters of \(J_s\). Its building block is the Burr type XII cumulative distribution \cite{wiki-burr},
+
+\begin{equation}\label{eq:burr}
+F(H;a,k,m) \;=\; 1-\left(1+(H/a)^{k}\right)^{-m}
+\end{equation}
+
+read as the cumulative distribution of unpinning fields over a population of domain walls. The scale a is the field at which a typical wall breaks loose, k controls how sharply the distribution rises, and m controls how heavy its high-field tail is.
+
+One Burr distribution is not enough, because its exponent k does two jobs. Below the scale it sets the onset, which goes as \((H/a)^{k}\); it also sets how abruptly the knee turns. The knee of these steels asks for k near 7, which would leave the walls immobile until the field is most of the way to the knee, whereas Rayleigh's quadratic term says the first walls break loose from the first increment of field. So the population is split in two. The soft population is the member of Eq.~\eqref{eq:burr} with \(k = 2\) and \(m = 1/2\),
+
+\[
+F_{\text{soft}}(H;h_S) \;=\; 1 - \frac{1}{\sqrt{1 + (H/h_S)^{2}}}
+\]
+
+which starts as \(H^{2}/2h_S^{2}\) and approaches saturation as \(1 - h_S/H\), with no free shape at all. The sharp population is Eq.~\eqref{eq:burr} with its own scale \(h_W\) and a free \(k_W\), and carries the knee. Its tail exponent \(k_W m_W\) is held at 2 ± 0.3 by a prior, since a narrow population of walls contributes nothing once all of it has broken loose.
+
+Together with the toe, the soft population gives the initial curve Rayleigh's form. With shares \(f_i\) and \(f_S\) and \(u = H/h_S\), the two expand at small field as
+
+\[
+\frac{J}{J_s} \;=\; f_i\,u + \tfrac{1}{2}f_S\,u^{2} + \cdots
+\]
+
+which is Rayleigh's initial relation \(\mu = \mu_1 + \nu H\), with \(\mu_1 = f_i J_s/(\mu_0 h_S)\) from the toe and \(\nu = f_S J_s/(2\mu_0 h_S^{2})\) from the soft walls alone. It is a small-field statement and nothing more. For ARMCO grade 2 at 1400 °F the emitted curve follows that line within 1\% up to 0.012 T and 3\% up to 0.04 T, and falls 12\% below it by 0.13 T as the soft population begins to saturate; Bozorth finds Rayleigh's law beginning to fail in a soft iron near 0.02 T (p.~509) \cite{bozorth1951}. The hysteretic part of Rayleigh's law, the shape and area of the low-field loop, lies outside this model, which gives only the normal curve.
+
+The sharp scale \(h_W\) is indexed by heat-treatment condition and made to depend on carbon, and the soft scale \(h_S\) is a fixed ratio to it, one ratio per heat-treatment regime (Section~\ref{the-assembled-model}). The two shares depend on carbon as well. How strongly is a result, and is reported with the others.
+
+The tail is not free either. Bozorth gives the law of approach in sufficiently high fields as \(I = I_s - a_0/H - b_0/H^{2}\) and calls it the most satisfactory representation of the facts (p.~486), and after Néel attributes the \(a_0/H\) term to ``the non-magnetic cavities or inclusions which are always present in materials'' (p.~488) \cite{bozorth1951}. In this model it is the soft population's term: its deficit falls as \(h_S/H\), so \(a_0 = f_S\,h_S\), while the toe's falls as \(1/H^{2}\) and joins the other term. It follows from parameters the fit fixes at lower field rather than being measured itself, and it is reported on those terms. Cementite is not a cavity, being ferromagnetic at about half the moment of ferrite, so in these steels the term is a magnetic inhomogeneity rather than a void, a partial version of Néel's mechanism rather than the thing itself.
+
+\subsection{High-Field Rotation}\label{high-field-rotation}
+
+Above the knee the only thing left to do is to rotate the remaining domains into line against the crystal anisotropy, which leaves a deficit falling as the inverse square of the field. This is the \(b_0/H^{2}\) term of the law just quoted, and it is Akulov's law of approach \cite{akulov1931},
+
+\begin{equation}\label{eq:akulov}
+J(H) \;=\; J_s\left(1-\frac{a}{H^{2}}\right), \qquad a \;=\; \frac{8}{105}\left(\frac{K_1}{J_s}\right)^{\!2} \;=\; \frac{2}{105}H_a^{2}
+\end{equation}
+
+where the 8/105 is the orientation average over a randomly oriented cubic polycrystal, as given by Bozorth \cite{bozorth1951}. Bozorth writes that coefficient as 0.0762, which is the same number. \(H_a\) is the anisotropy field,
+
+\begin{equation}\label{eq:ha}
+H_a = \frac{2K_1}{J_s} \approx 4.5\times10^{4}\ \mathrm{A/m}
+\end{equation}
+
+taking \(K_1\) = \(4.8\times10^{4}\) J/m\(^{3}\), the room-temperature value for iron \cite{wiki-anisotropy}. Keeping only the \(K_1\) term is justified by the same table, which puts \(K_2\) within ±0.5\(\times10^{4}\) J/m\(^{3}\): at that precision it cannot be told from zero.
+
+This is the most important constraint in the whole construction, because the field range the curves are wanted over runs about four times past the point where any of the measurements stop. Without a law the tail is invention. With one, the tail is physics and only its coefficients have to be determined. The law has two terms and both are present: the soft wall population carries \(a_0/H\) as described above, and the rotation term carries \(b_0/H^{2}\). The first-power term outlives the inverse-square one, and for 1010 the two deficits are equal near 5,000 Oe, where each is about 0.6 mT; above that the approach is Néel's rather than Akulov's.
+
+The law is imposed in two different ways, depending on which kind of curve is being built.
+
+In the regressed family the rotation term is itself a Burr XII distribution, Eq.~\eqref{eq:burr} with parameters \(h_R\), \(k_R\) and \(m_R\). Its tail falls as H raised to \(-k_R m_R\), so the law of approach is enforced by placing a prior on that product, \(k_R m_R\) = 2.0 ± 0.05. The prior does two jobs at once: it makes the extrapolation physical, and it collapses a parameter ridge that otherwise lets the fit wander along a direction the data cannot resolve.
+
+The scale and the fraction are not independent of each other either. Matching the Akulov coefficient of Eq.~\eqref{eq:akulov} to the Burr tail gives \(h_R = H_a\sqrt{(2/105)/f_r}\), and rather than fit \(h_R\) and check that afterwards, the model is written that way: each grade's rotation scale is built from its own anisotropy field, and the only free quantity is the overall level, given a prior of 10\% in its logarithm. So the scale follows composition, since \(H_a = 2K_1/J_s\) does. What the constraint is worth is a result and is reported as one. It is worth noting here that \(K_1\) enters only at this point and in Eq.~\eqref{eq:ha}. The emitted curves depend on it only through that construction, because the tail is pinned through the exponent of Eq.~\eqref{eq:burr} rather than through the coefficient of Eq.~\eqref{eq:akulov}.
+
+Where a curve is built from a measurement rather than from the model, the law is applied literally in the form of Eq.~\eqref{eq:akulov}, with \(J_s\) given by chemistry or by the product bulletin and the coefficient a fixed by continuity at the last measured point. \(J_s\) is never fitted from these curves. The law holds only for H well above \(H_a\), and fitting \(J_s\) from data that stops an order of magnitude below that returned 1.93 T against a stated 2.15 T, and then broke monotonicity at the splice.
+
+\subsection{Saturation Polarization from Composition}\label{saturation-polarization-from-composition}
+
+Saturation is a property of composition and of which phase holds the carbon, but not of the anneal that produced them. Annealing moves where the knee falls and how sharp it is; it cannot change how much iron is in the bar. Every condition in this family, as hot rolled or furnace cooled from 1300, 1400 or 1500 °F, leaves the carbon as carbide, so one composition law covers all four and the saturation polarization \(J_s\) is computed here from chemistry and never fitted to a curve. A quenched steel would need its own carbon coefficient, and the reason is taken up with that coefficient below.
+
+At room temperature a plain carbon steel is ferrite holding carbon as cementite, with manganese dissolved in the ferrite. Both dilute the saturation, and in the attenuation form each does so through one coefficient:
+
+\begin{equation}\label{eq:js}
+J_s(C,\mathrm{Mn}) \;=\; J_{s,\mathrm{Fe}} \;-\; k_{\mathrm{C}}\,C \;-\; k_{\mathrm{Mn}}\,\mathrm{Mn}
+\end{equation}
+
+Here C and Mn are in weight percent. Equation~\eqref{eq:js} is the standard way of predicting the saturation of a steel from its composition, going back to Maurer and Schroeter \cite{maurer1929} and collected with its later coefficient sets by Ouda and co-workers \cite{ouda2018}. That the fall is linear in the alloying element is a measured result rather than a convenience. Burrows, reproducing Gumlich's iron-carbon and iron-silicon series, reports the saturation decreasing ``at a rate almost proportional to the amount of carbon added'', holding for any one heat treatment and changing rate between treatments \cite{burrows1916}. What is particular to this work is not the form but the three constants, so it is worth separating what each of them rests on.
+
+The iron constant has a primary determination behind it. Sanford and Bennett obtained 21.58 ± 0.01 kG, or 2.158 T, at 25 °C by a modification of the Ewing isthmus method, on National Bureau of Standards ingots whose total impurities across 55 elements sought came to about 0.01\% and whose carbon did not exceed 0.001\%. Their paper tabulates four earlier determinations by different methods in different countries, all within 0.3\% of that figure \cite{sanford1941}, and Bozorth gives the same value \cite{bozorth1951}. It is the value used here.
+
+The reason such a reading comes out low is worth stating on its own account. At a few thousand oersteds the approach to saturation is still running as \(1/H^{2}\) and is nowhere near complete: the same digitized curve climbs to 21.56 kG by 2550 Oe and 21.59 kG by 4030 Oe, beyond where the chart itself stops. Reading a saturation value off the flat-looking end of a logarithmic B-H plot therefore underestimates it, by about the 6 mT seen here. It is the same error the law of approach exists to prevent, and it is why \(J_s\) is computed in this work rather than read from a curve.
+
+The carbon coefficient, k\(_{\mathrm{C}}\) = 0.174 T per weight percent, is from Cheney's iron-carbon alloys \cite{cheney}. They were made free of manganese so that carbon is the only variable, and were annealed from 760 to 930 °C, most of them at 820 °C, which brackets the 1400 and 1500 °F conditions of this family. Each specimen yields more than one maximum intensity of magnetization, one per constituent, so the series brackets the coefficient instead of fixing it: the two branches give 0.162 and 0.201 T per weight percent, with their mean at 0.175. The value used here sits at that mean. Gumlich's series, which reaches this work through both Bozorth's Fig.~9-19 and Burrows and is therefore one line of evidence rather than two, is steeper and would give about 0.23; it is also the weaker comparison, since his annealed specimens were held at 950 °C, above anything here, and a hotter anneal can leave more carbon in solution, which costs more than the same carbon held as carbide.
+
+Why carbon is so expensive is worth seeing, because the magnitude is the part a reader can check. Carbon costs about eight times what a substituent carrying no moment would cost, and it does so by taking iron with it: read as a two-phase mixture, C/6.67 of the mass becomes cementite, Fe\(_{3}\)C being 6.67 wt\% carbon, and 0.174 T per weight percent is what that costs if the carbide saturates near 1.0 T. Cementite measures stronger than that: Bozorth quotes 12,400 G, or 1.23 T at room temperature \cite{bozorth1951}. He gives the reason for the gap too: carbon reduces the average moment of the iron as well as diluting it, which a two-phase mixture has no term for. The mixture is therefore an interpretation of k\(_{\mathrm{C}}\) here and not its source.
+
+Published coefficients for carbon exist alongside the manganese one used below, and are not used, for the reason Burrows measured. Those models are calibrated on hardened steel, where carbon is in solution in martensite instead of held as carbide, and carbon in solution lowers the moment of the iron it dissolves in, which costs more than the same carbon locked into a weak carbide. Their A(C) runs from 7.4 to \(15.1\times10^{-6}\) T·m\(^{3}\)/kg against the 22.1 these annealed alloys require, and two of the three make it a function of carbon content as well, so their carbon term is not even linear.
+
+The manganese coefficient is taken straight from the literature the attenuation form comes from. Measuring retained austenite magnetically requires predicting the saturation of a hypothetical austenite-free reference from its composition, which is the same problem Eq.~\eqref{eq:js} solves, so those models tabulate the coefficient this work needs. Maurer and Schroeter and Exner \cite{exner1960} independently give A(Mn) = \(2.90\times10^{-6}\) T·m\(^{3}\)/kg per mass percent; Hoselitz \cite{hoselitz1952} gives \(2.39\times10^{-6}\). The three are collected by Ouda and co-workers \cite{ouda2018}.
+
+Those are specific quantities, per unit mass, so they need converting. At the density of iron the first two give 0.0228 T per weight percent and the third 0.0188 T, and 0.0228 T is the value used here. The conversion is worth doing carefully because it cross-checks the iron constant at the same time: the same models take plain iron as \(274\times10^{-6}\) T·m\(^{3}\)/kg, which at 7874 kg/m\(^{3}\) is 2.158 T --- the figure adopted above from an entirely independent measurement made eighty years earlier.
+
+The magnitude is interpretable rather than arbitrary. A substituent carrying no moment at all would dilute the saturation by its mass fraction alone, giving 0.0216 T per weight percent. The published manganese figure sits 6\% above that floor, which is the modest extra cost of manganese coupling antiparallel rather than simply being absent.
+
+Bozorth settles the question independently, in his own section on iron-manganese alloys \cite{bozorth1951}. Reporting Sadron's determination of the saturation at 0 K for three alloys below 4\% manganese \cite{sadron1932}, he writes that in this range the moment per atom drops only slowly and ``manganese appears to behave merely as a diluent''; the steeper fall at higher contents he attributes to a non-magnetic \(\gamma\) or \(\varepsilon\) phase appearing, which is well outside the range of any steel considered here. Behaving merely as a diluent is precisely the 0.0216 T floor, and it bounds the coefficient from above as well as from below: twice that figure would require manganese to carry about \(-\)2.3 Bohr magnetons, which is not what the measurements show.
+
+The term is small but not negligible. It costs 7 mT at the 0.325\% manganese of 1006 and 26 mT at the 1.15\% of 1117, enough to reorder the family: 1117 saturates 13 mT below 1020 despite carrying less carbon.
+
+Two limits on the Cheney bracket are worth stating, since the carbon coefficient rests on it. His saturation intensities are extrapolations from reluctivity lines rather than direct measurements, and they are multi-valued because his specimens are not single-constituent, which is what makes them a bracket rather than a determination. And the bracket needs his whole range, to 1.6 per cent carbon: restricted to the hypoeutectoid alloys these steels resemble, five points with a wandering lower branch settle nothing. His alloys were also deliberately free of manganese, so they say nothing about that term.
+
+No fitted correction rides on top of Eq.~\eqref{eq:js}: the emitted level is what the equation gives. Each curve in the regression does carry a free level offset against its own anchor under a tight prior, but that is a fitting device, there so that a level error in one scan cannot contaminate the shape it is fitted to. Those offsets are not averaged into the product.
+
+What they are worth reporting for is the check they constitute. The nine trusted U.S. Steel curves land within 5 mT of their anchors, a median under a millitesla and a worst case of 0.2\%, which is better agreement than the heat to heat variation of the steel itself. The two SLAC curves sit 1.7 and 2.6\% low. Those are the fitted offsets, pulled toward zero by their 0.02 T prior; read directly against the composition law, as in the validation section, the same curves are 2.6 and 3.2\% low, for reasons taken up there. That split is the result: the composition law predicts one laboratory's levels almost exactly and the other's not at all, and averaging the two would describe neither. As the validation section argues, the miss looks like a property of the instrument rather than of the steel.
+
+Equation~\eqref{eq:js} behaves sensibly below the composition range it was checked over. For ARMCO pure iron grade 2, at C \(\le\) 0.010 and Mn \(\le\) 0.100, it gives 2.154 T against the 2.15 T stated in the product bulletin \cite{armco-iron}. That is a check on the iron constant rather than on the dilution law: at this composition carbon and manganese together subtract 4 mT, which three figures in a product bulletin cannot resolve.
+
+\subsection{The Assembled Model}\label{the-assembled-model}
+
+The four terms are combined as additive shares of one saturation rather than as factors multiplying one another:
+
+\begin{equation}\label{eq:model}
+J(H) = J_s(C,\mathrm{Mn})\Big[\,f_i\,P(H;h_S) + f_S\,F_{\text{soft}}(H;h_S) + (1-f_i-f_S-f_r)\,F(H;h_W,k_W,m_W) + f_r\,F(H;h_R,k_R,m_R)\Big]
+\end{equation}
+
+\begin{equation}\label{eq:induction}
+B = J + \mu_0 H
+\end{equation}
+
+The shares sum to one, so J approaches \(J_s\) as H grows without any further constraint, and each term owns a disjoint share of the magnetization. That is the physical claim being made: a given region of the material is carried over either by wall motion or by rotation, and the shares do not modulate each other. Multiplying them would force one process to scale another.
+
+Carbon enters the shape through the coordinate
+
+\begin{equation}\label{eq:x}
+x = C/0.77
+\end{equation}
+
+which is not merely a convenient normalization. Since 0.77 wt\% is the eutectoid composition, x is the lever-rule pearlite fraction of a hypoeutectoid steel. Carbon enters the shape through x in four places and nowhere else:
+
+\begin{equation}\label{eq:carbon}
+\begin{aligned}
+\ln h_W &= \ln h_{W0}[\mathrm{cond}] + b_W[\mathrm{reg}]\,x, &\qquad \ln k_W &= \ln k_{W0}[\mathrm{reg}] + b_K[\mathrm{reg}]\,x, \\
+f_S &= \sigma\!\left(\alpha_S + \beta_S\,x\right), & f_i &= \sigma\!\left(\alpha_i + \beta_i\,x\right),
+\end{aligned}
+\end{equation}
+
+where \(\sigma(z) = 1/(1+e^{-z})\). The square brackets are indices, not arguments: a quantity written with \([\mathrm{cond}]\) is a separate fitted constant for each heat-treatment condition, and one written with \([\mathrm{reg}]\) a separate constant for each regime, shared by every condition in that regime. The four conditions are cond = as hot rolled, 1300 °F, 1400 °F and 1500 °F, all anneals furnace cooled. The three regimes are reg = as hot rolled; annealed below A1, which is 1300 °F alone; and annealed above A1, which is 1400 and 1500 °F together. Why the anneals are grouped that way is the subject of the next paragraph. So \(h_{W0}\) takes four values, and \(b_W\) and \(k_{W0}\) three each, with 1400 and 1500 °F using the same one; the constants without brackets, \(\alpha\) and \(\beta\), are single numbers for the whole family. The sharp pinning scale and the knee width are log-linear in x, so that pinning strength scales multiplicatively with how much pearlite is present, and the two shares are linear in x inside a logistic, which keeps each between 0 and 1. Every other shape parameter either follows from these or does not depend on carbon. The soft scale is a fixed multiple of the sharp one, \(h_S = q_S[\mathrm{reg}]\,h_W\), so it and the toe, whose scale it is, inherit the carbon dependence of \(h_W\). The sharp population's tail exponent is fixed per regime, so \(m_W = \tau_W[\mathrm{reg}]/k_W\) follows from \(k_W\), with \(\tau_W\) held near 2. The sharp share is what the others leave, \(1 - f_i - f_S - f_r\). The rotation term's \(f_r\), \(k_R\) and \(m_R\) are the same for every grade and condition, and its scale \(h_R\) follows composition only through \(H_a = 2K_1/J_s(C,\mathrm{Mn})\). Counting \(h_{W0}\) per condition, the other bracketed quantities per regime, the four constants of the shares, and \(f_r\), \(k_R\), \(m_R\) and the rotation level, the shape has 27 parameters.
+
+What varies with what is the substance of the model:
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Part
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Parameters
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Varies with
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Level & \(J_s\) & composition only, through Eq.~\eqref{eq:js} \\
+Toe & \(f_i\) & global, with one carbon slope; scale shared with the soft population \\
+Soft wall & \(f_S\) & global, with one carbon slope \\
+Soft wall & \(h_S\) & a ratio to \(h_W\), per regime \\
+Sharp wall & \(h_W\) & per condition; carbon slope per regime \\
+Sharp wall & \(k_W\), \(k_W m_W\) & per regime (as rolled; annealed below A1; annealed above A1), with a carbon slope on \(k_W\) \\
+Rotation & \(f_r\), \(k_R\), \(m_R\) & global, identical for every grade and condition \\
+Rotation & \(h_R\) & built from each grade's \(H_a\); one global level \\
+\end{longtable}
+}
+
+Heat treatment is indexed rather than interpolated, and the four conditions are grouped into three regimes rather than treated as four peers. As-hot-rolled material, pinned by dislocations and residual stress, keeps its own knee width, tail exponent and carbon slopes. The anneals are divided at A1, 727 °C or 1341 °F, which falls between the 1300 °F and 1400 °F conditions. Below it an anneal only recovers the ferrite and spheroidises the cementite. Above it part of the structure austenitises, and on furnace cooling that part re-forms as lamellar pearlite, a stronger pinner than the spheroidised cementite it replaces and one whose amount grows with carbon. So 1300 °F forms a regime of its own, and 1400 and 1500 °F share one shape family -- the knee width \(k_W\), the tail exponent \(k_W m_W\), and the carbon slopes of the pinning scales -- differing only by a grade-independent shift of the scale \(h_W\), which the soft population's scale follows. The rotation term's shape is shared by everything, and its field scale follows each grade's saturation through \(H_a\). That grouping is the central structural decision of the model: a per-condition family needs 38 shape parameters where this needs 27, and the evidence for it is a result rather than an assumption; it is given under results.
+
+There is no continuous anneal-temperature axis, and that is not merely because four points will not support one. The mechanism changes across A1, so interpolating in temperature would be fiction and the conditions stay categorical.
+
+Emitting a curve is then mechanical. Choose a grade's carbon and manganese and a condition, evaluate Eqs.~\eqref{eq:js} and \eqref{eq:model} on a 61-point grid consisting of the origin plus log-spaced points from 10 to \(4\times10^{5}\) A/m, and check four gates before emitting it: B strictly increasing, dB/dH not less than \(\mu_{0}\), a single maximum in permeability, counted with the interval from the origin included so that a spike at the first grid point cannot pass, and, across the conditions of one grade, no anneal needing more field than the as-rolled curve, and no hotter anneal needing more field than a cooler one on the same side of A1, at any of 0.5, 1.0, 1.5, 1.8 and 1.9 T. Across A1 the hotter anneal may be the harder, for the reason just given. The first three are what the SLAC authors ensured of their own table before entering it into POISSON, first and second differences of B smooth and of constant sign \cite{cobb1989}; the fourth is a cross-curve check against an inverted family, which Section~\ref{how-the-anneals-are-grouped} shows to be a real failure mode rather than a hypothetical one.
+
+\section{Source Data}\label{source-data}
+
+The regression uses fourteen curated curves drawn from two independent sources. A third source is held back for validation, and a fourth, Cheney's series of laboratory iron-carbon alloys, serves as an independent check on how the annealed curves change with carbon. This is the entire evidence base, and its limits shape everything above.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Source
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Material
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Condition
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Range, Oe
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Use
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+SLAC-TN-89-04 \cite{cobb1989} & 1010, 1004 & 750 °C, 2 h in H\(_{2}\), cooled at 60 °C/h & 5 -- 1096 & fitted; the low-carbon end of the 1400 °F condition above the knee \\
+U.S. Steel plate datasheets  & 1010, 1020, 1030 & as hot rolled; 1300, 1400, 1500 °F, furnace cooled & 0.4 -- 1001 & twelve traces, the whole condition ladder; all fitted \\
+Fermilab TM-1197 \cite{ito1983} & 1008, 1020 & as received & 0.3 -- 215 & held out \\
+Cheney \cite{cheney}, Fig.~10 & Fe-C, 0.018 -- 0.32\% C, Mn-free & annealed in vacuo, most at 820 °C & 1 -- 20 & validation \\
+\end{longtable}
+}
+
+\subsection{Source Provenance}\label{source-provenance}
+
+The SLAC report is the only source that publishes a numeric table, but that table is not raw data either. The permeameter takes nineteen points per run, starting near 0.5 Oe and stepping by a factor of about 1.4 up to 1250 Oe, averaging the two half-cycles at each point. The published fifty-point table is a seventh-degree polynomial in B against log H fitted through those nineteen points and resampled, deliberately smoothed so that the interpolation in POISSON would behave. Its smoothness is therefore cosmetic. H is read directly, by a Hall probe in an axial bore through the specimen, and the report's one correction is to B: it subtracts a fixed fraction of \(\mu_0\)H for the space between the pickup coil and the sample and for the bore. The report calls it 15 per cent and gives 0.0155 T at 1000 Oe, which is a coefficient of 0.155. Companion publications describe the same apparatus \cite{cobb1990} and the magnet that motivated building it \cite{early1989}.
+
+The U.S. Steel datasheets \cite{ito1983,visser1987} are photocopied log-linear plots. They are the only source covering the anneal ladder, so the entire condition structure of the model rests on them. They reached this work as figures reprinted inside the Fermilab memoranda: Figures 9 and 10 of \cite{ito1983} are the C1010 and C1020 sheets, and Figure 4 of \cite{visser1987} is the C1030 sheet. It is worth noting that TM-1197 therefore supplies both two of the three datasheets and the held-out data, so those two sources are less independent than they first appear.
+
+The same datasheets are reprinted in two further memoranda of the series \cite{visser1986,visser1985}.
+\subsection{Curation}\label{curation}
+
+Three curation decisions affect the default condition or its neighbours.
+
+First, the SLAC rows below 5 Oe are dropped. The SLAC samples were held two hours at 750 °C in hydrogen and cooled at 60 °C per hour, and their toe is soft, 50 to 65\% more B at 1 to 2 Oe than the furnace-cooled 1400 °F U.S. Steel sample. The default condition is meant to represent an ordinary furnace anneal, not a hydrogen one --- Roters' treatment for magnetic work is to heat to about 760 °C, which is 1400 °F, and cool very slowly without contact with oxygen \cite{roters1941} --- so the toe is taken instead from the U.S. Steel 1010 1400 °F trace, which is used only below 5 Oe. The U.S. Steel sheets record only the anneal temperature and that the samples were furnace cooled; the soak time, atmosphere and cooling rate are not given, so the annealed curves here stand for that condition as U.S. Steel ran it, not for any particular recipe.
+
+Second, the U.S. Steel 1010 as-rolled and 1300 °F traces are given loose level priors and excluded from the family level, contributing shape but not level. The justification for this appears in the validation section, where those two traces are shown to be wrong.
+
+Third, the U.S. Steel 1030 1500 °F trace is fitted like the others, although it is the hardest thing in the data set. On that sheet the 1500 °F anneal comes out harder than 1400 °F at 1.5 T, 35.4 against 30.6 Oe, while the 1010 sheet goes the other way, 12.1 against 13.9. A single shape family for all three anneals cannot serve both sheets: fitted that way, the trace misfits at 0.64 in ln H and the rotation term is pulled off its Akulov solution. It is kept because the mechanism above A1 predicts exactly this, 1030 having the most pearlite to re-form, and because an independent series of laboratory alloys shows the same hardening (Section~\ref{an-independent-series-cheney}). The grouping at A1 is what lets the model follow it, and it does so only in part; the residual is reported below.
+
+\subsection{Digitizing}\label{digitizing}
+
+Digitizing the plots was checked rather than assumed. Each scan's axes were calibrated by fitting an affine map, log H against pixel column and linear B against pixel row, chosen to maximize ink density beneath all digitized points, after which the points and the fitted curves were re-projected onto the original scans. The points sit centered on the printed lines. At these scan resolutions one pixel is 0.8 to 1.0\% in H and about 0.04 kG in B, so digitizing error is not the limiting uncertainty in this work. Disagreement between sources is larger by several times.
+
+Cheney's Fig.~10 was traced automatically from the held scan rendered at 400 dpi, the axes calibrated from its own gridlines at 71 pixels per oersted. The inner gridlines were blanked before tracing, since the 0.14\% curve runs along the 15,000 G line, and each trace was checked for monotonicity along its length, which removed 22 points where one trace had jumped to its neighbour at the foot. The only gap is 0.3 Oe of the 0.018\% curve lying on a gridline, where it is nearly flat. The traces were checked by overlay on the scan.
+
+\section{Regression}\label{regression}
+
+All fourteen curves are fitted at once, in a single weighted least-squares problem with one parameter vector covering every grade and every condition.
+
+Residuals are measured horizontally rather than vertically. A miss of 0.05 T means almost nothing on the vertical part of the knee and is serious on the flat shoulder, so a plain residual in B weights the fit according to the accident of local slope. Each residual is instead divided by the local slope dJ/d(ln H), which converts it into a fractional error in the field required to reach a given induction:
+
+\begin{equation}\label{eq:resid}
+r \;=\; \frac{J_{\text{data}} - J_{\text{fit}}}{H \,\partial J_{\text{fit}}/\partial H}
+\end{equation}
+
+An RMS r of 0.05 means the curve is typically 5\% off in H at a given B, which is the quantity of engineering interest. In the implementation this appears as a weight of \(1/(s^{2} + (0.05\,s_{\mathrm{max}})^{2})\) where s is the local slope, the floor term keeping the flat regions from dominating the sum. Points within 0.3 kG of the axis are dropped from the chart-digitized traces before fitting. The U.S. Steel sheets carry a linear kilogauss axis at about 24 pixels per kilogauss with a pen about three pixels wide riding the axis, so a point read at 0.1 kG is two pixels of a three-pixel line; on five traces the log-log slope between the first two points is 3 to 4, where a magnetization curve allows 1 to 2. The rule removes nine points over seven traces, none of them from the toe trace, which starts at 0.46 kG.
+
+Source bias is modelled rather than averaged away. Each curve carries two nuisance parameters, a level offset and a field-scale offset in ln H, each under a Gaussian prior. Trusted sources get standard deviations of 0.02 T and 0.03; the two suspect U.S. Steel traces get 0.10 T and 0.15. These absorb a sheet's calibration error so that it does not distort the shared physics, and they are excluded when the family curves are emitted. A biased source therefore contributes its shape without contributing its level.
+
+Physics enters as priors rather than as hard constraints, and every one of them is stated here. The rotation tail exponent is held at 2.0 ± 0.05 after Eq.~\eqref{eq:akulov}, and the rotation scale is held to the value the same law implies for the fitted rotation fraction, within 10\%. The sharp wall population's tail exponent is held at 2.0 ± 0.3, so that it has died away before the approach to saturation matters and the first-power term is left to the soft population. At the pure-iron end the toe and the soft population are held to Bozorth's Rayleigh constants for annealed iron, \(\mu_1\) = 200 and \(\nu\) = 2000 per oersted, applied to ARMCO grade 2 at 1400 °F within 0.4 in the logarithm of each; the fit lands on 201 and 2,079. The as-rolled end is not anchored, since Bozorth's unannealed iron is not hot-rolled steel, and the carbon trend carries the anchor to the other grades. The carbon slopes of the pinning scales and the shares are given weak priors so that an unsupported slope relaxes toward zero instead of chasing noise. The knee width is not held; it is a result.
+
+The optimization is a six-start Levenberg-Marquardt \cite{wiki-lm} followed by a soft-L1 robust polish \cite{wiki-huber}, so that a few digitizing outliers cannot drag the shared parameters. All six starts converge to the same optimum, so the solution is not a local accident. The implementation uses \texttt{scipy.optimize.least\_squares} \cite{virtanen2020}.
+
+\section{Results}\label{results}
+
+One parameter set covers the whole family, so everything it produces can be reported together: how closely the fit reproduces the curves it was given, what the constants come out as, whether the emitted curves pass the gates they have to pass before they are emitted, and what the two structural decisions the model section states without argument are worth.
+
+\subsection{Fit quality}\label{fit-quality}
+
+The total RMS ln-H residual over the fourteen fitted curves is 0.158, and over the thirteen other than U.S. Steel 1030 at 1500 °F it is 0.119, meaning the model is typically 12\% off in the field needed to reach a given induction, with 27 shape parameters serving fourteen curves.
+
+Per curve the residuals run from 0.069 to 0.216 over those thirteen. For the default 1400 °F condition, the two SLAC curves sit at 0.075 and 0.094 and the U.S. Steel toe at 0.216, with the 1020 and 1030 sheets at 0.16 and 0.04 over the 0.5 to 2.0 T working range. U.S. Steel 1030 at 1500 °F is the largest at 0.39, the part of its anneal hardening the model does not reach.
+
+\subsection{Fitted parameters}\label{fitted-parameters}
+
+The global parameters, which are shared by every grade and every condition, come out as follows.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}ll@{}}
+\toprule\noalign{}
+Parameter & Value \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Rotation fraction \(f_r\) & 0.211 \\
+Rotation scale level & 1.097 \(\times\) what the law gives \\
+Rotation scale \(h_R\) & 14,710 A/m at ARMCO grade 2 to 15,169 at 1030 \\
+\(k_R\) & 1.669 \\
+\(m_R\) & 1.197 \\
+Tail exponent \(k_R m_R\) & 1.999 (held at 2.0 ± 0.05) \\
+Toe fraction \(f_i\) at C = 0 & 0.017 \\
+Soft wall fraction \(f_S\) at C = 0 & 0.644 \\
+Soft scale \(h_S/h_W\), as rolled / below A1 / above A1 & 0.55 / 0.87 / 1.14 \\
+Sharp wall tail exponent \(k_W m_W\), same three regimes & 1.999 / 2.003 / 1.994 (held at 2.0 ± 0.3) \\
+Sharp wall knee width \(k_W\) at C = 0, same three regimes & 2.82 / 6.80 / 7.60 \\
+\end{longtable}
+}
+
+The pinning scales are what heat treatment actually moves, and they come out as follows at C = 0.10. They behave as annealing should, the pinning growing weaker as the anneal gets hotter; 1400 and 1500 °F share one knee shape by construction and differ only in scale, and 1300 °F, below A1, has its own. The soft scale and the initial permeability follow from the sharp scale and are listed with it.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}llllll@{}}
+\toprule\noalign{}
+Condition & sharp \(h_W\), A/m & \(k_W\) & \(m_W\) & soft \(h_S\), A/m & \(\mu_1\) \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+As hot rolled & 560 & 2.83 & 0.71 & 310 & 92 \\
+Annealed 1300 °F & 252 & 6.81 & 0.29 & 218 & 131 \\
+Annealed 1400 °F & 172 & 7.61 & 0.26 & 196 & 146 \\
+Annealed 1500 °F & 120 & 7.61 & 0.26 & 137 & 210 \\
+\end{longtable}
+}
+
+Carbon acts on the walls in two ways. Along the 1400 °F row, going from C = 0.04 to C = 0.30 moves the sharp wall scale by a factor of 2.4, from 140 to 337 A/m, and it moves walls from the soft population to the sharp one: \(f_S\) falls from 0.62 to 0.48 while the sharp share rises from 0.15 to 0.29. The initial permeability falls from 180 to 72. That is what pearlite should do, turning walls that move easily into walls that are pinned hard. The Rayleigh quadratic coefficient is positive throughout, as it must be with the soft population supplying it. The sheets themselves cannot see \(\mu_1\), since their traces begin at 30 A/m or higher and the lowest points are the least reliable on the page; what the model carries there is Bozorth's iron, carried to the steels by the fitted carbon trend.
+
+The division of the walls between the two populations is the least determined thing in the model. With the soft share at zero carbon pinned at 0.45 instead of 0.64, the fit to the thirteen curves is unchanged, 0.126 in either case; removing the share's carbon trend altogether costs 0.009, so the sign of the trend is supported but its size is not closely fixed. The emitted curves barely register the difference above 10 Oe, where B moves by at most 3\% and above 100 Oe by 0.5\%; below 10 Oe it moves the lower knee by up to 20\%, most for ARMCO and 1030 at 1400 °F. It is reported as a property of the fit rather than of the steel.
+
+The first-power coefficient of the approach to saturation follows as \(a_0 = f_S\,h_S\), here in oersteds:
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lllll@{}}
+\toprule\noalign{}
+Grade & As hot rolled & 1300 °F & 1400 °F & 1500 °F \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+ARMCO grade 2 & 2.0 & 1.5 & 1.2 & 0.8 \\
+1004 & 2.1 & 1.5 & 1.3 & 0.9 \\
+1010 & 2.3 & 1.6 & 1.5 & 1.0 \\
+1020 & 2.6 & 1.8 & 1.9 & 1.3 \\
+1030 & 3.0 & 2.0 & 2.3 & 1.6 \\
+\end{longtable}
+}
+
+These values sit at the soft end of the 3 to 40 Oe Bozorth reports for the same coefficient in nickel-rich alloys (p.~280) \cite{bozorth1951}, which is where a low-carbon steel belongs. They are not a measurement, though. \(a_0\) is fixed by parameters the fit determines at lower field, and the data cannot check it directly: the traces stop near 1000 Oe, where the whole term amounts to a few millitesla, about a pixel on the U.S. Steel charts and well inside the level allowance each curve carries. An alternative construction that fits these data about as well, a single wall population with its tail held at \(1/H\), gives 4.7 Oe for as-rolled 1030 where this one gives 3.0, because there \(a_0\) is simply proportional to the knee scale. The general ordering with heat treatment follows the pinning scale and is probably real. The dependence on carbon is not determined by these sources, and no measurement to hand could determine it: where the \(a_0/H\) and \(b_0/H^{2}\) terms can be told apart, near 5,000 Oe, each is about 0.6 mT.
+
+\subsection{Gates}\label{gates}
+
+All four gates pass on all 36 emitted curves. The first three are not automatic: with the origin interval included in the permeability count, a toe that saturates before the knee produces a spike at the origin and a trough after it, and that shape fails. The fourth passes with no crossing inside a regime and none against the as-rolled curve. Across A1 the 1400 °F curve needs more field than 1300 °F for 1030 at all five test inductions, and for 1020 at 1.8 and 1.9 T by under 1\%, which is the hardening the grouping exists to allow and is what the 1030 sheet itself shows, 25.5 and 30.6 Oe at 1.5 T. A per-condition family fails the gate, and why it does is the subject of the next two subsections, which carry the evidence for the two structural decisions the model section states without argument.
+
+\subsection{How the anneals are grouped}\label{how-the-anneals-are-grouped}
+
+Give each of the four conditions its own complete set of wall parameters, eight per condition, with nothing tying them together, and the data are fitted slightly better. That is the natural first choice, and it has a defect that shows only when the emitted curves are compared with one another: a hotter anneal comes out harder. For 1004 and 1010 the 1400 °F curve needs more field at 1.9 T than the as-rolled curve of the same grade, and in every grade the 1400 °F curve is harder than 1300 °F above 1.5 T.
+
+The cause was not metallurgy. The 1400 °F condition at low carbon is fed only by the SLAC report, because the U.S. Steel 1010 1400 °F trace is used only below 5 Oe; the other three conditions are fed only by the U.S. Steel sheets. For nominally the same grade and the same anneal, 750 °C against 1400 °F, which is 760 °C, the two sources disagree by 50\% in H at 1.5 T and 82\% at 1.9 T. Given a private parameter set per condition, the regression absorbed a difference between laboratories as a difference between heat treatments.
+
+Which source is right at high field can be settled by physics. The law of approach, Eq.~\eqref{eq:akulov}, bounds the field needed to reach a given induction. The SLAC 1010 curve reaches 1.9 T at 0.95 of that bound, which is where it should be, since wall motion still contributes a little; the U.S. Steel 1010 trace reaches it at 0.52, and allowing for the 3.6\% level error documented under validation only raises that to 0.62. No anisotropy iron possesses can supply that shortfall. The U.S. Steel 1020 and 1030 traces sit at 0.74 and 0.77, soft but admissible.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lllll@{}}
+\toprule\noalign{}
+Trace & \(J_s\), T & Akulov bound at 1.9 T, Oe & Measured, Oe & Ratio \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1010, SLAC & 2.128 & 239 & 227 & 0.95 \\
+1010, U.S. Steel 1400 °F  & 2.128 & 239 & 125 & 0.52 \\
+1020, U.S. Steel 1400 °F  & 2.110 & 250 & 184 & 0.74 \\
+1030, U.S. Steel 1400 °F  & 2.086 & 267 & 205 & 0.77 \\
+\end{longtable}
+}
+
+Grouping the anneals into shared shape families is what removes it. Two things follow. A laboratory difference cannot pose as a heat-treatment difference, because no parameter is private to one condition and one source. And the 1500 °F data inform the 1400 °F curve, which private parameter sets would not let them do.
+
+Grouping can go too far the other way. With one family for all three anneals, the hardening that appears above A1 has nowhere to go: 1030 at 1400 °F then needs 20\% less field at 1.5 T than its trace, and 1030 at 1500 °F half the measured field, misfitting at 0.64. Dividing the anneals at A1 costs little elsewhere, the thirteen other curves moving from 0.117 to 0.119, and lets 1030 at 1400 °F follow its trace to within 3\%, 29.8 Oe at 1.5 T against 30.6 measured. At 1500 °F it reaches only part of the way, 21.9 Oe against 35.4, which is the residual reported above. The grouping at A1 is therefore a middle course between two failures, one per condition and one for all, and the division is where the metallurgy says it should be.
+
+\subsection{What the rotation constraint is
+worth}\label{what-the-rotation-constraint-is-worth}
+
+The two priors on the rotation term are the ones with the most riding on them, since they govern the extrapolation, so it is worth recording what happens without them. Left free, the rotation fraction doubles and the rotation term takes over work that belongs to wall motion, which is why the tie between the rotation scale and the rotation fraction is imposed as a constraint rather than checked after the fact.
+
+With it enforced the fit returns the values tabulated above. The tail exponent is held to 2.0 ± 0.05 and comes out at 1.999. The rotation scale is built from the law rather than fitted against it, so what the data can still move is its overall level: that comes out at 1.097, a tenth above what \(K_1\) and the fitted fraction give, at the edge of the prior's 10\% width. The extrapolation is held by the tail exponent, which the data accept exactly; the level is the part of the construction the data push against.
+
+How hard they push was measured by holding the level fixed and refitting everything else. At 1.0, 1.3, 1.6 and 1.9 times the law's value the RMS error is 0.161, 0.149, 0.149 and 0.148. The data reject the law's own level, but above about 1.3 they are indifferent: the rotation fraction rises from 0.20 to 0.32 to absorb the difference, the exponent stays at 2.00, and nothing in the fit can tell the alternatives apart. Freed of its prior the level runs to 1.60, which is a point on that ridge and not a measurement.
+
+Most of that push comes from two curves. With the SLAC curves left out, the same comparison gives 0.146 at 1.0 against 0.143 at 1.3, a lean about as mild as the silicon steels show \cite{sicurves}. It is not their level offset that does it: loosening their level prior to 0.10 T, or every curve's to 0.05 T, leaves the lean in place. It is the shape of their tops, the part of any curve where a flat level error and an extra inverse-square deficit are hardest to tell apart. The one correction the SLAC report applies is of the kind that could do it: it subtracts 15\% of \(\mu_0\)H from the induction for the air inside the pickup coil \cite{cobb1989}, and an error in that coefficient adds a deficit growing with \(\mu_0\)H, which over these fields is close to what extra rotation deficit looks like. Its size argues against it, though. The report's own dimensions, a 0.749 in specimen with a 0.191 in bore inside a coil of 0.780 in mean diameter, give a coefficient of 0.160 against the 0.155 applied, a difference of about 0.5 mT at 1000 Oe, where moving the level from 1.0 to 1.3 changes the curves by 4 to 5 mT. So the push is located in the SLAC tops but not explained. Internal strain is the other known way to raise the level: Bozorth gives Becker and Polley's result that random internal stresses add to the \(1/H^{2}\) coefficient alongside the anisotropy \cite{bozorth1951}. The data do not support it here. With one level per regime the as-rolled curves, the most strained, do not come out highest, at 1.18 against 1.14 below A1 and 1.42 above it; the regime that does is the one carrying the SLAC curves, and without them it falls to 1.27. A carbon slope on the level, which cementite would produce, comes out at no more than a few per cent across the whole range, of either sign depending on the prior.
+
+Whatever the level, it barely reaches the emitted tables beyond the data. For 1010 and 1030, as rolled and at 1400 °F, refits held at 1.0, 1.3 and 1.6 differ from the adopted fit by at most 8 mT at 1000 Oe, where the curves are fitted to measurements anyway, by at most 0.5 mT at 4000 Oe, and by at most 0.3 mT at the end of the tables. The extrapolation is fixed by the exponent, not by the level.
+
+\subsection{The emitted curves against the scans}\label{the-emitted-curves-against-the-scans}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Emitted curves against the scans they were fitted to, one column per heat-treatment condition. Markers are the digitized source data (filled: fitted; open: outside the fitting window); lines are the library entries for the same grade and condition. The lower row is the error in field at fixed induction.}]{out/cmp_scans.png}}
+\caption{Emitted curves against the scans they were fitted to, one
+column per heat-treatment condition. Markers are the digitized source data (filled: fitted; open: outside the fitting window); lines are the library entries for the same grade and condition. The lower row is the error in field at fixed induction.}
+\end{figure}
+
+Figure 1 shows the emitted curves against the scans, one column per condition, with the error in field at fixed induction underneath. Filled markers were fitted; open markers lie outside the fitting window. Against the scans as they stand, the emitted curves are 27.7\% off in H on RMS. That figure is carried almost entirely by the five traces that disagree with their own chemistry or that the family follows only in part: SLAC 1010 at 65\%, U.S. Steel 1030 1500 °F at 40\%, SLAC 1004 at 38\%, and the two U.S. Steel 1010 traces of the level audit at 25\% each. The nine sound U.S. Steel curves run 10 to 22\%. Most of what remains sits at 1400 °F, where the family runs between the SLAC plateau, 2.5 to 3\% below the dilution anchor, and the U.S. Steel 1300 and 1500 °F traces, 2 to 3\% above it, rather than along SLAC. Above 15 kG, 2.5\% of level is 30 to 50\% of field, so this is a level disagreement between laboratories showing up in the field coordinate, not a shape error. The 1400 °F curve is a typical curve informed by every annealed source rather than one laboratory's rings, which is what the family was meant to produce.
+
+\section{Validation}\label{validation}
+
+Fit quality measures the model against the data it was handed, which is the weakest test available to it. Two stronger ones are possible here. One is a source the regression never saw. The other asks a question the fit cannot ask of itself: whether each measurement is consistent with the composition its own datasheet claims.
+
+\subsection{The hold-out}\label{the-hold-out}
+
+The Fermilab data of \cite{ito1983} was never fitted. Compared against the as-rolled family it agrees to an RMS ln-H of 0.18 and 0.17 for the two grades above the knee, taking the knee at J = 1.35 T, which is the regime that matters for saturated work. Below the knee its toes are far softer than as-rolled sheet, which is a different material state and the reason the data was held out rather than fitted.
+
+\subsection{The level audit}\label{the-level-audit}
+
+A sharper test is available, and it is the one that caught two errors in the datasheets; Figure 2 shows its result. Dividing each measured trace by the fitted shape above 150 Oe recovers the saturation level that the trace implies, which can then be compared against the level its own chemistry allows through Eq.~\eqref{eq:js}.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Saturation implied by each measured trace above 150 Oe, divided by the fitted shape and compared with the level its own composition allows. Positive means the trace saturates above the limit its composition permits, which is impossible.}]{levelaudit.png}}
+\caption{Saturation implied by each measured trace above 150 Oe, divided
+by the fitted shape and compared with the level its own composition allows. Positive means the trace saturates above the limit its composition permits, which is impossible.}
+\end{figure}
+
+The U.S. Steel 1010 as-rolled and 1300 °F traces imply saturation 3.6 and 2.6\% above the dilution limit for their own composition. That is not heat-to-heat scatter; it is not physically possible. Nor can it be explained as an error in the field axis, since reproducing an offset of that size horizontally would require a 30 to 40\% error in H on traces that match the family to within a few percent at the knee. The signature, a flat multiplicative offset present on some traces of a sheet but not on others, points to an error in the specimen cross-section used to reduce the original measurement, drawn faithfully onto correct axes.
+
+It is worth saying where such an error comes from, because the mechanism is documented and is more ordinary than it sounds. Specimen cross-section in this field is frequently not a measured dimension at all. U.S. Steel states the convention for its own sheet products \cite{uss1978}, and the mill that inherited that product line repeats it in as many words \cite{clf2026}: induction is flux divided by the \emph{net} cross-section, and the net cross-section is the specimen's mass divided by an \emph{assumed} density read from an ASTM table banded by alloy content. No dimension is measured at any point in it. Any slip in that reduction scales the whole curve and leaves its shape and its axes untouched, which is exactly the signature the audit sees. The direction matters, though. A curve reads high only if the net area came out too small: a mass that is too low, or a length that is too long. The density cannot do it here, because plain carbon steel already sits in the top band of the table, 7.85 g/cm\(^{3}\) \cite{uss1978}, so a density from any other band, like a weighed mass that includes more than the steel, makes the curve read low. The convention therefore explains the 1010 traces' 3\% excess only through a mass or length error, and the US Steel plate datasheets do not say how they were reduced, so this identifies a mechanism of the right kind, not a proven cause. It is, however, the first place to look whenever a published curve is uniformly a few per cent off and otherwise correct.
+
+The 1500 °F trace on the same sheet is clean at +0.6\%, and the digitizing was verified to about a pixel, so neither the sheet's axes nor the scan is responsible. The SLAC curves run 2.6 to 3.2\% low in the other direction. The density convention cannot be the cause there: the specimens are machined cylinders of stated dimensions \cite{cobb1989}, so their area is geometric. Nor can the report's one correction, which removes 0.155 \(\mu_0\)H from B, under 1\% of the induction at 1000 Oe and less below it. Nor, on magnitude, can chemistry: 55 to 70 mT of saturation would take about 0.35\% more carbon than nominal, 1.3\% silicon or 3\% manganese at the coefficients of Eq.~\eqref{eq:js}, none of them plausible in steel sold as 1004 or 1010, and an off-nominal heat accounts for a few tenths of a per cent at most. What remains is the flux measurement itself: a calibration error of a few per cent in the integrator or in the pickup coil's effective turns would scale the whole curve by a constant factor, which is the signature seen. The report describes no calibration of either, so this too cannot be decided from it. The curves are not grossly misscaled: they reach 1.9 T at 0.95 of the Akulov bound, which is where a correctly scaled measurement should. The finer shape of their tops is another matter, and is what pushes the rotation level, as discussed under the rotation constraint.
+
+The treatment described in the regression section is already the correct response: biased traces contribute shape only, and the family level rests on Eq.~\eqref{eq:js} plus the mean offset over the trusted sources. What remains is an ambiguity of about ±1\% in where the family level sits, which is the honest floor these sources support.
+
+\subsection{An independent series: Cheney}\label{an-independent-series-cheney}
+
+Cheney's iron-carbon alloys \cite{cheney} are a different kind of evidence from everything fitted. They were made at the Bureau of Standards in 1922 to isolate carbon, free of manganese, and annealed in vacuo, most at 820 °C, which is 1508 °F and above A1 like the 1400 and 1500 °F conditions. His Fig.~10 gives their normal induction curves from 1 to 20 Oe, and the four inside this note's carbon range were digitized and compared with the model at 1500 °F with no manganese. They were not fitted.
+
+The lower knee agrees. The upper knee does not, and the disagreement has a direction. Carbon hardens the top of Cheney's knee far more than it hardens the model's: the field to reach 13.5 kG rises five-fold from 0.018 to 0.32\% carbon in his series and 2.4-fold in the model, while his near-pure iron turns its knee more sharply than the model's ARMCO end.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lllll@{}}
+\toprule\noalign{}
+Field to reach 13.5 kG, Oe & 0.018\% C & 0.14\% & 0.23\% & 0.32\% \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Cheney & 3.60 & 10.8 & 13.6 & 18.2 \\
+Model, 1500 °F & 5.13 & 7.39 & 9.63 & 12.5 \\
+\end{longtable}
+}
+
+Scored as the fitted curves are, over 1 to 20 Oe, the model misses his curves by an RMS ln-H of 0.19 to 0.29. Letting each curve's level float, as the fit lets every source's, brings the 0.14 and 0.23\% curves to 0.095 and 0.039, but only with offsets of 6 to 7\% in level, more than his own table supports: at 150 Oe his inductions sit 2 to 5\% below the model's. Fitted as data they are matched only that way, and at a cost to the commercial curves, which is why they are used as a check rather than as data: they are laboratory alloys without the manganese of commercial steel.
+
+What they settle is the direction. They are independent of every commercial source here, and they agree with the U.S. Steel 1030 sheet that carbon hardens the upper knee strongly after an anneal above A1. The model follows that hardening in part, which is the strongest reason for the entries it most affects to be read as optimistic.
+
+\section{Unannealed and Cold-Worked Material}\label{unannealed-and-cold-worked-material}
+
+A common use of these entries is a pole piece or yoke machined from bar or block and never annealed. For hot-rolled bar, plate and block the as-hot-rolled entry is the material itself, the condition the U.S. Steel sheets measured. Cold-drawn bar, common in the smaller sizes, is not in the data set, and no cold-drawn curve of a plain carbon steel is held. Bozorth's measurements on iron say how far cold work goes, and they point to the as-hot-rolled entry as the stand-in \cite{bozorth1951}.
+
+The decisive feature is that the damage is done early. In iron swaged to various reductions of area (Bozorth's Fig. 13-34), the maximum permeability falls from about 3,500 annealed to about 1,800 within the first few per cent of reduction, then holds near that level out to 40--60\%; only heavy reductions take it further, to about 1,100 near 95\%, while the coercive force climbs steeply above about 80\%. Ordinary drawing reductions for bar therefore sit on the plateau, and the exact history matters less than the word ``unannealed'' suggests. The worked level also seems set by the work rather than by where the material started: Bozorth's Fig. 3-4 shows iron cold reduced 64\% at a maximum permeability of about 1,150, against 5,500 for the commercial sheet it is compared with, so two quite different annealed baselines land in the same worked range.
+
+The as-hot-rolled entries sit on that plateau. Their maximum permeability is 0.50 to 0.55 of the 1400 °F entry's for every grade, from ARMCO iron to 1117, the ratio of Bozorth's plateau to his annealed iron; at the iron end the model gives 3,061 annealed and 1,531 as rolled, against his 3,500 and 1,800. Like his worked curves they are harder and rounder below the knee and converge on the annealed curves at high field. For a part machined from unannealed stock, hot rolled or cold drawn at ordinary reductions, the as-hot-rolled entry is the recommended choice.
+
+Three cautions go with it. Bozorth's data are for iron, and in carbon steel the cementite adds pinning of its own, so the cold-work penalty may be smaller in the higher-carbon grades. His two figures disagree on its size at 64\% reduction, about 0.2 of the annealed maximum permeability in Fig. 3-4 against about 0.45 in Fig. 13-34. And heavily drawn material is harder than the plateau: for iron wire drawn to 4\% of its area, Tammann and Rocha's measurements in Bozorth's Fig. 3-9 put the induction at 0.29, 0.63 and 0.78 of the annealed value at 6.7, 13.4 and 20.1 Oe, the gap closing with field, and half of it recovers on annealing at only 250--350 °C. Machining also leaves a cold-worked surface layer, which matters in thin sections more than in bulky ones. None of these figures reaches above about 1.6 kA/m, so the effect of residual stress on the approach to saturation is not constrained by them.
+
+\section{Limitations}\label{limitations}
+
+Several things these curves are not, which matter more than the fit statistics when deciding whether to use one.
+
+\begin{itemize}
+\tightlist
+\item \textbf{No hysteresis.} These are normal-induction (virgin) curves, single-valued B(H). Nothing here gives coercivity, remanence or loss.
+\item \textbf{The toe is anchored, not measured.} No source used here reaches below about 30 A/m. The initial permeability and Rayleigh constant come from Bozorth's annealed iron at the pure-iron end, carried to the steels by the fitted carbon trend, and the curve has Rayleigh's form only to a few hundredths of a tesla.
+\item \textbf{Above \textasciitilde1100 Oe everything is extrapolation}, constrained by the two-term law of approach, \(a_0/H\) and \(b_0/H^{2}\), and by \(\mu_{0}\), but not measured. B(4000 Oe) lands at 2.49--2.55 T across the family, \(\mu_\mathrm{r}\) \(\approx\) 6.
+\item \textbf{The 1400 °F curves sit above the SLAC high-field points by design.} Two laboratories disagree by 2.5 to 3\% in level for the same material, and the family sits at the dilution anchor between them; against either source alone the emitted curve is 30 to 50\% off in H above 15 kG.
+\item \textbf{Anneal-hardening at high carbon is represented only in part.} Dividing the anneals at A1 lets 1030 at 1400 °F follow its trace, but 1030 at 1500 °F still needs 21.9 Oe to reach 1.5 T against 35.4 measured, and Cheney's alloys harden more still. The high-carbon entries above A1 are optimistic at the top of the knee, the 1030 1500 °F one by about 40\% in H.
+\item \textbf{1500 °F carries the largest fitted residuals}, \textasciitilde14--19\% in H on the 1010 and 1020 knees and 39\% on 1030. Condition 4 was prioritized.
+\item \textbf{1117 has no independent support.} No 1117 curve was fitted and none held out; it is a pure composition extrapolation, and its resulfurized MnS inclusions pin walls in a way the model does not represent, so the real knee is probably harder.
+\item \textbf{Armco grade 2 is a carbon extrapolation}, at a quarter the carbon of the leanest fitted curve, and its composition comes from the bulletin's \textbf{specification maxima} rather than a heat analysis, so real material runs cleaner than the entry assumes. That is deliberate. The whole span from the specification limits to chemically pure iron is 4 mT in \(J_s\), well inside the heat-to-heat scatter, so the conservative reading costs nothing and errs in the safer direction. Its knee means ``very low-carbon steel given U.S. Steel's 1400 °F furnace anneal''. The SLAC hydrogen-annealed sample is about five times softer in H, and material annealed that way is not represented here.
+\item \textbf{Cold work is not fitted.} No cold-drawn curve is in the data. Section~\ref{unannealed-and-cold-worked-material} recommends the as-hot-rolled entry for unannealed stock at ordinary drawing reductions, on Bozorth's measurements on iron; heavily drawn material is harder than any condition here.
+\item \textbf{Heat-to-heat scatter of ±0.02 T in \(J_s\) (±1\%) is irreducible} and belongs in any quoted result.
+\end{itemize}
+
+Fig. 17 of the Metals Handbook \cite{metalshandbook1966}, which plots intrinsic induction against field for 36 materials, allows a check, and it is not reassuring. Read inside the chart's own range and carried to saturation by Eq.~\eqref{eq:akulov}, the figure's annealed pure iron curve implies 2.157 T, within a millitesla of the accepted value and with no composition assumed anywhere in the comparison. Every carbon-bearing curve on the same figure implies 2 to 3\% less than its nominal composition allows: ingot iron 0.98, hot rolled low-carbon sheet 0.97, cold rolled low-carbon strip 0.98, cold drawn carbon steel 0.98. The ratios come out the same read at 1500 and at 2000 oersteds, so this is not an artifact of the extrapolation past the chart's right-hand edge. A curve taken from this figure therefore begins about 2\% low in level while its pure iron does not, which is the same direction as the datasheet shortfalls found above, and a caution against trusting the top of any drawn magnetization curve.
+
+\section{Electrical Conductivity}\label{electrical-conductivity}
+
+A library entry carries an electrical conductivity as well as a curve, and for any time-harmonic or transient problem it matters as much as the curve does: eddy-current loss and skin depth scale with it directly. Published resistivities for these grades exist, but they do not agree with one another well enough to be copied grade by grade.
+
+The 1961 \emph{Metals Handbook} gives 10 \(\mu\Omega\)\,cm for annealed low-carbon iron and 12 for annealed 1010, both for relay-grade material after annealing (\cite{metalshandbook1966}, p.~794). The tenth-edition ASM Handbook tabulates more grades \cite{asm1990}: 14.2 \(\mu\Omega\)\,cm for annealed 1008, 14.3 for 1010 and 16.6 for annealed 1030, all at 20 °C. Its rows for 1015 through 1029 read 15.9 to 16.0, but a footnote places those at 0 °C; brought to 20 °C with the table's own 0 and 100 °C values they are about 17.1, above 1030, although those grades carry less carbon and no more manganese. The rows evidently come from different data sets, and copying them would give a family in which conductivity does not follow composition.
+
+Instead the resistivity is taken from composition, by the formula U.S. Steel gives for the resistivity of iron containing small amounts of other elements \cite{uss1978},
+\begin{equation}\label{eq:rho}
+\rho \;=\; 10.45 + 6.0\,\mathrm{C} + 4.5\,\mathrm{Mn} + 13.7\,\mathrm{P} - 10.4\,\mathrm{S} + 11.6\,\mathrm{Si} + \ldots \quad \mu\Omega\,\mathrm{cm},
+\end{equation}
+with the elements in weight percent. The silicon-steel family of this library rests on the same formula, and at ARMCO grade 2's specification limits, C 0.010 and Mn 0.100, with no adjustment it returns 11.0 \(\mu\Omega\)\,cm, within the \(\pm\)0.7 the catalog states for the formula of the 10.7 the ARMCO bulletin states \cite{armco-iron}. The plain carbon grades read low from it, by an amount that depends on residual silicon and copper, which the AISI grades do not specify and ARMCO iron does not carry. One constant offset, fitted to the two annealed 20 °C values in the ASM table, absorbs it: 1.26 \(\mu\Omega\)\,cm, equivalent to about 0.11\% silicon, with residuals of \(\pm\)0.25 \(\mu\Omega\)\,cm at 1008 and 1030. The 1010 value, which was not used in the fit, comes out at 14.30 against the table's 14.3. Carbon and manganese are the values the curves use, phosphorus is taken as 0.02\%, and sulfur as 0.03\%, or 0.105\% for resulfurized 1117.
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lrrrr@{}}
+\toprule\noalign{}
+Grade & C (\%) & Mn (\%) & \(\rho\) (\(\mu\Omega\)\,cm) & \(\sigma\) (MS/m) \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1004 & 0.040 & 0.35 & 13.5 & 7.41 \\
+1006 & 0.060 & 0.325 & 13.5 & 7.41 \\
+1008 & 0.080 & 0.40 & 14.0 & 7.17 \\
+1010 & 0.100 & 0.45 & 14.3 & 6.99 \\
+1020 & 0.200 & 0.45 & 14.9 & 6.71 \\
+1018 & 0.175 & 0.75 & 16.1 & 6.21 \\
+1117 & 0.180 & 1.15 & 17.2 & 5.83 \\
+1030 & 0.300 & 0.75 & 16.9 & 5.94 \\
+ARMCO grade 2 & \(\le\)0.010 & \(\le\)0.10 & 10.7 & 9.35 \\
+\end{longtable}
+}
+
+The order follows composition: 1020 conducts better than 1018, despite slightly more carbon, because it carries 0.30\% less manganese, which outweighs the carbon. 1004 and 1006 come out equal because 1006's extra carbon is offset by slightly less manganese. The same value is used for every condition of a grade, because the sources give no condition-by-condition values. The values are for room temperature, and resistivity rises by about 0.6 \(\mu\Omega\)\,cm per 10 °C near it, so a hot part conducts noticeably less. The residual silicon behind the offset is the main uncertainty: a heat with 0.1\% more or less silicon than assumed differs by about 1.2 \(\mu\Omega\)\,cm, or 8\%.
+
+\section{Implementation}\label{implementation}
+
+The model form lives in one Python module, and the fit, the library emitters, the gates and the comparison figures all evaluate it through that module, so no two of them can disagree about what a curve is. The fit reads the curated data, performs the regression described above, prints the residual diagnostics, checks the four gates and emits every deliverable, so that all of the numbers quoted here regenerate from the sources in one step using SciPy. The fitted parameter set is written to a JSON file, and a generated Mathematica package evaluates the closed-form model without refitting, verified to reproduce the Python to better than a microtesla. Sources, scans, scripts and fitted parameters are kept under version control.
+
+The emitted curves cover nine grades, 1004, 1006, 1008, 1010, 1018, 1020, 1030, 1117 and ARMCO pure iron grade 2, in all four conditions, as 61-point tables of B in tesla against H in amperes per meter, running from the origin to \(4\times10^{5}\) A/m. The FEMM materials library file carries the as-hot-rolled and annealed-1400 °F entries. A geometry-free .fem problem file, containing nothing but material definitions and openable so that the materials can be dragged into the library, carries all four conditions of every grade.
+
+\section{Conclusions}\label{conclusions}
+
+A single model of 27 shape parameters fitted jointly to fourteen published curves reproduces thirteen of them to an RMS error of 12\% in H; the fourteenth, the most strongly anneal-hardened trace, it follows only in part. The saturation level is computed from composition rather than fitted, with no adjustment of any kind, and it agrees with the nine trusted U.S. Steel levels to within 5 mT while two SLAC curves sit 2 to 3\% low. It still holds at a quarter of the leanest carbon in the data set. The approach to saturation is fixed by Bozorth's two-term law rather than extrapolated, Akulov's inverse-square term carried by rotation and Néel's first-power term by the walls, which is what makes the tables usable out to 5000 Oe; the rotation scale the law implies is imposed rather than checked, and held there by a 10\% prior against data that would take it about 30\% higher, most of that push coming from the tops of the two SLAC curves. The choice moves the extrapolated tables by less than a millitesla. Every emitted curve has a single maximum in permeability, because the wall population is split in two: a soft part that begins to move at the first increment of field, as Rayleigh's law requires, and a sharp part that carries the knee. The initial permeability rests on Bozorth's measurement of annealed iron rather than on the least reliable points of the charts.
+
+The less expected results are what fitting the sources together revealed about the sources. Two traces on one datasheet imply a saturation above what their own chemistry permits, by about 3\%, and the pattern of that error identifies it as a specimen cross-section calibration mistake rather than anything to do with the axes or the scan. A single-curve fit would have absorbed it silently. A second finding came from comparing the emitted curves with one another rather than with the data: giving each heat treatment its own private shape turns a 50\% disagreement between two laboratories into a heat-treatment effect, and emits a 1400 °F curve harder than as-rolled at 1.9 T. Grouping the anneals removes it. Grouping them at A1 rather than into one family lets the model follow the carbon hardening that appears above A1, which a laboratory series from an independent source confirms in direction and exceeds in size. The residual uncertainty in where the family level sits is set by that 2.5 to 3\% disagreement between laboratories, a few times the real heat-to-heat variation, and is the honest limit of what these sources can settle.
+
+The introduction asked for curves a designer can defend, and that is the difference between these entries and the ones they replace. Each names its grade, its heat treatment, the sources it was fitted to, and the field above which it is law rather than measurement. Every constant in Eq.~\eqref{eq:js} traces to a determination rather than to an earlier table. Where a number has no source, the text says so.
+
+\begin{thebibliography}{99}\label{references}
+\bibitem{bozorth1951} R. M. Bozorth, \href{https://doi.org/10.1109/9780470544624}{\emph{Ferromagnetism}}, Van Nostrand, New York, 1951; reissued by IEEE Press, 1993. Cold work in iron: Fig. 3-4 (p. 56), Fig. 3-9 (p. 60, after Tammann and Rocha) and Fig. 13-34 (p. 620).
+
+\bibitem{wiki-rayleigh} \href{https://en.wikipedia.org/wiki/Rayleigh_law}{``Rayleigh law,''} Wikipedia, accessed 26 September 2026. Gives the low-field magnetization as \(M = \chi_0 H + \alpha_R \mu_0 H^{2}\), after Lord Rayleigh, ``On the behaviour of iron and steel under the operation of feeble magnetic forces,'' 1887. The expansion of the toe and soft wall population in Section~\ref{intermediate-field-wall-motion} is the same form in J.
+
+\bibitem{roters1941} H. C. Roters, \href{https://archive.org/details/in.ernet.dli.2015.205551}{\emph{Electromagnetic Devices}}, John Wiley \& Sons, New York, 1941. Art.~23 for the Frölich-Kennelly relation, Art.~311 for annealing practice.
+
+\bibitem{wiki-burr} \href{https://en.wikipedia.org/wiki/Burr_distribution}{``Burr distribution,''} Wikipedia, accessed 25 September 2026. Gives the type XII cumulative distribution as \(F(x;c,k) = 1-(1+x^{c})^{-k}\), which is Eq.~\eqref{eq:burr} with x = H/a, after I. W. Burr, ``Cumulative frequency functions,'' \emph{Annals of Mathematical Statistics}, 13(2):215-232, 1942.
+
+\bibitem{akulov1931} N. S. Akulov, \href{https://link.springer.com/article/10.1007/BF01339465}{``Über den Verlauf der Magnetisierungskurve in starken Feldern,''} \emph{Zeitschrift für Physik}, 69(11):822-831, 1931.
+
+\bibitem{wiki-anisotropy} \href{https://en.wikipedia.org/wiki/Magnetocrystalline_anisotropy}{``Magnetocrystalline anisotropy,''} Wikipedia, accessed 25 September 2026. Its room-temperature table gives iron \(K_1\) = \(4.8\times10^{4}\) J/m\(^{3}\) and \(K_2\) within ±0.5\(\times10^{4}\), citing \emph{Introduction to Magnetic Materials}, B. D. Cullity and C. D. Graham, 2nd ed., 2008. Cited for those two figures only.
+
+\bibitem{maurer1929} Ed. Maurer and K. Schroeter, ``Die Bestimmung des Austenitgehalts durch Messung des magnetischen Sättigungswertes und die Vorgänge beim Anlassen gehärteter Stähle,'' \emph{Stahl und Eisen}, 26:929-940, 1929.
+
+\bibitem{ouda2018} K. Ouda, H. Danninger and C. Gierl-Mayer, \href{https://doi.org/10.1080/00325899.2018.1530850}{``Magnetic measurement of retained austenite in sintered steels --- benefits and limitations,''} \emph{Powder Metallurgy}, 2018. Table 1 collects the attenuation coefficients of \cite{maurer1929}, \cite{exner1960} and \cite{hoselitz1952}.
+
+\bibitem{burrows1916} C. W. Burrows, \href{https://nvlpubs.nist.gov/nistpubs/bulletin/13/nbsbulletinv13n2p173_A2b.pdf}{``Correlation of the Magnetic and Mechanical Properties of Steel,''} \emph{Bulletin of the Bureau of Standards}, 13(2):173--247, submitted 30 March 1915. Figs.~1--4, saturation against carbon and against silicon, are stated there to be taken from the data of Gumlich.
+
+\bibitem{sanford1941} R. L. Sanford and E. G. Bennett, \href{https://nvlpubs.nist.gov/nistpubs/jres/26/jresv26n1p1_a1b.pdf}{``A Determination of the Magnetic Saturation Induction of Iron at Room Temperature,''} Research Paper RP1354, \emph{Journal of Research of the National Bureau of Standards}, 26:1-12, January 1941.
+
+\bibitem{cheney} W. L. Cheney, \href{https://nvlpubs.nist.gov/nistpubs/ScientificPapers/nbsscientificpaper463vol18p609_A2b.pdf}{``Preparation and Properties of Pure Iron Alloys: II. Magnetic Properties of Iron-Carbon Alloys as Affected by Heat Treatment and Carbon Content,''} Bureau of Standards Scientific Paper No.~463, vol.~18, p.~609, submitted 24 July 1922. Table 4 carries the annealed series used for the carbon coefficient, and Fig.~10, p.~629, the normal induction curves of the same annealed alloys, digitized here for validation.
+
+\bibitem{exner1960} H. E. Exner, \emph{Magnetische Bestimmung von Gefügebestandteilen}, master's thesis, Montanuniversität Leoben, 1960.
+
+\bibitem{hoselitz1952} K. Hoselitz, \href{https://archive.org/details/bwb_KR-618-908}{\emph{Ferromagnetic Properties of Metals and Alloys}}, Clarendon Press, Oxford, 1952, p.~138.
+
+\bibitem{sadron1932} C. Sadron, \href{https://doi.org/10.1051/anphys/193210170371}{``Ferromagnetic moments of the elements and the periodic system,''} \emph{Annales de Physique} {[}10{]} 17:371-452, 1932. Reported for iron-manganese in \cite{bozorth1951}, Chap. 7, with the room-temperature saturation data of Gumlich (1918) in Fig. 7-32.
+
+\bibitem{armco-iron} AK Steel International, \href{https://www.aksteel.nl/files/downloads/clf_productdata__armco_pure_iron_pdb_euro_final_072022_92.pdf}{``ARMCO Pure Iron,''} product data bulletin.
+
+\bibitem{cobb1989} J. K. Cobb and R. A. Early, \href{https://www.slac.stanford.edu/pubs/slactns/tn01/slac-tn-89-004.pdf}{``The New SLAC Permeameter,''} SLAC-TN-89-04, Stanford Linear Accelerator Center, December 1989.
+
+\bibitem{ito1983} A. Ito, W. Bosworth, A. T. Visser, J. Grimson and W. Yang, \href{https://lss.fnal.gov/archive/test-tm/1000/fermilab-tm-1197.pdf}{``B vs.~H Curves for 1008 and 1020 Steels,''} Fermilab TM-1197, July 1983.
+
+\bibitem{cobb1990} J. K. Cobb and R. A. Early, \href{https://www.slac.stanford.edu/pubs/slacpubs/5000/slac-pub-5168.pdf}{``Some Initial Results from the New SLAC Permeameter,''} SLAC-PUB-5168, January 1990.
+
+\bibitem{early1989} R. A. Early, J. K. Cobb and J. Oijala, \href{https://www.slac.stanford.edu/pubs/slacpubs/4750/slac-pub-4883.pdf}{``Design Calculations and Measurements of a Dipole Magnet with Permendur Pole Pieces,''} SLAC-PUB-4883, 1989.
+
+\bibitem{visser1987} A. Visser, J. Western and A. Skraboly, \href{https://lss.fnal.gov/archive/test-tm/1000/fermilab-tm-1435.pdf}{``Electrical and Mechanical Design Report of the Muon Toroids for the Beamline to the Muon Laboratory,''} Fermilab TM-1435, March 1987.
+
+\bibitem{visser1986} A. T. Visser, \href{https://lss.fnal.gov/archive/test-tm/1000/fermilab-tm-1432.pdf}{``Meson West Beamline Spoiler Magnets, Electrical Design and Test Report,''} Fermilab TM-1432, November 1986.
+
+\bibitem{visser1985} A. T. Visser, \href{https://lss.fnal.gov/archive/test-tm/1000/fermilab-tm-1364.pdf}{``Electrical Design of a 110-Ft Long Muon Pipe with Automatic Degaussing,''} Fermilab TM-1364, November 1985.
+
+
+\bibitem{wiki-lm} \href{https://en.wikipedia.org/wiki/Levenberg-Marquardt_algorithm}{``Levenberg--Marquardt algorithm,''} Wikipedia, accessed 25 September 2026, after K. Levenberg, \emph{Quarterly of Applied Mathematics}, 2(2):164-168, 1944, and D. W. Marquardt, \emph{Journal of the Society for Industrial and Applied Mathematics}, 11(2):431-441, 1963.
+
+\bibitem{wiki-huber} \href{https://en.wikipedia.org/wiki/Huber_loss}{``Huber loss,''} Wikipedia, accessed 25 September 2026. Its pseudo-Huber section is the smooth soft-L1 form used here, after P. J. Huber's 1964 paper on robust estimation of a location parameter.
+
+\bibitem{virtanen2020} P. Virtanen et al., \href{https://doi.org/10.1038/s41592-019-0686-2}{``SciPy 1.0: fundamental algorithms for scientific computing in Python,''} \emph{Nature Methods}, 17:261-272, 2020.
+
+\bibitem{uss1978} United States Steel, \emph{Nonoriented Sheet Steel for Magnetic Applications}, ADUSS 31-7103-01, May 1978, pp.~115--116. States the assumed-density table used to reduce a specimen mass to a net cross-section, and the resistivity and density formulas that go with it.
+
+\bibitem{clf2026} Cleveland-Cliffs, \href{https://www.clevelandcliffs.com/_assets/_92ef20feb08a1fc0de91b85887c0f9e4/clevelandcliffs/db/1190/10494/file/CLF_ProductData_DiMaxM15M47_042026.pdf}{\emph{DI-MAX Non-Oriented Electrical Steels}}, product data bulletin, April 2026, ``Testing Methods.'' The successor of \cite{uss1978}'s product line, stating the same convention explicitly: ``Induction is calculated from the net cross-sectional area of the specimen. Net area is determined from the actual weight of the specimen and the assumed specific gravity values (as specified by ASTM).''
+
+\bibitem{asm1990} ASM International, \emph{ASM Handbook}, Vol.~1, \emph{Properties and Selection: Irons, Steels, and High-Performance Alloys}, 10th ed., 1990, ``Physical Properties of Carbon and Low-Alloy Steels,'' table ``Electrical resistivities of carbon and low-alloy steels.'' Values at 20 °C except where its footnote (a) places them at 0 °C.
+
+\bibitem{metalshandbook1966} American Society for Metals, \emph{Metals Handbook}, 8th ed., Vol. 1, 1961, Fig. 17, p.~792. The generic soft-magnetic entries in the FEMM library are digitized from this figure; see \href{https://www.femm.info/wiki/SoftMagneticMaterials}{Soft Magnetic Materials}.
+
+\bibitem{sicurves} ``Generating B-H Curves for Nonoriented Silicon Steels,'' companion page.
+
+\end{thebibliography}
+
+\noindent Copyright 2026 David Meeker. This document is licensed under the \href{https://creativecommons.org/licenses/by/4.0/}{Creative Commons Attribution 4.0 International License (CC BY 4.0)}.
+
+\end{document}

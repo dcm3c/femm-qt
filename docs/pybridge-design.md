@@ -733,6 +733,7 @@ python/matplotlib/__init__.py
 python/matplotlib/pyplot.py
 python/xlsxwriter.py
 python/zipfile.py
+python/pandas.py
 ```
 
 **The rule: shim only what has no in-process equivalent.** matplotlib and
@@ -840,6 +841,15 @@ Order of candidates:
    `/usr/local/bin/python3` (pkg installs land there and the `python3` PATH
    symlink comes from the lang/python3 meta-port, which may not be installed).
 
+**Candidate 1 is exclusive; candidate 2 is not.** An explicit preference (or
+`pybridge.set_interpreter`) makes that interpreter the *only* candidate, so it
+is used even if it cannot plot — a pin means "this one". `FEMMQT_PYTHON` merely
+goes first in the list and is passed over by the backend rule below, which is
+the difference users trip on: pointing it at a venv holding pandas but no
+matplotlib silently yields a different python and a bare `No module named
+'pandas'`. `import_module()` names the interpreter actually in use for exactly
+this reason.
+
 **There is no separate probe script.** Discovery spawns
 the *real worker* against each candidate and reads its `hello` reply, which
 already reports the Python/numpy/matplotlib versions and the backend actually
@@ -900,6 +910,7 @@ femm-qt/
     mpy/shims/matplotlib/{cm,colors,ticker,gridspec,patches}.py
     mpy/shims/xlsxwriter.py               # one file; from-import resolves via __getattr__
     mpy/shims/zipfile.py                  # ditto, and re-raises with context (stdlib name)
+    mpy/shims/pandas.py                   # ditto; optional, so the import error names the interpreter
     tests/test_protocol.py                # CPython-only, no femm-qt needed
     tests/test_worker_headless.py         # live worker, headless (agg)
     tests/fake_client.py                  # CPython reference client (mirrors pybridge.py)

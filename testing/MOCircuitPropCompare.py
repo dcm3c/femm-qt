@@ -23,6 +23,8 @@ import math
 import re
 import sys
 
+import of_ac_curve
+
 TOL   = 0.02
 FLOOR = 1e-9
 
@@ -77,12 +79,15 @@ def compare(ref_path, test_path, tol=TOL, floor=FLOOR):
     vdom = {s: secdom(s, 1) for s in range(len(rsec))}
     fdom = {s: secdom(s, 2) for s in range(len(rsec))}
 
-    ok, flags = 0, []
+    ok, flags, ac_cut = 0, [], 0
     for k in sorted(rv, key=lambda x: (x[0], str(x[1]))):
         if k not in tv:
             continue
         s, cname = k
         rc, tc = rv[k], tv[k]
+        if of_ac_curve.excluded(rsec[s]):
+            ac_cut += min(len(rc), len(tc))
+            continue
         for j in range(min(len(rc), len(tc))):
             denom = abs(rc[j]) if j == 0 else (vdom[s] if j == 1 else fdom[s])
             if denom <= floor:
@@ -95,8 +100,8 @@ def compare(ref_path, test_path, tol=TOL, floor=FLOOR):
                 flags.append((s, cname, j, rc[j], tc[j], err))
 
     label = {0: "I", 1: "V", 2: "Flux"}
-    print("compared %d circuit-property components: %d agree (err <= %.1f%%), %d flagged"
-          % (ok + len(flags), ok, tol * 100, len(flags)))
+    print("compared %d circuit-property components: %d agree (err <= %.1f%%), %d flagged%s"
+          % (ok + len(flags), ok, tol * 100, len(flags), of_ac_curve.note(ac_cut)))
     if flags:
         print("\nFLAGGED (reference vs test):")
         for s, cname, j, a, b, err in sorted(flags, key=lambda x: -x[5]):

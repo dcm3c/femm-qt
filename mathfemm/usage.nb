@@ -5,7 +5,6 @@
 
 (* CreatedBy='Mathematica 7.0' *)
 
-(*CacheID: 234*)
 (* Internal cache information:
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
@@ -601,7 +600,7 @@ Cell[BoxData["\<\"EIClose[] closes the preprocessor window and destroys the \
 current document.\"\>"], "Print",
  CellTags->"Info3347223941-3439479"],
 
-Cell[BoxData["\<\"EICreateMesh[] runs triangle to create a mesh. Note that \
+Cell[BoxData["\<\"EICreateMesh[] runs the mesher to create a mesh. Note that \
 this is not a necessary precursor of performing an analysis, as EIAnalyze[] \
 will make sure the mesh is up to date before running an analysis.\"\>"], \
 "Print",
@@ -1117,7 +1116,7 @@ Cell[BoxData["\<\"HIClose[] closes the preprocessor window and destroys the \
 current document.\"\>"], "Print",
  CellTags->"Info3347223941-2245144"],
 
-Cell[BoxData["\<\"HICreateMesh[] runs triangle to create a mesh. Note that \
+Cell[BoxData["\<\"HICreateMesh[] runs the mesher to create a mesh. Note that \
 this is not a necessary precursor of performing an analysis, as HIAnalyze[] \
 will make sure the mesh is up to date before running an analysis.\"\>"], \
 "Print",
@@ -1634,7 +1633,7 @@ Cell[BoxData["\<\"CIClose[] closes the preprocessor window and destroys the \
 current document.\"\>"], "Print",
  CellTags->"Info3347223942-8756152"],
 
-Cell[BoxData["\<\"CICreateMesh[] runs triangle to create a mesh. Note that \
+Cell[BoxData["\<\"CICreateMesh[] runs the mesher to create a mesh. Note that \
 this is not a necessary precursor of performing an analysis, as CIAnalyze[] \
 will make sure the mesh is up to date before running an analysis.\"\>"], \
 "Print",
@@ -2191,7 +2190,7 @@ Cell[BoxData["\<\"MIClose[] closes the preprocessor window and destroys the \
 current document.\"\>"], "Print",
  CellTags->"Info3347223942-3212477"],
 
-Cell[BoxData["\<\"MICreateMesh[] runs triangle to create a mesh. Note that \
+Cell[BoxData["\<\"MICreateMesh[] runs the mesher to create a mesh. Note that \
 this is not a necessary precursor of performing an analysis, as MIAnalyze[] \
 will make sure the mesh is up to date before running an analysis.\"\>"], \
 "Print",

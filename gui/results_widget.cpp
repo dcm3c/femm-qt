@@ -18,6 +18,7 @@
 
 #include <QPainter>
 #include <QMessageBox>
+#include "mouse_release_gate.h"
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QKeyEvent>
@@ -1057,8 +1058,11 @@ void ResultsWidget::mouseDoubleClickEvent(QMouseEvent *event)
         int i = ppClosestNode(xd, yd, m_doc->nodelist);
         if (i >= 0) {
             auto &n = m_doc->nodelist[i];
-            QMessageBox::information(this, tr("Closest Input Node"),
-                QString("Closest input node:\n(%1,%2)").arg(n.x).arg(n.y));
+            const QString msg = QString("Closest input node:\n(%1,%2)").arg(n.x).arg(n.y);
+            // After the button-up, never here: mouse_release_gate.cpp.
+            femmAfterMouseRelease(this, [this, msg]() {
+                QMessageBox::information(this, tr("Closest Input Node"), msg);
+            });
         }
         return;
     }
@@ -1181,7 +1185,7 @@ void ResultsWidget::showPointProperties(double xd, double yd)
         }
         text += QString("E   = %1 J/m\u00b3\n").arg(u.E, 0, 'g');
         text += QString("J   = %1 MA/m\u00b2\n").arg(u.Js.re, 0, 'g');
-        if (u.ff > 0)
+        if (u.ff > 0 && !u.ffIsLam)
             text += QString("Winding Fill = %1%\n").arg(u.ff*100., 0, 'f', 2);
     } else {
         double Hmag = sqrt(u.H1.re*u.H1.re + u.H2.re*u.H2.re
@@ -1205,7 +1209,7 @@ void ResultsWidget::showPointProperties(double xd, double yd)
             text += QString("mu_%1= %2 (rel)\n").arg(isAxi?"rz":"xy").arg(cstr(u.mu12));
         CComplex Jtot = u.Je + u.Js;
         text += QString("J= %1 MA/m\u00b2\n").arg(cstr(Jtot));
-        if (u.ff > 0)
+        if (u.ff > 0 && !u.ffIsLam)
             text += QString("Winding Fill = %1%\n").arg(u.ff*100., 0, 'f', 2);
     }
 

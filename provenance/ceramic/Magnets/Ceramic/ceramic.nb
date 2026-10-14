@@ -1,0 +1,70 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+Notebook[{
+Cell["Typical-value demagnetization curves for Chinese sintered ferrite Y-grades", "Title"],
+
+Cell["Why", "Subsection"],
+
+Cell["Makers of the Chinese Y-grades publish ranges of Br, HcB, HcJ and (BH)max, but few demagnetization curves, and the ones they do publish look drawn rather than measured. This notebook builds a curve for each grade from its typical values instead: each is the midpoint of a published range on a shape shared by every grade. It is not a measurement, and each FEMM block is named \"(typical)\" to say so.", "Text"],
+
+Cell["Model", "Subsection"],
+
+Cell["The intrinsic curve is modelled and B follows from it, in SI units:\n    J(H) = (Br - mu0 X Hcj)(1 - Exp[-s (H + Hcj)/Hcj]) + mu0 X (H + Hcj),   X = ur - 1\n    B(H) = mu0 H + J(H)\nJ(-Hcj) = 0 exactly, the recoil slope near H = 0 is ur, and dB/dH is never less than mu0 ur, so the curves cannot fall below the vacuum slope the way FEMM's old stock Y25 and Y30 tables did. HcB and (BH)max are results, not inputs.", "Text"],
+
+Cell["Two parameters are shared by all grades: ur = 1.07 and s = 35. For every grade below, (BH)max falls on the straight part of the curve at 20 C, where it equals Br^2/(4 mu0 ur): it tests ur alone, and ur = 1.07 (1.067 fitted to the table midpoints, rounded) puts every grade's (BH)max in range. s sets the knee, and with it the ratio HcB/HcJ. The Y tables accept any s from about 35 up: every grade's HcB stays in range, and the RMS departure from the HcB midpoints moves only from 1.9% at s = 35 to 1.5% at 50. The measured magnets decide it: Dexter's HF050, HF081 and HF083 have HcB/Hci = 0.970, 0.952 and 0.976, a mean of 0.966, and the model gives 0.969 at s = 35. A knee sharper than the real one would overstate the reverse field a magnet withstands, so the rounder choice also errs on the safe side.", "Text"],
+
+Cell["Grades: every Y-grade row of the Eclipse datasheet was screened with these shared parameters, and the 15 included are those whose model HcB and (BH)max land inside the published ranges and within about 4% of both midpoints. Left out: Y23, Y25 and Y32H-1, whose HcB sits well below HcJ -- a rounder knee than s = 35 gives, so the model overshoots HcB by 9-12%; Y20, whose model (BH)max lands above its range (its 320-380 mT Br range is too wide for a midpoint to stand for it); Y22H, inside its ranges but 5-6% off both midpoints; Y40, whose table HcB exceeds Br/(mu0 ur), which this shape cannot reach; Y28H-2, whose Br columns disagree (360-380 mT against 3.3-3.8 kG); Y8T and Y10T, isotropic grades with a recoil near 1.2 (and Y10T is Ceramic 1, for which Dexter's measured HF010 exists); and three that would repeat a curve already here: Y32H-2 and Y26H-1 (the same Br and HcJ midpoints as Y33 and Y26H) and Y28 (a row identical to Y30's).", "Text"],
+
+Cell["Sources", "Subsection"],
+
+Cell["Br and Hcj: midpoints of the ranges in the Eclipse Magnetics ferrite datasheet (Magnets/Ceramic/ferrite_ceramic_datasheet.pdf); the e-Magnets UK and Magnet Store pages carry the same ranges. Temperature coefficients: Dexter Magnetic Technologies' ceramic table, alpha = -0.20 %/C for Br and beta = +0.35 %/C for coercivity, over 20-150 C, the same for all its HF grades. Dexter heads beta \"Coefficient Coercivity\" without saying Hc or Hci; it is applied here to Hcj. Below 20 C both are extrapolations. Note that Hcj falls on cooling: at -40 C, Y30's HcB is 155 kA/m against 194 at 20 C.", "Text"],
+
+Cell["Checks", "Subsection"],
+
+Cell["At 20 C every grade's HcB and (BH)max fall inside its published ranges. Against measured curves -- Dexter's HF050, HF081 and HF083, which the e-Magnets/Eclipse cross-reference makes Y30, Y30H-1 and Y33 -- the model given each curve's own Br and Dexter's Hci gives their coercivities to within 0.3, 0.1 and 2.8 kA/m, matches H to within 2.0-3.6 kA/m at every induction above 0.2 T, and to within 2.8-6.5 kA/m in the knee, the largest being HF050's, whose knee is rounder still.", "Text"],
+
+Cell["Reference values, from an independent Python implementation of the same model:\n    Y30, 20 C:   Hcb = 193.81 kA/m, (BH)max = 27.56 kJ/m^3\n    Y30, -40 C:  Hcb = 155.16 kA/m, (BH)max = 33.36 kJ/m^3\n(at -40 C the knee lies near the (BH)max point, so the 21-point table encloses slightly less than the exact curve).", "Text"],
+
+Cell["Output", "Subsection"],
+
+Cell["Yferrite_typical.fem, written next to the notebook: a geometry-free FEMM file holding every curve as a material block in FEMM's form for a nonlinear magnet, 21 points equally spaced in B, B against H + Hcb from (0, 0) to (Br, Hcb), with <H_c> = Hcb. Sigma is 0: no held source gives a resistivity for sintered ferrite.", "Text"],
+
+Cell["Program", "Subsection"],
+
+Cell["mu0 = 4 Pi 10^-7;", "Code"],
+
+Cell["(* Shared shape parameters.  BHmax lands on the straight part of every curve\n   here, so it equals Br^2/(4 mu0 ur) and tests ur alone (ur fit to the table\n   midpoints: 1.067, used rounded).  s sets the knee, i.e. the ratio Hcb/Hcj:\n   the Y tables accept anything from about 35 up, and s = 35 gives 0.969,\n   matching the mean of Dexter's three measured magnets (HF050, HF081, HF083:\n   0.970, 0.952, 0.976). *)\nur = 1.07;\ns = 35;", "Code"],
+
+Cell["(* Temperature coefficients: Dexter Magnetic Technologies ceramic table,\n   20-150 C, identical for all its HF grades.  Dexter's beta is headed\n   \"Coefficient Coercivity\" without saying Hc or Hci; applied here to Hcj.\n   Below 20 C both are extrapolations. *)\nalphaBr = -0.0020;   (* 1/C *)\nbetaHcj = +0.0035;   (* 1/C *)", "Code"],
+
+Cell["temps = {20};        (* e.g. {-40, -20, 20, 60, 100} *)", "Code"],
+
+Cell["(* name, Br [T], Hcj [kA/m] at 20 C: midpoints of the Eclipse Magnetics ranges.\n   Not listed because they would repeat a curve already here: Y32H-2 and\n   Y26H-1 (same Br and Hcj midpoints as Y33 and Y26H), and Y28 (its Eclipse\n   row is identical to Y30's). *)\ngrades = {\n  {\"Y26H\",   0.375, 240.0},\n  {\"Y26H-2\", 0.370, 334.0},\n  {\"Y27H\",   0.385, 232.5},\n  {\"Y28H-1\", 0.390, 265.0},\n  {\"Y30\",    0.385, 200.0},\n  {\"Y30BH\",  0.385, 238.0},\n  {\"Y30H-1\", 0.390, 262.5},\n  {\"Y30H-2\", 0.405, 322.5},\n  {\"Y32\",    0.410, 180.0},\n  {\"Y33\",    0.420, 240.0},\n  {\"Y33H\",   0.420, 262.5},\n  {\"Y34\",    0.430, 220.0},\n  {\"Y35\",    0.440, 229.0},\n  {\"Y36\",    0.440, 262.0},\n  {\"Y38\",    0.450, 302.0}};", "Code"],
+
+Cell["J[h_, br_, hcj_] := With[{X = ur - 1},\n  (br - mu0 X hcj) (1 - Exp[-s (h + hcj)/hcj]) + mu0 X (h + hcj)];", "Code"],
+
+Cell["B[h_, br_, hcj_] := mu0 h + J[h, br, hcj];", "Code"],
+
+Cell["(* Br [T] and Hcj [A/m] at temperature T *)\nparams[br20_, hcj20_, T_] := {br20 (1 + alphaBr (T - 20)), 1000 hcj20 (1 + betaHcj (T - 20))};", "Code"],
+
+Cell["(* H at which B = b; B(H) is monotonic, so bracket and use Brent *)\nhOfB[b_, br_, hcj_] := h /. FindRoot[B[h, br, hcj] == b, {h, -2 hcj, hcj/10}, Method -> \"Brent\"];", "Code"],
+
+Cell["(* 21 points {H [A/m], B [T]}, equally spaced in B from 0 to Br *)\ncurve[br20_, hcj20_, T_] := Module[{br, hcj},\n  {br, hcj} = params[br20, hcj20, T];\n  Table[{Round[hOfB[b, br, hcj]], N@Round[b, 1/10000]}, {b, 0, br, br/20}]];", "Code"],
+
+Cell["summary[br20_, hcj20_, T_] := Module[{br, hcj, hcb, bhmax},\n  {br, hcj} = params[br20, hcj20, T];\n  hcb = hOfB[0, br, hcj];\n  bhmax = -First@FindMinimum[{B[h, br, hcj] h, hcb <= h <= 0}, {h, hcb/2}];\n  {br, hcj/1000, -hcb/1000, bhmax/1000}];", "Code"],
+
+Cell["(* One FEMM material block.  FEMM's nonlinear magnet table is B against\n   H + Hcb, from (0, 0) to (Br, Hcb), and <H_c> must equal that last H. *)\nblockName[name_, T_] := name <> If[T == 20, \" (typical)\", \" (typical, \" <> ToString[T] <> \" C)\"];", "Code"],
+
+Cell["femBlock[name_, T_, pts_] := Module[{hcb = -pts[[1, 1]], rows},\n  rows = StringJoin[(\"      \" <> ToString[#[[2]]] <> \"\\t\" <> ToString[#[[1]] + hcb] <> \"\\n\") & /@ pts];\n  \"  <BeginBlock>\\n\" <>\n  \"    <BlockName> = \\\"\" <> blockName[name, T] <> \"\\\"\\n\" <>\n  \"    <Mu_x> = 1\\n    <Mu_y> = 1\\n\" <>\n  \"    <H_c> = \" <> ToString[hcb] <> \"\\n\" <>\n  \"    <H_cAngle> = 0\\n    <J_re> = 0\\n    <J_im> = 0\\n    <Sigma> = 0\\n\" <>\n  \"    <d_lam> = 0\\n    <Phi_h> = 0\\n    <Phi_hx> = 0\\n    <Phi_hy> = 0\\n\" <>\n  \"    <LamType> = 0\\n    <LamFill> = 1\\n    <NStrands> = 0\\n    <WireD> = 0\\n\" <>\n  \"    <BHPoints> = \" <> ToString[Length[pts]] <> \"\\n\" <> rows <>\n  \"  <EndBlock>\\n\"];", "Code"],
+
+Cell["femFile[blocks_] :=\n  \"[Format]      =  4.0\\n[Frequency]   =  0\\n[Precision]   =  1e-08\\n\" <>\n  \"[MinAngle]    =  30\\n[DoSmartMesh] =  1\\n[Depth]       =  1\\n\" <>\n  \"[LengthUnits] =  millimeters\\n[ProblemType] =  planar\\n\" <>\n  \"[Coordinates] =  cartesian\\n[ACSolver]    =  0\\n[PrevType]    =  0\\n\" <>\n  \"[PrevSoln]    =  \\\"\\\"\\n[Comment]     =  \\\"Typical-value Y-grade ferrite curves from ceramic.nb\\\"\\n\" <>\n  \"[PointProps]   = 0\\n[BdryProps]   = 0\\n\" <>\n  \"[BlockProps]  = \" <> ToString[Length[blocks]] <> \"\\n\" <> StringJoin[blocks] <>\n  \"[CircuitProps]  = 0\\n[NumPoints] = 0\\n[NumSegments] = 0\\n\" <>\n  \"[NumArcSegments] = 0\\n[NumHoles] = 0\\n[NumBlockLabels] = 0\\n\";", "Code"],
+
+Cell["outDir = If[StringQ[$InputFileName] && $InputFileName =!= \"\",\n  DirectoryName[$InputFileName],\n  Quiet@Check[NotebookDirectory[], Directory[]]];", "Code"],
+
+Cell["(* every curve as a block of one geometry-free FEMM file *)\nblocks = Flatten[Table[femBlock[g[[1]], T, curve[g[[2]], g[[3]], T]], {g, grades}, {T, temps}]];\nExport[FileNameJoin[{outDir, \"Yferrite_typical.fem\"}], femFile[blocks], \"Text\"];", "Code"],
+
+Cell["(* summary: Br [T], Hcj, Hcb [kA/m], BHmax [kJ/m^3] *)\nPrint[TableForm[\n  Flatten[Table[Join[{g[[1]], T}, NumberForm[#, 4] & /@ summary[g[[2]], g[[3]], T]],\n    {g, grades}, {T, temps}], 1],\n  TableHeadings -> {None, {\"Grade\", \"T [C]\", \"Br [T]\", \"Hcj\", \"Hcb\", \"BHmax\"}}]];", "Code"],
+
+Cell["(* all grades at the first temperature *)\nListLinePlot[\n  Table[{#[[1]]/1000, #[[2]]} & /@ curve[g[[2]], g[[3]], First@temps], {g, grades}],\n  PlotLegends -> grades[[All, 1]], Frame -> True,\n  FrameLabel -> {\"H [kA/m]\", \"B [T]\"}, GridLines -> Automatic,\n  PlotLabel -> \"Y-grade ferrite, typical values, \" <> ToString[First@temps] <> \" C\"]", "Code"]
+},
+WindowSize->{1000, 800}]

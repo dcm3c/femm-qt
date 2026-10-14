@@ -1,0 +1,52 @@
+name,crc_eps,conditions,table,row
+Helium,1.0000645,"20 C, 1 atm",6-221,Helium
+Hydrogen,1.0002532,"20 C, 1 atm",6-221,Hydrogen
+Oxygen,1.0004941,"20 C, 1 atm",6-221,Oxygen
+Argon,1.0005169,"20 C, 1 atm",6-221,Argon
+"Air (dry, CO2-free)",1.0005360,"20 C, 1 atm",6-221,"Air (dry, CO2 free)"
+Nitrogen,1.0005474,"20 C, 1 atm",6-221,Nitrogen
+Carbon dioxide,1.0009217,"20 C, 1 atm",6-221,Carbon dioxide
+"Water, 20 C",80.1,"20 C, static",6-199,Water
+"Water, 25 C",78.36,"25 C, 0-1 MHz",6-15,Water (Archer and Wang)
+"Water, 50 C",69.88,"50 C, 0-1 MHz",6-15,Water (Archer and Wang)
+Methanol,33.0,"20 C, static",6-199,Methanol
+Ethanol,24.85,"25 C, static (fit)",6-199,Ethanol
+1-Propanol,20.52,"25 C, static (fit)",6-199,1-Propanol
+2-Propanol,19.26,"25 C, static (fit)",6-199,2-Propanol
+Glycerol,45.64,"25 C, static (fit)",6-199,Glycerol
+Acetone,20.49,"25 C, static (fit)",6-199,Acetone
+Formamide,111.0,"20 C, static",6-199,Formamide
+"1,2-Dichloroethane",10.42,"20 C, static",6-199,"1,2-Dichloroethane"
+Nitrobenzene,35.6,"20 C, static",6-199,Nitrobenzene
+Diethyl ether,4.2666,"20 C, static",6-199,Diethyl ether
+Benzene,2.2825,"20 C, static",6-199,Benzene
+Toluene,2.374,"25 C, static (fit)",6-199,Toluene
+Hexane,1.8865,"20 C, static",6-199,Hexane
+Cyclohexane,2.0243,"20 C, static",6-199,Cyclohexane
+Carbon tetrachloride,2.2379,"20 C, static",6-199,Tetrachloromethane
+Chlorobenzene,5.6895,"20 C, static",6-199,Chlorobenzene
+Magnesium oxide (MgO),9.65,"298 K, 100 Hz-100 MHz",12-48,Magnesium oxide (periclase)
+Mica,6.9,"298 K, 100 Hz-10 kHz",12-48,"Mica (Canadian), perpendicular; muscovite 5.4"
+Glass (soda lime),6.75,"20 C, 100 MHz",12-58,Corning 0080
+Fused silica,4.1,"1 MHz",12-58,"Quartz (fused); 3.75 at 100 MHz"
+Pyrex 7740 borosilicate glass,5.00,"20 C, 100 MHz",12-58,Pyrex 7740
+Si3N4,4.2,"r.t., 1 kHz, film",12-48,Silicon nitride
+Ta2O5,24,"292 K, 1 kHz",12-48,"Tantalum pentoxide, beta phase"
+Polyethylene (LDPE),2.3,"23 C, 1 kHz",13-17,Polyethylene
+Polyethylene (MDPE),2.3,"23 C, 1 kHz",13-17,Polyethylene
+Polyethylene (HDPE),2.3,"23 C, 1 kHz",13-17,Polyethylene
+Cross-linked polyethylene (XLPE),2.3,"23 C, 1 kHz",13-17,Polyethylene
+Polypropylene,2.3,"25 C, 1 kHz",13-17,Polypropylene
+PTFE,2.1,"25 C, 1 kHz",13-17,Polytetrafluoroethylene
+Polycarbonate,2.92,"23 C, 1 kHz",13-17,Polycarbonate
+"Nylon 6,6",3.50,"25 C, 1 kHz",13-17,Polyamides (nylons)
+Polystyrene,2.6,"25 C, 1 kHz",13-17,Polystyrene
+Mylar polyester film (PET),3.25,"23 C, 1 kHz",13-17,Poly(ethylene terephthalate) (Mylar)
+Delrin 150 acetal (POM-H),3.8,"25 C, 1 kHz",13-17,Polyoxymethylene
+"PVC, rigid (Trovidur PN)",3.39,"25 C, 1 kHz",13-17,Poly(vinyl chloride)
+Silicon,12.1,"4.2 K, 10-1000 MHz",12-48,Silicon (4.2 K; not room temperature)
+Germanium,15.8,"r.t., 500 Hz-30 GHz",12-48,Germanium
+Gallium arsenide (GaAs),13.13,300 K,12-48,Gallium arsenide
+Indium phosphide (InP),12.61,"r.t., infrared",12-48,Indium phosphide
+"Silicon carbide, 6H (c-axis along y)",9.66,"r.t., infrared, perpendicular to c (10.03 parallel)",12-48,"Silicon carbide, 6H"
+Diamond,5.66,"300 K, 1 kHz",12-48,Diamond type IIa (type I 5.87)

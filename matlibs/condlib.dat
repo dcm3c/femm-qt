@@ -1,5 +1,9 @@
+<BeginFolder>
+<FolderName> = "Metals and Alloys"
+<BeginFolder>
+<FolderName> = "Pure Metals"
 <BeginBlock>
-<BlockName> = "Copper"
+<BlockName> = "Copper (IACS standard)"
 <ox> = 58000000
 <oy> = 58000000
 <ex> = 1
@@ -9,12 +13,2664 @@
 <EndBlock>
 
 <BeginBlock>
-<BlockName> = "Aluminum"
-<ox> = 37700000
-<oy> = 37700000
+<BlockName> = "Aluminum, 99.99%"
+<ox> = 37670000
+<oy> = 37670000
 <ex> = 1
 <ey> = 1
 <ltx> = 0
 <lty> = 0
 <EndBlock>
+
+<BeginBlock>
+<BlockName> = "Molybdenum"
+<ox> = 19230800
+<oy> = 19230800
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Tantalum"
+<ox> = 8032130
+<oy> = 8032130
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Tungsten"
+<ox> = 17699100
+<oy> = 17699100
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Nickel, 99.8%"
+<ox> = 12531300
+<oy> = 12531300
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Iron, 99.99%"
+<ox> = 10298700
+<oy> = 10298700
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Copper and Copper Alloys"
+<BeginBlock>
+<BlockName> = "Copper, pure"
+<ox> = 59880200
+<oy> = 59880200
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Electrolytic tough pitch copper (ETP)"
+<ox> = 58479500
+<oy> = 58479500
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Oxygen-free copper (OF)"
+<ox> = 58479500
+<oy> = 58479500
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Free-machining copper, 0.5% Te"
+<ox> = 54945100
+<oy> = 54945100
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Free-machining copper, 1.0% Pb"
+<ox> = 56818200
+<oy> = 56818200
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Cartridge brass, 70%"
+<ox> = 16129000
+<oy> = 16129000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Yellow brass"
+<ox> = 15625000
+<oy> = 15625000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Leaded commercial bronze"
+<ox> = 24390200
+<oy> = 24390200
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Phosphor bronze, 1.25%"
+<ox> = 27777800
+<oy> = 27777800
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Nickel silver, 55-18"
+<ox> = 3225810
+<oy> = 3225810
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Low-silicon bronze (B)"
+<ox> = 6993010
+<oy> = 6993010
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Beryllium copper"
+<ox> = 14814800
+<oy> = 14814800
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Cast Chromium copper (1% Cr)"
+<ox> = 47619000
+<oy> = 47619000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Cast 88Cu-8Sn-4Zn"
+<ox> = 6666670
+<oy> = 6666670
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Cast 87Cu-10Sn-1Pb-2Zn"
+<ox> = 6666670
+<oy> = 6666670
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Contact copper, 0.04 oxide"
+<ox> = 58139500
+<oy> = 58139500
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Contact copper, 1.25 Sn + P"
+<ox> = 27777800
+<oy> = 27777800
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Contact copper, 5 Sn + P"
+<ox> = 9090910
+<oy> = 9090910
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Contact copper, 8 Sn + P"
+<ox> = 7692310
+<oy> = 7692310
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Contact copper, 15 Zn"
+<ox> = 21276600
+<oy> = 21276600
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Contact copper, 20 Zn"
+<ox> = 18518500
+<oy> = 18518500
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Contact copper, 35 Zn"
+<ox> = 15625000
+<oy> = 15625000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Contact copper, 2 Be + Ni or Co"
+<ox> = 9478670
+<oy> = 9478670
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Copper, C36000 (free-cutting brass)"
+<ox> = 15151500
+<oy> = 15151500
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Copper, C71500 (30% copper-nickel)"
+<ox> = 2666670
+<oy> = 2666670
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Copper, C93200 (bearing bronze)"
+<ox> = 6944440
+<oy> = 6944440
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Aluminum Alloys"
+<BeginBlock>
+<BlockName> = "Aluminum, 1100 (O)"
+<ox> = 34482800
+<oy> = 34482800
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Aluminum, 2024 (O)"
+<ox> = 29411800
+<oy> = 29411800
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Aluminum, 3003 (O)"
+<ox> = 29411800
+<oy> = 29411800
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Aluminum, 4032 (O)"
+<ox> = 23255800
+<oy> = 23255800
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Aluminum, 5052 (all)"
+<ox> = 20408200
+<oy> = 20408200
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Aluminum, 5056 (O)"
+<ox> = 16949200
+<oy> = 16949200
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Aluminum, 6061 (T6)"
+<ox> = 25000000
+<oy> = 25000000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Aluminum, 6101 (T6)"
+<ox> = 33333300
+<oy> = 33333300
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Aluminum, 7075 (O)"
+<ox> = 26315800
+<oy> = 26315800
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Aluminum, 7075 (T6)"
+<ox> = 19230800
+<oy> = 19230800
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Aluminum, 6061 (annealed)"
+<ox> = 27027000
+<oy> = 27027000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Aluminum, 356.0 (T6)"
+<ox> = 22624400
+<oy> = 22624400
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Silver Alloys"
+<BeginBlock>
+<BlockName> = "Silver, fine"
+<ox> = 62893100
+<oy> = 62893100
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "92.5Ag-7.5Cu"
+<ox> = 50000000
+<oy> = 50000000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "90Ag-10Cu"
+<ox> = 50000000
+<oy> = 50000000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "72Ag-28Cu"
+<ox> = 50000000
+<oy> = 50000000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "72Ag-26Cu-2Ni"
+<ox> = 34482800
+<oy> = 34482800
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "85Ag-15Cd"
+<ox> = 20284000
+<oy> = 20284000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "97Ag-3Pt"
+<ox> = 28571400
+<oy> = 28571400
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "97Ag-3Pd"
+<ox> = 34482800
+<oy> = 34482800
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "90Ag-10Pd"
+<ox> = 18867900
+<oy> = 18867900
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "90Ag-10Au"
+<ox> = 23809500
+<oy> = 23809500
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "60Ag-40Pd"
+<ox> = 4347830
+<oy> = 4347830
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "70Ag-30Pd"
+<ox> = 6993010
+<oy> = 6993010
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Gold Alloys"
+<BeginBlock>
+<BlockName> = "Gold"
+<ox> = 42553200
+<oy> = 42553200
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "90Au-10Cu"
+<ox> = 9259260
+<oy> = 9259260
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "75Au-25Ag"
+<ox> = 9259260
+<oy> = 9259260
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "72.5Au-14Cu-8.5Pt-4Ag-1Zn"
+<ox> = 5882350
+<oy> = 5882350
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "69Au-25Ag-6Pt"
+<ox> = 6666670
+<oy> = 6666670
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "41.7Au-32.5Cu-18.8Ni-7Zn"
+<ox> = 2564100
+<oy> = 2564100
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Platinum and Palladium Alloys"
+<BeginBlock>
+<BlockName> = "Platinum"
+<ox> = 9433960
+<oy> = 9433960
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "95Pt-5Ir"
+<ox> = 5263160
+<oy> = 5263160
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "90Pt-10Ir"
+<ox> = 4000000
+<oy> = 4000000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "85Pt-15Ir"
+<ox> = 3508770
+<oy> = 3508770
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "80Pt-20Ir"
+<ox> = 3225810
+<oy> = 3225810
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "75Pt-25Ir"
+<ox> = 3030300
+<oy> = 3030300
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "70Pt-30Ir"
+<ox> = 2857140
+<oy> = 2857140
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "65Pt-35Ir"
+<ox> = 2777780
+<oy> = 2777780
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "95Pt-5Ru"
+<ox> = 3174600
+<oy> = 3174600
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "90Pt-10Ru"
+<ox> = 2325580
+<oy> = 2325580
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "89Pt-11Ru"
+<ox> = 2325580
+<oy> = 2325580
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "86Pt-14Ru"
+<ox> = 2173910
+<oy> = 2173910
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "96Pt-4W"
+<ox> = 2777780
+<oy> = 2777780
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Palladium"
+<ox> = 9259260
+<oy> = 9259260
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "95.5Pd-4.5Ru"
+<ox> = 4132230
+<oy> = 4132230
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "90Pd-10Ru"
+<ox> = 3703700
+<oy> = 3703700
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "70Pd-30Ag"
+<ox> = 2500000
+<oy> = 2500000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "60Pd-40Ag"
+<ox> = 2325580
+<oy> = 2325580
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "50Pd-50Ag"
+<ox> = 3174600
+<oy> = 3174600
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "72Pd-26Ag-1.71-2Ni"
+<ox> = 2325580
+<oy> = 2325580
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "60Pd-40Cu"
+<ox> = 2857140
+<oy> = 2857140
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "45Pd-30Ag-20Au-5Pt"
+<ox> = 2564100
+<oy> = 2564100
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "35Pd-30Ag-14Cu-10Pt-10Au-1Zn"
+<ox> = 2857140
+<oy> = 2857140
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Steels and Irons"
+<BeginBlock>
+<BlockName> = "Low-carbon iron (relay, annealed)"
+<ox> = 10000000
+<oy> = 10000000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Steel, 1010 (relay, annealed)"
+<ox> = 8333330
+<oy> = 8333330
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Silicon steel, 1% Si"
+<ox> = 4347830
+<oy> = 4347830
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Silicon steel, 2.5% Si"
+<ox> = 2439020
+<oy> = 2439020
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Silicon steel, 3% Si"
+<ox> = 2083330
+<oy> = 2083330
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Silicon steel, 3% Si, grain-oriented"
+<ox> = 2083330
+<oy> = 2083330
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Silicon steel, 4% Si"
+<ox> = 1694920
+<oy> = 1694920
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Steel, A36"
+<ox> = 6250000
+<oy> = 6250000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Steel, 1020 (annealed)"
+<ox> = 6250000
+<oy> = 6250000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Steel, 1040 (annealed)"
+<ox> = 6250000
+<oy> = 6250000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Steel, 4140 (quenched and tempered)"
+<ox> = 4545450
+<oy> = 4545450
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Steel, 4340 (quenched and tempered)"
+<ox> = 4032260
+<oy> = 4032260
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Cast Irons"
+<BeginBlock>
+<BlockName> = "Gray iron, G1800"
+<ox> = 666667
+<oy> = 666667
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Gray iron, G3000"
+<ox> = 1052630
+<oy> = 1052630
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Gray iron, G4000"
+<ox> = 1176470
+<oy> = 1176470
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Ductile iron, 60-40-18"
+<ox> = 1818180
+<oy> = 1818180
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Ductile iron, 80-55-06"
+<ox> = 1612900
+<oy> = 1612900
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Ductile iron, 120-90-02"
+<ox> = 1612900
+<oy> = 1612900
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Stainless Steels"
+<BeginBlock>
+<BlockName> = "Stainless, Type 410"
+<ox> = 1754390
+<oy> = 1754390
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, Type 416"
+<ox> = 1754390
+<oy> = 1754390
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, Type 430"
+<ox> = 1666670
+<oy> = 1666670
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, Type 443"
+<ox> = 1470590
+<oy> = 1470590
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, Type 446"
+<ox> = 1639340
+<oy> = 1639340
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, Type 302"
+<ox> = 1388890
+<oy> = 1388890
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, Type 309"
+<ox> = 1282050
+<oy> = 1282050
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, Type 316"
+<ox> = 1351350
+<oy> = 1351350
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, Type 317"
+<ox> = 1351350
+<oy> = 1351350
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, Type 347"
+<ox> = 1369860
+<oy> = 1369860
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, Type 403"
+<ox> = 1754390
+<oy> = 1754390
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, Type 405"
+<ox> = 1666670
+<oy> = 1666670
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, Type 501"
+<ox> = 2500000
+<oy> = 2500000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Cast heat-resistant alloy HH"
+<ox> = 1250000
+<oy> = 1250000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Cast heat-resistant alloy HK"
+<ox> = 1111110
+<oy> = 1111110
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Cast heat-resistant alloy HT"
+<ox> = 1000000
+<oy> = 1000000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, 304 (annealed)"
+<ox> = 1388890
+<oy> = 1388890
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, 440A (annealed)"
+<ox> = 1666670
+<oy> = 1666670
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Stainless, 17-4PH (annealed)"
+<ox> = 1020410
+<oy> = 1020410
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Nickel and Cobalt Alloys"
+<BeginBlock>
+<BlockName> = "Nickel 200"
+<ox> = 10526300
+<oy> = 10526300
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Inconel 625"
+<ox> = 775194
+<oy> = 775194
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Monel 400"
+<ox> = 1828150
+<oy> = 1828150
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Haynes 25"
+<ox> = 1123600
+<oy> = 1123600
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Invar"
+<ox> = 1219510
+<oy> = 1219510
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Super Invar"
+<ox> = 1250000
+<oy> = 1250000
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Kovar"
+<ox> = 2040820
+<oy> = 2040820
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Titanium Alloys"
+<BeginBlock>
+<BlockName> = "Titanium, CP Grade 1"
+<ox> = 2127660
+<oy> = 2127660
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Titanium, Ti-5Al-2.5Sn"
+<ox> = 636943
+<oy> = 636943
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Titanium, Ti-6Al-4V"
+<ox> = 584795
+<oy> = 584795
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Magnesium Alloys"
+<BeginBlock>
+<BlockName> = "Magnesium, AZ31B"
+<ox> = 10869600
+<oy> = 10869600
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Magnesium, AZ91D"
+<ox> = 5882350
+<oy> = 5882350
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Other Metals"
+<BeginBlock>
+<BlockName> = "Lead, chemical"
+<ox> = 4854370
+<oy> = 4854370
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Lead, antimonial (6% Sb)"
+<ox> = 3952570
+<oy> = 3952570
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Tin, commercially pure"
+<ox> = 9009010
+<oy> = 9009010
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Solder, 60Sn-40Pb"
+<ox> = 6666670
+<oy> = 6666670
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Zirconium, reactor grade 702"
+<ox> = 2518890
+<oy> = 2518890
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Resistance and Heating Alloys"
+<BeginBlock>
+<BlockName> = "78.5Ni-20Cr-1.5Si (80-20)"
+<ox> = 925497
+<oy> = 925497
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "73.5Ni-20Cr-5Al-1.5Si"
+<ox> = 724795
+<oy> = 724795
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "68Ni-20Cr-8.5Fe-2Si"
+<ox> = 859402
+<oy> = 859402
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "60Ni-16Cr-22.5Fe-1.5Si"
+<ox> = 891266
+<oy> = 891266
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "35Ni-20Cr-43.5Fe-1.5Si"
+<ox> = 986193
+<oy> = 986193
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "72Fe-23Cr-5Al"
+<ox> = 720461
+<oy> = 720461
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "55Fe-37.5Cr-7.5Al"
+<ox> = 601576
+<oy> = 601576
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "98Cu-2Ni"
+<ox> = 20040100
+<oy> = 20040100
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "94Cu-6Ni"
+<ox> = 10070500
+<oy> = 10070500
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "89Cu-11Ni"
+<ox> = 6684490
+<oy> = 6684490
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "78Cu-22Ni"
+<ox> = 3342250
+<oy> = 3342250
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "55Cu-45Ni (constantan)"
+<ox> = 2005210
+<oy> = 2005210
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "87Cu-13Mn (manganin)"
+<ox> = 2074260
+<oy> = 2074260
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "83Cu-13Mn-4Ni (manganin)"
+<ox> = 2074260
+<oy> = 2074260
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "85Cu-10Mn-4Ni (shunt manganin)"
+<ox> = 2615750
+<oy> = 2615750
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "70Cu-20Ni-10Mn"
+<ox> = 2045830
+<oy> = 2045830
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "67Cu-5Ni-27Mn"
+<ox> = 1002610
+<oy> = 1002610
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "71Ni-29Fe"
+<ox> = 5012530
+<oy> = 5012530
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "80Ni-20Cr"
+<ox> = 891266
+<oy> = 891266
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "75Ni-20Cr-3Al + Cu or Fe"
+<ox> = 751993
+<oy> = 751993
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "76Ni-17Cr-4Si-3Mn"
+<ox> = 751993
+<oy> = 751993
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "60Ni-16Cr-24Fe"
+<ox> = 891266
+<oy> = 891266
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "35Ni-20Cr-45Fe"
+<ox> = 986193
+<oy> = 986193
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "72Fe-23Cr-5Al-0.5Co"
+<ox> = 738116
+<oy> = 738116
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Nonmetallic Conductors"
+<BeginBlock>
+<BlockName> = "Silicon carbide heating element"
+<ox> = 666667
+<oy> = 666667
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Molybdenum disilicide (MoSi2)"
+<ox> = 2685280
+<oy> = 2685280
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Graphite (heating element)"
+<ox> = 109878
+<oy> = 109878
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Graphite, extruded (with grain)"
+<ox> = 74074.100000000006
+<oy> = 74074.100000000006
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Graphite, isostatically molded"
+<ox> = 71428.600000000006
+<oy> = 71428.600000000006
+<ex> = 1
+<ey> = 1
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Water"
+<BeginBlock>
+<BlockName> = "Pure water, 20 C"
+<ox> = 4.1928699999999997e-06
+<oy> = 4.1928699999999997e-06
+<ex> = 80.073800000000006
+<ey> = 80.073800000000006
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Pure water, 25 C"
+<ox> = 5.5005500000000002e-06
+<oy> = 5.5005500000000002e-06
+<ex> = 78.301000000000002
+<ey> = 78.301000000000002
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Sea water, 35 ppt, 0 C"
+<ox> = 2.9035700000000002
+<oy> = 2.9035700000000002
+<ex> = 78.600200000000001
+<ey> = 78.600200000000001
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Sea water, 35 ppt, 10 C"
+<ox> = 3.8087
+<oy> = 3.8087
+<ex> = 75.013800000000003
+<ey> = 75.013800000000003
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Sea water, 35 ppt, 20 C"
+<ox> = 4.7912699999999999
+<oy> = 4.7912699999999999
+<ex> = 71.671999999999997
+<ey> = 71.671999999999997
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Sea water, low salinity (ITU-R P.368)"
+<ox> = 1
+<oy> = 1
+<ex> = 80
+<ey> = 80
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Sea water, average salinity (ITU-R P.368)"
+<ox> = 5
+<oy> = 5
+<ex> = 70
+<ey> = 70
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Fresh water (ITU-R P.368)"
+<ox> = 0.0030000000000000001
+<oy> = 0.0030000000000000001
+<ex> = 80
+<ey> = 80
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Soil and Ground"
+<BeginBlock>
+<BlockName> = "Land, sigma 3e-2 S/m (ITU-R P.368)"
+<ox> = 0.029999999999999999
+<oy> = 0.029999999999999999
+<ex> = 40
+<ey> = 40
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Wet ground (ITU-R P.368)"
+<ox> = 0.01
+<oy> = 0.01
+<ex> = 30
+<ey> = 30
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Land, sigma 3e-3 S/m (ITU-R P.368)"
+<ox> = 0.0030000000000000001
+<oy> = 0.0030000000000000001
+<ex> = 22
+<ey> = 22
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Medium dry ground (ITU-R P.368)"
+<ox> = 0.001
+<oy> = 0.001
+<ex> = 15
+<ey> = 15
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Dry ground (ITU-R P.368)"
+<ox> = 0.00029999999999999997
+<oy> = 0.00029999999999999997
+<ex> = 7
+<ey> = 7
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Very dry ground (ITU-R P.368)"
+<ox> = 0.0001
+<oy> = 0.0001
+<ex> = 3
+<ey> = 3
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Fresh water ice, -1 C (ITU-R P.368)"
+<ox> = 3.0000000000000001e-05
+<oy> = 3.0000000000000001e-05
+<ex> = 3
+<ey> = 3
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Fresh water ice, -10 C (ITU-R P.368)"
+<ox> = 1.0000000000000001e-05
+<oy> = 1.0000000000000001e-05
+<ex> = 3
+<ey> = 3
+<ltx> = 0
+<lty> = 0
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Insulating Liquids (60 Hz)"
+<BeginBlock>
+<BlockName> = "Capacitor oil (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 2.2000000000000002
+<ey> = 2.2000000000000002
+<ltx> = 0.001
+<lty> = 0.001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Pipe cable oil (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 2.1499999999999999
+<ey> = 2.1499999999999999
+<ltx> = 0.001
+<lty> = 0.001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Self-contained cable oil (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 2.2999999999999998
+<ey> = 2.2999999999999998
+<ltx> = 0.001
+<lty> = 0.001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Heavy cable oil (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 2.23
+<ey> = 2.23
+<ltx> = 0.001
+<lty> = 0.001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Transformer oil (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 2.25
+<ey> = 2.25
+<ltx> = 0.001
+<lty> = 0.001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Alkyl benzene (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 2.1000000000000001
+<ey> = 2.1000000000000001
+<ltx> = 0.00040000000000000002
+<lty> = 0.00040000000000000002
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polybutene pipe cable oil (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 2.1400000000000001
+<ey> = 2.1400000000000001
+<ltx> = 0.00029999999999999997
+<lty> = 0.00029999999999999997
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polybutene capacitor oil (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 2.2200000000000002
+<ey> = 2.2200000000000002
+<ltx> = 0.00050000000000000001
+<lty> = 0.00050000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Silicone fluid (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 2.7000000000000002
+<ey> = 2.7000000000000002
+<ltx> = 0.00014999999999999999
+<lty> = 0.00014999999999999999
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Castor oil (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 3.7467299999999999
+<ey> = 3.7467299999999999
+<ltx> = 0.059999999999999998
+<lty> = 0.059999999999999998
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "C8F16O fluorocarbon (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 1.8600000000000001
+<ey> = 1.8600000000000001
+<ltx> = 0.00050000000000000001
+<lty> = 0.00050000000000000001
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Solid Insulation"
+<BeginFolder>
+<FolderName> = "60 Hz"
+<BeginBlock>
+<BlockName> = "Alumina (Al2O3) (60 Hz)"
+<ox> = 1e-13
+<oy> = 1e-13
+<ex> = 8.5
+<ey> = 8.5
+<ltx> = 0.001
+<lty> = 0.001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Porcelain (mullite) (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 8.2000100000000007
+<ey> = 8.2000100000000007
+<ltx> = 0.0014
+<lty> = 0.0014
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Steatite (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 5.5
+<ey> = 5.5
+<ltx> = 0.0012999999999999999
+<lty> = 0.0012999999999999999
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Magnesium oxide (MgO) (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 9.6500000000000004
+<ey> = 9.6500000000000004
+<ltx> = 0.00029999999999999997
+<lty> = 0.00029999999999999997
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Glass (soda lime) (60 Hz)"
+<ox> = 3.1645600000000002e-11
+<oy> = 3.1645600000000002e-11
+<ex> = 6.2500799999999996
+<ey> = 6.2500799999999996
+<ltx> = 0.0050000000000000001
+<lty> = 0.0050000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Mica (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 6.90001
+<ey> = 6.90001
+<ltx> = 0.0015
+<lty> = 0.0015
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyethylene (LDPE) (60 Hz)"
+<ox> = 1.4144299999999999e-16
+<oy> = 1.4144299999999999e-16
+<ex> = 2.2999999999999998
+<ey> = 2.2999999999999998
+<ltx> = 0.00020000000000000001
+<lty> = 0.00020000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyethylene (MDPE) (60 Hz)"
+<ox> = 1.4144299999999999e-16
+<oy> = 1.4144299999999999e-16
+<ex> = 2.2999999999999998
+<ey> = 2.2999999999999998
+<ltx> = 0.00020000000000000001
+<lty> = 0.00020000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyethylene (HDPE) (60 Hz)"
+<ox> = 1.4144299999999999e-16
+<oy> = 1.4144299999999999e-16
+<ex> = 2.3500000000000001
+<ey> = 2.3500000000000001
+<ltx> = 0.00020000000000000001
+<lty> = 0.00020000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Cross-linked polyethylene (XLPE) (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 2.2999999999999998
+<ey> = 2.2999999999999998
+<ltx> = 0.00029999999999999997
+<lty> = 0.00029999999999999997
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "EPR (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 3.2500300000000002
+<ey> = 3.2500300000000002
+<ltx> = 0.0040000000000000001
+<lty> = 0.0040000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polypropylene (60 Hz)"
+<ox> = 1e-14
+<oy> = 1e-14
+<ex> = 2.25
+<ey> = 2.25
+<ltx> = 0.00025000000000000001
+<lty> = 0.00025000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "PTFE (60 Hz)"
+<ox> = 1.0000000000000001e-17
+<oy> = 1.0000000000000001e-17
+<ex> = 2
+<ey> = 2
+<ltx> = 0.00020000000000000001
+<lty> = 0.00020000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Glass-reinforced polyester premix (60 Hz)"
+<ox> = 1e-13
+<oy> = 1e-13
+<ex> = 6.3019699999999998
+<ey> = 6.3019699999999998
+<ltx> = 0.025000000000000001
+<lty> = 0.025000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Thermoplastic polyester (60 Hz)"
+<ox> = 0
+<oy> = 0
+<ex> = 3.5500099999999999
+<ey> = 3.5500099999999999
+<ltx> = 0.00175
+<lty> = 0.00175
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polycarbonate (60 Hz)"
+<ox> = 5e-15
+<oy> = 5e-15
+<ex> = 3.1699999999999999
+<ey> = 3.1699999999999999
+<ltx> = 0.00089999999999999998
+<lty> = 0.00089999999999999998
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Epoxy (mineral filler) (60 Hz)"
+<ox> = 3.16456e-12
+<oy> = 3.16456e-12
+<ex> = 5.0055199999999997
+<ey> = 5.0055199999999997
+<ltx> = 0.047
+<lty> = 0.047
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Epoxy (silica filler) (60 Hz)"
+<ox> = 3.16456e-12
+<oy> = 3.16456e-12
+<ex> = 3.8506900000000002
+<ey> = 3.8506900000000002
+<ltx> = 0.019
+<lty> = 0.019
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Silicone rubber (60 Hz)"
+<ox> = 1e-13
+<oy> = 1e-13
+<ex> = 3.6509200000000002
+<ey> = 3.6509200000000002
+<ltx> = 0.022499999999999999
+<lty> = 0.022499999999999999
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "1 kHz"
+<BeginBlock>
+<BlockName> = "Alumina (Al2O3) (1 kHz)"
+<ox> = 1e-13
+<oy> = 1e-13
+<ex> = 8.5
+<ey> = 8.5
+<ltx> = 0.001
+<lty> = 0.001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Porcelain (mullite) (1 kHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 8.1999999999999993
+<ey> = 8.1999999999999993
+<ltx> = 0.00056999999999999998
+<lty> = 0.00056999999999999998
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Steatite (1 kHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 5
+<ey> = 5
+<ltx> = 0.00044999999999999999
+<lty> = 0.00044999999999999999
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Magnesium oxide (MgO) (1 kHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 9.6500000000000004
+<ey> = 9.6500000000000004
+<ltx> = 0.00029999999999999997
+<lty> = 0.00029999999999999997
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Glass (soda lime) (1 kHz)"
+<ox> = 3.1645600000000002e-11
+<oy> = 3.1645600000000002e-11
+<ex> = 6.16005
+<ey> = 6.16005
+<ltx> = 0.0041999999999999997
+<lty> = 0.0041999999999999997
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Mica (1 kHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 6.9000000000000004
+<ey> = 6.9000000000000004
+<ltx> = 0.00020000000000000001
+<lty> = 0.00020000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "SiO2 film (1 kHz)"
+<ox> = 1.0000000000000001e-18
+<oy> = 1.0000000000000001e-18
+<ex> = 3.8999999999999999
+<ey> = 3.8999999999999999
+<ltx> = 0.00069999999999999999
+<lty> = 0.00069999999999999999
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Si3N4 (1 kHz)"
+<ox> = 9.9999999999999998e-13
+<oy> = 9.9999999999999998e-13
+<ex> = 12.699999999999999
+<ey> = 12.699999999999999
+<ltx> = 0.0001
+<lty> = 0.0001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Ta2O5 (1 kHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 28.0014
+<ey> = 28.0014
+<ltx> = 0.01
+<lty> = 0.01
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "HfO2 (1 kHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 35.0017
+<ey> = 35.0017
+<ltx> = 0.01
+<lty> = 0.01
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyethylene (LDPE) (1 kHz)"
+<ox> = 1.4144299999999999e-16
+<oy> = 1.4144299999999999e-16
+<ex> = 2.2999999999999998
+<ey> = 2.2999999999999998
+<ltx> = 0.00020000000000000001
+<lty> = 0.00020000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyethylene (MDPE) (1 kHz)"
+<ox> = 1.4144299999999999e-16
+<oy> = 1.4144299999999999e-16
+<ex> = 2.2999999999999998
+<ey> = 2.2999999999999998
+<ltx> = 0.00020000000000000001
+<lty> = 0.00020000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyethylene (HDPE) (1 kHz)"
+<ox> = 1.4144299999999999e-16
+<oy> = 1.4144299999999999e-16
+<ex> = 2.3500000000000001
+<ey> = 2.3500000000000001
+<ltx> = 0.00020000000000000001
+<lty> = 0.00020000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polypropylene (1 kHz)"
+<ox> = 1e-14
+<oy> = 1e-14
+<ex> = 2.25
+<ey> = 2.25
+<ltx> = 0.00027500000000000002
+<lty> = 0.00027500000000000002
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "PTFE (1 kHz)"
+<ox> = 1.0000000000000001e-17
+<oy> = 1.0000000000000001e-17
+<ex> = 2
+<ey> = 2
+<ltx> = 0.00020000000000000001
+<lty> = 0.00020000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Epoxy (mineral filler) (1 kHz)"
+<ox> = 3.16456e-12
+<oy> = 3.16456e-12
+<ex> = 4.56454
+<ey> = 4.56454
+<ltx> = 0.080000000000000002
+<lty> = 0.080000000000000002
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Epoxy (silica filler) (1 kHz)"
+<ox> = 3.16456e-12
+<oy> = 3.16456e-12
+<ex> = 3.6006499999999999
+<ey> = 3.6006499999999999
+<ltx> = 0.019
+<lty> = 0.019
+<EndBlock>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "1 MHz"
+<BeginBlock>
+<BlockName> = "Alumina (Al2O3) (1 MHz)"
+<ox> = 1e-13
+<oy> = 1e-13
+<ex> = 8.5
+<ey> = 8.5
+<ltx> = 0.001
+<lty> = 0.001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Porcelain (mullite) (1 MHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 8.1999999999999993
+<ey> = 8.1999999999999993
+<ltx> = 0.00020000000000000001
+<lty> = 0.00020000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Steatite (1 MHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 5
+<ey> = 5
+<ltx> = 0.00036999999999999999
+<lty> = 0.00036999999999999999
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Magnesium oxide (MgO) (1 MHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 9.6899999999999995
+<ey> = 9.6899999999999995
+<ltx> = 0.00029999999999999997
+<lty> = 0.00029999999999999997
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Glass (soda lime) (1 MHz)"
+<ox> = 3.1645600000000002e-11
+<oy> = 3.1645600000000002e-11
+<ex> = 6.0000200000000001
+<ey> = 6.0000200000000001
+<ltx> = 0.0027000000000000001
+<lty> = 0.0027000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Mica (1 MHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 5.4000000000000004
+<ey> = 5.4000000000000004
+<ltx> = 0.00035
+<lty> = 0.00035
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyethylene (LDPE) (1 MHz)"
+<ox> = 1.4144299999999999e-16
+<oy> = 1.4144299999999999e-16
+<ex> = 2.2999999999999998
+<ey> = 2.2999999999999998
+<ltx> = 0.00020000000000000001
+<lty> = 0.00020000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyethylene (MDPE) (1 MHz)"
+<ox> = 1.4144299999999999e-16
+<oy> = 1.4144299999999999e-16
+<ex> = 2.2999999999999998
+<ey> = 2.2999999999999998
+<ltx> = 0.00020000000000000001
+<lty> = 0.00020000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyethylene (HDPE) (1 MHz)"
+<ox> = 1.4144299999999999e-16
+<oy> = 1.4144299999999999e-16
+<ex> = 2.3500000000000001
+<ey> = 2.3500000000000001
+<ltx> = 0.00020000000000000001
+<lty> = 0.00020000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Cross-linked polyethylene (XLPE) (1 MHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 2.2799999999999998
+<ey> = 2.2799999999999998
+<ltx> = 0.00040000000000000002
+<lty> = 0.00040000000000000002
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polypropylene (1 MHz)"
+<ox> = 1e-14
+<oy> = 1e-14
+<ex> = 2.25
+<ey> = 2.25
+<ltx> = 0.00046000000000000001
+<lty> = 0.00046000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "PTFE (1 MHz)"
+<ox> = 1.0000000000000001e-17
+<oy> = 1.0000000000000001e-17
+<ex> = 2
+<ey> = 2
+<ltx> = 0.00020000000000000001
+<lty> = 0.00020000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Glass-reinforced polyester premix (1 MHz)"
+<ox> = 1e-13
+<oy> = 1e-13
+<ex> = 5.7006399999999999
+<ey> = 5.7006399999999999
+<ltx> = 0.014999999999999999
+<lty> = 0.014999999999999999
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polycarbonate (1 MHz)"
+<ox> = 5e-15
+<oy> = 5e-15
+<ex> = 2.9601500000000001
+<ey> = 2.9601500000000001
+<ltx> = 0.01
+<lty> = 0.01
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Epoxy (mineral filler) (1 MHz)"
+<ox> = 3.16456e-12
+<oy> = 3.16456e-12
+<ex> = 4.3628799999999996
+<ey> = 4.3628799999999996
+<ltx> = 0.076999999999999999
+<lty> = 0.076999999999999999
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Epoxy (silica filler) (1 MHz)"
+<ox> = 3.16456e-12
+<oy> = 3.16456e-12
+<ex> = 3.4015300000000002
+<ey> = 3.4015300000000002
+<ltx> = 0.029999999999999999
+<lty> = 0.029999999999999999
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Silicone rubber (1 MHz)"
+<ox> = 1e-13
+<oy> = 1e-13
+<ex> = 3.4000300000000001
+<ey> = 3.4000300000000001
+<ltx> = 0.0040000000000000001
+<lty> = 0.0040000000000000001
+<EndBlock>
+
+<EndFolder>
+
+<EndFolder>
+
+<BeginFolder>
+<FolderName> = "Circuit Board Laminates (1 MHz)"
+<BeginBlock>
+<BlockName> = "FR-4 epoxy-glass (1 MHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 4.3518299999999996
+<ey> = 4.3518299999999996
+<ltx> = 0.029000000000000001
+<lty> = 0.029000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyfunctional FR-4 (1 MHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 4.3518299999999996
+<ey> = 4.3518299999999996
+<ltx> = 0.029000000000000001
+<lty> = 0.029000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Multifunctional FR-4 (1 MHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 4.3518299999999996
+<ey> = 4.3518299999999996
+<ltx> = 0.029000000000000001
+<lty> = 0.029000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Polyimide-glass (1 MHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 4.0003099999999998
+<ey> = 4.0003099999999998
+<ltx> = 0.012500000000000001
+<lty> = 0.012500000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "BT epoxy (1 MHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 3.9752900000000002
+<ey> = 3.9752900000000002
+<ltx> = 0.012
+<lty> = 0.012
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Cyanate ester-glass (1 MHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 3.5500600000000002
+<ey> = 3.5500600000000002
+<ltx> = 0.0060000000000000001
+<lty> = 0.0060000000000000001
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "PPO epoxy (1 MHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 4.00014
+<ey> = 4.00014
+<ltx> = 0.0085000000000000006
+<lty> = 0.0085000000000000006
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "PTFE-glass (1 MHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 2.5
+<ey> = 2.5
+<ltx> = 0.002
+<lty> = 0.002
+<EndBlock>
+
+<BeginBlock>
+<BlockName> = "Alumina substrate (1 MHz)"
+<ox> = 0
+<oy> = 0
+<ex> = 8.9000000000000004
+<ey> = 8.9000000000000004
+<ltx> = 0.00084999999999999995
+<lty> = 0.00084999999999999995
+<EndBlock>
+
+<EndFolder>
 

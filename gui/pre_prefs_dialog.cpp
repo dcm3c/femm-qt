@@ -102,7 +102,7 @@ PrePrefsDialog::PrePrefsDialog(int physicsType, QWidget *parent) : QDialog(paren
     // Load current settings
     QSettings settings;
     m_showGrid->setChecked(settings.value("editor/showGrid", true).toBool());
-    m_snapGrid->setChecked(settings.value("editor/snapToGrid", true).toBool());
+    m_snapGrid->setChecked(settings.value("editor/snapToGrid", false).toBool());
     m_showNames->setChecked(settings.value("editor/showNames", true).toBool());
     m_lengthUnits->setCurrentIndex(settings.value("defaults/lengthUnits", 1).toInt());
     m_problemType->setCurrentIndex(settings.value("defaults/problemType", 0).toInt());

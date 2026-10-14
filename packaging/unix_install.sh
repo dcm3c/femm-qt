@@ -230,6 +230,17 @@ if [ -f "$guide" ]; then
     cp -f "$guide" "$DOCDIR/"
     n_docs=$((n_docs + 1))
 fi
+# ...and the reference subfolders stage_extras.sh put in the program
+# directory -- the file-format references and the material-library papers --
+# so they are where the other documents are rather than only inside the
+# install. DOCDIR is removed whole by the uninstaller, subfolders included.
+for sub in formats materials; do
+    if [ -d "$APPDIR/docs/$sub" ]; then
+        rm -rf "$DOCDIR/$sub"
+        cp -R "$APPDIR/docs/$sub" "$DOCDIR/$sub"
+        n_docs=$((n_docs + $(find "$DOCDIR/$sub" -type f | wc -l)))
+    fi
+done
 echo "  documents: $n_docs in $DOCDIR"
 
 # ---- 3. Somewhere on PATH -------------------------------------------

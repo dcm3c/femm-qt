@@ -28,10 +28,20 @@ import math
 import re
 import sys
 
+import of_ac_curve
+
 TOL   = 0.03
 FLOOR = 1e-9
 NAMES = ["A", "B1", "B2", "sig", "E", "H1", "H2", "Je", "Js",
          "mu1", "mu2", "Pe", "Ph", "ff"]
+
+# ff in a laminated region. OF returns the block label's internal flag there
+# (-1, a solid region); femm-qt returns the material's lamination fill, the
+# documented meaning, and keeps -1 only for unlaminated solid regions. Where OF
+# says -1 and femm-qt a fill in (0, 1], the pair is a known, intended
+# difference, not a tolerance miss -- PointFillFactorTest checks the value
+# itself. Any other ff disagreement is still flagged.
+FF = NAMES.index("ff")
 
 
 def parse(path):
@@ -81,13 +91,19 @@ def compare(ref_path, test_path, tol=TOL, floor=FLOOR):
     gmax = [max((abs(c[j]) for c in rv.values() if len(c) > j), default=0.0)
             for j in range(n)]
 
-    ok, flags = 0, []
+    ok, flags, ac_cut, lam_cut = 0, [], 0, 0
     for k in sorted(rv, key=lambda x: (x[0], str(x[1]))):
         if k not in tv:
             continue
         s, pt = k
         rc, tc = rv[k], tv[k]
+        if of_ac_curve.excluded(rsec[s], pt):
+            ac_cut += min(len(rc), len(tc))
+            continue
         for j in range(min(len(rc), len(tc))):
+            if j == FF and rc[j] == -1 and 0 < tc[j].real <= 1 and tc[j].imag == 0:
+                lam_cut += 1
+                continue
             if j in (1, 2):
                 denom = math.hypot(abs(rc[1]), abs(rc[2]))   # local |B|
             elif j in (5, 6):
@@ -103,8 +119,12 @@ def compare(ref_path, test_path, tol=TOL, floor=FLOOR):
             else:
                 flags.append((s, pt, j, rc[j], tc[j], err))
 
-    print("compared %d point values: %d agree (err <= %.1f%%), %d flagged"
-          % (ok + len(flags), ok, tol * 100, len(flags)))
+    lam_note = ("; %d excluded (ff in laminated iron: femm-qt reports the "
+                "lamination fill where OF reports its -1 solid-region flag, see "
+                "PointFillFactorTest)" % lam_cut) if lam_cut else ""
+    print("compared %d point values: %d agree (err <= %.1f%%), %d flagged%s%s"
+          % (ok + len(flags), ok, tol * 100, len(flags), of_ac_curve.note(ac_cut),
+             lam_note))
     if flags:
         print("\nFLAGGED (reference vs test):")
         for s, pt, j, a, b, err in sorted(flags, key=lambda x: -x[5]):

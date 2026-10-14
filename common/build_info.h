@@ -24,5 +24,5 @@
 // only purpose this file has.
 #pragma once
 
-const char *femm_version();      // "5.0"
+const char *femm_version();      // "5.0.20261013", project(VERSION) in full
 const char *femm_build_date();   // "09Sep2026"

@@ -223,18 +223,39 @@ void RMaterialProp::GetSlopes(double omega)
         std::vector<double> bn(n);
         std::vector<CComplex> hn(n);
         double mumax = 0;
-        for (int i = 1; i < n; i++) {
-            hn[i] = Hdata[i];
-            bn[i] = 0;
-            for (int k = 1; k <= i; k++) {
-                bn[i] += Re((4.0*(Hdata[k]*Bdata[k-1] -
-                    Hdata[k-1]*Bdata[k])*(-cos((Hdata[k-1]*PI)/(2.0*Hdata[i])) +
-                    cos((Hdata[k]*PI)/(2.0*Hdata[i]))) + (-Bdata[k-1] +
-                    Bdata[k])*((Hdata[k-1] - Hdata[k])*PI +
-                    Hdata[i]*(-sin((Hdata[k-1]*PI)/Hdata[i]) +
-                    sin((Hdata[k]*PI)/Hdata[i])))) / ((Hdata[k-1] - Hdata[k])*PI));
+        double p,q,ttl,ttr;
+        for(int i=1;i<n;i++)
+        {
+            hn[i]=Hdata[i];
+            bn[i]=0;
+            for(int k=1;k<=i;k++)
+            {
+                if (Re(Hdata[k])==Re(Hdata[k-1])) continue;
+                ttl=asin(Re(Hdata[k-1])/Re(Hdata[i]));
+                ttr=asin(Re(Hdata[k])/Re(Hdata[i]));
+                p=(-2*ttl + 2*ttr + sin(2*ttl) - sin(2*ttr))/PI;
+                q=4*(cos(ttl) - cos(ttr))/PI;
+                bn[i]+=Re((Bdata[k]*(-(p*Hdata[i]) + q*Hdata[-1 + k]) + Bdata[-1 + k]*(p*Hdata[i] - q*Hdata[k]))/(Hdata[-1 + k] - Hdata[k]));
             }
         }
+/*
+        // alt version where we are taking fundamental of H(B*sin(tta))
+        double p,q,ttl,ttr;
+        for(int i=1;i<n;i++)
+        {
+            bn[i]=Bdata[i];
+            hn[i]=0;
+            for(int k=1;k<=i;k++)
+            {
+                if (Re(Bdata[k])==Re(Bdata[k-1])) continue;
+                ttl=asin(Bdata[k-1]/Bdata[i]);
+                ttr=asin(Bdata[k]/Bdata[i]);
+                p=(-2*ttl + 2*ttr + sin(2*ttl) - sin(2*ttr))/PI;
+                q=4*(cos(ttl) - cos(ttr))/PI;
+                hn[i]+=(Hdata[k]*(-(p*Bdata[i]) + q*Bdata[-1 + k]) + Hdata[-1 + k]*(p*Bdata[i] - q*Bdata[k]))/(Bdata[-1 + k] - Bdata[k]);
+            }
+        }
+*/
         for (int i = 1; i < n; i++) {
             Bdata[i] = bn[i];
             Hdata[i] = hn[i];
@@ -1790,7 +1811,7 @@ bool ResultsDoc::OpenDocument(const std::string &pathname)
             // A/m^2, and the two are added together in those integrals, so
             // convert here -- the same 1e6 GetJA applies at its own exit.
             el.Jp *= 1.e6;
-            // Note: lbl is already 0-based in the .ans file (solver uses Triangle -z flag)
+            // Note: lbl is already 0-based in the .ans file (tangle writes it with -z)
             if (el.lbl >= 0 && el.lbl < (int)labellist.size())
                 el.blk = labellist[el.lbl].BlockType;
         }
@@ -2066,7 +2087,19 @@ bool ResultsDoc::GetPointValues(double x, double y, int k, PointVals &u)
 
     u.Hc = CComplex(0, 0);
     u.mu12 = CComplex(0, 0);
-    u.ff = labellist[meshelem[k].lbl].FillFactor;
+    // ff. A label's FillFactor is the winding fill for a wire material
+    // (LamType >= 3); for anything else it is OF's eddy-current flag, -1 for a
+    // solid region and 1 for a multi-turn one, which is what OF returned here.
+    // A laminated region reports its lamination fill instead, so the flag no
+    // longer leaks out as "-1" for laminated iron. Laminated means what the
+    // material editor shows as laminated: in-plane with a thickness or a fill
+    // below 1, or laminated along x or y. Everything else is unchanged.
+    {
+        const RMaterialProp &bp = blockproplist[meshelem[k].blk];
+        u.ffIsLam = (bp.LamType == 1 || bp.LamType == 2 ||
+                     (bp.LamType == 0 && (bp.Lam_d != 0 || bp.LamFill != 1)));
+        u.ff = u.ffIsLam ? bp.LamFill : labellist[meshelem[k].lbl].FillFactor;
+    }
 
     // Interpolate a per-node scalar to (x,y) exactly as A is interpolated
     // below: linear for planar, the 6-node quadratic for axisymmetric. Used
@@ -2178,7 +2211,8 @@ bool ResultsDoc::GetPointValues(double x, double y, int k, PointVals &u)
         const bool bInPlaneLam =
             (blockproplist[meshelem[k].blk].LamType == 0 &&
              blockproplist[meshelem[k].blk].Lam_d != 0);
-        if (DeltaT > 0 && u.c != 0 && u.ff < 0 && !bInPlaneLam) {
+        if (DeltaT > 0 && u.c != 0 && labellist[meshelem[k].lbl].FillFactor < 0
+            && !bInPlaneLam) {
             double apn[3];
             for (int i = 0; i < 3; i++) apn[i] = meshnode[n[i]].Aprev;
             double aprev = interpNodal(apn);

@@ -1,0 +1,781 @@
+source,fig,curve,condition,thick_in,H_Am,B_T
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.082697,0.01
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.091155,0.011213
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.10109,0.012516
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.11121,0.014071
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.12232,0.015836
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.13443,0.017795
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.14537,0.020168
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.16026,0.022528
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.17492,0.025505
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.19048,0.028872
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.20776,0.032586
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.22546,0.037
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.23978,0.042491
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.2584,0.048495
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.28106,0.054921
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.29963,0.063019
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.31631,0.072624
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.33773,0.083077
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.36295,0.094356
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.38295,0.10871
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.40277,0.12544
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.42293,0.14484
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.44659,0.16684
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.46494,0.19288
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.49246,0.22172
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.52514,0.25341
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.55411,0.29201
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.5956,0.33264
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.63052,0.38093
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.70832,0.40378
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.79705,0.44323
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,0.91834,0.46768
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,1.0418,0.49697
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,1.2061,0.51728
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,1.3999,0.53264
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,1.6108,0.55821
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,1.8742,0.56463
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,2.1761,0.57873
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,2.525,0.59308
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,2.9382,0.59899
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,3.417,0.60864
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,3.9741,0.61845
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,4.6217,0.62864
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,5.3741,0.63986
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,6.2504,0.65001
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,7.2711,0.65885
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,8.4425,0.67679
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,9.814,0.68807
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,11.422,0.69254
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,13.294,0.69704
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,15.468,0.70424
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,17.996,0.71302
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,20.937,0.7219
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,24.36,0.73013
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,28.345,0.73792
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,32.984,0.745
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,38.382,0.75196
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,44.669,0.75747
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,51.988,0.76262
+Carpenter HyMu 800,p4 0.004 in tape toroid,DC,dry H2 (sheet gives no temperature for this figure),0.004,60.505,0.7678
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,0.81025,0.010505
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,0.85904,0.01228
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,0.91076,0.014354
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,0.96561,0.016778
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,1.0238,0.019613
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,1.0854,0.022925
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,1.1508,0.026798
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,1.2201,0.031324
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,1.2935,0.036615
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,1.3714,0.042799
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,1.454,0.050028
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,1.5415,0.058479
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,1.6344,0.068356
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,1.7328,0.079902
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,1.8371,0.093398
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,1.9478,0.10917
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,2.065,0.12761
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,2.1894,0.14917
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,2.3212,0.17437
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,2.461,0.20382
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,2.6092,0.23824
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,2.7702,0.27834
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,2.9415,0.32516
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,3.1255,0.37976
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,3.3321,0.44294
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,3.5946,0.51372
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,3.9549,0.58884
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,4.4597,0.66084
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,5.0698,0.73509
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,5.7995,0.81108
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,6.6717,0.88765
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,7.7494,0.95471
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,9.0677,1.0092
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,10.64,1.0575
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,12.532,1.091
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,14.788,1.1124
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,17.451,1.1336
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,20.594,1.1551
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,24.303,1.177
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,28.68,1.1994
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,33.845,1.2222
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,39.94,1.2454
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,47.162,1.2609
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,55.69,1.2764
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,65.761,1.292
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,77.652,1.3078
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,91.694,1.3238
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,108.28,1.34
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,127.86,1.3565
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,150.98,1.3731
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,178.28,1.3899
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,210.52,1.4069
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,248.58,1.4241
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,293.54,1.4416
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,346.62,1.4592
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,409.3,1.4771
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,483.31,1.4952
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,570.71,1.5135
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,673.91,1.532
+Carpenter HP49,p4 0.060 in ring,2050F,dry H2 2050 F (1121 C) 4 h,0.06,795.77,1.5508
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,1.7566,0.010264
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,1.9338,0.011487
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,2.1246,0.012877
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,2.3294,0.014459
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,2.5553,0.01623
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,2.8004,0.018231
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,3.0578,0.020535
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,3.3037,0.023295
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,3.5465,0.026527
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,3.7984,0.030244
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,4.0882,0.034386
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,4.4271,0.038955
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,4.7597,0.044321
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,5.0914,0.050563
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,5.4512,0.057658
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,5.8426,0.065711
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,6.184,0.075304
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,6.44,0.086822
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,6.9574,0.098464
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,7.4003,0.11258
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,7.8301,0.12909
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,8.2912,0.14797
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,8.7731,0.16967
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,9.2648,0.19469
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,9.7486,0.22372
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,10.217,0.25744
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,10.739,0.29594
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,11.39,0.33897
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,12.18,0.38678
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,13.091,0.44013
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,14.158,0.49901
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,15.466,0.56191
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,16.948,0.63126
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,18.668,0.70607
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,20.732,0.7838
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,23.161,0.86458
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,26.141,0.94111
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,29.77,1.0101
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,34.028,1.0761
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,39.124,1.1302
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,45.149,1.1731
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,52.227,1.2043
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,60.492,1.226
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,70.095,1.2435
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,81.246,1.2568
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,94.166,1.2711
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,109.14,1.2852
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,126.51,1.2991
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,146.63,1.3126
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,169.97,1.3257
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,197.03,1.3382
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,228.39,1.3504
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,264.76,1.3622
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,306.92,1.3736
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,355.82,1.3838
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,412.51,1.3938
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,478.22,1.4047
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,554.4,1.4155
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,642.77,1.424
+Carpenter HP49,p4 0.060 in ring,1750F,dry H2 1750 F (954 C) 2 h,0.06,745.21,1.433
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,2.3567,0.010419
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,2.5805,0.011603
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,2.8235,0.012929
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,3.087,0.014416
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,3.3657,0.016109
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,3.663,0.018027
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,3.9834,0.020184
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,4.3621,0.022474
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,4.7735,0.02504
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,5.1949,0.028021
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,5.6553,0.031349
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,6.1646,0.035037
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,6.7026,0.039235
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,7.2518,0.044089
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,7.8376,0.049579
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,8.5218,0.055516
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,9.2832,0.062078
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,10.105,0.069444
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,10.718,0.078885
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,11.304,0.08986
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,12.517,0.098976
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,13.466,0.11156
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,14.387,0.12632
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,15.315,0.14329
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,16.235,0.16287
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,17.113,0.18557
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,17.945,0.21186
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,18.715,0.24232
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,19.446,0.27746
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,20.22,0.31763
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,21.185,0.36272
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,22.442,0.41239
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,24.007,0.46661
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,25.96,0.52445
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,28.344,0.58539
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,31.056,0.65152
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,34.274,0.72032
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,38.059,0.79129
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,42.378,0.86653
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,47.553,0.93924
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,53.721,1.0076
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,60.768,1.0784
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,68.843,1.1509
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,78.536,1.2085
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,89.871,1.2582
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,103.21,1.2903
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,118.74,1.3059
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,136.66,1.3159
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,157.29,1.3248
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,181.02,1.334
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,208.34,1.3439
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,239.78,1.3546
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,275.94,1.366
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,317.56,1.3781
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,365.46,1.3897
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,420.56,1.4028
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,483.91,1.4183
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,556.75,1.4354
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,640.65,1.4502
+Carpenter HP49,p4 0.060 in ring,1600F,dry H2 1600 F (871 C) 2 h,0.06,737.09,1.4679
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,3.0565,0.010639
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,3.3604,0.011738
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,3.6788,0.013004
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,4.0283,0.014403
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,4.4589,0.015781
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,4.9309,0.017309
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,5.4289,0.019074
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,5.9543,0.021094
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,6.5028,0.023416
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,7.0778,0.026067
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,7.6922,0.029051
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,8.3842,0.032301
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,9.1522,0.035873
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,9.9834,0.039862
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,10.834,0.044475
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,11.741,0.049673
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,12.745,0.055409
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,13.829,0.061829
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,14.988,0.069044
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,15.833,0.078202
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,16.661,0.088741
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,18.156,0.098584
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,19.407,0.11105
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,20.596,0.12558
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,21.799,0.14221
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,23.01,0.16123
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,24.243,0.18293
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,25.514,0.20766
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,26.853,0.23571
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,28.301,0.26741
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,29.877,0.30316
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,31.68,0.34299
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,33.702,0.38745
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,35.832,0.43779
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,38.128,0.49447
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,40.872,0.5562
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,44.007,0.62395
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,47.684,0.6969
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,52.285,0.77085
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,57.889,0.84438
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,64.548,0.91702
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,72.378,0.98779
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,81.847,1.0484
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,92.514,1.1138
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,104.97,1.1734
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,119.4,1.2284
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,136.05,1.279
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,155.44,1.3182
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,177.88,1.3478
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,203.69,1.3722
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,233.31,1.3934
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,267.29,1.4128
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,306.26,1.4308
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,350.96,1.4462
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,402.22,1.4601
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,460.96,1.4748
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,528.3,1.4885
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,605.56,1.4989
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,694.18,1.5063
+Carpenter HP49,p4 0.060 in ring,1450F,dry H2 1450 F (788 C) 2 h,0.06,795.77,1.5135
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,6.817,0.010341
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,7.3662,0.011338
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,7.9498,0.012444
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,8.5944,0.013639
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,9.2822,0.01496
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,10.044,0.016383
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,10.858,0.017956
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,11.721,0.019705
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,12.59,0.021706
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,13.495,0.023948
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,14.444,0.026447
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,15.437,0.029237
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,16.492,0.032329
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,17.592,0.035784
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,18.745,0.039637
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,19.88,0.044024
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,21.066,0.048921
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,22.379,0.054283
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,23.797,0.060201
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,25.353,0.066686
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,26.661,0.074367
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,27.692,0.083363
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,29.198,0.09268
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,31.581,0.10147
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,33.511,0.11267
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,35.598,0.12503
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,37.887,0.13858
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,40.37,0.1535
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,43.016,0.17002
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,45.851,0.18828
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,48.899,0.20843
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,52.202,0.23058
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,55.839,0.25476
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,59.933,0.2808
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,64.483,0.30894
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,69.267,0.34032
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,75.206,0.37141
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,82.049,0.4035
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,89.082,0.44055
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,96.935,0.47995
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,105.97,0.52031
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,116.38,0.56114
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,128.05,0.60368
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,141,0.64882
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,155.57,0.69541
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,172.06,0.7427
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,190.68,0.79064
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,211.38,0.84133
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,234.67,0.89302
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,261.58,0.94052
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,292.05,0.98712
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,325.81,1.0378
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,364.02,1.0874
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,406.65,1.1398
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,453.25,1.2007
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,505.19,1.2648
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,563.53,1.33
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,631.37,1.3835
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,706.83,1.4423
+Carpenter HP49,p4 0.060 in ring,mill,typical mill process annealed,0.06,790.01,1.5099
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.24717,0.0041234
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.26905,0.0049218
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.29126,0.0058896
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.31638,0.0070369
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.34474,0.0083951
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.37343,0.010043
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.40507,0.012007
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.44021,0.014343
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.4794,0.017116
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.51989,0.020466
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.55923,0.024556
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.59972,0.029499
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.64482,0.035401
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.69331,0.042483
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.74216,0.051069
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.79789,0.06129
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.84775,0.07385
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.88412,0.089451
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,0.96257,0.10669
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,1.0236,0.12855
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,1.0873,0.15494
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,1.1536,0.18683
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,1.2284,0.22501
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,1.3127,0.27066
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,1.4051,0.32536
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,1.5034,0.39118
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,1.6212,0.46887
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,1.7953,0.55407
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,2.0578,0.63779
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,2.4079,0.71733
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,2.84,0.79758
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,3.3724,0.87691
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,4.0486,0.94055
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,4.9116,0.97321
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,5.9718,0.99031
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,7.263,1.0045
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,8.8334,1.019
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,10.743,1.0336
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,13.066,1.0485
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,15.892,1.0636
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,19.328,1.0789
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,23.507,1.0944
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,28.589,1.1101
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,34.771,1.1261
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,42.288,1.1428
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,51.427,1.1607
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,62.54,1.1789
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,76.056,1.1974
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,92.492,1.2161
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,112.48,1.2351
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,136.79,1.2545
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,166.35,1.2741
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,202.3,1.294
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,246.01,1.3143
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,299.18,1.3349
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,363.83,1.3557
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,442.46,1.377
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,538.08,1.3985
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,654.36,1.4204
+Carpenter HP49,p7 rotor grade 0.014 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.014,795.77,1.4426
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.22031,0.0040822
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.24144,0.0048451
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.26459,0.0057506
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.28996,0.0068252
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.31777,0.0081007
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.34825,0.0096146
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.38164,0.011411
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.41824,0.013544
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.45835,0.016075
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.50231,0.019079
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.55048,0.022645
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.60327,0.026876
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.6611,0.0319
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.7237,0.037883
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.78767,0.045119
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.85518,0.053801
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.91905,0.064409
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,0.96951,0.077633
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,1.0634,0.091963
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,1.1762,0.10845
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,1.2718,0.12956
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,1.374,0.15484
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,1.4831,0.18512
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,1.5981,0.22149
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,1.722,0.26499
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,1.8593,0.31676
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,2.0181,0.37776
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,2.1741,0.45198
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,2.3828,0.53613
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,2.6744,0.62676
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,3.0514,0.72246
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,3.5885,0.80329
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,4.291,0.86606
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,5.1904,0.89906
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,6.2956,0.91889
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,7.6361,0.93916
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,9.2621,0.95988
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,11.234,0.98105
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,13.629,1.0007
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,16.535,1.0204
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,20.061,1.0406
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,24.338,1.0612
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,29.528,1.0821
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,35.824,1.1035
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,43.462,1.1253
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,52.729,1.1476
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,63.972,1.1703
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,77.631,1.1901
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,94.217,1.2089
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,114.35,1.228
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,138.78,1.2475
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,168.43,1.2672
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,204.41,1.2872
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,248.08,1.3076
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,301.08,1.3283
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,365.41,1.3493
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,443.48,1.3706
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,538.23,1.3923
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,653.22,1.4143
+Carpenter HP49,p11 rotor grade 0.007 in ring,DC,dry H2 2150 F (1177 C) 4 h,0.007,792.78,1.4367
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.18773,0.0051721
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.21006,0.0060739
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.23562,0.0071202
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.26373,0.0083595
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.29285,0.0098666
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.3245,0.011661
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.35774,0.013823
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.3941,0.016393
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.43249,0.019482
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.47146,0.023233
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.51317,0.027727
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.55964,0.033059
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.60969,0.039436
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.65642,0.047288
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.70519,0.056758
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.75553,0.068178
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.79625,0.082354
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.85899,0.098676
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.92788,0.11816
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,0.99403,0.14197
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,1.0646,0.1706
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,1.1397,0.20504
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,1.2191,0.2465
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,1.3042,0.29633
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,1.3983,0.3559
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,1.5197,0.42504
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,1.6633,0.5058
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,1.8496,0.59629
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,2.1006,0.69199
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,2.4328,0.78779
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,2.8575,0.88099
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,3.4113,0.95778
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,4.0992,1.0258
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,4.9436,1.0869
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,5.9837,1.1362
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,7.2546,1.1788
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,8.8114,1.2092
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,10.711,1.2316
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,13.024,1.2503
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,15.838,1.2674
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,19.258,1.2859
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,23.413,1.3079
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,28.478,1.32
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,34.642,1.3308
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,42.138,1.3425
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,51.257,1.3546
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,62.347,1.3673
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,75.834,1.3811
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,92.243,1.3939
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,112.2,1.4073
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,136.47,1.421
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,166,1.4346
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,201.92,1.4476
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,245.61,1.4611
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,298.74,1.4757
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,363.39,1.489
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,442.03,1.5016
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,537.71,1.5135
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,654.13,1.5231
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range upper,H2 2150 F (1177 C),,795.76,1.5324
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,0.32614,0.003063
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,0.37429,0.0035019
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,0.42796,0.0040184
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,0.48113,0.0046792
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,0.53923,0.0054616
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,0.60276,0.006387
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,0.67136,0.0074874
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,0.74105,0.0088286
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,0.81297,0.010447
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,0.89525,0.012335
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,0.98265,0.014592
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,1.0798,0.017251
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,1.1814,0.020443
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,1.2794,0.024348
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,1.3787,0.029062
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,1.4841,0.034704
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,1.5885,0.041534
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,1.6807,0.049907
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,1.7815,0.059935
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,1.8809,0.072045
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,1.9442,0.087052
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,2.0721,0.10428
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,2.1774,0.12554
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,2.2924,0.15107
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,2.4223,0.1816
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,2.5726,0.21795
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,2.7381,0.26138
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,2.927,0.31297
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,3.1604,0.37325
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,3.4224,0.44455
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,3.7543,0.52594
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,4.2439,0.60951
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,4.9196,0.68893
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,5.7982,0.76076
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,6.8991,0.82557
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,8.255,0.88394
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,9.9413,0.92773
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,11.989,0.96835
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,14.461,1.0098
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,17.445,1.0526
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,21.063,1.0926
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,25.448,1.1302
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,30.761,1.1658
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,37.2,1.1992
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,44.991,1.2324
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,54.443,1.2616
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,65.873,1.2927
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,79.72,1.3221
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,96.517,1.3471
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,116.86,1.372
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,141.49,1.3973
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,171.32,1.4224
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,207.45,1.4469
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,251.36,1.4559
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,304.59,1.4636
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,369.09,1.4705
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,447.24,1.4775
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,541.94,1.4853
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,656.7,1.492
+Carpenter HP49,p13 typical DC range 0.014-0.062 in,range lower,H2 2150 F (1177 C),,795.75,1.4991
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.081521,0.0084469
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.088741,0.010047
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.10127,0.011603
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.1155,0.013418
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.13115,0.015576
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.14783,0.01819
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.16589,0.021313
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.18527,0.025057
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.20625,0.029523
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.22968,0.034776
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.25274,0.041254
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.27453,0.049273
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.29918,0.058761
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.32219,0.070432
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.33253,0.085322
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.36339,0.10152
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.38684,0.12224
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.41145,0.14723
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.43752,0.17734
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.4643,0.21375
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.49097,0.25791
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.51873,0.31128
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.57261,0.36803
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.66076,0.42044
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.78112,0.46538
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,0.93434,0.50369
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,1.1281,0.53124
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,1.3685,0.54874
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,1.6616,0.56398
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,2.018,0.5784
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,2.454,0.58496
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,2.9846,0.59017
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,3.6299,0.59577
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,4.4147,0.60151
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,5.3693,0.60711
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,6.5301,0.61286
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,7.942,0.6186
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,9.6593,0.62431
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,11.748,0.63013
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,14.288,0.63604
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,17.377,0.64221
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,21.133,0.64839
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,25.703,0.65455
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,31.26,0.6606
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,38.019,0.66659
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,46.237,0.67365
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,56.228,0.68124
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,68.384,0.68777
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,83.17,0.69417
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,101.16,0.70015
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,123.03,0.7062
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,149.64,0.71235
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,181.99,0.71872
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,221.34,0.72536
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,269.19,0.73271
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,327.38,0.74002
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,398.16,0.74726
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,484.15,0.75695
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,588.81,0.76443
+Carpenter HyMu 80,p4 0.006 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.006,716.09,0.77215
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.083294,0.0088791
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.093542,0.010324
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.10479,0.012027
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.11698,0.014047
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.13061,0.016403
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.14598,0.019142
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.16231,0.022418
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.18056,0.026246
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.20044,0.03077
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.22261,0.036064
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.24462,0.042533
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.26498,0.050549
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.287,0.06008
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.3103,0.071465
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.32994,0.085493
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.35135,0.10218
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.37199,0.12252
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.39136,0.14718
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.41338,0.17658
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.447,0.21
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.49476,0.24663
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.55889,0.28536
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.6453,0.3231
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.75825,0.35735
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,0.89822,0.38967
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,1.0692,0.42061
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,1.2759,0.45128
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,1.5263,0.48114
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,1.8313,0.50821
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,2.2022,0.53259
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,2.6511,0.55558
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,3.1943,0.57731
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,3.8493,0.59941
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,4.6458,0.61698
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,5.6089,0.63369
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,6.7762,0.64739
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,8.1903,0.6584
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,9.9003,0.66897
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,11.969,0.67881
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,14.471,0.68784
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,17.497,0.69626
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,21.157,0.704
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,25.586,0.71052
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,30.944,0.71577
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,37.425,0.72041
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,45.266,0.72444
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,54.75,0.72805
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,66.22,0.73169
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,80.095,0.73536
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,96.876,0.73891
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,117.17,0.74245
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,141.72,0.74597
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,171.42,0.74906
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,207.34,0.75164
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,250.79,0.7548
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,303.32,0.75978
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,366.87,0.76346
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,443.74,0.76683
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,536.71,0.7702
+Carpenter HyMu 80,p4 0.014 in ring,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.014,649.18,0.77338
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.07992,0.011427
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.090834,0.013119
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.103,0.015092
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.11701,0.017335
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.13251,0.019964
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.14879,0.023157
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.16683,0.026891
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.18729,0.031196
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.21041,0.036171
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.23494,0.04213
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.25761,0.049645
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.28295,0.058445
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.31054,0.068838
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.33058,0.08219
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.36292,0.096368
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.40056,0.11302
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.43844,0.13331
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.4788,0.15744
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.51982,0.1865
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.56236,0.22129
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.60655,0.26292
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.65137,0.31296
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.70283,0.37174
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.79612,0.42558
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,0.93777,0.46678
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,1.1189,0.49795
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,1.3378,0.52831
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,1.6044,0.55492
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,1.9298,0.57555
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,2.3249,0.59134
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,2.8036,0.60319
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,3.3811,0.61423
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,4.0769,0.62689
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,4.9179,0.63718
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,5.932,0.64821
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,7.1583,0.65522
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,8.6333,0.66712
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,10.417,0.6758
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,12.571,0.68351
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,15.171,0.6903
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,18.309,0.69664
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,22.097,0.70262
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,26.671,0.7079
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,32.192,0.71262
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,38.856,0.71708
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,46.901,0.72136
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,56.612,0.72522
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,68.335,0.72874
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,82.484,0.73244
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,99.564,0.73603
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,120.18,0.73943
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,145.07,0.74255
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,175.11,0.74536
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,211.38,0.74753
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,255.16,0.75004
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,308.01,0.7531
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,371.79,0.75614
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,448.8,0.75867
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,541.76,0.7603
+Carpenter HyMu 80,p4 0.004 in toroid,DC,"dry H2 2150 F (1177 C) 4 h, 600 F/h",0.004,653.96,0.76245

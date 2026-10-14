@@ -7,6 +7,7 @@ add_executable(femm_gui
     main.cpp
     mainwindow.cpp
     editor_widget.cpp
+    mouse_release_gate.cpp
     results_widget.cpp
     scalar_results_widget.cpp
     scalar_doc_view.cpp
@@ -46,6 +47,7 @@ add_executable(femm_gui
     icons.qrc
     $<$<PLATFORM_ID:Windows>:femm.rc>
 )
+femm_add_version_resource(femm_gui "FEMM")
 # femm.rc says ICON "icons/femm.ico", but nothing scans a .rc for what it
 # includes -- ninja reported "#deps 0" for femm.rc.obj -- so replacing the icon
 # rebuilt nothing and the executable kept the old one.
@@ -63,6 +65,25 @@ target_link_libraries(femm_gui PRIVATE femm_ipc Qt6::Widgets)
 target_compile_options(femm_gui PRIVATE -Wall
     -Wno-unused-variable -Wno-sign-compare -Wno-unused-result
 )
+
+# The minimum macOS the bundle declares (LSMinimumSystemVersion in
+# Info.plist.in). macos_build.sh passes FEMM_MACOS_MIN alongside
+# CMAKE_OSX_DEPLOYMENT_TARGET -- the Qt's own floor unless overridden -- and
+# step 4c there refuses a bundle whose binaries declare anything higher. A
+# bare cmake run without either falls back to the deployment target, and
+# failing that to the macOS this is being built on, which is what clang
+# targets when told nothing.
+if(APPLE)
+    if(NOT FEMM_MACOS_MIN)
+        set(FEMM_MACOS_MIN "${CMAKE_OSX_DEPLOYMENT_TARGET}")
+    endif()
+    if(NOT FEMM_MACOS_MIN)
+        execute_process(COMMAND sw_vers -productVersion
+                        OUTPUT_VARIABLE _host_macos OUTPUT_STRIP_TRAILING_WHITESPACE)
+        string(REGEX REPLACE "^([0-9]+)\\.([0-9]+).*" "\\1.\\2" FEMM_MACOS_MIN "${_host_macos}")
+    endif()
+    set(MACOSX_BUNDLE_MIN_MACOS "${FEMM_MACOS_MIN}")
+endif()
 
 # Suppress console window on Windows/macOS
 set_target_properties(femm_gui PROPERTIES

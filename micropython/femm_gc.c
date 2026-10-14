@@ -25,6 +25,11 @@
 // MicroPython's own collector header, which this file also includes and whose
 // interface it implements.
 #include <gc.h>
+#ifdef GC_DEBUG
+#include <gc_mark.h>             // GC_USR_PTR_FROM_BASE, GC_get_debug_header_size
+_Static_assert(sizeof(GC_word) == sizeof(size_t),
+               "gc_nbytes reads oh_sz as size_t; bdwgc writes it as GC_word");
+#endif
 #include <javaxfc.h>             // GC_finalize_all
 #include "py/gc.h"
 #include "py/runtime.h"
@@ -162,19 +167,73 @@ void *gc_alloc_atomic(size_t n_bytes) {
 }
 
 void gc_free(void *ptr) {
-    if (ptr) GC_FREE(ptr);                   // does not run the finaliser, per gc.h
+    if (ptr == NULL) return;
+    // As py/gc.c: "free is an optimisation to reclaim the memory immediately",
+    // so with the heap locked the block is simply left for the next
+    // collection instead of mutating the collector from a locked context.
+    // gc_alloc, gc_alloc_atomic and gc_realloc already refuse when locked.
+    if (gc_is_locked()) return;
+    // gc.h, GC_free: "An object should not be enabled for finalization ...
+    // when it is explicitly deallocated." gc_alloc registers finaliser_cb on
+    // every GC_ALLOC_FLAG_HAS_FINALISER object, and freeing one would leave a
+    // finalization-table entry pointing at memory bdwgc may hand out again.
+    // Registering a NULL function removes the entry; it is a no-op when there
+    // was none. The finaliser itself is not run, as py/gc.c's gc_free promises.
+    GC_REGISTER_FINALIZER_NO_ORDER(ptr, NULL, NULL, NULL, NULL);
+    GC_FREE(ptr);
+}
+
+// bdwgc's EXTRA_BYTES, as a client can see it: one reserved byte per object
+// when all-interior-pointers is on (gc_priv.h EXTRA_BYTES, ADD_SLOP). The
+// marker's length descriptor for NORMAL objects is shortened to match
+// (misc.c GC_init, "Adjust normal object descriptor for extra allocation"),
+// so the last word of every scanned block is never examined.
+static size_t femm_gc_slop(void) {
+    return GC_get_all_interior_pointers() ? 1 : 0;
 }
 
 size_t gc_nbytes(const void *ptr) {
-    if (ptr == NULL || GC_base((void *)ptr) != ptr) return 0;   // 0 for "not a heap object", as gc.c
-    return GC_size((void *)ptr);
+    if (ptr == NULL) return 0;
+    void *base = GC_base((void *)ptr);
+    if (base == NULL) return 0;                  // 0 for "not a heap object", as gc.c
+#ifdef GC_DEBUG
+    // GC_debug_malloc hands back a pointer PAST its header, and writes an
+    // END_FLAG word at roundup(requested) bytes from THAT pointer
+    // (dbg_mlc.c, GC_store_debug_info_inner). So under GC_DEBUG the usable
+    // size is the ORIGINAL REQUEST, not the block size. Returning GC_size()
+    // here -- the rounded-up block, which is routinely larger -- lets
+    // gc_realloc grow an object in place across the END_FLAG. That smashes
+    // it, garbles whatever the caller was building (the init script comes
+    // back "invalid syntax"), and reports every victim against this file,
+    // so the debug build corrupts itself before it can instrument anything.
+    // bdwgc keeps the request in oh_sz, and oh_sz/oh_sf are the last two
+    // header words before the user pointer; there is no public accessor.
+    if ((const void *)GC_USR_PTR_FROM_BASE(base) != ptr) return 0;   // interior pointer
+    size_t requested = ((const size_t *)ptr)[-2];                    // oh_sz
+    if (requested > GC_size(base) - GC_get_debug_header_size()) return 0;  // not the assumed layout
+    return requested;
+#else
+    if (base != ptr) return 0;
+    return GC_size(base) - femm_gc_slop();       // usable size, per bdwgc's own contract
+#endif
 }
 
 void *gc_realloc(void *ptr, size_t n_bytes, bool allow_move) {
     if (ptr == NULL) return gc_alloc(n_bytes, 0);
-    if (n_bytes == 0) { GC_FREE(ptr); return NULL; }
+    if (n_bytes == 0) { gc_free(ptr); return NULL; }   // guard + unregister, as gc_free
     if (gc_is_locked()) return NULL;
-    if (n_bytes <= GC_size(ptr)) return ptr;  // fits the size class: in place, like gc.c's same-block case
+#ifdef GC_DEBUG
+    if (n_bytes <= gc_nbytes(ptr)) return ptr;  // usable size is the request, NOT the block
+#else
+    // In place only if the request fits WITH bdwgc's slop: its own GC_realloc
+    // tests ADD_SLOP(lb) <= sz, i.e. lb + 1 <= sz under all-interior-pointers.
+    // Testing n_bytes <= GC_size() let a request exactly the block size stay in
+    // place: a list grown by extend() to 64 slots (472 -> 512 bytes, in a
+    // 512-byte block) put its 64th pointer in the reserved last word, which the
+    // marker never scans. The float it referenced was collected while live and
+    // its block recycled under a live Python list -- the ulab "heisenbug".
+    if (n_bytes + femm_gc_slop() <= GC_size(ptr)) return ptr;  // fits, in place, like gc.c's same-block case
+#endif
     if (!allow_move) return NULL;             // vstr's "extend only if free" probe
     return GC_REALLOC(ptr, n_bytes);          // copies, tail is zero-filled for non-atomic objects
 }

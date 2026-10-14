@@ -28,6 +28,10 @@
 #include "results_widget.h"
 #include "results_doc.h"
 #include <QMessageBox>
+#include <QMouseEvent>
+#include <QKeyEvent>
+#include <QElapsedTimer>
+#include <cstdio>
 #include "mag_document.h"
 #include "elec_document.h"
 #include "document.h"
@@ -617,9 +621,74 @@ static int onRunSolver(const char *exePath, const char *basePath, int hide)
                          QString::fromUtf8(basePath));
 }
 
+// DIAG (FEMM_EVENT_TRACE=1): print the mouse/key/activation events Qt
+// dispatches, with the button set Qt believes is held, to stderr. For the
+// "toolbar buttons stay depressed after the double-right-click properties
+// box" report. Inert unless the variable is set.
+class FemmEventTrace : public QObject {
+public:
+    QElapsedTimer t;
+    FemmEventTrace() { t.start(); }
+    // By value, not a static buffer: one fprintf below formats three of these.
+    static QByteArray btn(Qt::MouseButtons b) {
+        QByteArray s;
+        if (b & Qt::LeftButton)   s += 'L';
+        if (b & Qt::RightButton)  s += 'R';
+        if (b & Qt::MiddleButton) s += 'M';
+        if (s.isEmpty())          s += '-';
+        return s;
+    }
+    bool eventFilter(QObject *o, QEvent *e) override {
+        const char *kind = nullptr;
+        switch (e->type()) {
+        case QEvent::MouseButtonPress:    kind = "PRESS"; break;
+        case QEvent::MouseButtonRelease:  kind = "RELEASE"; break;
+        case QEvent::MouseButtonDblClick: kind = "DBLCLICK"; break;
+        case QEvent::KeyPress:            kind = "KEY"; break;
+        case QEvent::WindowActivate:      kind = "ACTIVATE"; break;
+        case QEvent::WindowDeactivate:    kind = "DEACTIVATE"; break;
+        case QEvent::UngrabMouse:         kind = "UNGRABMOUSE"; break;
+        case QEvent::GrabMouse:           kind = "GRABMOUSE"; break;
+        default: return false;
+        }
+        const char *cls = o->metaObject()->className();
+        QByteArray name = o->objectName().toUtf8();
+        if (auto *m = dynamic_cast<QMouseEvent *>(e)) {
+            fprintf(stderr, "TRACE %8lld %-11s btn=%s held=%s app=%s spont=%d pos=%d,%d -> %s(%s)\n",
+                    (long long)t.elapsed(), kind, btn(m->button()).constData(), btn(m->buttons()).constData(),
+                    btn(QGuiApplication::mouseButtons()).constData(), m->spontaneous() ? 1 : 0,
+                    (int)m->position().x(), (int)m->position().y(), cls, name.constData());
+        } else if (auto *k = dynamic_cast<QKeyEvent *>(e)) {
+            fprintf(stderr, "TRACE %8lld %-11s key=0x%x app=%s -> %s(%s)\n",
+                    (long long)t.elapsed(), kind, k->key(), btn(QGuiApplication::mouseButtons()).constData(),
+                    cls, name.constData());
+        } else {
+            fprintf(stderr, "TRACE %8lld %-11s app=%s -> %s(%s)\n",
+                    (long long)t.elapsed(), kind, btn(QGuiApplication::mouseButtons()).constData(), cls, name.constData());
+        }
+        fflush(stderr);
+        return false;
+    }
+};
+
 int main(int argc, char *argv[])
 {
+    // Drop inherited plugin-path redirections before Qt can act on them. We
+    // ship a complete Qt on every platform; these variables PREPEND a foreign
+    // plugin directory to the search path, and clients routinely leak them —
+    // conda's qt activation scripts export QT_PLUGIN_PATH, so any pyfemm user
+    // in a conda env spawns us with conda's Qt plugins ahead of our own. A
+    // version-mismatched plugin dlopen'd into this process resolves against
+    // our Qt symbols and crashes, or misbehaves subtly if the versions are
+    // close. (The signed macOS bundle is shielded by library validation; the
+    // Windows exe and self-built binaries are not.) octavefemm clears this on
+    // its side, but the fix has to live here to cover every launcher.
+    qunsetenv("QT_PLUGIN_PATH");
+    qunsetenv("QT_QPA_PLATFORM_PLUGIN_PATH");
+
     QApplication app(argc, argv);
+    if (qEnvironmentVariableIsSet("FEMM_EVENT_TRACE"))
+        app.installEventFilter(new FemmEventTrace);   // DIAG, see class above
 
     // Force the C numeric locale for the whole process. libfemm reads and writes
     // the .fem/.fee/.feh/.fec format with C sscanf/fprintf, which honor LC_NUMERIC;

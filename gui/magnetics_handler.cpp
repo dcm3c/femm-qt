@@ -708,24 +708,47 @@ void MagneticsHandler::showBHCurves(QWidget *parent)
 {
     auto *doc = m_widget->document();
     if (!doc) return;
+    // Ported from OF CFemmviewView::OnViewBHcurves: pick ONE nonlinear material
+    // and a point count, then plot the curve the solution was actually solved
+    // with. On load, GetSlopes has already rewritten an AC material's curve
+    // into its effective form (fundamental of B, hysteresis lag, lamination
+    // eddy currents, fill factor), so H comes back complex. OF plots B against
+    // |H| with B carrying the phase, which gives Re[B] and Im[B] curves.
     std::vector<int> matIdx;
+    QStringList names;
     for (int i = 0; i < (int)doc->blockproplist.size(); i++)
-        if (doc->blockproplist[i].BHpoints > 0) matIdx.push_back(i);
-    if (matIdx.empty()) { m_widget->emitStatus("No nonlinear materials in this solution"); return; }
-    auto *pdlg = new PlotDialog(tr("B-H Curves"), parent);
-    pdlg->setAttribute(Qt::WA_DeleteOnClose);
-    for (size_t mi = 0; mi < matIdx.size(); mi++) {
-        auto &mat = doc->blockproplist[matIdx[mi]];
-        PlotSeries series;
-        series.label = QString::fromStdString(mat.BlockName);
-        double bMax = mat.Bdata.back();
-        for (int j = 0; j <= 200; j++) {
-            double b = bMax * j / 200;
-            series.x.push_back(mat.GetH(b));
-            series.y.push_back(b);
+        if (doc->blockproplist[i].BHpoints > 0) {
+            matIdx.push_back(i);
+            names << QString::fromStdString(doc->blockproplist[i].BlockName);
         }
-        pdlg->plot()->addSeries(series);
+    if (matIdx.empty()) { m_widget->emitStatus("No nonlinear materials in this solution"); return; }
+
+    int pick = 0, npts = 0;
+    if (!xyplot::prompt(parent, names, 0, "pp/plotPoints", pick, npts,
+                        tr("Plot B-H Curve"), tr("Material:")))
+        return;
+
+    const auto &mat = doc->blockproplist[matIdx[pick]];
+    const bool isAC = (doc->Frequency != 0);
+    PlotSeries re, im;
+    re.label = isAC ? tr("Re[B], T") : tr("B, T");
+    im.label = tr("Im[B], T");
+    const double bMax = mat.Bdata[mat.BHpoints - 1];
+    for (int j = 0; j < npts; j++) {
+        double b = bMax * j / (npts - 1);
+        CComplex H = mat.GetH(CComplex(b));
+        CComplex B = (abs(H) > 0) ? abs(H) * b / H : CComplex(0);
+        re.x.push_back(abs(H)); re.y.push_back(Re(B));
+        im.x.push_back(abs(H)); im.y.push_back(Im(B));
     }
+
+    QString title = isAC
+        ? tr("Effective B-H Curve at %1 Hz: %2").arg(doc->Frequency).arg(names[pick])
+        : tr("B-H Curve: %1").arg(names[pick]);
+    auto *pdlg = new PlotDialog(title, parent);
+    pdlg->setAttribute(Qt::WA_DeleteOnClose);
+    pdlg->plot()->addSeries(re);
+    if (isAC) pdlg->plot()->addSeries(im);
     pdlg->plot()->setAxisLabels(tr("H, A/m"), tr("B, Tesla"));
     pdlg->show();
 }

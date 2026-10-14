@@ -6,8 +6,8 @@
 // Every physics offers the same thing: pick a quantity, pick how many points
 // to sample along the defined contour, plot it. The four handlers had grown
 // four copies, and two of them (electrostatics, heat flow) had drifted into a
-// bare QInputDialog that dropped the point count -- so they read
-// "eo/plotPoints" / "ho/plotPoints" from QSettings that nothing could write.
+// bare QInputDialog that dropped the point count. The count's default is the
+// per-physics Preferences value ("pp", "eo", "ho", "co" + "/plotPoints").
 //
 // Only the quantity list, its default index, and the settings key differ per
 // physics. The point-vector type differs too (each results doc defines its own
@@ -38,21 +38,28 @@ constexpr int kMaxPoints = 100000;
 constexpr int kDefaultPoints = 1500;
 
 // The prompt. Returns false if the user cancelled; otherwise fills plotType
-// (an index into `types`) and npts. The chosen point count is written back to
-// settingsKey so it is the default next time -- which is what the reads in
-// each handler always assumed.
+// (an index into `types`) and npts. The point count starts at the Preferences
+// value under settingsKey and is NOT written back: a count typed here is for
+// this plot only, as in OF's CXYPlotDlg. Writing it back once let a test
+// script's 12 silently become the preference for every later plot. The title
+// and list label default to the contour plot's; the B-H curve plot passes its
+// own, as OF's one CXYPlotDlg did.
 inline bool prompt(QWidget *parent, const QStringList &types, int defaultType,
-                   const QString &settingsKey, int &plotType, int &npts)
+                   const QString &settingsKey, int &plotType, int &npts,
+                   const QString &title = QString(),
+                   const QString &listLabel = QString())
 {
     QDialog dlg(parent);
-    dlg.setWindowTitle(QCoreApplication::translate("xyplot", "X-Y Plot"));
+    dlg.setWindowTitle(title.isEmpty()
+        ? QCoreApplication::translate("xyplot", "X-Y Plot") : title);
     auto *form = new QFormLayout;
 
     auto *typeCombo = new QComboBox;
     for (const auto &t : types) typeCombo->addItem(t);
     if (defaultType >= 0 && defaultType < types.size())
         typeCombo->setCurrentIndex(defaultType);
-    form->addRow(QCoreApplication::translate("xyplot", "Quantity:"), typeCombo);
+    form->addRow(listLabel.isEmpty()
+        ? QCoreApplication::translate("xyplot", "Quantity:") : listLabel, typeCombo);
 
     auto *nptsEdit = new PyLineEdit;
     nptsEdit->setText(QSettings().value(settingsKey, kDefaultPoints).toString());
@@ -70,7 +77,6 @@ inline bool prompt(QWidget *parent, const QStringList &types, int defaultType,
     npts = (int)nptsEdit->evaluateAsDouble(kDefaultPoints);
     if (npts < kMinPoints) npts = kMinPoints;
     if (npts > kMaxPoints) npts = kMaxPoints;
-    QSettings().setValue(settingsKey, npts);
     return true;
 }
 

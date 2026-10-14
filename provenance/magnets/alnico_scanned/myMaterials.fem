@@ -1,0 +1,419 @@
+[Format]      =  4.0
+[Frequency]   =  0
+[Precision]   =  1e-008
+[MinAngle]    =  30
+[DoSmartMesh] =  1
+[Depth]       =  1
+[LengthUnits] =  inches
+[ProblemType] =  planar
+[Coordinates] =  cartesian
+[ACSolver]    =  0
+[PrevType]    =  0
+[PrevSoln]    =  ""
+[Comment]     =  "Add comments here."
+[PointProps]   = 0
+[BdryProps]   = 0
+[BlockProps]  = 14
+  <BeginBlock>
+    <BlockName> = "Cast Alnico 2 (LNG12)"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 45120
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 1.5
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <NStrands> = 0
+    <WireD> = 0
+    <BHPoints> = 7
+      0	0
+      0.1474	3570
+      0.3175	9900
+      0.47920000000000001	19060
+      0.5847	28310
+      0.63719999999999999	34140
+      0.71999999999999997	45120
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Cast Alnico 3 (LNG10)"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 44200
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 1.7
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <NStrands> = 0
+    <WireD> = 0
+    <BHPoints> = 6
+      0	0
+      0.097500000000000003	2700
+      0.20699999999999999	6900
+      0.35799999999999998	15500
+      0.48399999999999999	27100
+      0.60599999999999998	44200
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Cast Alnico 5 (LNG37)"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 48600
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 2.1000000000000001
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <NStrands> = 0
+    <WireD> = 0
+    <BHPoints> = 11
+      0	0
+      0.27810000000000001	1600
+      0.63829999999999998	4100
+      0.82340000000000002	6300
+      0.9214	8600
+      1.0129999999999999	13400
+      1.0640000000000001	18200
+      1.1060000000000001	24300
+      1.149	33000
+      1.1839999999999999	42530
+      1.204	48600
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Cast Alnico 5 (LNG40)"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 51015
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 2.1000000000000001
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <NStrands> = 0
+    <WireD> = 0
+    <BHPoints> = 11
+      0	0
+      0.1883	1109
+      0.37669999999999998	2287
+      0.57769999999999999	3619
+      0.79200000000000004	5578
+      0.97989999999999999	10201
+      1.0857000000000001	18139
+      1.1395999999999999	26809
+      1.1745000000000001	35119
+      1.2011000000000001	43100
+      1.2252000000000001	51015
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Cast Alnico 5 (LNG44)"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 54060
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 2.1000000000000001
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <NStrands> = 0
+    <WireD> = 0
+    <BHPoints> = 9
+      0	0
+      0.3861	2030
+      0.69299999999999995	4360
+      0.91479999999999995	7490
+      1.0229999999999999	11010
+      1.097	16380
+      1.181	30960
+      1.2170000000000001	41370
+      1.252	54060
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Cast Alnico 5-7 (LNG56)"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 61400
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 2.1000000000000001
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <NStrands> = 0
+    <WireD> = 0
+    <BHPoints> = 9
+      0	0
+      0.43070000000000003	3000
+      0.79069999999999996	5900
+      1.014	8800
+      1.1499999999999999	12800
+      1.2130000000000001	18000
+      1.2470000000000001	26000
+      1.276	37800
+      1.321	61400
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Cast Alnico 6 (LNGT28)"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 58450
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 2
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <NStrands> = 0
+    <WireD> = 0
+    <BHPoints> = 9
+      0	0
+      0.1353	2400
+      0.32400000000000001	6100
+      0.49869999999999998	10490
+      0.71009999999999995	18700
+      0.83189999999999997	28130
+      0.90449999999999997	37770
+      0.96519999999999995	49201
+      1.0029999999999999	58450
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Cast Alnico 8 (LNGT32)"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 102600
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 1.8999999999999999
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <NStrands> = 0
+    <WireD> = 0
+    <BHPoints> = 10
+      0	0
+      0.13600000000000001	6490
+      0.249	13640
+      0.36799999999999999	23350
+      0.46999999999999997	34600
+      0.57499999999999996	49570
+      0.64200000000000002	61960
+      0.70999999999999996	76600
+      0.76500000000000001	90400
+      0.80900000000000005	102600
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Cast Alnico 8 (LNGT38)"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 115800
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 1.8999999999999999
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <NStrands> = 0
+    <WireD> = 0
+    <BHPoints> = 8
+      0	0
+      0.191	9600
+      0.35199999999999998	22050
+      0.46300000000000002	34540
+      0.57099999999999995	51350
+      0.67200000000000004	73450
+      0.751	95460
+      0.80900000000000005	115800
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Cast Alnico 8 (LNGT44)"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 116000
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 1.8999999999999999
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <NStrands> = 0
+    <WireD> = 0
+    <BHPoints> = 9
+      0	0
+      0.14399999999999999	6000
+      0.32500000000000001	16000
+      0.48399999999999999	28800
+      0.57899999999999996	40500
+      0.67500000000000004	56300
+      0.745	72700
+      0.80600000000000005	92200
+      0.85699999999999998	116000
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Cast Alnico 9 (LNGT72)"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 112100
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 1.8999999999999999
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <NStrands> = 0
+    <WireD> = 0
+    <BHPoints> = 13
+      0	0
+      0.1691	2900
+      0.37409999999999999	6700
+      0.57830000000000004	11300
+      0.7268	16690
+      0.80820000000000003	22540
+      0.88019999999999998	34470
+      0.91810000000000003	46050
+      0.95240000000000002	58990
+      0.98499999999999999	72980
+      1.016	88930
+      1.04	101630
+      1.0600000000000001	112100
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Sintered Alnico 2 (FLNG12)"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 50900
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 1.5
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <NStrands> = 0
+    <WireD> = 0
+    <BHPoints> = 9
+      0	0
+      0.129	3800
+      0.247	8100
+      0.34799999999999998	13000
+      0.437	18800
+      0.51200000000000001	24900
+      0.58699999999999997	33000
+      0.65100000000000002	41630
+      0.71299999999999997	50900
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Sintered Alnico 5 (FLNG34)"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 51300
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 2
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <NStrands> = 0
+    <WireD> = 0
+    <BHPoints> = 10
+      0	0
+      0.2833	2500
+      0.51629999999999998	4900
+      0.7218	7800
+      0.85370000000000001	11500
+      0.93179999999999996	16800
+      1.0149999999999999	26900
+      1.0600000000000001	36100
+      1.085	42830
+      1.113	51300
+  <EndBlock>
+  <BeginBlock>
+    <BlockName> = "Sintered Alnico 8 (FLNG38)"
+    <Mu_x> = 1
+    <Mu_y> = 1
+    <H_c> = 121000
+    <H_cAngle> = 0
+    <J_re> = 0
+    <J_im> = 0
+    <Sigma> = 1.8999999999999999
+    <d_lam> = 0
+    <Phi_h> = 0
+    <Phi_hx> = 0
+    <Phi_hy> = 0
+    <LamType> = 0
+    <LamFill> = 1
+    <NStrands> = 0
+    <WireD> = 0
+    <BHPoints> = 10
+      0	0
+      0.11700000000000001	7000
+      0.24099999999999999	16000
+      0.35399999999999998	26000
+      0.44500000000000001	37300
+      0.49299999999999999	44100
+      0.58099999999999996	59300
+      0.68300000000000005	81800
+      0.75600000000000001	102000
+      0.81299999999999994	121000
+  <EndBlock>
+[CircuitProps]  = 0
+[NumPoints] = 0
+[NumSegments] = 0
+[NumArcSegments] = 0
+[NumHoles] = 0
+[NumBlockLabels] = 0

@@ -110,15 +110,36 @@ done
 # open and every reason not to find. luafemm's README is renamed on the way
 # out: in one flat directory beside five other guides, "README.md" says
 # nothing about which thing it is the readme for.
-# The file-format references, one per physics: the on-disk layout of
-# .fem/.fee/.feh/.fec, which is what a third-party tool or a mesh importer
-# needs. Their own subdirectory, matching {app}\docs on Windows -- four more
-# PDFs in the flat directory above would bury the guides that are actually
-# about using the program.
-mkdir -p "$DEST/docs"
-for doc in "$ROOT"/docs/*-file-formats.pdf; do
-    [ -f "$doc" ] && cp "$doc" "$DEST/docs/"
-done
+# Reference documents in docs/<subfolder>, read from femm-qt.iss like the
+# examples: every line whose DestDir is "{app}\docs\<sub>" is staged into
+# $DEST/docs/<sub>. Today that is docs/formats (the four file-format
+# references: the on-disk layout of .fem/.fee/.feh/.fec, for third-party tools
+# and mesh importers) and docs/materials (the material-library provenance
+# papers and their index). Subfolders, not the flat directory below, so they
+# do not bury the guides that are about using the program. Read from the .iss
+# rather than globbed: provenance/ may hold third-party source PDFs that must
+# never ship, so only what is named there goes out.
+ndoc=0
+while IFS='|' read -r rel dest; do
+    [ -n "$rel" ] || continue
+    sub="${dest#\{app\}/}"
+    src="$ROOT/packaging/$rel"
+    if [ -f "$src" ]; then
+        mkdir -p "$DEST/$sub"
+        cp "$src" "$DEST/$sub/"
+        ndoc=$((ndoc + 1))
+    else
+        missing=$((missing + 1))
+        echo "  WARNING: listed in femm-qt.iss but not found: $rel" >&2
+    fi
+done <<EOF
+$(awk -F'"' '/DestDir: "\{app\}\\docs\\[^"]+";/ { print $2 "|" $4 }' "$ISS" | tr '\\' '/')
+EOF
+if [ "$ndoc" -eq 0 ]; then
+    echo "stage_extras: no reference documents extracted from femm-qt.iss --" >&2
+    echo "              fix the awk above rather than shipping without them." >&2
+    exit 1
+fi
 
 for doc in "$ROOT/pyfemm/pyfemm.md" \
            "$ROOT/octavefemm/octavefemm.md" \

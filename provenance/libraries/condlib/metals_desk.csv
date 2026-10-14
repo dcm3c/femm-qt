@@ -1,0 +1,187 @@
+headings,name,iacs,rho_uohm_cm,note,pdf_page
+Aluminum and aluminum alloys,1100 (O),59,2.9,,55
+Aluminum and aluminum alloys,2024 (O),50,3.4,,55
+Aluminum and aluminum alloys,3003 (O),50,3.4,,55
+Aluminum and aluminum alloys,4032 (O),40,4.3,,55
+Aluminum and aluminum alloys,5052 (all),35,4.9,,55
+Aluminum and aluminum alloys,5056 (O),29,5.9,,55
+Aluminum and aluminum alloys,6061 (T6),43,4.0,,55
+Aluminum and aluminum alloys,6101 (T6),57,3.0,,55
+Aluminum and aluminum alloys,7075 (O),45,3.8,,55
+Aluminum and aluminum alloys,7075 (T6),33,5.2,,55
+Copper and copper alloys / Wrought copper,Pure copper,103.06,1.67,,55
+Copper and copper alloys / Wrought copper,Electrolytic tough pitch copper (ETP),101,1.71,,55
+Copper and copper alloys / Wrought copper,Oxygen-free copper (OF),101,1.71,,55
+Free-machining copper,0.5% Te,95,1.82,,56
+Free-machining copper,1.0% Pb,98,1.76,,56
+Wrought alloys,"Cartridge brass, 70%",28,6.2,,56
+Wrought alloys,Yellow brass,27,6.4,,56
+Wrought alloys,Leaded commercial bronze,42,4.1,,56
+Wrought alloys,"Phosphor bronze, 1.25%",48,3.6,,56
+Wrought alloys,"Nickel silver, 55-18",5.5,31,,56
+Wrought alloys,Low-silicon bronze (B),12,14.3,,56
+Wrought alloys,Beryllium copper,22-30,5.7-7.8,(a)(a),56
+Casting alloys,Chromium copper (1% Cr),80-90,2.10,(a),56
+Casting alloys,88Cu-8Sn-4Zn,11,15,,56
+Casting alloys,87Cu-10Sn-1Pb-2Zn,11,15,,56
+Electrical contact materials / Copper alloys,0.04 oxide,100,1.72,,56
+Electrical contact materials / Copper alloys,1.25 Sn + P,48,3.6,,56
+Electrical contact materials / Copper alloys,5 Sn + P,18,11,,56
+Electrical contact materials / Copper alloys,8 Sn + P,13,13,,56
+Electrical contact materials / Copper alloys,15 Zn,37,4.7,,56
+Electrical contact materials / Copper alloys,20 Zn,32,5.4,,57
+Electrical contact materials / Copper alloys,35 Zn,27,6.4,,57
+Electrical contact materials / Copper alloys,2 Be + Ni or Co(b),17-21,9.6-11.5,,57
+Silver and silver alloys,Fine silver,104,1.59,,57
+Silver and silver alloys,92.5Ag-7.5Cu,88,2,,57
+Silver and silver alloys,90Ag-10Cu,85,2,,57
+Silver and silver alloys,72Ag-28Cu,87,2,,57
+Silver and silver alloys,72Ag-26Cu-2Ni,60,2.9,,57
+Silver and silver alloys,85Ag-15Cd,35,4.93,,57
+Silver and silver alloys,97Ag-3Pt,45,3.5,,57
+Silver and silver alloys,97Ag-3Pd,58,2.9,,57
+Silver and silver alloys,90Ag-10Pd,27,5.3,,57
+Silver and silver alloys,90Ag-10Au,40,4.2,,57
+Silver and silver alloys,60Ag-40Pd,8,23,,57
+Silver and silver alloys,70Ag-30Pd,12,14.3,,57
+Platinum and platinum alloys,Platinum,16,10.6,,57
+Platinum and platinum alloys,95Pt-5Ir,9,19,,57
+Platinum and platinum alloys,90Pt-10Ir,7,25,,57
+Platinum and platinum alloys,85Pt-15Ir,6,28.5,,57
+Platinum and platinum alloys,80Pt-20Ir,5.6,31,,58
+Platinum and platinum alloys,75Pt-25Ir,5.5,33,,58
+Platinum and platinum alloys,70Pt-30Ir,5,35,,58
+Platinum and platinum alloys,65Pt-35Ir,5,36,,58
+Platinum and platinum alloys,95Pt-5Ru,5.5,31.5,,58
+Platinum and platinum alloys,90Pt-10Ru,4,43,,58
+Platinum and platinum alloys,89Pt-11Ru,4,43,,58
+Platinum and platinum alloys,86Pt-14Ru,3.5,46,,58
+Platinum and platinum alloys,96Pt-4W,5,36,,58
+Palladium and palladium alloys,Palladium,16,10.8,,58
+Palladium and palladium alloys,95.5Pd-4.5Ru,7,24.2,,58
+Palladium and palladium alloys,90Pd-10Ru,6.5,27,,58
+Palladium and palladium alloys,70Pd-30Ag,4.3,40,,58
+Palladium and palladium alloys,60Pd-40Ag,4.0,43,,58
+Palladium and palladium alloys,50Pd-50Ag,5.5,31.5,,58
+Palladium and palladium alloys,72Pd-26Ag-1.71-2Ni,4,43,,58
+Palladium and palladium alloys,60Pd-40Cu,5,35,(c),58
+Palladium and palladium alloys,45Pd-30Ag-20Au-5Pt,4.5,39,,58
+Palladium and palladium alloys,35Pd-30Ag-14Cu-10Pt-10Au-1Zn,5,35,,58
+Gold and gold alloys,Gold,75,2.35,,59
+Gold and gold alloys,90Au-10Cu,16,10.8,,59
+Gold and gold alloys,75Au-25Ag,16,10.8,,59
+Gold and gold alloys,72.5Au-14Cu-8.5Pt-4Ag-1Zn,10,17,,59
+Gold and gold alloys,69Au-25Ag-6Pt,11,15,,59
+Gold and gold alloys,41.7Au-32.5Cu-18.8Ni-7Zn,4.5,39,,59
+Electrical heating alloys / Ni-Cr and Ni-Cr-Fe alloys,78.5Ni-20Cr-1.5Si (80-20),1.6,108.05,,59
+Electrical heating alloys / Ni-Cr and Ni-Cr-Fe alloys,73.5Ni-20Cr-5Al-1.5Si,1.2,137.97,,59
+Electrical heating alloys / Ni-Cr and Ni-Cr-Fe alloys,68Ni-20Cr-8.5Fe-2Si,1.5,116.36,,59
+Electrical heating alloys / Ni-Cr and Ni-Cr-Fe alloys,60Ni-16Cr-22.5Fe-1.5Si,1.5,112.20,,59
+Electrical heating alloys / Ni-Cr and Ni-Cr-Fe alloys,35Ni-20Cr-43.5Fe-1.5Si,1.7,101.4,,59
+Fe-Cr-Al alloys,72Fe-23Cr-5Al,1.3,138.8,,59
+Fe-Cr-Al alloys,55Fe-37.5Cr-7.5Al,1.2,166.23,,59
+Pure metals,Molybdenum,34,5.2,,59
+Pure metals,Platinum,16,10.64,,59
+Pure metals,Tantalum,13.9,12.45,,59
+Pure metals,Tungsten,30,5.65,,59
+Nonmetallic heating element materials,Silicon carbide (SiC),1-1.7,100-200,,60
+Nonmetallic heating element materials,Molybdenum disilicide (MoSi2),4.5,37.24,,60
+Nonmetallic heating element materials,Graphite,. . .,910.1,,60
+Instrument and control alloys / Cu-Ni alloys,98Cu-2Ni,35,4.99,,60
+Instrument and control alloys / Cu-Ni alloys,94Cu-6Ni,17,9.93,,60
+Instrument and control alloys / Cu-Ni alloys,89Cu-11Ni,11,14.96,,60
+Instrument and control alloys / Cu-Ni alloys,78Cu-22Ni,5.7,29.92,,60
+Instrument and control alloys / Cu-Ni alloys,55Cu-45Ni (constantan),3.5,49.87,,60
+Cu-Mn-Ni alloys,87Cu-13Mn (manganin),3.5,48.21,,60
+Cu-Mn-Ni alloys,83Cu-13Mn-4Ni (manganin),3.5,48.21,,60
+Cu-Mn-Ni alloys,85Cu-10Mn-4Ni (shunt manganin),4.5,38.23,,60
+Cu-Mn-Ni alloys,70Cu-20Ni-10Mn,3.6,48.88,,60
+Cu-Mn-Ni alloys,67Cu-5Ni-27Mn,1.8,99.74,,60
+Nickel-base alloys,99.8 Ni,23,7.98,,60
+Nickel-base alloys,71Ni-29Fe,9,19.95,,60
+Nickel-base alloys,80Ni-20Cr,1.5,112.2,,60
+Nickel-base alloys,75Ni-20Cr-3Al + Cu or Fe,1.3,132.98,,61
+Nickel-base alloys,76Ni-17Cr-4Si-3Mn,1.3,132.98,,61
+Nickel-base alloys,60Ni-16Cr-24Fe,1.5,112.2,,61
+Nickel-base alloys,35Ni-20Cr-45Fe,1.7,101.4,,61
+Fe-Cr-Al alloy,72Fe-23Cr-5Al-0.5Co,1.3,135.48,,61
+Pure metals,Iron (99.99%),17.75,9.71,,61
+Thermostat metals,75Fe-22Ni-3Cr,3,78.13,,61
+Thermostat metals,72Mn-18Cu-10Ni,1.5,112.2,,61
+Thermostat metals,67Ni-30Cu-1.4Fe-1Mn,3.5,56.52,,61
+Thermostat metals,75Fe-22Ni-3Cr,12,15.79,,61
+Thermostat metals,66.5Fe-22Ni-8.5Cr,3.3,58.18,,61
+Permanent magnet materials / Carbon steel,0.65% C,9.5,18,,61
+Permanent magnet materials / Carbon steel,1% C,8,20,,61
+Permanent magnet materials / Carbon steel,"Chromium steel, 3.5% Cr",6.1,29,,61
+Permanent magnet materials / Carbon steel,"Tungsten steel, 6% W",6,30,,61
+Cobalt steel,17% Co,6.3,28,,62
+Cobalt steel,36% Co,6.5,27,,62
+Intermediate alloys,Cunico,7.5,24,,62
+Intermediate alloys,Cunife,9.5,18,,62
+Intermediate alloys,Comol,3.6,45,,62
+Alnico alloys,Alnico I,3.3,75,,62
+Alnico alloys,Alnico II,3.3,65,,62
+Alnico alloys,Alnico III,3.3,60,,62
+Alnico alloys,Alnico IV,3.3,75,,62
+Alnico alloys,Alnico V,3.5,47,,62
+Alnico alloys,Alnico VI,3.5,50,,62
+Magnetically soft materials / Electrical steel sheet,M-50,9.5,18,,62
+Magnetically soft materials / Electrical steel sheet,M-43,6-9,20-28,,62
+Magnetically soft materials / Electrical steel sheet,M-36,5.5-7.5,24-33,,62
+Magnetically soft materials / Electrical steel sheet,M-27,3.5-5.5,32-47,,62
+Magnetically soft materials / Electrical steel sheet,M-22,3.5-5,41-52,,62
+Magnetically soft materials / Electrical steel sheet,M-19,3.5-5,41-56,,62
+Magnetically soft materials / Electrical steel sheet,M-17,3-3.5,45-58,,63
+Magnetically soft materials / Electrical steel sheet,M-15,3-3.5,45-69,,63
+Magnetically soft materials / Electrical steel sheet,M-14,3-3.5,58-69,,63
+Magnetically soft materials / Electrical steel sheet,M-7,3-3.5,45-52,,63
+Magnetically soft materials / Electrical steel sheet,M-6,3-3.5,45-52,,63
+Magnetically soft materials / Electrical steel sheet,M-5,3-3.5,45-52,,63
+Moderately high-permeability materials(d),Thermenol,0.5,162,,63
+Moderately high-permeability materials(d),16 Alfenol,0.7,153,,63
+Moderately high-permeability materials(d),Sinimax,2,90,,63
+Moderately high-permeability materials(d),Monimax,2.5,80,,63
+Moderately high-permeability materials(d),Supermalloy,3,65,,63
+Moderately high-permeability materials(d),"4-79 Moly Permalloy, Hymu 80",3,58,,63
+Moderately high-permeability materials(d),Mumetal,3,60,,63
+Moderately high-permeability materials(d),1040 alloy,3,56,,63
+Moderately high-permeability materials(d),"High Permalloy 49, A-L 4750, Armco 48",3.6,48,,63
+Moderately high-permeability materials(d),45 Permalloy,3.6,45,,63
+High-permeability materials(e),Supermendur,4.5,40,,63
+High-permeability materials(e),2V Permendur,4.5,40,,63
+High-permeability materials(e),"35% Co, 1% Cr",9,20,,63
+High-permeability materials(e),Ingot iron,17.5,10,,64
+High-permeability materials(e),0.5% Si steel,6,28,,64
+High-permeability materials(e),1.75% Si steel,4.6,37,,64
+High-permeability materials(e),3.0% Si steel,3.6,47,,64
+High-permeability materials(e),Grain-oriented 3.0% Si steel,3.5,50,,64
+High-permeability materials(e),Grain-oriented 50% Ni iron,3.6,45,,64
+High-permeability materials(e),50% Ni iron,3.5,50,,64
+Relay steels and alloys after annealing / Low-carbon iron and steel,Low-carbon iron,17.5,10,,64
+Relay steels and alloys after annealing / Low-carbon iron and steel,1010 steel,14.5,12,,64
+Silicon steels,1% Si,7.5,23,,64
+Silicon steels,2.5% Si,4,41,,64
+Silicon steels,3% Si,3.5,48,,64
+Silicon steels,"3% Si, grain-oriented",3.5,48,,64
+Silicon steels,4% Si,3,59,,64
+Stainless steels,Type 410,3,57,,64
+Stainless steels,Type 416,3,57,,64
+Stainless steels,Type 430,3,60,,64
+Stainless steels,Type 443,3,68,,65
+Stainless steels,Type 446,3,61,,65
+Nickel irons,50% Ni,3.5,48,,65
+Nickel irons,78% Ni,11,16,,65
+Nickel irons,"77% Ni (Cu, Cr)",3,60,,65
+Nickel irons,79% Ni (Mo),3,58,,65
+Stainless and heat-resistant alloys,Type 302,3,72,,65
+Stainless and heat-resistant alloys,Type 309,2.5,78,,65
+Stainless and heat-resistant alloys,Type 316,2.5,74,,65
+Stainless and heat-resistant alloys,Type 317,2.5,74,,65
+Stainless and heat-resistant alloys,Type 347,2.5,73,,65
+Stainless and heat-resistant alloys,Type 403,3,57,,65
+Stainless and heat-resistant alloys,Type 405,3,60,,65
+Stainless and heat-resistant alloys,Type 501,4.5,40,,65
+Stainless and heat-resistant alloys,HH,2.5,80,,65
+Stainless and heat-resistant alloys,HK,2,90,,65
+Stainless and heat-resistant alloys,HT,1.7,100, (a) Precipitation hardened; depends on processing. (b) A heat treatable alloy. (c) Annealed and quenched. (d) At low field strength and high electrical resistance. (e) At higher field strength; annealed for optimal magnetic properties,65

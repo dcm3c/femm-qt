@@ -7,6 +7,7 @@
 // CurveDataDialog, shared with the heat flow T-k editor.
 
 #include "bh_dialog.h"
+#include <algorithm>
 
 #include <cmath>
 #include <vector>
@@ -172,14 +173,27 @@ CurveDataDialog::PlotData BHDataDialog::buildPlotData(const std::vector<double> 
 
     PlotData pd;
 
-    // 101 points across the curve, as Original FEMM draws it. H goes on the
-    // horizontal axis, so the interpolated H is the plot's x.
-    double db = (Bw[npts - 1] - Bw[0]) / 100.0;
-    for (int i = 0; i <= 100; i++) {
-        double b = Bw[0] + i * db;
-        pd.cx.push_back(getH(b, Bw, Hw, slope, npts));
-        pd.cy.push_back(b);
+    // Sample the spline interval by interval, with a sample exactly on every
+    // defined point. Original FEMM drew 101 points evenly spaced in B, which
+    // is fine for a dozen points spread up the curve and wrong for the
+    // modern log-spaced tables: there the lowest defined points sit far
+    // below B_max/100, so on the log plot (where B = 0 is dropped) the line
+    // began at the second even sample and left the bottom few markers
+    // hanging off its end. Per-interval sampling puts a sample on every
+    // point, so the line runs from the first positive point to the last,
+    // and the sub-samples keep a short table as smooth as the old 101.
+    // H goes on the horizontal axis, so the interpolated H is the plot's x.
+    const int sub = std::max(4, (100 + npts - 2) / std::max(1, npts - 1));
+    for (int i = 0; i < npts - 1; i++) {
+        const double db = (Bw[i + 1] - Bw[i]) / sub;
+        for (int j = 0; j < sub; j++) {
+            double b = Bw[i] + j * db;
+            pd.cx.push_back(getH(b, Bw, Hw, slope, npts));
+            pd.cy.push_back(b);
+        }
     }
+    pd.cx.push_back(getH(Bw[npts - 1], Bw, Hw, slope, npts));
+    pd.cy.push_back(Bw[npts - 1]);
 
     // Markers sit on the points as entered, not as smoothed
     for (int i = 0; i < npts; i++) {

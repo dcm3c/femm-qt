@@ -1,0 +1,7 @@
+numpy
+scipy
+matplotlib
+openpyxl
+# only for scripts/digitize/, which also need the original sources:
+# pymupdf
+# pillow
