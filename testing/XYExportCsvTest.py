@@ -43,7 +43,17 @@ BUILD = os.path.dirname(os.path.dirname(EXE))      # <build>/bin/femm_headless
 
 
 def compiler():
-    cache = os.path.join(BUILD, "CMakeCache.txt")
+    # The build directory is the nearest ancestor of the engine holding a
+    # CMakeCache.txt: <build>/bin/femm_headless on Windows and Linux, but
+    # <build>/bin/femm_gui.app/Contents/MacOS/femm_headless on macOS, where
+    # the suite runs the bundle copy (the loose one has no solvers beside it).
+    d = BUILD
+    while not os.path.exists(os.path.join(d, "CMakeCache.txt")):
+        parent = os.path.dirname(d)
+        if parent == d:
+            raise RuntimeError("no CMakeCache.txt above " + EXE)
+        d = parent
+    cache = os.path.join(d, "CMakeCache.txt")
     with open(cache, encoding="utf-8", errors="replace") as fh:
         for ln in fh:
             if ln.startswith("CMAKE_CXX_COMPILER:"):

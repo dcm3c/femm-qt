@@ -6,8 +6,10 @@ dmeeker@ieee.org
   about any platform.  Builds and runs on Windows, Linux, FreeBSD and macOS.
 * FEMM now uses tangle, compiled as an internal library, for meshing
   instead of Triangle
-* Solvers rewritten around a whole-matrix ILDL preconditioner: 2-3x faster
-  than the previous block-SSOR scheme, and bit-deterministic run to run
+* Faster analysis: on the example models, meshing and solving together run
+  about 3 to 9 times faster than in FEMM 4.2, mostly from solvers rebuilt
+  around an incomplete LDL^T preconditioner in place of FEMM 4.2's SSOR.
+  Results are also bit-for-bit repeatable from run to run
 * External bindings use cross-platform capable TCP IPC instead of Windows-
   only ActiveX
 * MicroPython now used as an embedded scripting language rather than Lua 4

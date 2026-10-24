@@ -540,16 +540,28 @@ two command-line binaries has one:
 \item \texttt{scilab-cli} is \texttt{-nwni} mode --- no window, no Java.  It
       runs, then refuses the first thing SciFEMM does: \emph{``Scilab
       `jimport' function disabled in -nogui or -nwni mode''}.
-\item \texttt{scilab-adv-cli} has the JVM, and segfaults on startup.
+\item \texttt{scilab-adv-cli} has the JVM, and dies on startup.
 \end{itemize}
 
-The crash is not specific to SciFEMM or to Java.  It reproduces with no
-femm-qt code involved at all:
+The failure is not specific to SciFEMM.  It reproduces with no femm-qt code
+involved at all:
 \begin{lstlisting}
 scilab-adv-cli -quit -e "disp(1+1)"
 \end{lstlisting}
-which prints a fatal error and \texttt{Signal: Segmentation fault (11)},
-\texttt{Address not mapped}, failing at address \texttt{0x0}.
+
+How it dies depends on the Scilab version.  With \texttt{scilab-2026.1.0\_1}
+(Scilab branch 2026.1), tested on GhostBSD, FreeBSD 15.0-RELEASE-p13, it
+aborts while setting up its Java library path, before Scilab itself starts:
+\begin{lstlisting}
+Exception in thread "main" java.lang.UnsupportedOperationException: set
+    at org.scilab.modules.jvm.LibraryPath.addPath(Unknown Source)
+Signal: Abort trap (6)
+Could not access to the Main Scilab Class:
+\end{lstlisting}
+with exit status 51, the same on every run.  The earlier
+\texttt{scilab-6.1.1\_30} instead printed a fatal error and
+\texttt{Signal: Segmentation fault (11)}, \texttt{Address not mapped}, failing
+at address \texttt{0x0}.
 
 Two things this is \emph{not}, both checked:
 
@@ -558,19 +570,16 @@ Two things this is \emph{not}, both checked:
       socket communication --- see \emph{Using with Octave} above, which
       installs a JDK for exactly that reason --- and works.
 \item \textbf{Not the OpenGL problem} described in the previous subsection.
-      The \texttt{libEGL}/\texttt{DRI3} warnings do appear before the crash,
-      but setting \texttt{LIBGL\_ALWAYS\_SOFTWARE=1} removes those warnings
-      and the segfault is unchanged.  They are noise.
+      The \texttt{libEGL}/\texttt{DRI3} warnings do appear before the
+      failure, but setting \texttt{LIBGL\_ALWAYS\_SOFTWARE=1} removes those
+      warnings and the failure is unchanged.  They are noise.
 \end{itemize}
 
-Tested on GhostBSD, FreeBSD 15.0-RELEASE-p10, with \texttt{scilab-6.1.1\_30}
-from the GhostBSD package repository.  That is the stock \texttt{math/scilab}
-port at the same revision --- \texttt{make -V PKGNAME} in
-\texttt{/usr/ports/math/scilab} returns the identical version --- so building
-it locally would compile the same 2021 source and is unlikely to behave
-differently.  Scilab's own project publishes no FreeBSD binaries, and the
-version in ports is several years behind the 2024--2026 releases that work on
-Windows and Linux.
+Nor is it simply an old port.  This section once concluded that
+\texttt{scilab-6.1.1\_30}, several years behind the releases that work on
+Windows and Linux, was the cause.  The port has since reached the 2026
+release, and Scilab still does not start.  Scilab's own project publishes no
+FreeBSD binaries.
 
 Stock FreeBSD's own \texttt{scilab} package has not been tested; if it works
 there, the difference is the build environment rather than the source.  The
