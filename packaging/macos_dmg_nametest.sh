@@ -40,7 +40,7 @@ expect() {                   # mode notary gk want label
     rm -f "$T"/out/*.dmg "$T"/out/.*.dmg 2>/dev/null
     (
         OUT_DIR="$T/out"
-        DMG_BASE="femm-qt-5.0_01Jan2026"
+        DMG_BASE="femm-5.0.20260101-1234"
         DMG="$OUT_DIR/.${DMG_BASE}.building.dmg"
         DMG_WORK="$DMG"
         FEMM_SIGN_MODE="$mode"
@@ -62,7 +62,7 @@ expect() {                   # mode notary gk want label
     fi
 }
 
-B="femm-qt-5.0_01Jan2026"
+B="femm-5.0.20260101-1234"
 echo "macos_dmg.sh naming:"
 expect ad-hoc       ""            ""  "$B-adhoc.dmg" \
        "no FEMM_SIGN_ID"

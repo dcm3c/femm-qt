@@ -28,15 +28,44 @@ struct DxfPair {
     char value[512];
 };
 
-static bool readPair(FILE *fp, DxfPair &pair)
+// One pair of lookahead. Each entity's loop reads until the group code 0 that
+// starts the NEXT entity, and must hand that pair back to the main loop. That
+// was done by seeking back strlen(value)+6 bytes, a guess at the length of the
+// two lines on disk -- right only for AutoCAD's own "  0" + CRLF layout. With
+// LF line endings, or an unindented "0", it landed elsewhere: every entity
+// after the first was silently dropped, and with both (and short values) it
+// could seek back past the pair it had just read and re-read the same entity
+// forever. Keeping the pair
+// in memory works for any layout and needs no seeking at all.
+struct DxfReader {
+    FILE *fp;
+    bool pending = false;
+    DxfPair saved;
+};
+
+static void unreadPair(DxfReader &rd, const DxfPair &pair)
 {
+    rd.saved = pair;
+    rd.pending = true;
+}
+
+static bool readPair(DxfReader &rd, DxfPair &pair)
+{
+    if (rd.pending) {
+        pair = rd.saved;
+        rd.pending = false;
+        return true;
+    }
+    FILE *fp = rd.fp;
     char s[512];
     if (fgets(s, sizeof(s), fp) == NULL) return false;
     pair.code = atoi(s);
     if (fgets(pair.value, sizeof(pair.value), fp) == NULL) return false;
-    // Strip trailing newline/CR
+    // Strip the line ending and any trailing padding; entity and layer names
+    // are then compared exactly
     int len = (int)strlen(pair.value);
-    while (len > 0 && (pair.value[len-1] == '\n' || pair.value[len-1] == '\r'))
+    while (len > 0 && (pair.value[len-1] == '\n' || pair.value[len-1] == '\r' ||
+                       pair.value[len-1] == ' ' || pair.value[len-1] == '\t'))
         pair.value[--len] = 0;
     return true;
 }
@@ -49,37 +78,78 @@ static const char *sval(const DxfPair &p) { return p.value; }
 // Helper: add a node, returning its index (reuses existing if close)
 // ================================================================
 
-static int addOrFindNode(DocumentBase &doc, double x, double y, double tol)
+static int addOrFindNode(DocumentBase &doc, double x, double y, double tol, int grp)
 {
     for (int i = 0; i < (int)doc.nodelist.size(); i++)
         if (doc.nodelist[i].GetDistance(x, y) < tol) return i;
     FNode n;
     n.x = x; n.y = y;
+    n.InGroup = grp;
     doc.nodelist.push_back(n);
     return (int)doc.nodelist.size() - 1;
 }
 
-// ================================================================
-// Helper: add arc from bulge (used by LWPOLYLINE and POLYLINE)
-// Bulge = tan(included_angle / 4), positive = CCW
-// ================================================================
-
-static void addBulgeArc(DocumentBase &doc, int n0, int n1, double bulge, double tol)
+static void addLine(DocumentBase &doc, int n0, int n1, int grp)
 {
-    if (fabs(bulge) < 1e-10) {
-        doc.AddSegment(n0, n1);
+    FSegment segm;
+    segm.BoundaryMarker = "<None>";
+    segm.InGroup = grp;
+    doc.AddSegment(n0, n1, &segm);
+}
+
+// FEMM 4.2 imports every arc with a maximum segment of 5 degrees
+// (bd_movecopy.cpp); 1 degree meshed each curved edge five times as finely.
+static const double kArcMaxSeg = 5.0;
+
+// ================================================================
+// Helper: add a CCW arc from n0 to n1, split in two if it exceeds 180 deg
+// ================================================================
+//
+// FEMM's arc model only holds arcs of 180 degrees or less. GetCircle puts the
+// centre on the left of the chord, and the arg()-based tests (the split in
+// AddNode, GetLineArcIntersection, ShortestDistanceFromArc) read angles in
+// (-180, 180]. A longer arc is drawn about the wrong centre, and the first
+// line that crosses it splits it into pieces of the wrong length, one of them
+// negative. Reported from the field: a 292.6 degree ARC came in as a 67 degree
+// arc plus two slivers. FEMM 4.2's reader halves such arcs on import
+// (bd_movecopy.cpp, the ARC branch), and its arc dialog caps the angle at 180;
+// so does ours (gui/arc_dialog.cpp). This is the importer's half of that.
+static void addArcCCW(DocumentBase &doc, int n0, int n1, double angle, double tol, int grp)
+{
+    FArcSegment asegm;
+    asegm.MaxSideLength = kArcMaxSeg;
+    asegm.InGroup = grp;
+    if (angle > 180.0) {
+        // the arc's midpoint: from the chord's midpoint, out along the right-
+        // hand normal by the sagitta, (chord/2)*tan(angle/4)
+        CComplex a0 = doc.nodelist[n0].CC(), a1 = doc.nodelist[n1].CC();
+        CComplex m = (a0 + a1) / 2.0 - CComplex(0, 1) * ((a1 - a0) / 2.0) * tan(angle * PI / 720.0);
+        int nm = addOrFindNode(doc, m.re, m.im, tol, grp);
+        asegm.n0 = n0; asegm.n1 = nm; asegm.ArcLength = angle / 2.0;
+        doc.AddArcSegment(asegm, tol);
+        asegm.n0 = nm; asegm.n1 = n1; asegm.ArcLength = angle / 2.0;
+        doc.AddArcSegment(asegm, tol);
         return;
     }
-    double x0 = doc.nodelist[n0].x, y0 = doc.nodelist[n0].y;
-    double x1 = doc.nodelist[n1].x, y1 = doc.nodelist[n1].y;
-
-    double angle = 4.0 * atan(fabs(bulge)) * 180.0 / PI;
-    FArcSegment asegm;
-    if (bulge > 0) { asegm.n0 = n0; asegm.n1 = n1; }
-    else { asegm.n0 = n1; asegm.n1 = n0; }
+    asegm.n0 = n0; asegm.n1 = n1;
     asegm.ArcLength = angle;
-    asegm.MaxSideLength = 1.0;
     doc.AddArcSegment(asegm, tol);
+}
+
+// ================================================================
+// Helper: add arc from bulge (used by LWPOLYLINE and POLYLINE)
+// Bulge = tan(included_angle / 4), positive = CCW; |bulge| > 1 is past 180
+// ================================================================
+
+static void addBulgeArc(DocumentBase &doc, int n0, int n1, double bulge, double tol, int grp)
+{
+    if (fabs(bulge) < 1e-10) {
+        addLine(doc, n0, n1, grp);
+        return;
+    }
+    double angle = 4.0 * atan(fabs(bulge)) * 180.0 / PI;
+    if (bulge > 0) addArcCCW(doc, n0, n1, angle, tol, grp);
+    else addArcCCW(doc, n1, n0, angle, tol, grp);
 }
 
 // ================================================================
@@ -90,6 +160,8 @@ bool ReadDXF(DocumentBase &doc, const std::string &filename, double tolerance)
 {
     FILE *fp = femm_fopen(filename, "rt");
     if (!fp) return false;
+    DxfReader rd;
+    rd.fp = fp;
 
     // Compute default tolerance from existing geometry
     if (tolerance <= 0) {
@@ -99,39 +171,97 @@ bool ReadDXF(DocumentBase &doc, const std::string &filename, double tolerance)
 
     DxfPair pair;
 
+    // Layers become groups, numbered by their order in the LAYER table, as in
+    // FEMM 4.2: an entity on the n-th layer listed goes in group n, and one on
+    // a layer the table does not list goes in group 0.
+    std::vector<std::string> layers;
+    auto groupOf = [&layers](const char *name) {
+        for (int j = 0; j < (int)layers.size(); j++)
+            if (layers[j] == name) return j;
+        return 0;
+    };
+
+    // Only the ENTITIES section is drawing geometry. The BLOCKS section holds
+    // block DEFINITIONS -- the lines and arcs of every dimension, hatch and
+    // inserted symbol -- at their own coordinates, and importing those put
+    // stray arrowheads and leaders into the model. A file with no SECTION
+    // markers at all is read whole.
+    std::string section;
+    bool sawSection = false;
+
     // State for POLYLINE/VERTEX accumulation
     bool inPolyline = false;
     bool polylineClosed = false;
+    int polylineGroup = 0;
     struct PolyVertex { double x, y, bulge; };
     std::vector<PolyVertex> polyVerts;
 
-    while (readPair(fp, pair)) {
+    while (readPair(rd, pair)) {
         // Entity type is group code 0
         if (pair.code != 0) continue;
 
-        // ---- LINE ----
-        if (strncmp(sval(pair), "LINE", 4) == 0 && strlen(sval(pair)) == 4) {
-            double x0=0, y0=0, x1=0, y1=0;
-            while (readPair(fp, pair)) {
-                if (pair.code == 0) { fseek(fp, -(long)(strlen(pair.value)+6), SEEK_CUR); break; }
+        if (strcmp(sval(pair), "SECTION") == 0) {
+            sawSection = true;
+            section.clear();
+            if (readPair(rd, pair)) {
+                if (pair.code == 2) section = sval(pair);
+                else unreadPair(rd, pair);
+            }
+            continue;
+        }
+        if (strcmp(sval(pair), "ENDSEC") == 0) { section.clear(); continue; }
+
+        // ---- LAYER (a record of the TABLES section's LAYER table) ----
+        if (strcmp(sval(pair), "LAYER") == 0 && (!sawSection || section == "TABLES")) {
+            while (readPair(rd, pair)) {
+                if (pair.code == 0) { unreadPair(rd, pair); break; }
+                if (pair.code == 2) layers.push_back(sval(pair));
+            }
+            continue;
+        }
+
+        if (sawSection && section != "ENTITIES") continue;
+        int grp = 0;
+
+        // ---- POINT ----
+        if (strcmp(sval(pair), "POINT") == 0) {
+            double x=0, y=0;
+            while (readPair(rd, pair)) {
+                if (pair.code == 0) { unreadPair(rd, pair); break; }
                 switch (pair.code) {
+                case 8: grp = groupOf(sval(pair)); break;
+                case 10: x = dval(pair); break;
+                case 20: y = dval(pair); break;
+                }
+            }
+            addOrFindNode(doc, x, y, tolerance, grp);
+        }
+
+        // ---- LINE ----
+        else if (strcmp(sval(pair), "LINE") == 0) {
+            double x0=0, y0=0, x1=0, y1=0;
+            while (readPair(rd, pair)) {
+                if (pair.code == 0) { unreadPair(rd, pair); break; }
+                switch (pair.code) {
+                case 8: grp = groupOf(sval(pair)); break;
                 case 10: x0 = dval(pair); break;
                 case 20: y0 = dval(pair); break;
                 case 11: x1 = dval(pair); break;
                 case 21: y1 = dval(pair); break;
                 }
             }
-            int n0 = addOrFindNode(doc, x0, y0, tolerance);
-            int n1 = addOrFindNode(doc, x1, y1, tolerance);
-            doc.AddSegment(n0, n1);
+            int n0 = addOrFindNode(doc, x0, y0, tolerance, grp);
+            int n1 = addOrFindNode(doc, x1, y1, tolerance, grp);
+            addLine(doc, n0, n1, grp);
         }
 
         // ---- ARC ----
-        else if (strncmp(sval(pair), "ARC", 3) == 0 && strlen(sval(pair)) == 3) {
+        else if (strcmp(sval(pair), "ARC") == 0) {
             double cx=0, cy=0, R=0, a0=0, a1=0;
-            while (readPair(fp, pair)) {
-                if (pair.code == 0) { fseek(fp, -(long)(strlen(pair.value)+6), SEEK_CUR); break; }
+            while (readPair(rd, pair)) {
+                if (pair.code == 0) { unreadPair(rd, pair); break; }
                 switch (pair.code) {
+                case 8: grp = groupOf(sval(pair)); break;
                 case 10: cx = dval(pair); break;
                 case 20: cy = dval(pair); break;
                 case 40: R = dval(pair); break;
@@ -146,46 +276,41 @@ bool ReadDXF(DocumentBase &doc, const std::string &filename, double tolerance)
             double angle = a1 - a0;
             if (angle < 0) angle += 360.0;
 
-            int n0 = addOrFindNode(doc, x0, y0, tolerance);
-            int n1 = addOrFindNode(doc, x1, y1, tolerance);
-            FArcSegment asegm;
-            asegm.n0 = n0; asegm.n1 = n1;
-            asegm.ArcLength = angle;
-            asegm.MaxSideLength = 1.0;
-            doc.AddArcSegment(asegm, tolerance);
+            int n0 = addOrFindNode(doc, x0, y0, tolerance, grp);
+            int n1 = addOrFindNode(doc, x1, y1, tolerance, grp);
+            addArcCCW(doc, n0, n1, angle, tolerance, grp);
         }
 
         // ---- CIRCLE ----
-        else if (strncmp(sval(pair), "CIRCLE", 6) == 0) {
+        else if (strcmp(sval(pair), "CIRCLE") == 0) {
             double cx=0, cy=0, R=0;
-            while (readPair(fp, pair)) {
-                if (pair.code == 0) { fseek(fp, -(long)(strlen(pair.value)+6), SEEK_CUR); break; }
+            while (readPair(rd, pair)) {
+                if (pair.code == 0) { unreadPair(rd, pair); break; }
                 switch (pair.code) {
+                case 8: grp = groupOf(sval(pair)); break;
                 case 10: cx = dval(pair); break;
                 case 20: cy = dval(pair); break;
                 case 40: R = dval(pair); break;
                 }
             }
             // Circle → two 180° arcs
-            int n0 = addOrFindNode(doc, cx + R, cy, tolerance);
-            int n1 = addOrFindNode(doc, cx - R, cy, tolerance);
-            FArcSegment a1, a2;
-            a1.n0 = n0; a1.n1 = n1; a1.ArcLength = 180.0; a1.MaxSideLength = 1.0;
-            a2.n0 = n1; a2.n1 = n0; a2.ArcLength = 180.0; a2.MaxSideLength = 1.0;
-            doc.AddArcSegment(a1, tolerance);
-            doc.AddArcSegment(a2, tolerance);
+            int n0 = addOrFindNode(doc, cx + R, cy, tolerance, grp);
+            int n1 = addOrFindNode(doc, cx - R, cy, tolerance, grp);
+            addArcCCW(doc, n0, n1, 180.0, tolerance, grp);
+            addArcCCW(doc, n1, n0, 180.0, tolerance, grp);
         }
 
         // ---- LWPOLYLINE ----
-        else if (strncmp(sval(pair), "LWPOLYLINE", 10) == 0) {
+        else if (strcmp(sval(pair), "LWPOLYLINE") == 0) {
             int closed = 0;
             std::vector<PolyVertex> verts;
             PolyVertex cur = {0, 0, 0};
             bool firstVertex = true;
 
-            while (readPair(fp, pair)) {
-                if (pair.code == 0) { fseek(fp, -(long)(strlen(pair.value)+6), SEEK_CUR); break; }
+            while (readPair(rd, pair)) {
+                if (pair.code == 0) { unreadPair(rd, pair); break; }
                 switch (pair.code) {
+                case 8: grp = groupOf(sval(pair)); break;
                 case 90: break;  // vertex count — derived from verts vector instead
                 case 70: closed = ival(pair) & 1; break;
                 case 10:
@@ -202,30 +327,32 @@ bool ReadDXF(DocumentBase &doc, const std::string &filename, double tolerance)
             // Add segments/arcs between consecutive vertices
             std::vector<int> nodeIds;
             for (auto &v : verts)
-                nodeIds.push_back(addOrFindNode(doc, v.x, v.y, tolerance));
+                nodeIds.push_back(addOrFindNode(doc, v.x, v.y, tolerance, grp));
 
             for (int i = 0; i + 1 < (int)verts.size(); i++)
-                addBulgeArc(doc, nodeIds[i], nodeIds[i+1], verts[i].bulge, tolerance);
+                addBulgeArc(doc, nodeIds[i], nodeIds[i+1], verts[i].bulge, tolerance, grp);
             if (closed && verts.size() >= 2)
-                addBulgeArc(doc, nodeIds.back(), nodeIds[0], verts.back().bulge, tolerance);
+                addBulgeArc(doc, nodeIds.back(), nodeIds[0], verts.back().bulge, tolerance, grp);
         }
 
         // ---- POLYLINE (old-style) ----
-        else if (strncmp(sval(pair), "POLYLINE", 8) == 0 && strlen(sval(pair)) == 8) {
+        else if (strcmp(sval(pair), "POLYLINE") == 0) {
             inPolyline = true;
             polylineClosed = false;
+            polylineGroup = 0;
             polyVerts.clear();
-            while (readPair(fp, pair)) {
-                if (pair.code == 0) { fseek(fp, -(long)(strlen(pair.value)+6), SEEK_CUR); break; }
+            while (readPair(rd, pair)) {
+                if (pair.code == 0) { unreadPair(rd, pair); break; }
+                if (pair.code == 8) polylineGroup = groupOf(sval(pair));
                 if (pair.code == 70) polylineClosed = (ival(pair) & 1) != 0;
             }
         }
 
         // ---- VERTEX (within POLYLINE) ----
-        else if (strncmp(sval(pair), "VERTEX", 6) == 0 && inPolyline) {
+        else if (strcmp(sval(pair), "VERTEX") == 0 && inPolyline) {
             PolyVertex v = {0, 0, 0};
-            while (readPair(fp, pair)) {
-                if (pair.code == 0) { fseek(fp, -(long)(strlen(pair.value)+6), SEEK_CUR); break; }
+            while (readPair(rd, pair)) {
+                if (pair.code == 0) { unreadPair(rd, pair); break; }
                 switch (pair.code) {
                 case 10: v.x = dval(pair); break;
                 case 20: v.y = dval(pair); break;
@@ -236,24 +363,26 @@ bool ReadDXF(DocumentBase &doc, const std::string &filename, double tolerance)
         }
 
         // ---- SEQEND (end of POLYLINE) ----
-        else if (strncmp(sval(pair), "SEQEND", 6) == 0 && inPolyline) {
+        else if (strcmp(sval(pair), "SEQEND") == 0 && inPolyline) {
             inPolyline = false;
+            grp = polylineGroup;
             std::vector<int> nodeIds;
             for (auto &v : polyVerts)
-                nodeIds.push_back(addOrFindNode(doc, v.x, v.y, tolerance));
+                nodeIds.push_back(addOrFindNode(doc, v.x, v.y, tolerance, grp));
             for (int i = 0; i + 1 < (int)polyVerts.size(); i++)
-                addBulgeArc(doc, nodeIds[i], nodeIds[i+1], polyVerts[i].bulge, tolerance);
+                addBulgeArc(doc, nodeIds[i], nodeIds[i+1], polyVerts[i].bulge, tolerance, grp);
             if (polylineClosed && polyVerts.size() >= 2)
-                addBulgeArc(doc, nodeIds.back(), nodeIds[0], polyVerts.back().bulge, tolerance);
+                addBulgeArc(doc, nodeIds.back(), nodeIds[0], polyVerts.back().bulge, tolerance, grp);
             polyVerts.clear();
         }
 
         // ---- ELLIPSE ----
-        else if (strncmp(sval(pair), "ELLIPSE", 7) == 0) {
+        else if (strcmp(sval(pair), "ELLIPSE") == 0) {
             double cx=0, cy=0, ex=0, ey=0, ratio=1, startP=0, endP=2*PI;
-            while (readPair(fp, pair)) {
-                if (pair.code == 0) { fseek(fp, -(long)(strlen(pair.value)+6), SEEK_CUR); break; }
+            while (readPair(rd, pair)) {
+                if (pair.code == 0) { unreadPair(rd, pair); break; }
                 switch (pair.code) {
+                case 8: grp = groupOf(sval(pair)); break;
                 case 10: cx = dval(pair); break;
                 case 20: cy = dval(pair); break;
                 case 11: ex = dval(pair); break;  // major axis endpoint (relative)
@@ -276,26 +405,27 @@ bool ReadDXF(DocumentBase &doc, const std::string &filename, double tolerance)
                 double t = startP + dt * i;
                 double px = cx + a * cos(t) * cos(rot) - b * sin(t) * sin(rot);
                 double py = cy + a * cos(t) * sin(rot) + b * sin(t) * cos(rot);
-                int ni = addOrFindNode(doc, px, py, tolerance);
+                int ni = addOrFindNode(doc, px, py, tolerance, grp);
                 if (i == 0) firstNode = ni;
                 if (prevNode >= 0 && prevNode != ni)
-                    doc.AddSegment(prevNode, ni);
+                    addLine(doc, prevNode, ni, grp);
                 prevNode = ni;
             }
             // Close if full ellipse
             if (fabs(endP - startP - 2*PI) < 0.01 && firstNode >= 0 && prevNode != firstNode)
-                doc.AddSegment(prevNode, firstNode);
+                addLine(doc, prevNode, firstNode, grp);
         }
 
         // ---- SPLINE ----
-        else if (strncmp(sval(pair), "SPLINE", 6) == 0) {
+        else if (strcmp(sval(pair), "SPLINE") == 0) {
             // Approximate spline using fit points (group 11/21) if available,
             // or control points (group 10/20) as fallback
             std::vector<std::pair<double,double>> fitPts, ctrlPts;
             int closed = 0;
-            while (readPair(fp, pair)) {
-                if (pair.code == 0) { fseek(fp, -(long)(strlen(pair.value)+6), SEEK_CUR); break; }
+            while (readPair(rd, pair)) {
+                if (pair.code == 0) { unreadPair(rd, pair); break; }
                 switch (pair.code) {
+                case 8: grp = groupOf(sval(pair)); break;
                 case 70: closed = ival(pair) & 1; break;
                 case 10: ctrlPts.push_back({dval(pair), 0}); break;
                 case 20: if (!ctrlPts.empty()) ctrlPts.back().second = dval(pair); break;
@@ -308,14 +438,14 @@ bool ReadDXF(DocumentBase &doc, const std::string &filename, double tolerance)
             int prevNode = -1;
             int firstNode = -1;
             for (auto &p : pts) {
-                int ni = addOrFindNode(doc, p.first, p.second, tolerance);
+                int ni = addOrFindNode(doc, p.first, p.second, tolerance, grp);
                 if (firstNode < 0) firstNode = ni;
                 if (prevNode >= 0 && prevNode != ni)
-                    doc.AddSegment(prevNode, ni);
+                    addLine(doc, prevNode, ni, grp);
                 prevNode = ni;
             }
             if (closed && firstNode >= 0 && prevNode != firstNode)
-                doc.AddSegment(prevNode, firstNode);
+                addLine(doc, prevNode, firstNode, grp);
         }
     }
 

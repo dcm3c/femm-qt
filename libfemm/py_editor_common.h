@@ -398,7 +398,10 @@ void register_common_editor(femm_py::Module &m, const std::string &P,
     m.def(P + "_close", [&s_doc, P]() {
         auto cb = get_view_command_callback();
         if (cb) { double args[4] = {}; cb((P + "_close").c_str(), 0, args); return; }
-        if (s_doc) { doc_registry_remove(s_doc); delete s_doc; s_doc = nullptr; }
+        // Take the pointer first: doc_registry_remove runs the deactivate
+        // hook, which nulls s_doc, so `delete s_doc` after it deleted nothing
+        // and every headless close leaked the document.
+        if (auto *doc = s_doc) { doc_registry_remove(doc); delete doc; s_doc = nullptr; }
     });
 
     m.def(P + "_setfocus", [P](std::optional<std::string> docname) {

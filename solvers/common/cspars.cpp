@@ -822,7 +822,7 @@ int CBigComplexLinProb::PBCGSolve(int flag)
 {
 	int i;
 	CComplex res,res_new,del,rho,pAp;
-	double er,normb;
+	double er,normb,normz;
 	int prg2,prg1=0;
 
 	if(!finalized) Finalize();
@@ -845,14 +845,40 @@ int CBigComplexLinProb::PBCGSolve(int flag)
 		return 1;
 	}
 
-	er=nrm(R)/normb;
+	// Convergence is measured on the PRECONDITIONED residual, |M^-1 R| /
+	// |M^-1 b|, not on |R| / |b|. With M close to A, M^-1 R is close to the
+	// error in V and M^-1 b to the solution, so the test reads as a relative
+	// error in the unknowns, whatever the scale of each row. |R| / |b| is
+	// dominated by the largest-coefficient rows and cannot see the rest:
+	// reported 2026-10 on a current-flow model with copper (sigma 5.8e7)
+	// against epoxy (sigma 1e-9, omega*eps ~ 1e-8 at 50 Hz), where a 3 kV
+	// error in the insulation is a residual ~1e-17 of |b|. The old test
+	// returned after 4 iterations with |R| / |b| = 8e-10 and nodes 17 kV
+	// (60% of the drive) wrong; this one takes 48 and lands within 3.7e-8
+	// of a 1e-14 solve. FEMM 4.2's csolv stopped on sqrt(|Z'R|), which is
+	// an unconjugated bilinear form and not a norm, and is as blind here;
+	// it got this model right only because SSOR took hundreds of sweeps.
+	// The same lesson as QMRSolve's tau test in spars.cpp (e42fb00). A warm
+	// start is measured against the same |M^-1 b|, as there.
+	//
+	// OPEN: there is still no stall counter, so a Precision below what the
+	// model can reach in this metric never terminates. Measured on a model
+	// with copper facing epoxy WITHOUT a conductor on that face (a ratio of
+	// ~6e15 inside one row, past 1/eps): the metric floors near 1e-8 and a
+	// 1e-14 solve wanders forever. The old |R| / |b| test returned garbage
+	// on that model instead. testing/CurrentFlowContrastTest.py documents it.
+	MultPC(b,Z);
+	normz=nrm(Z);
+	if(!(normz>0) || !std::isfinite(normz)) return 0;
+
+	MultPC(R,Z);
+	er=nrm(Z)/normz;
 	prg1=(int)(20.*log10(er)/(log10(Precision)));
 	TheView->m_prog1.SetPos(5*prg1);
 	TheView->SetDlgItemText(IDC_FRAME1,"BiConjugate Gradient Solver");
 	TheView->InvalidateRect(NULL, FALSE);
 	TheView->UpdateWindow();
 
-	MultPC(R,Z);
 	for(i=0;i<n;i++) P[i]=Z[i];
 	res=Dot(Z,R);
 
@@ -882,7 +908,7 @@ int CBigComplexLinProb::PBCGSolve(int flag)
 		res=res_new;
 		for(i=0;i<n;i++) P[i]=Z[i]+(rho*P[i]);
 
-		er=nrm(R)/normb;
+		er=nrm(Z)/normz;
 		if (!std::isfinite(er)) return 0;
 		prg2=(int)(20.*log10(er)/(log10(Precision)));
 		if(prg2>prg1){

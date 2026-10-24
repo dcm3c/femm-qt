@@ -6,7 +6,11 @@ rem      packaging\pack.bat
 rem
 rem  Produces, in packaging\output\:
 rem    femm-qt-py-src_<date>_<hash>.zip   the source archive (buildsource.bat)
-rem    femm-qt-py_<date>.exe              the Windows installer (femm-qt.iss)
+rem    femm-<version>-<build>.exe         the Windows installer (femm-qt.iss),
+rem                                       e.g. femm-5.0.20261013-1108.exe; the
+rem                                       build number is the commit count, with
+rem                                       -dirty for uncommitted changes
+rem                                       (cmake/BuildInfo.cmake)
 rem
 rem  The zip comes from `git archive HEAD`, so it contains what is COMMITTED,
 rem  not what is in the working tree. An edit you have not committed will not

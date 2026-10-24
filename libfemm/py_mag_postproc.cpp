@@ -754,16 +754,35 @@ void register_mag_postproc_py(ResultsDoc *doc) {
             throw std::runtime_error("Failed to reload: " + path);
         }
         register_mag_postproc_py(s_rdoc);
+        // Swap the doc everywhere it is known BEFORE freeing the old one. The
+        // registry and the editor's cache used to keep the freed doc: the next
+        // mi_loadsolution deleted it again (crashed the GUI), headless exit
+        // cleanup deleted it again (crashed every reload-then-exit run), and
+        // a lookup by name read it. Removing the old doc from the registry
+        // runs the deactivate hook, which only matches the ACTIVE doc -- now
+        // the new one -- so it leaves the new binding alone.
+        doc_registry_add(s_rdoc);
+        replace_mag_results_doc(oldDoc, s_rdoc);
         auto cb = get_results_opened_callback();
         if (cb) cb(path.c_str(), s_rdoc);
+        doc_registry_remove(oldDoc);
         delete oldDoc;
     });
 
+    // In the GUI the document belongs to its window, whose destructor frees
+    // it. Headless there is no window, so close frees it here, as *_close in
+    // py_editor_common.h does for input documents. Only dropping the pointer
+    // leaked the whole solution on every close: a batch of load/close passes
+    // over TCP grew without bound. Take the pointer first: doc_registry_remove
+    // runs the deactivate hook, which nulls s_rdoc, so `delete s_rdoc` after
+    // it deletes nothing.
     m.def("mo_close", []() {
         check_doc(s_rdoc, MOERR);
+        ResultsDoc *doc = s_rdoc;
         clear_mag_results_doc();
         auto cb = get_view_command_callback();
         if (cb) cb("mo_close", 0, nullptr);
+        else { doc_registry_remove(doc); delete doc; }
         s_rdoc = nullptr;
     });
 

@@ -49,6 +49,7 @@
 #include "py_heat_postproc.h"
 #include "py_curr_postproc.h"
 #include "scalar_results_widget.h"
+#include "vector_choice.h"
 #include "tcp_server.h"
 #include "solver_progress_dialog.h"
 
@@ -560,12 +561,12 @@ static const char *onViewCommand(const char *cmd, int nargs, double *args)
             } else {
                 if (rw) {
                     rw->m_showVectors = true;
-                    rw->m_vectorType = type - 1;
+                    rw->m_vectorType = vectorFieldOf(type);
                     rw->setShowDensity(false);
                     rw->update();
                 } else if (sw) {
                     sw->m_showVectors = true;
-                    sw->m_vectorType = type - 1;
+                    sw->m_vectorType = vectorFieldOf(type);
                     sw->setShowDensity(false);
                     sw->update();
                 }

@@ -14,7 +14,7 @@
 //   femm_headless --port N        # TCP server on port N (what the bindings use)
 //   femm_headless script.py       # run script, then serve
 //   femm_headless -run script.py  # run script and exit (batch / CI)
-//   femm_headless --version       # version and build date, then exit
+//   femm_headless --version       # version and build number, then exit
 //   femm_headless --help          # the above, then exit
 //
 // The bindings always pass --port, so they always land in server mode; the REPL
@@ -84,7 +84,7 @@ static void print_usage(FILE *out)
         "  --port N, -port N    listen on port N (default 48015)\n"
         "  -run FILE            run FILE, then exit\n"
         "  -i, --interactive    force the interactive REPL\n"
-        "  --version, -version  print the version and build date, then exit\n"
+        "  --version, -version  print the version and build number, then exit\n"
         "  -h, --help           print this and exit\n"
         "\n"
         "Naming a script ends this program's arguments: everything after it is\n"
@@ -346,7 +346,7 @@ int main(int argc, char *argv[])
 
     if (wantVersion) {
         // stdout: this is the answer to a question, not a status line.
-        printf("FEMM headless engine v%s %s\n", femm_version(), femm_build_date());
+        printf("FEMM headless engine v%s (build %s)\n", femm_version(), femm_build());
         return 0;
     }
     if (wantHelp) {
@@ -360,11 +360,11 @@ int main(int argc, char *argv[])
         return 2;
     }
 
-    // The build date is here so a bug report can say WHICH v5.0 it came from.
-    // stderr, with the rest of the status: stdout is the data channel and a
-    // client parsing a script's output must not have to skip a banner.
-    fprintf(stderr, "FEMM headless engine v%s %s\n",
-            femm_version(), femm_build_date());
+    // The build number is here so a bug report can say WHICH build it came
+    // from. stderr, with the rest of the status: stdout is the data channel and
+    // a client parsing a script's output must not have to skip a banner.
+    fprintf(stderr, "FEMM headless engine v%s (build %s)\n",
+            femm_version(), femm_build());
 
     // Layer 1: initialize Python
     init_py();

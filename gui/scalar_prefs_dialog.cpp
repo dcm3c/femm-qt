@@ -7,6 +7,7 @@
 #include "scalar_prefs_dialog.h"
 #include "view_colors.h"
 #include "py_line_edit.h"
+#include "vector_choice.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -123,9 +124,10 @@ ScalarPrefsDialog::ScalarPrefsDialog(QWidget *parent, int physicsType) : QDialog
         m_vectorType->addItem(tr("Heat Flux (F)"));
         m_vectorType->addItem(tr("Temperature Gradient (G)"));
     } else if (physicsType == 3) {
-        m_vectorType->addItem(tr("Re(J)")); m_vectorType->addItem(tr("Re(E)"));
-        m_vectorType->addItem(tr("Im(J)")); m_vectorType->addItem(tr("Im(E)"));
-        m_vectorType->addItem(tr("Re+Im(J)")); m_vectorType->addItem(tr("Re+Im(E)"));
+        // The Vector Plot dialog's own two: the widget draws J or E at the
+        // phase on its slider, which covers FEMM 4.2's separate Re and Im.
+        m_vectorType->addItem(tr("Current Density (J)"));
+        m_vectorType->addItem(tr("Electric Field (E)"));
     } else {
         m_vectorType->addItem(tr("D (displacement)"));
         m_vectorType->addItem(tr("E (electric field)"));
@@ -156,7 +158,10 @@ ScalarPrefsDialog::ScalarPrefsDialog(QWidget *parent, int physicsType) : QDialog
     m_plotPoints->setText(settings.value(m_prefix + "/plotPoints", "1500").toString());
     m_densityType->setCurrentIndex(settings.value(m_prefix + "/densityType", defaultDensity).toInt());
     m_editActionType->setCurrentIndex(settings.value(m_prefix + "/editAction", 0).toInt());
-    m_vectorType->setCurrentIndex(settings.value(m_prefix + "/vectorType", 0).toInt());
+    // A current-flow value saved from the old six-entry list (Re(J), Re(E),
+    // Im(J), ...) lands on its field.
+    int vt = settings.value(m_prefix + "/vectorType", 0).toInt();
+    m_vectorType->setCurrentIndex(vt > 0 ? vectorFieldOf(vt) + 1 : 0);
 }
 
 void ScalarPrefsDialog::onModifyColor()

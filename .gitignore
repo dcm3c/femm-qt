@@ -113,6 +113,9 @@ docs/bdwgc-handoff-plan.md
 docs/macos-verification.md
 solvers/common/find_close.cpp
 testing/myTestProblem.tmp
+# The maintainer's working table of which block integrals return real or
+# complex values, by physics; kept and edited locally.
+docs/mo_blockintegral_cases.xlsx
 *.png
 !gui/icons/*.png
 # The manual's figures are sources, not build products: since the manual moved
@@ -147,3 +150,6 @@ Thumbs.db
 # Claude Code local config
 .claude/
 
+# Written into the source zip by packaging/buildsource.bat (a build from the
+# zip has no .git to ask); never part of the repository itself.
+/BUILD_NUMBER

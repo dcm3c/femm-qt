@@ -44,6 +44,8 @@ static ResultsDoc *s_resultsDoc = nullptr;
 MagDocument *active_mag_document() { return s_doc; }
 void deactivate_mag_editor_py() { s_doc = nullptr; }
 void clear_mag_results_doc() { s_resultsDoc = nullptr; }
+void replace_mag_results_doc(ResultsDoc *oldDoc, ResultsDoc *newDoc)
+{ if (s_resultsDoc == oldDoc) s_resultsDoc = newDoc; }
 
 // Current edit action for selectrectangle/selectcircle (0=nodes..4=group).
 static int s_editAction = 0;

@@ -244,7 +244,22 @@ int createMeshForDocument(DocumentBase *doc, char *errmsg, int errmsg_size)
     Mesh tmesh;
     int ret = tangle_mesh_fem(full, tmesh);
     if (ret != 0) {
-        if (errmsg) snprintf(errmsg, errmsg_size, "Mesher failed (error %d)", ret);
+        // The bare number reached users as "Mesh error 3", which says nothing.
+        // 3 is TANGLE_ERR_PARSE by name, but the .fem reader's only failure
+        // is the open: the file exists (checked just before) yet stayed
+        // unreadable through the mesher's ~1.6 s of retries.
+        const char *why =
+            ret == 2 ? "the mesher could not find the problem file" :
+            // Callers' buffers are 256 bytes: keep this under ~220.
+            ret == 3 ? "the file exists but could not be read: another program "
+                       "(cloud sync such as OneDrive, or antivirus) held it "
+                       "locked, or read access is denied. A local, unsynced "
+                       "folder avoids this" :
+            ret == 4 ? "the geometry could not be meshed" : nullptr;
+        if (errmsg) {
+            if (why) snprintf(errmsg, errmsg_size, "Mesher failed (error %d): %s", ret, why);
+            else     snprintf(errmsg, errmsg_size, "Mesher failed (error %d)", ret);
+        }
         return ret;
     }
 

@@ -20,9 +20,9 @@
 #                           refuses it anywhere else.
 #
 #  The FILENAME records which of those you got. Only a signed, notarised,
-#  stapled image that Gatekeeper accepts is named femm-qt-5.0_<date>.dmg;
-#  anything else gets -adhoc, -unnotarized or -REJECTED after the date. Ship
-#  the one with nothing after the date.
+#  stapled image that Gatekeeper accepts is named femm-<version>-<build>.dmg;
+#  anything else gets -adhoc, -unnotarized or -REJECTED after the build number. Ship
+#  the one with nothing after the build number.
 #    FEMM_SIGN_ID           the image is signed with the Developer ID.
 #    + FEMM_NOTARY_PROFILE  the image is notarised and stapled as well.
 #
@@ -44,7 +44,17 @@ cd "$(dirname "$0")/.."          # femm-qt/
 APP="build/bin/femm_gui.app"
 OUT_DIR="packaging/output"
 VOLNAME="FEMM 5.0"
-STAMP="$(date +%d%b%Y)"
+
+# The version and build number of the build being packaged, written by the
+# build itself (cmake/BuildInfo.cmake) -- the same two the Windows installer is
+# named by. The build number is the commit count; a build from the source zip
+# takes it from the BUILD_NUMBER file buildsource.bat puts in the zip.
+VERSION_ENV="build/generated/version.env"
+if [ ! -f "$VERSION_ENV" ]; then
+    echo "macos_dmg: $VERSION_ENV is missing -- build first (macos_build.sh)" >&2
+    exit 1
+fi
+. "$VERSION_ENV"
 
 # The image is BUILT under a working name and only takes its real one at the
 # very end, once what it actually IS has been established -- see "Name it for
@@ -64,7 +74,7 @@ STAMP="$(date +%d%b%Y)"
 # The working name is dot-prefixed: hidden in Finder, plainly not a deliverable
 # in ls, skipped by the *.dmg glob macos_release.sh uses, and removed by the
 # trap if this script does not reach the end.
-DMG_BASE="femm-qt-5.0_${STAMP}"
+DMG_BASE="femm-${FEMM_VERSION}-${FEMM_BUILD}"
 DMG="$OUT_DIR/.${DMG_BASE}.building.dmg"
 DMG_WORK="$DMG"          # cleared once the image has been named, not before
 
@@ -428,6 +438,6 @@ echo
 echo "Wrote $DMG ($(du -h "$DMG" | cut -f1))"
 if [ -n "$SUFFIX" ]; then
     echo "The '${SUFFIX#-}' in the name is deliberate: this image is NOT the"
-    echo "one to ship. A releasable build is named femm-qt-5.0_<date>.dmg with"
-    echo "nothing after the date."
+    echo "one to ship. A releasable build is named femm-<version>-<build>.dmg with"
+    echo "nothing after the build number."
 fi

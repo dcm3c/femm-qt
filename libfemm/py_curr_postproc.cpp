@@ -417,8 +417,11 @@ void register_curr_postproc_py(CurrResultsDoc *doc) {
             throw std::runtime_error("Failed to reload: " + path);
         }
         register_curr_postproc_py(s_doc);
+        doc_registry_add(s_doc);                  // see mo_reload
+        replace_curr_results_doc(oldDoc, s_doc);
         auto cb = get_results_opened_callback();
         if (cb) cb(path.c_str(), s_doc);
+        doc_registry_remove(oldDoc);
         delete oldDoc;
     });
 
@@ -427,6 +430,7 @@ void register_curr_postproc_py(CurrResultsDoc *doc) {
         clear_curr_results_doc();
         auto cb = get_view_command_callback();
         if (cb) cb("co_close", 0, nullptr);
+        else { auto *doc = s_doc; doc_registry_remove(doc); delete doc; }  // see mo_close
         s_doc = nullptr;
     });
 

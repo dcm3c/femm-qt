@@ -40,6 +40,8 @@ static CurrResultsDoc *s_resultsDoc = nullptr;
 CurrDocument *active_curr_document() { return s_doc; }
 void deactivate_curr_editor_py() { s_doc = nullptr; }
 void clear_curr_results_doc() { s_resultsDoc = nullptr; }
+void replace_curr_results_doc(CurrResultsDoc *oldDoc, CurrResultsDoc *newDoc)
+{ if (s_resultsDoc == oldDoc) s_resultsDoc = newDoc; }
 
 static int s_editAction = 0;
 

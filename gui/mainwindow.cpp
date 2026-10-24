@@ -14,6 +14,7 @@
 #include "editor_widget.h"
 #include "results_widget.h"
 #include "scalar_results_widget.h"
+#include "vector_choice.h"
 #include "elec_results_doc.h"
 #include "heat_results_doc.h"
 #include "heat_document.h"
@@ -558,8 +559,11 @@ void MainWindow::openResultsFile(const QString &ansPath, void *scriptDoc)
             bMultiLabel = ppMarkMultiplyDefinedLabels(doc);
 
             doc->Smooth = settings.value("co/smooth", true).toBool();
+            // 0=off, 1..13 = |V| .. |Jd|, ScalarPrefsDialog's list and the
+            // widget's own numbering. Not heat's 0..3: copying that clamp
+            // here turned every choice past Im(V) back into |V|.
             int cdt = settings.value("co/densityType", 1).toInt();
-            if (cdt < 0 || cdt > 3) cdt = 1;
+            if (cdt < 0 || cdt > 13) cdt = 1;
             sw->m_densityPlotType = cdt;
             sw->setShowDensity(sw->m_densityPlotType > 0);
             sw->setShowContours(settings.value("co/showContours", true).toBool());
@@ -628,7 +632,6 @@ void MainWindow::openResultsFile(const QString &ansPath, void *scriptDoc)
             if (sMode == 1) m_ppActContour->setChecked(true);
             else if (sMode == 2) m_ppActArea->setChecked(true);
             else m_ppActPoint->setChecked(true);
-            sw->m_vectorType = settings.value(pfx + "/vectorType", 0).toInt();
         }
         connect(sw, &ScalarResultsWidget::coordinatesChanged, this, &MainWindow::updateCoordinates);
         connect(sw, &ScalarResultsWidget::statusMessage, this, &MainWindow::updateStatus);
@@ -650,6 +653,21 @@ void MainWindow::openResultsFile(const QString &ansPath, void *scriptDoc)
             sw->m_showMask = settings.value("eo/showMask", false).toBool();
             sw->setShowGrid(settings.value("eo/grid", false).toBool());
             sw->setSnapToGrid(settings.value("eo/snap", false).toBool());
+        }
+
+        // Default vector plot. After every physics' density preference, since
+        // a vector plot turns density off as the Vector Plot dialog does (the
+        // legend shows one or the other). Copying the setting straight into
+        // m_vectorType never set m_showVectors, so vectors never came on, and
+        // was off by one: the setting counts Off as 0.
+        {
+            QString pfx = (sw->physicsType() == 2) ? "ho" : (sw->physicsType() == 3) ? "co" : "eo";
+            int vt = settings.value(pfx + "/vectorType", 0).toInt();
+            if (vt > 0) {
+                sw->m_showVectors = true;
+                sw->m_vectorType = vectorFieldOf(vt);
+                sw->setShowDensity(false);
+            }
         }
 
         // Multiply-defined regions override the stored view preferences, so the
@@ -718,7 +736,12 @@ void MainWindow::openResultsFile(const QString &ansPath, void *scriptDoc)
         rw->m_showNames = settings.value("pp/names", false).toBool();
         if (bMultiLabel) rw->m_showNames = true;
         rw->m_showMask = settings.value("pp/showMask", false).toBool();
-        rw->m_vectorType = settings.value("pp/vectorType", 0).toInt();
+        // Default vector plot: see the scalar postprocessors above.
+        if (int vt = settings.value("pp/vectorType", 0).toInt(); vt > 0) {
+            rw->m_showVectors = true;
+            rw->m_vectorType = vectorFieldOf(vt);
+            rw->setShowDensity(false);
+        }
         rw->setShowGrid(settings.value("pp/grid", false).toBool());
         rw->setSnapToGrid(settings.value("pp/snap", false).toBool());
 
@@ -2441,13 +2464,13 @@ void MainWindow::createLeftToolbars()
     });
     help->addSeparator();
     help->addAction(tr("&About"), QKeySequence(), [this]() {
-        // The build date is what tells one 5.0 from another in a bug report --
-        // the same job FEMM 4.2's About box gave __DATE__. See common/
-        // build_info.h; the title stays the bare version so the window caption
-        // does not move about from build to build.
+        // The build number is what tells one build of a version from another
+        // in a bug report -- the job FEMM 4.2's About box gave __DATE__. See
+        // common/build_info.h; the title stays the bare version so the window
+        // caption does not move about from build to build.
         showAbout(this, QString("femm %1").arg(femm_version()),
-            QString("Finite Element Method Magnetics, Version %1 %2\n")
-                .arg(femm_version(), femm_build_date()) +
+            QString("Finite Element Method Magnetics, Version %1 (build %2)\n")
+                .arg(femm_version(), femm_build()) +
             "Copyright © 2026 David Meeker and contributors\n\n"
             "The femm-qt application (this GUI, the libfemm engine, the IPC "
             "server, the tangle mesher, and the language bindings) is released "

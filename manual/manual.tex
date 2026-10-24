@@ -210,14 +210,16 @@ REPL.
 \item\texttt{-{}-port {\itshape N}} --- Listen on TCP port {\itshape N} rather
 than the default, 48015.
 
-\item\texttt{-{}-version} --- Print the version and build date --- for example,
-{\tt FEMM headless engine v5.0.20261013 13Oct2026} --- and exit.  The version
-is the release, numbered by its date; the date after it is when this
-particular binary was built, which differs from the release date for a test
-build made between releases.  This is the quickest
+\item\texttt{-{}-version} --- Print the version and build number --- for
+example, {\tt FEMM headless engine v5.0.20261013 (build 1108)} --- and exit.
+The version names the release, numbered by its date.  The build number names
+the exact source the program was built from: it goes up with every change, so
+a test build made between releases has a higher number than the release it
+follows, and {\tt -dirty} after it marks a build with uncommitted changes.  The
+installer and disk image are named by the same two numbers.  This is the quickest
 way to say which build you are running when reporting a problem, and it answers
 without starting the Python engine or opening a port, so it still works on a
-machine where FEMM itself will not start.  The same version and date appear in
+machine where FEMM itself will not start.  The same version and build number appear in
 the GUI under {\tt Help|About}.
 
 \item\texttt{-h}, \texttt{-{}-help} --- Print a summary of these options and

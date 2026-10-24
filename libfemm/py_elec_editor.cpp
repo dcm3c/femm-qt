@@ -40,6 +40,8 @@ static ElecResultsDoc *s_resultsDoc = nullptr;
 ElecDocument *active_elec_document() { return s_doc; }
 void deactivate_elec_editor_py() { s_doc = nullptr; }
 void clear_elec_results_doc() { s_resultsDoc = nullptr; }
+void replace_elec_results_doc(ElecResultsDoc *oldDoc, ElecResultsDoc *newDoc)
+{ if (s_resultsDoc == oldDoc) s_resultsDoc = newDoc; }
 
 static int s_editAction = 0;
 

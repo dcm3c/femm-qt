@@ -19,5 +19,9 @@ void deactivate_mag_editor_py();
 // Clear the static results-doc pointer (called by mo_close to prevent a
 // double-free when the GUI widget destructor also deletes the doc).
 void clear_mag_results_doc();
+// mo_reload swapped in a new results doc: point the cache at it if it held the
+// old one, so the next mi_loadsolution frees the live doc, not a freed one.
+class ResultsDoc;
+void replace_mag_results_doc(ResultsDoc *oldDoc, ResultsDoc *newDoc);
 
 #endif  // PY_MAG_EDITOR_H

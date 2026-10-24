@@ -257,6 +257,8 @@ inproc PointLocationTest.py PointLocation
 inproc MagDirTransformTest.py MagDirTransform
 inproc NodePropsTransformTest.py NodePropsTransform
 inproc PointFillFactorTest.py PointFillFactor
+inproc CurrentFlowContrastTest.py CurrentFlowContrast
+inproc DxfImportTest.py DxfImport
 inproc CreateRadiusTest.py     CreateRadius
 inproc FftTest.py Fft
 inproc NumpyProxyTest.py NumpyProxy

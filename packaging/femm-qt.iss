@@ -1,16 +1,16 @@
 ; -- femm-qt.iss --
 ; Inno Setup script for FEMM 5.0 (Qt port)
 
-#define MyDate GetDateTimeString('ddmmmyyyy', '', '')
 #define MyYear GetDateTimeString('yyyy', '', '')
-; FemmVersion: project(VERSION) from CMakeLists.txt, written by the build.
+; FemmVersion and FemmBuild (the build number), written by the build from
+; project(VERSION) and the commit count -- see cmake/BuildInfo.cmake.
 ; Run ninja first (pack.bat already requires it) or this include fails.
 #include "..\build\generated\version.iss"
 
 [Setup]
 AppName           = FEMM
 AppVersion        = {#FemmVersion}
-AppVerName        = femm {#FemmVersion} {#MyDate}
+AppVerName        = femm {#FemmVersion} (build {#FemmBuild})
 AppCopyright      = Copyright © 1998-{#MyYear}, DC Meeker
 AppPublisher      = D. Meeker
 DefaultDirName    = c:\femm-qt
@@ -18,7 +18,7 @@ DefaultGroupName  = femm 5.0
 UsePreviousAppDir = no
 UsePreviousGroup  = no
 LicenseFile       = ..\packaging\license.txt
-OutputBaseFilename= femm-qt-py_{#MyDate}
+OutputBaseFilename= femm-{#FemmVersion}-{#FemmBuild}
 ; This script lives in femm-qt\packaging\.  Relative [Files]/[Dirs] paths
 ; are resolved against SourceDir; "bin\..." -> build\bin, "..\foo" ->
 ; femm-qt\foo, exactly as when the script lived in build\.  The finished

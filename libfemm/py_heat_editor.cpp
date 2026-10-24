@@ -39,6 +39,8 @@ static HeatResultsDoc *s_resultsDoc = nullptr;
 HeatDocument *active_heat_document() { return s_doc; }
 void deactivate_heat_editor_py() { s_doc = nullptr; }
 void clear_heat_results_doc() { s_resultsDoc = nullptr; }
+void replace_heat_results_doc(HeatResultsDoc *oldDoc, HeatResultsDoc *newDoc)
+{ if (s_resultsDoc == oldDoc) s_resultsDoc = newDoc; }
 
 static int s_editAction = 0;
 
