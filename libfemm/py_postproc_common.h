@@ -255,11 +255,38 @@ double ppMakePlot(Doc *doc, int plotType, int numPoints, const std::string &file
     std::vector<typename Doc::XYPlotPoint> pts;
     doc->GetLineValues(pts, plotType, numPoints);
 
+    const std::string name =
+        (plotType >= 0 && plotType < (int)names.size())
+            ? xyexport::shortName(names[plotType])
+            : std::string("Value");
+
+    if (filename.empty() && !pts.empty()) {
+        // No filename: the manual's "plot to the screen" form. Hand the
+        // sampled curve to the GUI through the same generic command the
+        // script-level plot() function uses, so the window, its series
+        // labels and its Export... output are identical to the ones the
+        // postprocessor's own X-Y Plot button produces. Without a GUI (the
+        // headless engine, or any client with no view callback) the command
+        // is a no-op and the call just returns the point count, as before.
+        //   cmd  = "plot\n<title>\n<xlabel>\n<ylabel>\n<label0>\n<label1>..."
+        //   args = [ncurves, npoints, x..., y0..., y1..., ...]
+        const int ncols = (int)pts[0].vals.size();
+        std::string cmd = "plot\n" + name + " along contour\n" +
+                          std::string(xyexport::contourAxisLabel()) + "\n" + name;
+        for (const auto &lbl : xyexport::columnLabels(name, ncols))
+            cmd += "\n" + lbl;
+        std::vector<double> a;
+        a.reserve(2 + pts.size() * (1 + (size_t)ncols));
+        a.push_back((double)ncols);
+        a.push_back((double)pts.size());
+        for (auto &p : pts) a.push_back(p.x);
+        for (int c = 0; c < ncols; c++)
+            for (auto &p : pts)
+                a.push_back(c < (int)p.vals.size() ? p.vals[c] : 0.0);
+        ppViewCmd(cmd, (int)a.size(), a.data());
+    }
+
     if (!filename.empty() && !pts.empty()) {
-        const std::string name =
-            (plotType >= 0 && plotType < (int)names.size())
-                ? xyexport::shortName(names[plotType])
-                : std::string("Value");
         const int ncols = (int)pts[0].vals.size();
 
         std::vector<double> x;

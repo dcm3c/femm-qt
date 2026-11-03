@@ -32,7 +32,7 @@
 using femm_py::caster;
 using std::optional;
 
-static const char *EERR = "No current electrostatics input in focus";
+static const char *EERR = "No electrostatics input in focus";
 
 static ElecDocument *s_doc = nullptr;
 static ElecResultsDoc *s_resultsDoc = nullptr;

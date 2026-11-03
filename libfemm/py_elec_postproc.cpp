@@ -20,7 +20,7 @@
 using femm_py::caster;
 using std::optional;
 
-static const char *EOERR = "No current electrostatics output in focus";
+static const char *EOERR = "No electrostatics output in focus";
 
 static ElecResultsDoc *s_doc = nullptr;
 ElecResultsDoc *active_elec_results() { return s_doc; }

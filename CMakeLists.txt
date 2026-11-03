@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.20)
 # the macOS Info.plist. A release is cut by changing it here, publishing, and
 # tagging the published commit with packaging/tag_release.sh, which refuses a
 # tag that does not match this line.
-project(femm-qt VERSION 5.0.20261021 LANGUAGES CXX C)
+project(femm-qt VERSION 5.0.20261101 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -504,12 +504,14 @@ install(FILES
         DESTINATION "${CMAKE_INSTALL_DOCDIR}")
 foreach(_lic
         "NOTICE-Qt.txt"
-        "QT-THIRD-PARTY-NOTICES.txt"
+        # NOT QT-THIRD-PARTY-NOTICES.txt: it credits the code inside Qt
+        # binaries a package redistributes, and is generated per package
+        # (pack.bat, macos_build.sh). An installed build links the system Qt.
         "LICENSE-melihaltun.txt"
-        # NOT THIRD-PARTY-NOTICES.txt: it is generated from the macOS .app's
-        # Contents/Frameworks and documents the Homebrew dylibs macdeployqt
-        # copies in. A packaged build links the system Qt and ships none of
-        # them, so including it would attribute libraries that are not there.
+        # NOT THIRD-PARTY-NOTICES.txt: macos_build.sh generates it, only for
+        # a macOS .app built against Homebrew's Qt, from the Homebrew dylibs
+        # macdeployqt copies into Contents/Frameworks. A packaged build links
+        # the system Qt and ships none of them.
         "lua/liblua/COPYRIGHT"
         "lua/luasocket-1.0/COPYRIGHT"
         "micropython/LICENSE.micropython"

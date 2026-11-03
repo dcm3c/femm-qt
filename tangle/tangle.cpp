@@ -8,8 +8,8 @@
 // Author: David Meeker
 // Generated with the assistance of Claude Code
 //
-// Version 0.4.18
-// 22 Aug 2026
+// Version 0.4.20
+// 29 Oct 2026
 //
 // Supports: -p -P -j -q -e -A -a -z -Q -I -Y options
 //
@@ -237,6 +237,18 @@ struct Segment {
     int pbc_side = -1;   // which side of its (anti)periodic pair this segment
                          // belongs to (0 or 1), assigned by the reader; -1 = n/a.
                          // Sides are DECLARED, never inferred from connectivity.
+    int pbc_partner = -1; // index of the segment this one is paired with on the
+                          // other side (-1 = none). Set per entity pair by
+                          // buildPbcTwinFromCDT and kept current through splits,
+                          // so refinement never has to recover the partner from
+                          // node twins -- a node at a corner shared by two paired
+                          // boundaries has two different partners (a Kelvin
+                          // exterior ending on an anti-periodic symmetry line),
+                          // and the one-entry twin map can hold only one of them.
+                          // Orientation needs no storing: both sides are oriented
+                          // to the CDT (interior on the left), so a segment and
+                          // its partner always run opposite ways along the shared
+                          // boundary, and partner.v0 corresponds to this v1.
 };
 
 struct Hole { double x, y; };
@@ -2293,8 +2305,10 @@ void refineQuality(Mesh& mesh, const Options& opts, int nInputVerts){
         for(int& nb : segAdj[seg.v0]) if(nb==seg.v1) nb=midIdx;
         for(int& nb : segAdj[seg.v1]) if(nb==seg.v0) nb=midIdx;
         segAdj[midIdx]={seg.v0,seg.v1};
-        Segment s1{seg.v0,midIdx,seg.marker,seg.lfs,seg.pbc_type,seg.no_split,seg.pbc_side};
-        Segment s2{midIdx,seg.v1,seg.marker,seg.lfs,seg.pbc_type,seg.no_split,seg.pbc_side};
+        Segment s1{seg.v0,midIdx,seg.marker,seg.lfs,seg.pbc_type,seg.no_split,seg.pbc_side,
+                   seg.pbc_partner};
+        Segment s2{midIdx,seg.v1,seg.marker,seg.lfs,seg.pbc_type,seg.no_split,seg.pbc_side,
+                   seg.pbc_partner};
         mesh.segments[si]=s1;
         int newSi=(int)mesh.segments.size();
         mesh.segments.push_back(s2);
@@ -2319,37 +2333,39 @@ void refineQuality(Mesh& mesh, const Options& opts, int nInputVerts){
         int midIdx=splitSegmentCore(si, outAffected, hintTri, tUsed);
         if(midIdx<0) return false;
 
-        // Synchronized PBC partner split: if this is a PBC segment, find and
-        // split the partner. Suppress cascade by not adding partner's affected
-        // triangles to the quality check.
-        if(seg.pbc_type>=0){
-            int tv0=mesh.pbc_twin.count(seg.v0)?mesh.pbc_twin[seg.v0]:-1;
-            int tv1=mesh.pbc_twin.count(seg.v1)?mesh.pbc_twin[seg.v1]:-1;
-            if(tv0>=0 && tv1>=0){
-                auto pek=edgeKey(tv0,tv1);
-                auto pit=edgeToSeg.find(pek);
-                if(pit!=edgeToSeg.end()){
-                    int partnerSi=pit->second;
-                    std::vector<int> partnerAffected;
-                    // Split the partner at the SAME parametric position (oriented:
-                    // partner may be stored with endpoints in either order) so the
-                    // periodic boundaries keep matching node positions.
-                    double pt = (mesh.segments[partnerSi].v0==tv0) ? tUsed : 1.0-tUsed;
-                    int partnerMid=splitSegmentCore(partnerSi, partnerAffected, -1, pt);
-                    if(partnerMid>=0){
-                        // Link the two midpoints as PBC twins
-                        mesh.pbc_twin[midIdx]=partnerMid;
-                        mesh.pbc_twin[partnerMid]=midIdx;
-                        mesh.pbc_node_type[midIdx]=seg.pbc_type;
-                        mesh.pbc_node_type[partnerMid]=seg.pbc_type;
-                        // Add partner-affected triangles so the caller can
-                        // queue them for quality checking.
-                        outAffected.insert(outAffected.end(),
-                                           partnerAffected.begin(),
-                                           partnerAffected.end());
-                    }
-                }
+        // Synchronized PBC partner split: if this is a PBC segment, split its
+        // partner at the same parametric position so the two sides keep
+        // matching node positions. The partner is the segment index recorded
+        // on the entity pair (pbc_partner), not recovered from the endpoints'
+        // twins: at a corner shared by two paired boundaries the twin map holds
+        // only one of the node's two partners, and the lookup through it found
+        // the wrong segment or none, leaving splits unsynchronized (and the
+        // whole chain then silently unpaired).
+        if(seg.pbc_type>=0 && seg.pbc_partner>=0){
+            int partnerSi=seg.pbc_partner;
+            int newSi=(int)mesh.segments.size()-1;    // s2 of this split
+            std::vector<int> partnerAffected;
+            // Partner runs the opposite way (CDT orientation, see Segment), so
+            // the same point along the boundary is at 1-t from its v0.
+            int partnerMid=splitSegmentCore(partnerSi, partnerAffected, -1, 1.0-tUsed);
+            if(partnerMid>=0){
+                int pNewSi=(int)mesh.segments.size()-1; // p2 of the partner split
+                // si: v0->mid, newSi: mid->v1; partnerSi: pv0->pmid, pNewSi: pmid->pv1.
+                // Opposite directions: v0 corresponds to pv1, so s1<->p2, s2<->p1.
+                mesh.segments[si].pbc_partner=pNewSi;      mesh.segments[pNewSi].pbc_partner=si;
+                mesh.segments[newSi].pbc_partner=partnerSi; mesh.segments[partnerSi].pbc_partner=newSi;
+                // Link the two midpoints as PBC twins
+                mesh.pbc_twin[midIdx]=partnerMid;
+                mesh.pbc_twin[partnerMid]=midIdx;
+                mesh.pbc_node_type[midIdx]=seg.pbc_type;
+                mesh.pbc_node_type[partnerMid]=seg.pbc_type;
+                // Add partner-affected triangles so the caller can
+                // queue them for quality checking.
+                outAffected.insert(outAffected.end(),
+                                   partnerAffected.begin(),
+                                   partnerAffected.end());
             }
+            // else: the sides now differ; the check after refinement reports it.
         }
         return true;
     };
@@ -2745,6 +2761,12 @@ void buildPbcTwinFromCDT(Mesh& mesh){
         }
     }
 
+    // Edge -> PBC segment index, for recording segment partners below.
+    std::map<std::pair<int,int>,int> pbcEdgeSeg;
+    for(int si=0;si<(int)mesh.segments.size();si++)
+        if(mesh.segments[si].pbc_type>=0)
+            pbcEdgeSeg[edgeKey(mesh.segments[si].v0,mesh.segments[si].v1)]=si;
+
     // Group PBC segments by boundary {marker, pbc_type}.
     // BFS-split each group into two chains, build DIRECTED node chains
     // that follow the CDT-determined segment orientation, then reverse
@@ -2957,13 +2979,36 @@ void buildPbcTwinFromCDT(Mesh& mesh){
             for(int i=0;i<(int)c1.size();i++){
                 int a=c1[i], b=c2[i];
                 // a==b happens when the two sides of a boundary adjoin: the
-                // shared node is its own twin. Record it — the refinement
-                // partner-split lookup needs the entry, and the pair reaches
+                // shared node is its own twin. Record it — the pair reaches
                 // the .pbc output (anti-periodic: A = -A pins A = 0 there,
-                // matching original FEMM).
+                // matching original FEMM). One twin per node is all the
+                // constraint system needs: where a node sits on two paired
+                // boundaries (a Kelvin exterior's corner, on a periodic arc
+                // and an anti-periodic diameter) the second pairing is implied
+                // by the others, so whichever is recorded is consistent.
                 mesh.pbc_twin[a]=b; mesh.pbc_twin[b]=a;
                 mesh.pbc_node_type[a]=bp.pbcType;
                 mesh.pbc_node_type[b]=bp.pbcType;
+            }
+            // Pair the SEGMENTS of the two chains, edge by edge, as OF's
+            // FunnyOnWritePoly subdivides paired entities in lockstep. This is
+            // what refinement uses to split both sides identically; node twins
+            // cannot answer it at a shared corner (see Segment::pbc_partner).
+            for(int i=0;i+1<(int)c1.size();i++){
+                auto ia=pbcEdgeSeg.find(edgeKey(c1[i],c1[i+1]));
+                auto ib=pbcEdgeSeg.find(edgeKey(c2[i],c2[i+1]));
+                if(ia==pbcEdgeSeg.end()||ib==pbcEdgeSeg.end()){
+                    std::cerr<<"Warning: PBC chain edge has no segment; partner not recorded\n";
+                    continue;
+                }
+                int sa=ia->second, sb=ib->second;
+                // Both sides are oriented to the CDT, so paired segments must run
+                // opposite ways; refinement relies on it (partner split at 1-t).
+                if((mesh.segments[sa].v0==c1[i]) == (mesh.segments[sb].v0==c2[i]))
+                    std::cerr<<"Warning: paired PBC segments run the same direction; "
+                               "the two sides will not stay synchronized\n";
+                mesh.segments[sa].pbc_partner=sb;
+                mesh.segments[sb].pbc_partner=sa;
             }
             bp.processed=true;
             progress=true;
@@ -3130,6 +3175,17 @@ bool readPolyFile(const std::string& filename, Mesh& mesh, int& nAttribs){
         s.skipComments();
         int idx=0; s.nextInt(idx); s.nextInt(segs[i].v0); s.nextInt(segs[i].v1);
         segs[i].v0-=base; segs[i].v1-=base;
+        // An endpoint outside the vertex list would index pts[] out of range
+        // from here on (undefined behavior: the arc chordizer read past the
+        // array). Refuse it, naming the vertex in the file's own numbering.
+        for(int v : {segs[i].v0, segs[i].v1}){
+            if(v<0 || v>=(int)pts.size()){
+                std::cerr<<"Error: segment "<<idx<<" references vertex "<<v+base
+                         <<" but the file has "<<pts.size()<<" vertices (numbered from "
+                         <<base<<")\n";
+                return false;
+            }
+        }
         if(smark>0) s.nextInt(segs[i].marker); else segs[i].marker=0;
         // Optional LFS column after marker
         double lval;
@@ -3177,6 +3233,14 @@ bool readPolyFile(const std::string& filename, Mesh& mesh, int& nAttribs){
                 s.nextInt(idx); s.nextInt(v0); s.nextInt(v1);
                 s.nextDouble(angle); s.nextDouble(maxSegAngle);
                 v0-=base; v1-=base;
+                for(int v : {v0, v1}){
+                    if(v<0 || v>=(int)pts.size()){
+                        std::cerr<<"Error: arc "<<idx<<" references vertex "<<v+base
+                                 <<" but the file has "<<pts.size()<<" vertices (numbered from "
+                                 <<base<<")\n";
+                        return false;
+                    }
+                }
                 int marker=0;
                 if(arcHasMarkers) s.nextInt(marker);
                 // Optional LFS after marker
@@ -3355,17 +3419,25 @@ bool readFemFile(const std::string& filename,
     // Detect file type from extension
     bool hasConductors = false;  // .fee, .feh, .fec have conductor columns
     bool isMagnetics = true;     // .fem uses different BdryFormat numbering
+    bool isHeat = false;         // .feh: one more non-periodic type (radiation)
     { auto dot = filename.rfind('.');
       if(dot!=std::string::npos){
           std::string ext=filename.substr(dot);
           if(ext==".fee"||ext==".feh"||ext==".fec") { hasConductors=true; isMagnetics=false; }
+          if(ext==".feh") isHeat=true;
       }
     }
     // BdryFormat for periodic/anti-periodic differs by physics type:
-    //   Magnetics (.fem): 4=periodic, 5=anti-periodic, 6=periodic AGE, 7=anti-periodic AGE
-    //   Others (.fee/.feh/.fec): 3=periodic, 4=anti-periodic (no AGE)
-    int FMT_PERIODIC      = isMagnetics ? 4 : 3;
-    int FMT_ANTIPERIODIC  = isMagnetics ? 5 : 4;
+    //   Magnetics (.fem):        4=periodic, 5=anti-periodic, 6=periodic AGE, 7=anti-periodic AGE
+    //   Heat flow (.feh):        0=fixed T, 1=flux, 2=convection, 3=RADIATION, 4=periodic, 5=anti-periodic
+    //   Electrostatics (.fee),
+    //   current flow (.fec):     0=fixed V, 1=mixed, 2=surface charge/current, 3=periodic, 4=anti-periodic
+    // Heat used to share the .fee/.fec numbering here, which read every
+    // radiation boundary as periodic (two equal-length radiating faces got
+    // their temperatures tied together, silently), every periodic one as
+    // anti-periodic, and never paired an anti-periodic one.
+    int FMT_PERIODIC      = isMagnetics ? 4 : (isHeat ? 4 : 3);
+    int FMT_ANTIPERIODIC  = isMagnetics ? 5 : (isHeat ? 5 : 4);
     int FMT_PERIODIC_AGE  = isMagnetics ? 6 : -1;
     int FMT_ANTIPERIOD_AGE= isMagnetics ? 7 : -1;
 
@@ -3664,6 +3736,29 @@ bool readFemFile(const std::string& filename,
                 k++;
             }
             continue;
+        }
+    }
+
+    // ----- Validate segment / arc endpoints -----
+    // Sections can arrive in any order, so this runs once parsing is complete.
+    // An endpoint outside [NumPoints] would index pts[] out of range in every
+    // stage below (undefined behavior); refuse the file instead.
+    for(int i=0;i<(int)femSegs.size();i++){
+        for(int v : {femSegs[i].n0, femSegs[i].n1}){
+            if(v<0 || v>=(int)pts.size()){
+                std::cerr<<"Error: segment "<<i<<" references point "<<v
+                         <<" but [NumPoints] = "<<pts.size()<<"\n";
+                return false;
+            }
+        }
+    }
+    for(int i=0;i<(int)arcs.size();i++){
+        for(int v : {arcs[i].n0, arcs[i].n1}){
+            if(v<0 || v>=(int)pts.size()){
+                std::cerr<<"Error: arc segment "<<i<<" references point "<<v
+                         <<" but [NumPoints] = "<<pts.size()<<"\n";
+                return false;
+            }
         }
     }
 
@@ -4665,6 +4760,23 @@ void cleanPSLG(Mesh& mesh, double tol, bool quiet){
         for(int i=nv; i<(int)pts.size(); i++)
             if(newIdx[i]<0){ newIdx[i]=(int)newPts.size(); pts[i].id=(int)newPts.size(); newPts.push_back(pts[i]); }
         for(auto& s : segs){ s.v0=newIdx[s.v0]; s.v1=newIdx[s.v1]; }
+        // The sliding-band (AGE) ring lists were built by the reader as
+        // indices into the input vertices and must follow the renumbering
+        // too; left alone, every ring reference pointed one node further on
+        // after any merge, and the band coupled rotor and stator one element
+        // out of step with no error. A merge can also fold two adjacent ring
+        // nodes into one: drop the repeat and recount.
+        for(auto& age : mesh.age_defs){
+            for(auto* ring : {&age.innerNodes, &age.outerNodes}){
+                for(auto& nd : *ring) nd = newIdx[nd];
+                ring->erase(std::unique(ring->begin(), ring->end()), ring->end());
+            }
+            age.n=(int)age.innerNodes.size();
+            if(age.outerNodes.size()!=age.innerNodes.size())
+                std::cerr<<"Warning: AGE '"<<age.name<<"' inner/outer node counts differ "
+                           "after merging near-duplicate nodes ("<<age.innerNodes.size()
+                         <<" vs "<<age.outerNodes.size()<<")\n";
+        }
         pts = std::move(newPts);
     }
 
@@ -4865,6 +4977,35 @@ static int runMeshPipeline(Mesh& mesh, const Options& opts)
     // 5. Quality refinement
     if(opts.quality||opts.area_limit) refineQuality(mesh, opts, nInputVerts);
 
+    // 5b. Every (anti)periodic segment must still have a mutual partner and
+    // twinned endpoints. If the two sides of a boundary were split
+    // differently, the pairing is incomplete and the solver would quietly
+    // treat the unpaired stretch as a free boundary, which is never what a
+    // periodic boundary means: fail instead. (A boundary whose pairing
+    // buildPbcTwinFromCDT already declined -- missing side, mismatched
+    // chains -- reaches here with no partner and fails the same way.) The
+    // check keys on the segments, not on pbc_twin being non-empty: when the
+    // model's ONLY periodic boundary failed to pair, the twin map is empty
+    // and that is precisely the silent free boundary to refuse.
+    {
+        int bad=0;
+        for(int si=0;si<(int)mesh.segments.size();si++){
+            auto& s=mesh.segments[si];
+            if(s.pbc_type<0) continue;
+            bool ok = s.pbc_partner>=0 && s.pbc_partner<(int)mesh.segments.size()
+                   && mesh.segments[s.pbc_partner].pbc_partner==si
+                   && mesh.pbc_twin.count(s.v0) && mesh.pbc_twin.count(s.v1);
+            if(!ok) bad++;
+        }
+        if(bad){
+            std::cerr<<"Error: "<<bad<<" (anti)periodic boundary segment(s) have no "
+                       "matching partner after refinement: the two sides of a periodic "
+                       "boundary were not meshed identically, so the boundary cannot be "
+                       "paired.\n";
+            return TANGLE_ERR_MESH;
+        }
+    }
+
     // 6. Final cleanup: compact dead triangles, then extract edges.
     // Adjacency is already maintained incrementally during refinement
     // (insertPointLawson keeps neighbors[] correct), so instead of throwing
@@ -4897,17 +5038,27 @@ static int runMeshPipeline(Mesh& mesh, const Options& opts)
     // no .edge output is requested. (The FEMM path forces opts.edges=true.)
     if(opts.edges) extractEdges(mesh);
 
-    // 7. Convert PBC twin map to output pairs
+    // 7. Output pairs: one per paired segment end, as OF emits them per
+    // entity. A node on two paired boundaries (a Kelvin exterior's corner,
+    // on a periodic arc and an anti-periodic diameter) then appears in two
+    // pairs, each with its own type, and the solver's constraint classes
+    // stay connected. The twin map is a matching -- one partner per node --
+    // and emitting from it dropped one of a shared corner's two pairs, which
+    // one depending on the order the boundaries were processed.
+    // Self-pairs (a==b) are kept: a node shared by both sides of an adjoining
+    // boundary is its own twin, and original FEMM emits the pair so the
+    // solver constrains it (anti-periodic -> A=0).
     {
-        std::set<std::pair<int,int>> seen;
-        for(auto& [a, b] : mesh.pbc_twin){
-            // Self-pairs (a==b) are kept: a node shared by both sides of an
-            // adjoining boundary is its own twin, and original FEMM emits the
-            // pair so the solver constrains it (anti-periodic -> A=0).
-            auto key=std::make_pair(std::min(a,b), std::max(a,b));
-            if(seen.insert(key).second){
-                int type=mesh.pbc_node_type.count(a)?mesh.pbc_node_type[a]:0;
-                mesh.pbc_pairs.push_back({a, b, type});
+        std::set<std::pair<std::pair<int,int>,int>> seen;
+        for(int si=0;si<(int)mesh.segments.size();si++){
+            auto& s=mesh.segments[si];
+            if(s.pbc_type<0 || s.pbc_partner<0) continue;
+            auto& p=mesh.segments[s.pbc_partner];
+            // Partner runs the opposite way (see Segment): v0<->p.v1, v1<->p.v0.
+            const std::pair<int,int> ends[2]={{s.v0,p.v1},{s.v1,p.v0}};
+            for(auto [a,b] : ends){
+                auto key=std::make_pair(std::make_pair(std::min(a,b), std::max(a,b)), s.pbc_type);
+                if(seen.insert(key).second) mesh.pbc_pairs.push_back({a, b, s.pbc_type});
             }
         }
     }

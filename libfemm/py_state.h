@@ -65,6 +65,19 @@ PyVmHook py_vm_hook();
 typedef void (*PyPostExecHook)();
 void set_py_post_exec_hook(PyPostExecHook hook);
 
+// The post-exec hook treats a command that left a wire result as a getter and
+// skips the repaint, so a burst of mo_getpointvalues over TCP does not pay a
+// repaint per call. A few commands both change the document AND return a
+// value -- the four editor select commands answer with the coordinates of
+// what they toggled -- and they were taken for getters: over the wire, one
+// command at a time, the window kept showing the previous selection (a label
+// selected by mi_selectlabel drew as unselected until some later command
+// repainted; a femm group report, Oct 2026). Such a command calls
+// py_mark_view_dirty(); the hook repaints when the result is empty OR the
+// flag is set, and clears it. Harmless without a GUI.
+void py_mark_view_dirty();
+bool py_take_view_dirty();
+
 // Ask the running script to stop: KeyboardInterrupt is raised at the next VM
 // branch (the standard MicroPython pending-exception mechanism). A request
 // made while no script is running is dropped at the next exec_python().

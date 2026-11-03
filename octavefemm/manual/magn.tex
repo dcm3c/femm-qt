@@ -27,7 +27,11 @@ flow problem. Alternative syntax for this function is {\tt create(doctype)}
 \item \texttt{messagebox('message')} displays the \texttt{'message' }string to the
 screen in a pop-up message box.
 
-\item {\tt opendocument('filename')} Opens a document specified by {\tt filename}.
+\item {\tt opendocument('filename')} Opens a document specified by {\tt filename}:
+an input file ({\tt .fem}, {\tt .fee}, {\tt .feh}, {\tt .fec}) in its editor,
+or a solution file ({\tt .ans}, {\tt .res}, {\tt .anh}, {\tt .anc}) in its
+postprocessor, after which the corresponding {\tt mo\_}, {\tt eo\_}, {\tt ho\_}
+or {\tt co\_} commands act on it.
 
 \item \texttt{print(item1,item2,...)} This is standard Lua ``print'' command directed to the
 output of the Lua console window. Any number of comma-separated items can be

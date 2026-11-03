@@ -15,6 +15,7 @@
 #define PY_EDITOR_COMMON_H
 
 #include "py_bind.h"
+#include "py_state.h"      // py_mark_view_dirty
 #include "script_callbacks.h"
 #include "coord_mode.h"
 #include "document.h"
@@ -140,6 +141,7 @@ void register_common_editor(femm_py::Module &m, const std::string &P,
         if (s_doc->nodelist.empty()) return std::nullopt;
         int k = s_doc->ClosestNode(x, y);
         s_doc->nodelist[k].ToggleSelect();
+        py_mark_view_dirty();   // returns a value, so the repaint hook needs telling
         return XY{s_doc->nodelist[k].x, s_doc->nodelist[k].y};
     });
     m.def(P + "_selectlabel", [&s_doc, errmsg](double x, double y) -> std::optional<XY> {
@@ -147,6 +149,7 @@ void register_common_editor(femm_py::Module &m, const std::string &P,
         if (s_doc->blocklist.empty()) return std::nullopt;
         int k = s_doc->ClosestBlockLabel(x, y);
         s_doc->blocklist[k].ToggleSelect();
+        py_mark_view_dirty();
         return XY{s_doc->blocklist[k].x, s_doc->blocklist[k].y};
     });
     m.def(P + "_selectsegment", [&s_doc, errmsg](double x, double y) -> std::optional<XYXY> {
@@ -154,6 +157,7 @@ void register_common_editor(femm_py::Module &m, const std::string &P,
         if (s_doc->linelist.empty()) return std::nullopt;
         int k = s_doc->ClosestSegment(x, y);
         s_doc->linelist[k].ToggleSelect();
+        py_mark_view_dirty();
         auto &n0 = s_doc->nodelist[s_doc->linelist[k].n0];
         auto &n1 = s_doc->nodelist[s_doc->linelist[k].n1];
         return XYXY{n0.x, n0.y, n1.x, n1.y};
@@ -163,6 +167,7 @@ void register_common_editor(femm_py::Module &m, const std::string &P,
         if (s_doc->arclist.empty()) return std::nullopt;
         int k = s_doc->ClosestArcSegment(x, y);
         s_doc->arclist[k].ToggleSelect();
+        py_mark_view_dirty();
         auto &n0 = s_doc->nodelist[s_doc->arclist[k].n0];
         auto &n1 = s_doc->nodelist[s_doc->arclist[k].n1];
         return XYXY{n0.x, n0.y, n1.x, n1.y};

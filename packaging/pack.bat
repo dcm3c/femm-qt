@@ -78,6 +78,15 @@ rem removes "." from the command search path, so a bare `call buildsource.bat`
 rem is "not recognized" when pack.bat is driven from a bash shell even though it
 rem works from a cmd prompt.
 call "%~dp0buildsource.bat"
+rem The Qt notice is generated from the Qt files THIS installer takes (read from
+rem femm-qt.iss, which also names the Qt directory), never copied from a stored
+rem file: which third-party code Qt contains depends on the platform and the Qt
+rem release. ISCC picks it up from build\generated, beside version.iss.
+python "%~dp0gen-qt-notices.py" from-iss "%~dp0..\build\generated\QT-THIRD-PARTY-NOTICES.txt" --deployed "%~dp0femm-qt.iss"
+if errorlevel 1 (
+    echo pack: gen-qt-notices.py failed - see above; the installer was NOT built
+    goto :error
+)
 "%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe" %ISCCSIGN% "%~dp0femm-qt.iss" > NUL
 if errorlevel 1 goto :error
 

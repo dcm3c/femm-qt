@@ -19,7 +19,7 @@
 using femm_py::caster;
 using std::optional;
 
-static const char *HOERR = "No current heat flow output in focus";
+static const char *HOERR = "No heat flow output in focus";
 
 static HeatResultsDoc *s_doc = nullptr;
 HeatResultsDoc *active_heat_results() { return s_doc; }

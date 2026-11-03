@@ -1277,8 +1277,17 @@ void MainWindow::updateRecentFilesMenu()
                 fullPath.endsWith(".res", Qt::CaseInsensitive) ||
                 fullPath.endsWith(".anh", Qt::CaseInsensitive) ||
                 fullPath.endsWith(".anc", Qt::CaseInsensitive)) {
-                openResultsFile(fullPath);
-                addToRecentFiles(fullPath);
+                // openResultsFile records the path itself when it succeeds.
+                // A file that has gone is dropped from the list, as the input
+                // branch below does; re-adding unconditionally promoted the
+                // dead entry to the top instead.
+                if (!QFileInfo::exists(fullPath)) {
+                    QMessageBox::warning(this, tr("Open Failed"),
+                        tr("Could not open %1").arg(fullPath));
+                    removeFromRecentFiles(fullPath);
+                } else {
+                    openResultsFile(fullPath);
+                }
             } else {
                 QString scriptPath = fullPath;
                 scriptPath.replace('\\', '/');

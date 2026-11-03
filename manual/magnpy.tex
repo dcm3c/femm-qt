@@ -280,10 +280,15 @@ to other Windows programs.  Files opened in binary mode ({\tt "rb"},
 {\tt "wb"}) are exact, byte for byte, with no translation at all.
 
 Note that {\tt open()} does double duty.  Called with a single argument
-naming a {\tt .fem}, {\tt .fee}, {\tt .feh} or {\tt .fec} file it opens
-that {\em document}, exactly as {\tt opendocument()} does; called any
-other way it is Python's file {\tt open()}.  Reach for
-{\tt opendocument()} when the intent should be unambiguous.
+naming a FEMM file it opens that {\em document}, exactly as
+{\tt opendocument()} does: an input file ({\tt .fem}, {\tt .fee},
+{\tt .feh}, {\tt .fec}) opens in its editor and a solution file
+({\tt .ans}, {\tt .res}, {\tt .anh}, {\tt .anc}) in its postprocessor,
+after which the {\tt mo\_}, {\tt eo\_}, {\tt ho\_} or {\tt co\_}
+commands act on it.  Called any other way it is Python's file
+{\tt open()}; to read a solution file as text, give a mode, as in
+{\tt open("x.ans", "r")}.  Reach for {\tt opendocument()} when the
+intent should be unambiguous.
 
 \subsection*{Writing results as a table}
 

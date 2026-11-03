@@ -236,6 +236,13 @@ run HOPointValueTest.py      ScalarPointValueCompare.py  OF_hopv_result.txt  fq_
 
 pyrow FluxConstraint python3 FluxConstraintTest.py "$B"
 pyrow Transient python3 TransientTest.py "$FKN" "$B"
+# Mesher (tangle 0.4.19) regressions, each a silent wrong answer before it:
+# heat-flow boundary types read with the wrong numbering; a merged
+# near-duplicate point shifting every sliding-band reference; a node shared
+# by two periodic transformations losing one pairing.
+pyrow HeatBoundaryType python3 HeatBoundaryTypeTest.py "$B"
+pyrow AgeNearDuplicate python3 AgeNearDuplicateTest.py "$FKN"
+pyrow KelvinCorner python3 KelvinCornerTest.py "$B"
 pyrow IncrementalLorentz python3 IncrementalLorentzTest.py "$B"
 inproc ACBHCurveTest.py ACBHCurve
 pyrow FQReference python3 FQReferenceCompare.py
@@ -252,6 +259,7 @@ pyrow RunScriptSize python3 RunScriptSizeTest.py "$B"
 pyrow RedirectedOutput python3 RedirectedOutputTest.py "$B"
 pyrow ScriptArgv python3 ScriptArgvTest.py "$B"
 pyrow XYExportCsv python3 XYExportCsvTest.py "$B"
+pyrow OpenResults python3 OpenResultsTest.py "$B"
 inproc ProxyDunderTest.py ProxyDunders
 inproc PointLocationTest.py PointLocation
 inproc MagDirTransformTest.py MagDirTransform

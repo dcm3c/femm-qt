@@ -25,6 +25,10 @@ dmeeker@ieee.org
   NOTICE-Qt.txt and QT-THIRD-PARTY-NOTICES.txt), MicroPython, micropython-lib,
   ulab, the Boehm-Demers-Weiser garbage collector, Lua 4 and LuaSocket (the
   legacy Lua client), and complexEigenPairSolver -- all MIT/X11 or similar.
+  On Windows the MinGW-w64 runtime also ships: winpthreads (MIT/BSD, see
+  LICENSE-winpthreads.txt) and libgcc/libstdc++ (GPLv3 with the GCC Runtime
+  Library Exception, which allows shipping them with any program; see
+  LICENSE-GCC-RUNTIME-EXCEPTION.txt).
   For use of the GPL solvers under terms other than GPLv3 (e.g., in
   proprietary or closed-source applications), alternative licensing
   arrangements are available on request -- please contact the author.

@@ -781,9 +781,15 @@ int main(int argc, char *argv[])
     // into ~10 FPS so a script drawing a motor with thousands of mi_addnode/
     // mi_addsegment calls doesn't pay ~25ms of repaint per call. See
     // py_state.h / MainWindow::scheduleDelayedRepaint for details.
+    // The select commands return the coordinates of what they toggled, so
+    // their non-empty result looked like a getter's and the window drew the
+    // stale selection until some later command repainted; they now raise
+    // the dirty flag instead (py_state.h). Always take the flag, so a
+    // getter following a select does not inherit it.
     set_py_post_exec_hook([]() {
+        bool dirty = py_take_view_dirty();
         if (!s_mainWindow) return;
-        if (py_last_result().empty())
+        if (py_last_result().empty() || dirty)
             s_mainWindow->scheduleDelayedRepaint();
     });
     w.show();

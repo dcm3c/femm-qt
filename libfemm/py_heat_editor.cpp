@@ -31,7 +31,7 @@
 using femm_py::caster;
 using std::optional;
 
-static const char *HERR = "No current heat flow input in focus";
+static const char *HERR = "No heat flow input in focus";
 
 static HeatDocument *s_doc = nullptr;
 static HeatResultsDoc *s_resultsDoc = nullptr;

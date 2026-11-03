@@ -1305,6 +1305,19 @@ int CFemmeDocCore::OnOpenDocument()
 								break;
 							}
 						}
+						// An unmatched name used to sail through with
+						// fluxproplist[k] = -1, and the RHS assembly in
+						// prob1big then indexed circproplist[-1]: undefined
+						// behaviour and no diagnostic. A misspelt circuit
+						// name is a wrong problem, so refuse to solve it.
+						if (fluxproplist[k]<0)
+						{
+							fprintf(stderr,"[Circuits] entry %i names \"%s\", "
+								"which is not a circuit property of this problem\n",
+								k+1,(const char*)thisName);
+							fclose(fp);
+							return FALSE;
+						}
 					}
 				}
 

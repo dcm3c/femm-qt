@@ -6,13 +6,19 @@
 #  Usage:  ./packaging/gen-third-party-notices.sh [APP_BUNDLE] [OUTPUT_FILE]
 #
 #    APP_BUNDLE   path to femm_gui.app   (default: build/bin/femm_gui.app)
-#    OUTPUT_FILE  file to write          (default: <repo>/THIRD-PARTY-NOTICES.txt)
+#    OUTPUT_FILE  file to write          (default:
+#                 APP_BUNDLE/Contents/Resources/THIRD-PARTY-NOTICES.txt)
 #
-#  macos_build.sh runs macdeployqt, which copies Qt's transitive Homebrew
-#  dependencies -- roughly 30 dylibs -- into
-#  femm_gui.app/Contents/Frameworks/.  Shipping the .app redistributes every
-#  one of them, so each needs a notice.  This script produces that aggregate
-#  notice file automatically.
+#  macos_build.sh runs this itself, against the bundle it has just built,
+#  whenever Contents/Frameworks/ holds any non-Qt dylib -- which is the case
+#  only for a build against Homebrew's Qt (FEMM_QT=homebrew): macdeployqt
+#  then copies Qt's transitive Homebrew dependencies -- roughly 30 dylibs --
+#  into Frameworks/, and shipping the .app redistributes every one of them.
+#  A build against the official Qt (what releases use) has no such dylibs,
+#  and this script exits with "no dylibs found"; macos_build.sh checks first
+#  and does not call it then.  The output is a build product: it is not kept
+#  in the repository, because a stored copy describes whichever bundle it was
+#  generated from, not the one being shipped.
 #
 #  For every *.dylib in Contents/Frameworks/ it:
 #    1. maps the dylib back to the Homebrew formula that installed it, using
@@ -42,7 +48,7 @@ cd "$(dirname "$0")/.."          # repo root
 REPO_ROOT="$PWD"
 
 APP="${1:-build/bin/femm_gui.app}"
-OUT="${2:-$REPO_ROOT/THIRD-PARTY-NOTICES.txt}"
+OUT="${2:-$APP/Contents/Resources/THIRD-PARTY-NOTICES.txt}"
 FRAMEWORKS="$APP/Contents/Frameworks"
 # License texts kept in-repo for components whose Homebrew keg ships none.
 # Named per-formula (glib.txt) or per-license (LGPL-2.1.txt, shared).

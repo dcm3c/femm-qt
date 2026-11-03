@@ -88,11 +88,16 @@ solvers in `solvers/` are released under the GNU General Public License v3 or
 later (see [solvers/COPYING](solvers/COPYING)). The SPDX-License-Identifier tag
 in each source file is authoritative.
 
-Qt is used under the LGPL-3.0; see [NOTICE-Qt.txt](NOTICE-Qt.txt) and
-[QT-THIRD-PARTY-NOTICES.txt](QT-THIRD-PARTY-NOTICES.txt). The other bundled
+Qt is used under the LGPL-3.0; see [NOTICE-Qt.txt](NOTICE-Qt.txt). The
+Windows installer and the macOS app also carry QT-THIRD-PARTY-NOTICES.txt,
+crediting the third-party code compiled into the Qt they ship; it is
+generated for each package from that Qt's own bill of materials
+(`packaging/gen-qt-notices.py`). The other bundled
 components keep their own licenses, all MIT/X11 or similar: MicroPython,
 micropython-lib, ulab, the Boehm-Demers-Weiser garbage collector, Lua 4 and
-LuaSocket (the legacy Lua client), and complexEigenPairSolver. Their license
+LuaSocket (the legacy Lua client), and complexEigenPairSolver. The Windows
+installer also ships the MinGW-w64 runtime: winpthreads (MIT/BSD) and
+libgcc/libstdc++ (GPLv3 with the GCC Runtime Library Exception). Their license
 texts ship with the program.
 
 For use of the GPL solvers under terms other than GPLv3 (e.g., in proprietary

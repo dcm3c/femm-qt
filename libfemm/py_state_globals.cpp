@@ -31,6 +31,7 @@
 #include "curr_results_doc.h"
 #include "utf8_io.h"      // UTF-8 <-> wide at the OS boundary
 #include "py_os.h"        // femm_os_chdir: the one working-directory setter
+#include <algorithm>
 #include <filesystem>
 #include <system_error>
 
@@ -174,6 +175,77 @@ void register_global_femm_funcs()
         std::string canonical = (dot != std::string::npos)
                                     ? spath.substr(0, dot) + ext : spath;
 
+        // A solution file opens in the postprocessor, as File>Open does and as
+        // FEMM 4.2's open() did (it went through MFC's OpenDocumentFile, which
+        // dispatched on the extension). Until 28 Oct 2026 this threw
+        // "unsupported file type" -- and since the init script's open() shim
+        // only routed the four input types here, a bare open("x.ans") fell
+        // through to Python's file open and returned a file handle without a
+        // word, after which every mo_* call failed (femm group report). The
+        // document is created and registered exactly as *_loadsolution does;
+        // if the same file is already the focused solution this is a reload,
+        // swapped everywhere it is known before the old one is freed, in
+        // mo_reload's order. A different file leaves earlier solutions open,
+        // reachable with *_setfocus, as open() does for input documents.
+        auto openResults = [&](auto *doc, auto *old, auto registerFn, auto replaceFn) {
+            // Stored ABSOLUTE, as *_loadsolution stores its path: the GUI
+            // records it in Recent Files and *_reload re-reads it, and a
+            // script's relative name is only valid in the directory it ran
+            // from (Ubuntu RC-1138 pass: the Recent Files entry failed to
+            // open from anywhere else).
+            {
+                std::error_code ec;
+                std::string abs = femm_u8string(std::filesystem::absolute(femm_path(canonical), ec));
+                if (!ec) {
+                    std::replace(abs.begin(), abs.end(), '\\', '/');
+                    canonical = abs;
+                }
+            }
+            bool same = false;
+            if (old) {
+                same = (old->filePath == canonical);
+                if (!same) {
+                    std::error_code ec;
+                    same = std::filesystem::equivalent(femm_path(old->filePath),
+                                                       femm_path(spath), ec) && !ec;
+                }
+            }
+            if (!doc->OpenDocument(spath)) {
+                delete doc;
+                throw std::runtime_error("Failed to open " + spath);
+            }
+            doc->filePath = canonical;
+            registerFn(doc);
+            doc_registry_add(doc);
+            if (same) replaceFn(old, doc);
+            auto cb = get_results_opened_callback();
+            if (cb) cb(canonical.c_str(), doc);
+            if (same) {
+                doc_registry_remove(old);
+                delete old;
+            }
+        };
+        if (ext == ".ans") {
+            openResults(new ResultsDoc(), active_results_document(),
+                        register_mag_postproc_py, replace_mag_results_doc);
+            return;
+        }
+        if (ext == ".res") {
+            openResults(new ElecResultsDoc(), active_elec_results(),
+                        register_elec_postproc_py, replace_elec_results_doc);
+            return;
+        }
+        if (ext == ".anh") {
+            openResults(new HeatResultsDoc(), active_heat_results(),
+                        register_heat_postproc_py, replace_heat_results_doc);
+            return;
+        }
+        if (ext == ".anc") {
+            openResults(new CurrResultsDoc(), active_curr_results(),
+                        register_curr_postproc_py, replace_curr_results_doc);
+            return;
+        }
+
         // If this path is already open AS THE FOCUSED DOCUMENT, re-read it from
         // disk instead of handing back whatever is in memory: open() means
         // "load this file", which is what *_loadsolution already does on the
@@ -278,6 +350,25 @@ void register_global_femm_funcs()
         else throw std::runtime_error("open(\"" + spath + "\"): unsupported file type");
     });
     m.alias("opendocument", "_femm_open");
+
+    // Define every physics' editor and postprocessor commands now, bound to
+    // no document. Each one then fails with its own "No <physics> output in
+    // focus" when nothing is open, which says what to do. Before this, the
+    // commands did not exist until the first document of that kind had been
+    // created, so a script that never got that far saw "name
+    // 'mo_getcircuitproperties' isn't defined" and concluded the function was
+    // missing from the program (femm group report, 27 Oct 2026). The GUI already did
+    // this whenever its last window closed; the headless engine never had.
+    // Registration is idempotent: opening a document re-registers the same
+    // names bound to it.
+    register_mag_editor_py(nullptr);
+    register_elec_editor_py(nullptr);
+    register_heat_editor_py(nullptr);
+    register_curr_editor_py(nullptr);
+    register_mag_postproc_py(nullptr);
+    register_elec_postproc_py(nullptr);
+    register_heat_postproc_py(nullptr);
+    register_curr_postproc_py(nullptr);
 
     // One implementation behind setcurrentdirectory, chdir and os.chdir: the
     // working directory is one piece of state, and three ways to set it is how

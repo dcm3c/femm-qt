@@ -675,14 +675,62 @@ copy_license ../lua/luasocket-1.0/COPYRIGHT      LuaSocket-COPYRIGHT.txt
 copy_license ../micropython/LICENSE.micropython  LICENSE-MicroPython.txt
 copy_license ../micropython/ulab/LICENSE         LICENSE-ulab.txt
 copy_license ../third_party/bdwgc/LICENSE       LICENSE-bdwgc.txt
-copy_license ../QT-THIRD-PARTY-NOTICES.txt      QT-THIRD-PARTY-NOTICES.txt
+# QT-THIRD-PARTY-NOTICES.txt credits the third-party code compiled INTO the Qt
+# frameworks and plugins in this bundle. It is generated from THIS Qt's SBOM
+# and THIS bundle's files, never copied: the Mac Qt contains different code
+# from the Windows one (system zlib; forkfd and the CoreFoundation event
+# dispatcher), and versions move with every Qt release. A stored file made
+# from the Windows Qt credited code the Mac did not ship and missed code it
+# did (RC-1138 pass).
+rm -f "$APP_RES/QT-THIRD-PARTY-NOTICES.txt"
+command -v python3 >/dev/null || { echo "ERROR: python3 is needed to generate QT-THIRD-PARTY-NOTICES.txt"; exit 1; }
+if python3 ../packaging/gen-qt-notices.py "$QT_PREFIX" "$PWD/$APP_RES/QT-THIRD-PARTY-NOTICES.txt" \
+        --deployed "$PWD/$APP" > gen-qt-notices.log 2>&1; then
+    sed -n '2,4p' gen-qt-notices.log | sed 's/^/  /'
+else
+    cat gen-qt-notices.log
+    if [ "$QT_FLAVOUR" = "homebrew" ]; then
+        # Development builds only: Homebrew's Qt may install no SBOM.
+        echo "WARNING: no QT-THIRD-PARTY-NOTICES.txt for this Homebrew-Qt bundle (development only; releases use official Qt)"
+        rm -f "$APP_RES/QT-THIRD-PARTY-NOTICES.txt"
+    else
+        echo "ERROR: could not generate QT-THIRD-PARTY-NOTICES.txt"
+        exit 1
+    fi
+fi
 copy_license ../pylib/vendor/LICENSE.micropython-lib   LICENSE-micropython-lib.txt
-# macOS-only: macdeployqt copies Qt's transitive Homebrew dependencies into
-# Contents/Frameworks/, so the bundle redistributes them. Their notices are
-# aggregated into THIRD-PARTY-NOTICES.txt by
-# packaging/gen-third-party-notices.sh. Windows covers the equivalent set via
-# the Inno Setup list, which is why this file is macOS-only.
-copy_license ../THIRD-PARTY-NOTICES.txt          THIRD-PARTY-NOTICES.txt
+# THIRD-PARTY-NOTICES.txt credits the NON-Qt dylibs in Contents/Frameworks/,
+# and it is written from THIS bundle, never copied from a stored file: what
+# sits in Frameworks/ depends on which Qt the build used.
+#
+#   official Qt (FEMM_QT=official, what releases ship): the frameworks are
+#     self-contained and link only the system, so Frameworks/ holds Qt and
+#     nothing else. There is nothing to credit beyond Qt, which NOTICE-Qt.txt
+#     and QT-THIRD-PARTY-NOTICES.txt cover, and the bundle carries no
+#     THIRD-PARTY-NOTICES.txt.
+#   Homebrew Qt (FEMM_QT=homebrew, development only): macdeployqt copies Qt's
+#     transitive Homebrew dependencies -- about 30 dylibs: dbus, glib, icu4c,
+#     harfbuzz, libtiff, webp ... -- into Frameworks/, so the bundle
+#     redistributes them, and packaging/gen-third-party-notices.sh writes the
+#     notice for exactly the set present.
+#
+# A stored copy used to be bundled unconditionally. Generated once from a
+# Homebrew bundle, it went on crediting those 30 libraries in official-Qt
+# bundles that contain none of them. Generating here makes that impossible.
+rm -f "$APP_RES/THIRD-PARTY-NOTICES.txt"
+NONQT_DYLIBS=$(find "$APP/Contents/Frameworks" -maxdepth 1 -name '*.dylib' 2>/dev/null | wc -l | tr -d ' ')
+if [ "$NONQT_DYLIBS" -gt 0 ]; then
+    echo "  $NONQT_DYLIBS non-Qt dylibs in Frameworks/: generating THIRD-PARTY-NOTICES.txt"
+    if ! bash ../packaging/gen-third-party-notices.sh "$PWD/$APP" \
+            "$PWD/$APP_RES/THIRD-PARTY-NOTICES.txt" > gen-third-party-notices.log 2>&1; then
+        cat gen-third-party-notices.log
+        echo "ERROR: could not generate THIRD-PARTY-NOTICES.txt for the bundled dylibs."
+        exit 1
+    fi
+    grep -A50 -E '^(WARNING|MANUAL ATTENTION)' gen-third-party-notices.log || true
+else
+    echo "  no non-Qt dylibs in Frameworks/: no THIRD-PARTY-NOTICES.txt needed"
+fi
 
 # ---- 4b. Nothing may point at something that is not there -------------
 # The bundle is finished; before it is signed, check that it is CLOSED --

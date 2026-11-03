@@ -149,6 +149,12 @@ const std::string &py_last_result() { return s_last_result; }
 const std::string &py_last_display() { return s_last_display; }
 void py_set_result(std::string &&result) { s_last_result = std::move(result); }
 
+// See py_state.h: set by commands that change the document yet return a
+// value, read (and cleared) by the GUI's post-exec repaint hook.
+static bool s_view_dirty = false;
+void py_mark_view_dirty() { s_view_dirty = true; }
+bool py_take_view_dirty() { bool d = s_view_dirty; s_view_dirty = false; return d; }
+
 // Append one double as the SHORTEST digit string that strtod reads back to the
 // identical value (std::to_chars). This is common/fastio.h's technique, applied
 // here for the same reason it was applied to the .ans hot loops: snprintf

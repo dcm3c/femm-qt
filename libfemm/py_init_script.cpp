@@ -873,10 +873,14 @@ def print(*args, **kw):
         _builtin_print(text, end=end)
 
 # --- open() smart wrapper: FEMM document open vs Python file open ---
+# One string argument naming a FEMM file opens that document (an input file
+# in its editor, a solution file in its postprocessor), as FEMM 4.2's open()
+# did; anything else is Python's file open(). To read a solution file as
+# text, pass a mode: open("x.ans", "r").
 _builtin_open = open
 try:
     _femm_open
-    _femm_exts = ('.fem', '.fee', '.feh', '.fec')
+    _femm_exts = ('.fem', '.fee', '.feh', '.fec', '.ans', '.res', '.anh', '.anc')
     def open(*args, **kwargs):
         if len(args) == 1 and not kwargs and isinstance(args[0], str):
             s = args[0].lower()

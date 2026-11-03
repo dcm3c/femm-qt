@@ -32,7 +32,7 @@
 using femm_py::caster;
 using std::optional;
 
-static const char *MAGERR = "No current magnetics input in focus";
+static const char *MAGERR = "No magnetics input in focus";
 
 // Active document pointer.
 static MagDocument *s_doc = nullptr;
