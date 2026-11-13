@@ -854,52 +854,54 @@ do{
 						Mn[j][w]=K*v[j]*v[w];
 			}
 
+			// Nonlinear material laminated on edge. B1 (from q, d/dy) is Bx and
+			// B2 (from p, d/dx) is By; Mx pairs with mu2 (the y direction) and
+			// My with mu1 (x). The iron's state and the two stack permeabilities
+			// come from GetLamProps, which solves for the flux the iron carries
+			// along the laminations with the insulation in parallel; the Newton
+			// tangent is rank one in u = (M_easy/phi^2 + M_hard)*A.
 			if ((blockproplist[k].LamType==1) && (blockproplist[k].BHpoints>0)){
+				// laminations along x: Bx is the along (easy) component
+				double muEasy,muHard,phi,D;
 				t=blockproplist[k].LamFill;
 				for(j=0,B1=0.,B2=0.;j<3;j++){
 					B1+=L.V[n[j]]*q[j];
-					B2+=L.V[n[j]]*p[j]/t;
-				}
-				B=c*sqrt(B1*B1+B2*B2)/(0.02*a);
-				blockproplist[k].GetBHProps(B,mu,dv);
-				mu=1./(muo*mu);
-				meshele[i].mu1=mu*t;
-				meshele[i].mu2=mu/(t+mu*(1.-t));
-				for(j=0;j<3;j++){
-					for(w=0,v[j]=0,u[j]=0;w<3;w++)
-					{
-						v[j]+=(My[j][w]/t+Mx[j][w])*L.V[n[w]];
-						u[j]+=(My[j][w]/t + t*Mx[j][w])*L.V[n[w]];
-					}
-				}
-				K=-100.*c*c*c*dv/(a);
-				for(j=0;j<3;j++)
-					for(w=0;w<3;w++)
-						Mn[j][w]=K*(v[j]*u[w]+v[w]*u[j]);
-			}
-			if ((blockproplist[k].LamType==2) && (blockproplist[k].BHpoints>0)){
-				t=blockproplist[k].LamFill;
-				for(j=0,B1=0.,B2=0.;j<3;j++){
-					B1+=(L.V[n[j]]*q[j])/t;
 					B2+=L.V[n[j]]*p[j];
 				}
-				B=c*sqrt(B1*B1+B2*B2)/(0.02*a);
-				blockproplist[k].GetBHProps(B,mu,dv);
-				mu=1./(muo*mu);
-				meshele[i].mu2=mu*t;
-				meshele[i].mu1=mu/(t+mu*(1.-t));
+				blockproplist[k].GetLamProps(c*fabs(B2)/(0.02*a),c*fabs(B1)/(0.02*a),
+				                             muEasy,muHard,dv,phi,D);
+				meshele[i].mu1=muEasy;
+				meshele[i].mu2=muHard;
 				for(j=0;j<3;j++){
-					for(w=0,v[j]=0,u[j]=0;w<3;w++)
-					{
-						v[j]+=(Mx[j][w]/t + My[j][w])*L.V[n[w]];
-						u[j]+=(Mx[j][w]/t + t*My[j][w])*L.V[n[w]];
-					}
+					for(w=0,v[j]=0;w<3;w++)
+						v[j]+=(Mx[j][w] + My[j][w]/(phi*phi))*L.V[n[w]];
 				}
-				K=-100.*c*c*c*dv/(a);
+				K=-200.*c*c*c*dv*t/(D*a);
 				for(j=0;j<3;j++)
 					for(w=0;w<3;w++)
-						Mn[j][w]=K*(v[j]*u[w]+v[w]*u[j]);
-			} 
+						Mn[j][w]=K*v[j]*v[w];
+			}
+			if ((blockproplist[k].LamType==2) && (blockproplist[k].BHpoints>0)){
+				// laminations along y: By is the along (easy) component
+				double muEasy,muHard,phi,D;
+				t=blockproplist[k].LamFill;
+				for(j=0,B1=0.,B2=0.;j<3;j++){
+					B1+=L.V[n[j]]*q[j];
+					B2+=L.V[n[j]]*p[j];
+				}
+				blockproplist[k].GetLamProps(c*fabs(B1)/(0.02*a),c*fabs(B2)/(0.02*a),
+				                             muEasy,muHard,dv,phi,D);
+				meshele[i].mu2=muEasy;
+				meshele[i].mu1=muHard;
+				for(j=0;j<3;j++){
+					for(w=0,v[j]=0;w<3;w++)
+						v[j]+=(Mx[j][w]/(phi*phi) + My[j][w])*L.V[n[w]];
+				}
+				K=-200.*c*c*c*dv*t/(D*a);
+				for(j=0;j<3;j++)
+					for(w=0;w<3;w++)
+						Mn[j][w]=K*v[j]*v[w];
+			}
 		}
 
 		// combine block matrices into global matrices;

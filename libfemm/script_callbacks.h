@@ -66,8 +66,11 @@ typedef void (*MessageBoxCallback)(const char *msg);
 void set_message_box_callback(MessageBoxCallback cb);
 MessageBoxCallback get_message_box_callback();
 
-// Shared mesh creation for all physics types. 0 on success.
-int createMeshForDocument(DocumentBase *doc, char *errmsg = nullptr, int errmsg_size = 0);
+// Shared mesh creation for all physics types. 0 on success; on success
+// *nodes (if given) receives the node count of the mesh just made, which is
+// what the *_createmesh() script commands return, as FEMM 4.2 did.
+int createMeshForDocument(DocumentBase *doc, char *errmsg = nullptr, int errmsg_size = 0,
+                          int *nodes = nullptr);
 
 // Shared analysis for all physics types. 0 on success.
 int analyzeDocument(DocumentBase *doc, int hide = 0, char *errmsg = nullptr, int errmsg_size = 0);

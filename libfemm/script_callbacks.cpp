@@ -223,8 +223,9 @@ static bool saveBeforeRun(DocumentBase *doc, const char *what,
     return false;
 }
 
-int createMeshForDocument(DocumentBase *doc, char *errmsg, int errmsg_size)
+int createMeshForDocument(DocumentBase *doc, char *errmsg, int errmsg_size, int *nodes)
 {
+    if (nodes) *nodes = 0;
     if (!doc || doc->filePath.empty()) {
         if (errmsg) snprintf(errmsg, errmsg_size, "File must be saved before creating mesh");
         return -1;
@@ -262,6 +263,11 @@ int createMeshForDocument(DocumentBase *doc, char *errmsg, int errmsg_size)
         }
         return ret;
     }
+    // FEMM 4.2 pushed meshnode.GetSize() back to the script here (its manual
+    // says "elements", its code counts nodes; scripts written against it
+    // expect the node count). A femm group report, November 2026: the port
+    // returned nothing.
+    if (nodes) *nodes = (int)tmesh.vertices.size();
 
     auto meshCb = get_mesh_loaded_callback();
     if (meshCb) {

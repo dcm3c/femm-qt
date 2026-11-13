@@ -125,41 +125,69 @@ void RMaterialProp::GetMu(double b1, double b2, double &mu1, double &mu2) const
     }
 
     // Nonlinear material
-    double b, h;
-    if (LamType == 0) {
-        b = sqrt(b1 * b1 + b2 * b2);
-    }
-    else if (LamType == 1) {
-        b = sqrt(sqr(b1 / LamFill) + b2 * b2);
-    }
-    else {
-        b = sqrt(b1 * b1 + sqr(b2 / LamFill));
+    double b, h, mu_iron;
+    if (LamType == 1 || LamType == 2) {
+        // Laminated on edge: the iron sees the across-lamination component
+        // unchanged and carries the along-lamination flux in parallel with
+        // the insulation. LamIron solves for that flux and the iron's mu at
+        // the resulting |B_fe|; the stack's permeabilities are then the
+        // parallel (along) and series (across) combinations of the manual's
+        // bulk-lamination appendix. Same law as the solver's GetLamProps.
+        double bfe;
+        if (LamType == 1) LamIron(fabs(b2), fabs(b1), bfe, mu_iron);  // laminations along x
+        else              LamIron(fabs(b1), fabs(b2), bfe, mu_iron);  // laminations along y
+        double muEasy = mu_iron * LamFill + (1.0 - LamFill);
+        double muHard = mu_iron / (LamFill + mu_iron * (1.0 - LamFill));
+        if (LamType == 1) { mu1 = muEasy; mu2 = muHard; }
+        else              { mu1 = muHard; mu2 = muEasy; }
+        return;
     }
 
+    // In-plane: the fill factor is already baked into the B-H curve (GetSlopes
+    // rescales it), so it is not re-applied here -- mirror the complex GetMu
+    // and OF.
+    b = sqrt(b1 * b1 + b2 * b2);
     if (b < 1e-20) {
         mu1 = mu_x;
         mu2 = mu_y;
         return;
     }
-
     h = GetH(b);
-    double mu_iron = b / (muo * h);   // relative iron permeability
+    mu_iron = b / (muo * h);   // relative permeability off the (apparent) curve
+    mu1 = mu_iron;
+    mu2 = mu_iron;
+}
 
-    // The lamination fill factor is already baked into the B-H curve (GetH), so
-    // it is NOT re-applied for LamType 0 (in-plane) -- mirror the complex GetMu
-    // and OF. For LamType 1/2 the perpendicular fill correction still applies.
-    if (LamType == 1) {
-        mu1 = mu_iron * LamFill;
-        mu2 = mu_iron / (LamFill + mu_iron * (1.0 - LamFill));
+void RMaterialProp::LamIron(double bhard, double beasy, double &b, double &mu_iron) const
+{
+    // Along the laminations the iron (flux density b) and the insulation
+    // (unit permeability) share the same H, so the stack average is
+    // beasy = t*b + (1-t)*muo*H with H = b*nu(|B_fe|), |B_fe|^2 = bhard^2 + b^2.
+    // That makes b the root of g(b) = b*(t + (1-t)*nu_r(|B_fe|)) - beasy,
+    // increasing in b and bracketed by [0, beasy/t]: bracketed Newton.
+    const double t = LamFill;
+    double lo = 0.0, hi = beasy / t, Bfe, H, nur, phi, g, gp;
+    b = hi;
+    for (int i = 0; i < 60; i++) {
+        Bfe = sqrt(bhard * bhard + b * b);
+        if (Bfe < 1e-20) break;
+        H = GetH(Bfe);
+        nur = muo * H / Bfe;
+        phi = t + (1.0 - t) * nur;
+        g = b * phi - beasy;
+        if (fabs(g) <= 1e-13 * beasy) break;
+        if (g > 0) hi = b; else lo = b;
+        // d(nu_r)/dB = muo*(dH/dB - H/B)/B, chain through |B_fe|
+        double dnur = muo * (Re(GetdHdB(Bfe)) - H / Bfe) / Bfe;
+        gp = phi + b * (1.0 - t) * dnur * b / Bfe;
+        if (gp > 0) b -= g / gp; else b = 0.5 * (lo + hi);
+        if (b <= lo || b >= hi) b = 0.5 * (lo + hi);
+        if (hi - lo <= 1e-13 * beasy) break;
     }
-    else if (LamType == 2) {
-        mu1 = mu_iron / (LamFill + mu_iron * (1.0 - LamFill));
-        mu2 = mu_iron * LamFill;
-    }
-    else {
-        mu1 = mu_iron;
-        mu2 = mu_iron;
-    }
+    Bfe = sqrt(bhard * bhard + b * b);
+    if (Bfe < 1e-20) { mu_iron = mu_x; return; }   // no field: initial permeability
+    H = GetH(Bfe);
+    mu_iron = (H > 0) ? Bfe / (muo * H) : mu_x;
 }
 
 void RMaterialProp::GetMu(CComplex b1, CComplex b2, CComplex &mu1, CComplex &mu2) const
@@ -3033,27 +3061,34 @@ double RMaterialProp::DoEnergy(double b1, double b2) const
     }
 
     // Nonlinear
-    double biron;
     if (LamType == 0) return GetEnergy(sqrt(b1 * b1 + b2 * b2));
-    if (LamType == 1) {
-        biron = sqrt(sqr(b1 / LamFill) + b2 * b2);
-        return LamFill * GetEnergy(biron) + (1 - LamFill) * b2 * b2 / (2 * muo);
-    }
-    biron = sqrt(sqr(b2 / LamFill) + b1 * b1);
-    return LamFill * GetEnergy(biron) + (1 - LamFill) * b1 * b1 / (2 * muo);
+    // Laminated on edge: fill-weighted iron energy at the iron's own flux
+    // density, plus the insulation's, which carries the across component
+    // unchanged and muo*H along the laminations (H shared with the iron).
+    double bhard, beasy, bfe, mu_iron;
+    if (LamType == 1) { bhard = fabs(b2); beasy = fabs(b1); }
+    else              { bhard = fabs(b1); beasy = fabs(b2); }
+    LamIron(bhard, beasy, bfe, mu_iron);
+    double Bfe = sqrt(bhard * bhard + bfe * bfe);
+    double Heasy = (Bfe > 0) ? GetH(Bfe) * bfe / Bfe : 0.0;
+    return LamFill * GetEnergy(Bfe)
+         + (1 - LamFill) * (bhard * bhard + sqr(muo * Heasy)) / (2 * muo);
 }
 
 double RMaterialProp::DoCoEnergy(double b1, double b2) const
 {
     if (BHpoints == 0) return DoEnergy(b1, b2);
-    double biron;
     if (LamType == 0) return GetCoEnergy(sqrt(b1 * b1 + b2 * b2));
-    if (LamType == 1) {
-        biron = sqrt(sqr(b1 / LamFill) + b2 * b2);
-        return LamFill * GetCoEnergy(biron) + (1 - LamFill) * b2 * b2 / (2 * muo);
-    }
-    biron = sqrt(sqr(b2 / LamFill) + b1 * b1);
-    return LamFill * GetCoEnergy(biron) + (1 - LamFill) * b1 * b1 / (2 * muo);
+    // Laminated on edge, as DoEnergy; the insulation is linear, so its
+    // coenergy equals its energy.
+    double bhard, beasy, bfe, mu_iron;
+    if (LamType == 1) { bhard = fabs(b2); beasy = fabs(b1); }
+    else              { bhard = fabs(b1); beasy = fabs(b2); }
+    LamIron(bhard, beasy, bfe, mu_iron);
+    double Bfe = sqrt(bhard * bhard + bfe * bfe);
+    double Heasy = (Bfe > 0) ? GetH(Bfe) * bfe / Bfe : 0.0;
+    return LamFill * GetCoEnergy(Bfe)
+         + (1 - LamFill) * (bhard * bhard + sqr(muo * Heasy)) / (2 * muo);
 }
 
 double RMaterialProp::DoCoEnergy(CComplex b1, CComplex b2) const

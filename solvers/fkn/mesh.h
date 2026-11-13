@@ -103,6 +103,8 @@ class CMaterialProp
 		CComplex Get_v(double B);
 		void GetBHProps(double B, CComplex &v, CComplex &dv);
 		void GetBHProps(double B, double &v, double &dv);
+		void GetLamProps(double Bhard, double Beasy, double &muEasy, double &muHard,
+		                 double &dv, double &phi, double &D);
 		CComplex LaminatedBH(double omega, int i);
 		void IncrementalPermeability(double B, double w, CComplex &mu1, CComplex &mu2);
 		void IncrementalPermeability(double B, double &mu1, double &mu2);

@@ -110,9 +110,22 @@ HOSTS = [
     # found next to femm_headless rather than on PATH for the same reason.
     ("luafemm", "_luafemm.lua",
      lambda: _beside_engine("lua4"), lambda exe, d: [exe, d]),
+    # Wolfram's Windows install path changed with 14.x: "Mathematica\<ver>"
+    # before, "Wolfram\<ver>" since. Both layouts ship math.exe, and neither
+    # puts it on PATH (only wolframscript goes there), hence the globs. On
+    # macOS the kernel lives inside the application bundle (Wolfram.app since
+    # 14, Mathematica.app before), again off PATH: the "math" wrapper script
+    # sits beside WolframKernel in Contents/MacOS, and WolframKernel itself
+    # takes -script too, so it is the fallback. Linux installs math and
+    # wolframscript into /usr/local/bin and needs no glob.
     ("mathfemm", "_mathfemm.m",
-     lambda: shutil.which("math") or _first([
-         r"C:\Program Files\Wolfram Research\Mathematica\9.0\math.exe"]),
+     lambda: shutil.which("math") or shutil.which("wolfram")
+             or _glob(r"C:\Program Files\Wolfram Research\Wolfram\*\math.exe")
+             or _glob(r"C:\Program Files\Wolfram Research\Mathematica\*\math.exe")
+             or _glob("/Applications/*.app/Contents/MacOS/math")
+             or _glob(os.path.expanduser("~/Applications/*.app/Contents/MacOS/math"))
+             or _glob("/Applications/*.app/Contents/MacOS/WolframKernel")
+             or _glob(os.path.expanduser("~/Applications/*.app/Contents/MacOS/WolframKernel")),
      lambda exe, d: [exe, "-script", d]),
 ]
 

@@ -144,6 +144,10 @@ the desired field throughout the solution domain.  The {\tt tangle}
 mesher is directly integrated into each solver.
 \end{itemize}
 
+On Windows, FEMM requires a 64-bit (x86-64) edition of Windows 10 version
+1809 or later, or Windows 11; the installer refuses older versions.  The
+macOS build requires macOS 13.3 or later.
+
 The Python scripting language is integrated into both shells. Python can both build and analyze a geometry and
 evaluate the post-processing results, simplifying the creation of
 various sorts of ``batch'' runs.
@@ -711,12 +715,17 @@ where $n$ represents the direction normal to the boundary.
 This boundary condition can be represented as:
 \be k \frac{\partial T}{\partial n} + h \left( T - T_o \right) = 0 \ee
 where $h$ is the ``heat transfer coefficient'' and $T_o$ is the ambient
-cooling fluid temperature.
+cooling fluid temperature.  A prescribed heat flux $f$ may be specified
+on the same boundary; it is added to the convective term.
 \item {\em Radiation}
 Heat flux via radiation can be described mathematically as:
-\be k \frac{\partial T}{\partial n} + \beta k_{sb} \left( T^4 - T_o^4 \right) = 0 \ee
-where $\beta$ is the emissivity of the surface (a dimensionless value between 0 and 1)
-and $k_{sb}$ is the Stefan-Boltzmann constant.
+\be k \frac{\partial T}{\partial n} + \beta k_{sb} \left( T^4 - T_r^4 \right) = 0 \ee
+where $\beta$ is the emissivity of the surface (a dimensionless value between 0 and 1),
+$k_{sb}$ is the Stefan-Boltzmann constant, and $T_r$ is the temperature of
+the surroundings that the surface radiates to.  A radiation boundary also
+carries the convection and heat flux terms of the two types above, so a
+surface that loses heat by both convection and radiation is a single
+{\em Radiation} boundary with $h$, $T_o$, $\beta$ and $T_r$ all specified.
 \item {\em Periodic}
 A periodic boundary condition joins two boundaries together.  In this
 type of boundary condition, the boundary values on 
@@ -918,6 +927,7 @@ associated functions is contained in Table~\ref{hotkeys}.
 \multicolumn{2}{|c|}{Group Mode Keys} \\ \hline \hline
  Key    & Function \\ \hline \hline
  Space  & Edit group assignment of the selected objects \\ \hline
+ Tab    & Select (or unselect) every object in a group given by number \\ \hline
  Escape & Unselect all  \\ \hline
  Delete & Delete selected block label(s) \\ \hline \hline
 \end{tabular}
@@ -1348,6 +1358,10 @@ parameters correspond to the formula:
 \be A=(A_0 + A_1 x + A_2 y) e^{j \phi} \ee
 If the problem type is axisymmetric, the parameters correspond to:
 \be A=(A_0 + A_1 r + A_2 z) e^{j \phi} \ee
+In both formulas $x$, $y$, $r$ and $z$ are in the problem's length
+units, so $A_1$ and $A_2$ are in Wb/m per length unit; a model drawn
+in millimeters needs values a thousand times smaller than the same
+model drawn in meters.
 \item {\tt Small Skin Depth}
 This boundary condition denotes an interface with a material
 subject to eddy currents at high enough frequencies such that the
@@ -3745,15 +3759,6 @@ two reluctances in parallel yields:
 Since L and W are arbitrarily chosen, the bulk permeability of the
 section is:
 \be \label{ez1} \mu_{ez}= ((1-c) + c \mu_r) \mu_o \ee
-For the solution of nonlinear problems, the derivation of the
-changes to Newton's method to accomodate the bulk lamination model
-are greatly simplified if it is assumed that $(1-c) << c
-\mu_r$. In this case, $\mu_{ez}$ can be approximated as:
-\be \label{ez2} \mu_{ez} \approx c \mu_r \mu_o \ee
-This approximation leads to only trivial errors until the fill
-factor approaches zero.  For example, if $\mu_r=1000$ with a 90\%
-fill, the difference between (\ref{ez1})~and~(\ref{ez2}) is only
-about 0.01\%.
 
 For the hard direction, a different equivalent circuit, pictured in
 Figure~\ref{harddirection} can be drawn.
@@ -3775,10 +3780,39 @@ direction is:
 \be \label{hard} \mu_{hard}=  \frac{\mu_r \mu_o}{c+(1-c) \mu_r} \ee
 
 If the material is laminated ``in-plane,'' all flux is flowing in
-the easy direction, and (\ref{ez2}) is used as the permeability for
-each element.  In problems that are laminated parallel to x or y,
-(\ref{ez2})~and~(\ref{hard}) are used as permeabilities in the
-standard fashion for elements with an anisotropic permeability.
+the easy direction.  For a linear material, (\ref{ez1}) is used as
+the permeability of each element.  For a nonlinear material the same
+parallel combination is applied to the B-H curve itself: each point
+$(B_{fe},H)$ of the curve is replaced by $(c B_{fe} + (1-c) \mu_o
+H,\, H)$, and the solver then works with that apparent curve as if
+the material were solid.
+
+In problems that are laminated parallel to x or y,
+(\ref{ez1})~and~(\ref{hard}) are used as the permeabilities of an
+anisotropic element.  For a nonlinear material, $\mu_r$ must be read
+from the B-H curve at the flux density in the iron, which is not the
+stack average.  Across the laminations the two are equal, because the
+normal component of $B$ is continuous from iron to insulation.  Along
+the laminations the iron carries $b_{fe}$ while the stack average is
+$B_{ez} = c\, b_{fe} + (1-c) \mu_o H$, the iron and the insulation
+sharing the field intensity $H = b_{fe}/(\mu_r \mu_o)$.  Writing
+$|B_{fe}|^2 = B_{hard}^2 + b_{fe}^2$ for the magnitude the iron sees,
+$b_{fe}$ is the root of
+\be \label{lamiron} b_{fe} \left( c + \frac{1-c}{\mu_r(|B_{fe}|)}
+\right) = B_{ez} \ee
+which the solver and the postprocessor find for each element by a
+bracketed Newton iteration on the curve.  (\ref{ez1})~and~(\ref{hard})
+are then evaluated with $\mu_r(|B_{fe}|)$.  The stored energy density
+of the stack follows from the same split,
+\be c \int_0^{|B_{fe}|} H\, dB \;+\; (1-c)\, \frac{B_{hard}^2 +
+(\mu_o H_{ez})^2}{2 \mu_o} \ee
+the iron's energy at its own flux density plus the insulation's, which
+carries the across-lamination component unchanged and $\mu_o H_{ez}$
+along the laminations.  Coenergy is formed the same way, so that
+energy plus coenergy equals $B \cdot H$ per unit volume for the stack
+as it does for a solid material.  Read this way, a stack driven along
+its laminations saturates at $c$ times the saturation flux density of
+the iron, as a stack of discrete laminations does.
 
 For harmonic problems, eddy currents flow in the laminations, and
 hysteresis causes additional loss.  If the laminations are thin
@@ -3787,7 +3821,7 @@ eddy currents and hysteresis can be encapsulated in a
 frequency-dependent permeability \cite{stoll}.  In this case, the
 magnetostatic permeability, $\mu_r$ is simply replaced by the
 frequency-dependent permeability $\mu_{fd}$ in
-(\ref{ez2})~and~(\ref{hard}):
+(\ref{ez1})~and~(\ref{hard}):
 \be \label{mufd}
 \mu_{fd} = \frac{\mu_r e^{\frac{-j \phi_h}{2}} \tanh \left[ e^{\frac{-j \phi_h}{2}}
 \sqrt{j \omega \sigma \mu_r \mu_o} \frac{d}{2} \right]}

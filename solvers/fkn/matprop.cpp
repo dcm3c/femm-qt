@@ -379,6 +379,71 @@ void CMaterialProp::GetBHProps(double B, double &v, double &dv)
 	dv=Re(dvc);
 }
 
+// Nonlinear material laminated on edge (LamType 1 or 2), magnetostatic.
+//
+// The flux density across the laminations is the same in the iron as in the
+// stack. Along the laminations the iron and the insulation (unit
+// permeability) are in parallel and share the same H, so the stack average
+// is  Beasy = t*b + (1-t)*muo*H  with b the iron's along-lamination flux
+// density, t the fill factor and H = b*nu_fe(|B_fe|). The iron's state is
+// |B_fe|^2 = Bhard^2 + b^2, which makes b the root of
+//
+//     g(b) = b*phi(b) - Beasy = 0,   phi = t + (1-t)*nu_r(|B_fe|),
+//
+// nu_r being the iron's relative reluctivity. g is increasing (nu_r grows
+// with B on a saturating curve) and b lies in [0, Beasy/t], so a bracketed
+// Newton iteration is safe. From the iron's mu_r at that |B_fe| the stack's
+// relative permeabilities follow as in the manual's bulk-lamination
+// appendix:  muEasy = t*mu_r + (1-t)  (parallel paths) and
+// muHard = mu_r/(t + (1-t)*mu_r)  (series paths).
+//
+// For the Newton tangent the caller also gets dv = d(nu)/d(B^2) of the iron
+// at |B_fe|, phi, and D = 1 + 2*b^2*(1-t)*muo*dv/phi. Differentiating the
+// element's reluctivities through g(b)=0 gives a rank-one tangent
+// K*(t/D)*u*u^T with u = (M_easy/phi^2 + M_hard)*A and K the same constant
+// the isotropic element uses; at t=1 it is the isotropic tangent.
+//
+// Before November 2026 the lookup used the stack average with one component
+// divided by t -- and in the planar solver that was the ACROSS component, so
+// a stack driven along its laminations saturated at the iron's Bs instead
+// of t*Bs (28% at t=0.78; a user report, 8 Nov 2026) -- and the (1-t) air
+// path along the laminations was dropped.
+void CMaterialProp::GetLamProps(double Bhard, double Beasy, double &muEasy, double &muHard,
+                                double &dv, double &phi, double &D)
+{
+	double t=LamFill, v, b, lo, hi, g, gp, Bfe, nur, dnur;
+	int i;
+
+	Bhard=fabs(Bhard); Beasy=fabs(Beasy);
+	lo=0.; hi=Beasy/t; b=hi;
+	for(i=0;i<60;i++)
+	{
+		Bfe=sqrt(Bhard*Bhard+b*b);
+		GetBHProps(Bfe,v,dv);
+		nur=muo*v; dnur=muo*dv;          // relative reluctivity and d(nu_r)/d(B^2)
+		phi=t+(1.-t)*nur;
+		g=b*phi-Beasy;
+		if (fabs(g)<=1.e-13*Beasy) break;
+		if (g>0) hi=b; else lo=b;        // keep the root bracketed
+		gp=phi+2.*b*b*(1.-t)*dnur;       // dg/db
+		if (gp>0) b-=g/gp; else b=0.5*(lo+hi);
+		if ((b<=lo) || (b>=hi)) b=0.5*(lo+hi);
+		if ((hi-lo)<=1.e-13*Beasy) break;
+	}
+	Bfe=sqrt(Bhard*Bhard+b*b);
+	GetBHProps(Bfe,v,dv);
+	nur=muo*v; dnur=muo*dv;
+	phi=t+(1.-t)*nur;
+	D=1.+2.*b*b*(1.-t)*dnur/phi;
+
+	if (nur>0){
+		double mur=1./nur;
+		muEasy=t*mur+(1.-t);
+		muHard=mur/(t+(1.-t)*mur);
+	}
+	else{ muEasy=1.; muHard=1.; }     // degenerate curve: treat as air
+}
+
 void CMaterialProp::GetBHProps(double B, CComplex &v, CComplex &dv)
 {
 	double b,z,z2,l;

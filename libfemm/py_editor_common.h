@@ -254,11 +254,13 @@ void register_common_editor(femm_py::Module &m, const std::string &P,
     });
 
     // --- Mesh / solve ---
-    m.def(P + "_createmesh", [&s_doc, errmsg]() {
+    m.def(P + "_createmesh", [&s_doc, errmsg]() -> int {
         CHK();
         char msg[256] = {};
-        int ret = createMeshForDocument(s_doc, msg, sizeof(msg));
+        int nodes = 0;
+        int ret = createMeshForDocument(s_doc, msg, sizeof(msg), &nodes);
         if (ret != 0) throw std::runtime_error(msg);
+        return nodes;   // the node count, as FEMM 4.2 returned
     });
     auto analyze_fn = [&s_doc, errmsg](std::optional<int> hide) {
         CHK();

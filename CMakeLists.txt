@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.20)
 # the macOS Info.plist. A release is cut by changing it here, publishing, and
 # tagging the published commit with packaging/tag_release.sh, which refuses a
 # tag that does not match this line.
-project(femm-qt VERSION 5.0.20261101 LANGUAGES CXX C)
+project(femm-qt VERSION 5.0.20261112 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

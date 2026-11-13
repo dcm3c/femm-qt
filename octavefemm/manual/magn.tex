@@ -242,8 +242,7 @@ it appears on the window's title bar.
 \item{\tt mi\_createmesh} runs the mesher to create a mesh. Note that this is not a
 necessary precursor of performing an analysis, as {\tt
 mi\_analyze} will make sure the mesh is up to date before running
-an analysis. The number of elements in the mesh is pushed back onto
-the lua stack.
+an analysis. Returns the number of nodes in the mesh.
 
 \item{\tt mi\_showmesh} shows the mesh.
 

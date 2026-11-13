@@ -243,6 +243,11 @@ pyrow Transient python3 TransientTest.py "$FKN" "$B"
 pyrow HeatBoundaryType python3 HeatBoundaryTypeTest.py "$B"
 pyrow AgeNearDuplicate python3 AgeNearDuplicateTest.py "$FKN"
 pyrow KelvinCorner python3 KelvinCornerTest.py "$B"
+# Nonlinear on-edge laminations: bulk block vs the drawn stack. Before the
+# Nov 2026 fix the solver read the curve with the wrong component scaled by
+# the fill factor (stack saturated at the iron's Bs) and dropped the air path.
+pyrow LamFill python3 LamFillTest.py "$B"
+pyrow CreateMeshReturn python3 CreateMeshReturnTest.py "$B"
 pyrow IncrementalLorentz python3 IncrementalLorentzTest.py "$B"
 inproc ACBHCurveTest.py ACBHCurve
 pyrow FQReference python3 FQReferenceCompare.py

@@ -582,65 +582,46 @@ do{
 						Mn[j][w]=K*v[j]*v[w];
 			}
 
-			if ((blockproplist[k].LamType==1) && (blockproplist[k].BHpoints>0)){
-				
-				//	Derive B directly from energy;
+			// Nonlinear material laminated on edge. The two quadratic forms give
+			// the squared components: A'*Mx*A is the z (d/dr) one, paired with
+			// mu2, and A'*My*A the r (d/dz) one, paired with mu1. GetLamProps
+			// solves for the flux the iron carries along the laminations with
+			// the insulation in parallel and returns both stack permeabilities;
+			// the Newton tangent is rank one in u = (M_easy/phi^2 + M_hard)*A.
+			if (((blockproplist[k].LamType==1) || (blockproplist[k].LamType==2))
+			    && (blockproplist[k].BHpoints>0)){
+				double muEasy,muHard,phi,D,Bz2,Br2;
 				t=blockproplist[k].LamFill;
-				v[0]=0;v[1]=0;v[2]=0;
 				for(j=0;j<3;j++)
-					for(w=0;w<3;w++)
-						v[j]+=(Mx[j][w]+My[j][w]/(t*t))*L.V[n[w]];
-				for(j=0,dv=0;j<3;j++) dv+=L.V[n[j]]*v[j];
-				dv*=(10000.*c*c/vol); 
-				B=sqrt(fabs(dv));
-
-				// Evaluate BH curve
-				blockproplist[k].GetBHProps(B,mu,dv);
-				mu=1./(muo*mu);
-				meshele[i].mu1=mu*t;
-				meshele[i].mu2=mu/(t+mu*(1.-t));
-				for(j=0;j<3;j++){
-					for(w=0,v[j]=0,u[j]=0;w<3;w++)
-					{
-						v[j]+=(My[j][w]/t+Mx[j][w])*L.V[n[w]];
-						u[j]+=(My[j][w]/t + t*Mx[j][w])*L.V[n[w]];
+					for(w=0,v[j]=0,u[j]=0;w<3;w++){
+						v[j]+=Mx[j][w]*L.V[n[w]];
+						u[j]+=My[j][w]*L.V[n[w]];
 					}
+				for(j=0,Bz2=0,Br2=0;j<3;j++){
+					Bz2+=L.V[n[j]]*v[j];
+					Br2+=L.V[n[j]]*u[j];
 				}
-				K=-100.*c*c*c*dv/(vol);
-				for(j=0;j<3;j++)
-					for(w=0;w<3;w++)
-						Mn[j][w]=K*(v[j]*u[w]+v[w]*u[j]);
-			}
-			if ((blockproplist[k].LamType==2) && (blockproplist[k].BHpoints>0)){
+				Bz2=fabs(Bz2*10000.*c*c/vol);
+				Br2=fabs(Br2*10000.*c*c/vol);
 
-				//	Derive B directly from energy;
-				t=blockproplist[k].LamFill;
-				v[0]=0;v[1]=0;v[2]=0;
-				for(j=0;j<3;j++)
-					for(w=0;w<3;w++)
-						v[j]+=(Mx[j][w]/(t*t)+My[j][w])*L.V[n[w]];
-				for(j=0,dv=0;j<3;j++) dv+=L.V[n[j]]*v[j];
-				dv*=(10000.*c*c/vol); 
-				B=sqrt(fabs(dv));
-				
-				// Evaluate BH curve
-				blockproplist[k].GetBHProps(B,mu,dv);
-				mu=1./(muo*mu);
-				meshele[i].mu2=mu*t;
-				meshele[i].mu1=mu/(t+mu*(1.-t));
-
-				for(j=0;j<3;j++){
-					for(w=0,v[j]=0,u[j]=0;w<3;w++)
-					{
-						v[j]+=(Mx[j][w]/t + My[j][w])*L.V[n[w]];
-						u[j]+=(Mx[j][w]/t + t*My[j][w])*L.V[n[w]];
-					}
+				if (blockproplist[k].LamType==1){
+					// laminations along r: Br is the along (easy) component
+					blockproplist[k].GetLamProps(sqrt(Bz2),sqrt(Br2),muEasy,muHard,dv,phi,D);
+					meshele[i].mu1=muEasy;
+					meshele[i].mu2=muHard;
+					for(j=0;j<3;j++) v[j]=v[j]+u[j]/(phi*phi);
 				}
-				K=-100.*c*c*c*dv/(vol);
+				else{
+					// laminations along z: Bz is the along (easy) component
+					blockproplist[k].GetLamProps(sqrt(Br2),sqrt(Bz2),muEasy,muHard,dv,phi,D);
+					meshele[i].mu2=muEasy;
+					meshele[i].mu1=muHard;
+					for(j=0;j<3;j++) v[j]=v[j]/(phi*phi)+u[j];
+				}
+				K=-200.*c*c*c*dv*t/(D*vol);
 				for(j=0;j<3;j++)
 					for(w=0;w<3;w++)
-						Mn[j][w]=K*(v[j]*u[w]+v[w]*u[j]);
-		
+						Mn[j][w]=K*v[j]*v[w];
 			}
 		}
 

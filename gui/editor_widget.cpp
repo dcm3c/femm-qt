@@ -35,6 +35,7 @@
 #include <QDialogButtonBox>
 #include <QDialog>
 #include <cmath>
+#include <limits>
 
 #ifndef PI
 #define PI 3.141592653589793238462643383279
@@ -937,6 +938,23 @@ void EditorWidget::keyPressEvent(QKeyEvent *event)
                 update();
             }
         }
+        else if (m_doc && m_editAction == 4) {
+            // Select by group number, as FEMM 4.2 did in group mode: toggle
+            // the selection of every node, segment, arc and block label in
+            // the group, so pressing it twice deselects again. Was missing
+            // from the port (a femm user report, November 2026).
+            bool ok = false;
+            const int j = QInputDialog::getInt(this, tr("Select Group"),
+                                               tr("Group number:"), 0, 0,
+                                               std::numeric_limits<int>::max(), 1, &ok);
+            if (ok) {
+                for (auto &n : m_doc->nodelist)  if (n.InGroup == j) n.IsSelected = !n.IsSelected;
+                for (auto &s : m_doc->linelist)  if (s.InGroup == j) s.IsSelected = !s.IsSelected;
+                for (auto &a : m_doc->arclist)   if (a.InGroup == j) a.IsSelected = !a.IsSelected;
+                for (auto &b : m_doc->blocklist) if (b.InGroup == j) b.IsSelected = !b.IsSelected;
+                update();
+            }
+        }
         break;
 
     case Qt::Key_F3:
@@ -1342,6 +1360,10 @@ void EditorWidget::openSelected()
             if (a.IsSelected) { if (first) { grp = a.InGroup; first = false; } else if (a.InGroup != grp) grp = 0; }
         for (auto &b : m_doc->blocklist)
             if (b.IsSelected) { if (first) { grp = b.InGroup; first = false; } else if (b.InGroup != grp) grp = 0; }
+        // Nothing selected: nothing to assign, so no dialog -- FEMM 4.2 does
+        // the same. Showing it anyway read as a broken "select group" prompt
+        // (the same femm user report, November 2026).
+        if (first) return;
         dlg.setGroup(grp);
 
         if (dlg.exec() == QDialog::Accepted) {

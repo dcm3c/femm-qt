@@ -68,6 +68,9 @@ struct RMaterialProp {
     CComplex GetH(CComplex b) const;   // complex cubic-Hermite lookup (OF Problem.cpp)
     void GetMu(double b1, double b2, double &mu1, double &mu2) const;
     void GetMu(CComplex b1, CComplex b2, CComplex &mu1, CComplex &mu2) const;
+    // On-edge laminated nonlinear material: the iron's along-lamination flux
+    // density and relative permeability from the stack-average components
+    void LamIron(double bhard, double beasy, double &b, double &mu_iron) const;
     // 1-D nonlinear lamination FE solve for the apparent AC B-H (OF Problem.cpp)
     CComplex LaminatedBH(double omega, int i) const;
     void GetSlopes(double omega);

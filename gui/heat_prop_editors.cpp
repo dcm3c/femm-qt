@@ -190,18 +190,25 @@ HeatBoundaryEditorDialog::HeatBoundaryEditorDialog(QWidget *parent) : QDialog(pa
 
 void HeatBoundaryEditorDialog::onTypeChanged(int idx)
 {
-    // Fixed Temperature (0): Tset only
-    // Heat Flux (1): qs only
-    // Convection (2): qs, Tinf, h, beta, TinfRad (mixed BC — all visible)
-    // Radiation (3): beta, TinfRad
-    // Periodic (4), Anti-Periodic (5): no extra fields
+    // The fields shown follow what the solver (hsolv prob1big.cpp) reads for
+    // each type, which is also what the FEMM 4.2 dialog enabled:
+    //   Fixed Temperature (0): Tset
+    //   Heat Flux (1): qs
+    //   Convection (2): qs, Tinf, h            -- convection + flux
+    //   Radiation (3): qs, Tinf, h, beta, TinfRad -- radiation + convection + flux
+    //   Periodic (4), Anti-Periodic (5): none
+    // Until Nov 2026 this table was inverted (Convection showed the radiation
+    // fields, which type 2 ignores; Radiation hid h, Tinf and qs, which type 3
+    // uses), so a 4.2 combined boundary could not be seen or edited here and
+    // a new one could not be made. Values were never lost: hidden fields keep
+    // their text and toProp() writes all six.
 
     bool showTset    = (idx == 0);
-    bool showQs      = (idx == 1 || idx == 2);
-    bool showTinf    = (idx == 2);
-    bool showH       = (idx == 2);
-    bool showBeta    = (idx == 2 || idx == 3);
-    bool showTinfRad = (idx == 2 || idx == 3);
+    bool showQs      = (idx == 1 || idx == 2 || idx == 3);
+    bool showTinf    = (idx == 2 || idx == 3);
+    bool showH       = (idx == 2 || idx == 3);
+    bool showBeta    = (idx == 3);
+    bool showTinfRad = (idx == 3);
 
     m_lTset->setVisible(showTset);       m_Tset->setVisible(showTset);
     m_lqs->setVisible(showQs);           m_qs->setVisible(showQs);

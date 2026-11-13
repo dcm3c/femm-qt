@@ -27,6 +27,19 @@ re-run after an aborted script without leaving a trail of orphaned FEMM
 windows, and it means the {\tt bHide} argument has no effect when an instance
 is already running.
 
+The package reaches the socket through J/Link.  Mathematica 15 ships a Java
+runtime whose module system blocks the reflective access J/Link needs for a
+socket's streams, so {\tt OpenFEMM} checks the running Java and, when it finds
+the {\tt java.net} and {\tt java.lang} packages closed, restarts Java once with
+the two {\tt --add-opens} options and prints a line saying so.  (On macOS the
+Java runtime adds a line of its own, {\tt Picked up JAVA\_TOOL\_OPTIONS}, because
+that is the route by which the options reach it there.  The restart
+invalidates any Java objects other packages hold in that kernel; older
+runtimes are left alone.)  A Java restart made after the connection exists,
+by {\tt ReinstallJava} for instance, leaves the connection unusable; so does
+closing the FEMM process by hand.  In either case the next command reports
+it and {\tt OpenFEMM} reconnects.
+
 Once connected, FEMM is controlled through the Mathematica functions provided by
 the package, which mirror the Python command set documented in the scripting
 chapters.  For example, the magnetics preprocessor commands appear as

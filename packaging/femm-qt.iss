@@ -28,6 +28,10 @@ OutputDir         = ..\packaging\output
 ChangesEnvironment= yes
 PrivilegesRequired= lowest
 PrivilegesRequiredOverridesAllowed= dialog
+; Qt 6.10 (the GUI's toolkit) runs on Windows 10 build 1809 and later only;
+; on anything older femm_gui would install and then fail to start with a
+; missing-DLL error. Refuse up front instead. Must move with the Qt version.
+MinVersion        = 10.0.17763
 
 ; -- Authenticode signing (Azure Trusted Signing), OFF unless asked for ------
 ; pack.bat passes /DSIGN together with /Ssigntool=<command> when the signing

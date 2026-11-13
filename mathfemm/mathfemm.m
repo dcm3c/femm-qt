@@ -3110,7 +3110,12 @@ COGetAllV::usage = "COGetAllV[] returns the voltage at every mesh node. Complex 
 
 Begin["`Private`"]
 
-PackDir = DirectoryName[StringReplace[$Input, "/" -> "\\"]];
+(* The backslash form is what DirectoryName needs on Windows. Applied only *)
+(* there: on macOS and Linux it turned every separator into a backslash, *)
+(* DirectoryName then found none, and PackDir came out "" -- so OpenFEMM *)
+(* searched "/../build/bin" instead of the tree's build/bin. *)
+PackDir = DirectoryName[If[$OperatingSystem == "Windows",
+	StringReplace[$Input, "/" -> "\\"], $Input]];
 
 Print["MathFEMM loaded at " <> DateString[]];
 
@@ -3141,6 +3146,54 @@ Needs["JLink`"];
 femmSocket = Null;
 femmOut = Null;
 femmIn = Null;
+
+(* Java 16 and later refuse reflective access to members of non-public *)
+(* classes in packages the module system has not opened (JEP 396/403). *)
+(* J/Link loads the runtime class of every object a method returns and *)
+(* makes its methods accessible, so Socket.getOutputStream() -- whose *)
+(* runtime class is the non-public java.net.Socket$SocketOutputStream -- *)
+(* fails to load, every JavaNew built on it gets $Failed, and the *)
+(* Runtime.exec process streams in java.lang fail the same way (a femm *)
+(* group report against Mathematica 15, November 2026). Opening the two *)
+(* packages to unnamed modules restores the pre-16 behaviour. *)
+femmJavaOpens = "--add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED";
+(* The same two opens in the single-token form the JVM accepts from *)
+(* JAVA_TOOL_OPTIONS (see the macOS fallback in OpenFEMM). *)
+femmJavaToolOpens = "--add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED";
+
+(* True when the running JVM enforces module encapsulation and has not *)
+(* opened java.net and java.lang to unnamed modules. A few calls on public *)
+(* classes only. On Java 8 and older getModule[] does not exist, the Check *)
+(* fires, and the answer is False: nothing to do there. *)
+femmJavaNeedsOpensQ[] := Module[{r},
+	r = Quiet[Check[
+		Module[{mod, un},
+			LoadJavaClass["java.lang.ClassLoader"];
+			mod = JavaNew["java.lang.Object"]@getClass[]@getModule[];
+			un = ClassLoader`getSystemClassLoader[]@getUnnamedModule[];
+			{mod@isOpen["java.net", un], mod@isOpen["java.lang", un]}
+		], None]];
+	MatchQ[r, {_, _}] && MemberQ[r, False]
+]
+
+(* femmJavaOpens appended to whatever JVMArguments the user has set as *)
+(* the InstallJava default, so a ReinstallJava here does not discard them. *)
+femmJVMArgumentsWithOpens[] := Module[{old},
+	old = JVMArguments /. Options[InstallJava];
+	If[StringQ[old] && StringTrim[old] =!= "", old <> " " <> femmJavaOpens, femmJavaOpens]
+]
+
+(* The three handles are J/Link object references. ReinstallJava (ours, or *)
+(* one the user runs between commands) invalidates every reference from the *)
+(* old JVM: JavaObjectQ turns False and a method call on one stays *)
+(* unevaluated, so femmIn@readLine[] would hand StringTrim a JavaObject *)
+(* expression instead of a string. Everything that uses the handles asks *)
+(* femmLiveQ first and drops them when the answer is no. JavaObjectQ[Null] *)
+(* is True (Null stands for Java's null), hence the explicit Null tests. *)
+femmLiveQ[] := femmSocket =!= Null && femmOut =!= Null && femmIn =!= Null &&
+	JavaObjectQ[femmSocket] && JavaObjectQ[femmOut] && JavaObjectQ[femmIn]
+
+femmDropHandles[] := (femmSocket = Null; femmOut = Null; femmIn = Null;)
 femmActivePort = 48015;
 mlinkResult = Null;
 (* Sticky error flag: once a femm-qt command has errored, every subsequent *)
@@ -3201,9 +3254,34 @@ OpenFEMM[bHide_:0, port_:48015] := Module[{exename, femmdir, found, candidates, 
 	(* Clear the sticky errored flag so a re-call after a script abort *)
 	(* recovers cleanly without forcing the user to actually reconnect. *)
 	femmErrored = False;
+	(* Handles left from before a Java restart are dead; reconnect instead *)
+	(* of reporting a connection that cannot carry a command. *)
+	If[femmSocket =!= Null && !femmLiveQ[], femmDropHandles[]];
 	If[femmSocket =!= Null,
 		Print["already connected!"];
 		Return[]
+	];
+	(* See femmJavaNeedsOpensQ. Done only when the JVM is actually closed, *)
+	(* so a Java 11 or Java 8 kernel never restarts Java, and done before *)
+	(* the first connect so no half-built connection is ever left behind. *)
+	If[femmJavaNeedsOpensQ[],
+		Print["MathFEMM: restarting Java with " <> femmJavaOpens <>
+			" so that J/Link can reach socket streams on Java 16 and later."];
+		ReinstallJava[JVMArguments -> femmJVMArgumentsWithOpens[]];
+		(* On macOS J/Link starts Java through its own JLink.app launcher, *)
+		(* which does not pass JVMArguments' --add-opens on to the JVM: the *)
+		(* packages are still closed afterwards (Mathematica 15.0.1, Java 21, *)
+		(* Nov 2026). JAVA_TOOL_OPTIONS is read by the JVM itself, whatever *)
+		(* starts it, so fall back to that -- for this one restart only, *)
+		(* then restore the variable as it was. *)
+		If[femmJavaNeedsOpensQ[],
+			Module[{prev = Environment["JAVA_TOOL_OPTIONS"]},
+				SetEnvironment["JAVA_TOOL_OPTIONS" -> If[StringQ[prev] && StringTrim[prev] =!= "",
+					prev <> " " <> femmJavaToolOpens, femmJavaToolOpens]];
+				ReinstallJava[JVMArguments -> femmJVMArgumentsWithOpens[]];
+				SetEnvironment["JAVA_TOOL_OPTIONS" -> If[StringQ[prev], prev, None]]
+			]
+		];
 	];
 	(* Try to connect to an already-running instance *)
 	If[!femmTryConnect[femmActivePort],
@@ -3297,7 +3375,10 @@ OpenFEMM[bHide_:0, port_:48015] := Module[{exename, femmdir, found, candidates, 
 
 CloseFEMM[] := Module[{},
 	If[femmSocket =!= Null,
-		Quiet[MLPut["quit()"]];
+		(* femm-qt answers quit() by exiting, not with a reply line, so send *)
+		(* it without reading back: MLPutWait would report the EOF as a lost *)
+		(* connection. The pause lets the process go before the socket closes. *)
+		If[femmLiveQ[], Quiet[femmOut@println["quit()"]]];
 		Pause[0.5];
 		Quiet[femmSocket@close[]];
 		femmSocket = Null;
@@ -3324,6 +3405,12 @@ MLPut[s_] := MLPutWait[s]
 MLPutWait[s_] := Module[{ss, response},
 	If[femmErrored, Abort[]];
 	If[femmSocket === Null, Print["not connected!"]; Return[]];
+	If[!femmLiveQ[],
+		femmDropHandles[];
+		mlinkResult = Null;
+		Print["connection to femm-qt lost (Java was restarted); call OpenFEMM[] again"];
+		Return[]
+	];
 	(* Strip mlput() wrapper if present *)
 	If[StringMatchQ[s, "mlput(*)"],
 		ss = StringTake[s, {7, StringLength[s] - 1}],
@@ -3332,11 +3419,24 @@ MLPutWait[s_] := Module[{ss, response},
 	(* Escape backslashes for the command parser — see MLPut for the rationale. *)
 	ss = StringReplace[ss, "\\" -> "\\\\"];
 	femmOut@println[ss];
-	(* readLine returns a single line, blocking until \n or EOF. *)
-	(* Returns Null at EOF (e.g. peer closed). *)
-	response = femmIn@readLine[];
+	(* readLine returns a single line, blocking until \n or EOF. Null at EOF *)
+	(* and $Failed (an IOException: on Windows a peer that has exited gives *)
+	(* "connection abort" rather than EOF) both mean the socket is dead, *)
+	(* typically femm-qt closed by hand; the handles are dropped so the next *)
+	(* OpenFEMM[] reconnects instead of saying "already connected". The Java *)
+	(* stack trace is quieted in favour of the one-line message. Anything *)
+	(* else that is not a string is a dead handle (see femmLiveQ). *)
+	response = Quiet[femmIn@readLine[], Java::excptn];
 	If[response === Null || response === $Failed,
+		femmDropHandles[];
 		mlinkResult = Null;
+		Print["femm-qt closed the connection; call OpenFEMM[] again"];
+		Return[]
+	];
+	If[!StringQ[response],
+		femmDropHandles[];
+		mlinkResult = Null;
+		Print["connection to femm-qt lost (Java was restarted); call OpenFEMM[] again"];
 		Return[]
 	];
 	response = StringTrim[response];

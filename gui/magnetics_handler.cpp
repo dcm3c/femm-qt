@@ -730,6 +730,41 @@ void MagneticsHandler::showBHCurves(QWidget *parent)
 
     const auto &mat = doc->blockproplist[matIdx[pick]];
     const bool isAC = (doc->Frequency != 0);
+
+    // Laminated on edge (parallel to x or y) with a fill below 1: the stored
+    // curve is the iron's, which is not what the stack does in either
+    // direction. Along the laminations the stack carries c*B_fe plus the
+    // insulation's muo*H at the H the two share -- the relation the solver
+    // and the point values use -- saturating at c times the iron's level.
+    // Across the laminations the stack is nearly linear at mu_r ~ 1/(1-c)
+    // until the iron saturates. Both go on one plot: the across curve sets
+    // the H range, and the along curve then sits high and flat, which is
+    // the honest picture of an on-edge stack. (AC problems refuse on-edge
+    // laminations, so these are magnetostatic curves.)
+    if ((mat.LamType == 1 || mat.LamType == 2) && mat.LamFill < 1) {
+        const double c = mat.LamFill;
+        PlotSeries along, across;
+        along.label = tr("along laminations, T");
+        across.label = tr("across laminations, T");
+        const double bMaxFe = mat.Bdata[mat.BHpoints - 1];
+        for (int j = 0; j < npts; j++) {
+            double b = bMaxFe * j / (npts - 1);
+            double h = mat.GetH(b);
+            along.x.push_back(h);
+            along.y.push_back(c * b + (1.0 - c) * muo * h);
+            across.x.push_back(c * h + (1.0 - c) * b / muo);
+            across.y.push_back(b);
+        }
+        auto *pdlg = new PlotDialog(tr("B-H Curves of the laminated stack (fill %1): %2")
+                                        .arg(c).arg(names[pick]), parent);
+        pdlg->setAttribute(Qt::WA_DeleteOnClose);
+        pdlg->plot()->addSeries(along);
+        pdlg->plot()->addSeries(across);
+        pdlg->plot()->setAxisLabels(tr("H, A/m"), tr("B, Tesla"));
+        pdlg->show();
+        return;
+    }
+
     PlotSeries re, im;
     re.label = isAC ? tr("Re[B], T") : tr("B, T");
     im.label = tr("Im[B], T");
